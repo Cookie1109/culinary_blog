@@ -1,0 +1,14 @@
+.git
+.dotnet
+**/.next
+**/*.tsbuildinfo
+**/bin
+**/obj
+**/node_modules
+**/TestResults
+artifacts
+coverage
+design
+docs/**/*.pdf
+logs
+tmp

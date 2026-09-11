@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:ital,opsz,wght@0,14..32,100..900&display=swap');
+@import 'tailwindcss';
+
+@source '../features/culinary/**/*.{ts,tsx}';
+
+@theme inline {
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --color-background: #faf8f5;
+  --color-foreground: #2c2a28;
+  --color-card: #ffffff;
+  --color-card-foreground: #2c2a28;
+  --color-primary: #c55333;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #ebe5dd;
+  --color-secondary-foreground: #4a4641;
+  --color-muted: #f2efea;
+  --color-muted-foreground: #7e7870;
+  --color-accent: #e5a93d;
+  --color-accent-foreground: #2c2a28;
+  --color-border: #e0dcd6;
+  --radius-sm: 0;
+  --radius-md: 0.125rem;
+  --radius-lg: 0.25rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    background: var(--color-background);
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}

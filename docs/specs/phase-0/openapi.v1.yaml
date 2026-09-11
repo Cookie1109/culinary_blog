@@ -1,0 +1,849 @@
+openapi: 3.1.0
+info:
+  title: Culinary Blog API
+  version: 1.0.0
+  description: >-
+    Contract triển khai đã hợp nhất từ SRS v1.0.0 và
+    00_SRS_Conformance_and_Resolution.md. Mọi lỗi dùng RFC 7807.
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Development
+  - url: https://api.culinaryblog.com/api/v1
+    description: Production
+tags:
+  - name: Auth
+  - name: Categories
+  - name: Recipes
+  - name: MyRecipes
+  - name: Admin
+  - name: Images
+  - name: Steps
+  - name: Ingredients
+  - name: Health
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RegisterRequest'}
+      responses:
+        '201': {$ref: '#/components/responses/AuthCreated'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LoginRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/AuthOk'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '423': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/Problem'}
+  /auth/google:
+    post:
+      tags: [Auth]
+      operationId: googleLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idToken]
+              properties:
+                idToken: {type: string, minLength: 1, writeOnly: true}
+      responses:
+        '200': {$ref: '#/components/responses/AuthOk'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '502': {$ref: '#/components/responses/Problem'}
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshSession
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RefreshTokenRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/AuthOk'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      security:
+        - {}
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RefreshTokenRequest'}
+      responses:
+        '204': {description: Refresh token đã được revoke hoặc vốn không còn hiệu lực}
+        '400': {$ref: '#/components/responses/Problem'}
+  /auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Hồ sơ hiện tại
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserEnvelope'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      tags: [Auth]
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateProfileRequest'}
+      responses:
+        '200':
+          description: Hồ sơ đã cập nhật
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserEnvelope'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /categories:
+    get:
+      tags: [Categories]
+      operationId: listCategories
+      security: []
+      responses:
+        '200':
+          description: Danh sách category, sắp xếp name tăng dần
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: {$ref: '#/components/schemas/Category'}
+    post:
+      tags: [Categories]
+      operationId: createCategory
+      x-required-role: Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CategoryWrite'}
+      responses:
+        '201': {$ref: '#/components/responses/CategoryResource'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /categories/{slug}:
+    get:
+      tags: [Categories]
+      operationId: getCategoryBySlug
+      security: []
+      parameters:
+        - {$ref: '#/components/parameters/Slug'}
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+      responses:
+        '200':
+          description: Category và Published recipes
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryDetailEnvelope'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /categories/{id}:
+    put:
+      tags: [Categories]
+      operationId: updateCategory
+      x-required-role: Admin
+      parameters: [{$ref: '#/components/parameters/Id'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CategoryWrite'}
+      responses:
+        '200': {$ref: '#/components/responses/CategoryResource'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [Categories]
+      operationId: deleteCategory
+      x-required-role: Admin
+      parameters: [{$ref: '#/components/parameters/Id'}]
+      responses:
+        '204': {description: Category đã soft-delete}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /admin/recipes:
+    get:
+      tags: [Admin]
+      operationId: listAllRecipesForAdmin
+      x-required-role: Admin
+      parameters:
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+        - {name: status, in: query, schema: {$ref: '#/components/schemas/RecipeStatus'}}
+        - {name: authorId, in: query, schema: {type: string}}
+      responses:
+        '200': {$ref: '#/components/responses/RecipePage'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/recipes/{id}:
+    get:
+      tags: [Admin]
+      operationId: getAnyRecipeForAdmin
+      x-required-role: Admin
+      parameters: [{$ref: '#/components/parameters/Id'}]
+      responses:
+        '200': {$ref: '#/components/responses/RecipeResource'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /recipes:
+    get:
+      tags: [Recipes]
+      operationId: listPublishedRecipes
+      security: []
+      parameters:
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+        - {$ref: '#/components/parameters/Sort'}
+        - {name: categoryId, in: query, schema: {type: string, format: uuid}}
+        - {name: difficulty, in: query, schema: {$ref: '#/components/schemas/RecipeDifficulty'}}
+        - {name: maxCookTime, in: query, schema: {type: integer, minimum: 0}}
+        - {name: minServings, in: query, schema: {type: integer, minimum: 1}}
+        - {name: minPrepTime, in: query, schema: {type: integer, minimum: 1}}
+        - {name: maxPrepTime, in: query, schema: {type: integer, minimum: 1}}
+      responses:
+        '200': {$ref: '#/components/responses/RecipePage'}
+        '400': {$ref: '#/components/responses/Problem'}
+    post:
+      tags: [Recipes]
+      operationId: createRecipe
+      x-required-role: AuthorOrAdmin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateRecipeRequest'}
+      responses:
+        '201': {$ref: '#/components/responses/RecipeResource'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/search:
+    get:
+      tags: [Recipes]
+      operationId: searchPublishedRecipes
+      security: []
+      parameters:
+        - {name: q, in: query, required: true, schema: {type: string, minLength: 2, maxLength: 100}}
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+        - {name: categoryId, in: query, schema: {type: string, format: uuid}}
+        - {name: difficulty, in: query, schema: {$ref: '#/components/schemas/RecipeDifficulty'}}
+      responses:
+        '200': {$ref: '#/components/responses/RecipePage'}
+        '400': {$ref: '#/components/responses/Problem'}
+  /recipes/{slug}:
+    get:
+      tags: [Recipes]
+      operationId: getPublishedRecipeBySlug
+      security: []
+      parameters: [{$ref: '#/components/parameters/Slug'}]
+      responses:
+        '200': {$ref: '#/components/responses/RecipeResource'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}:
+    put:
+      tags: [Recipes]
+      operationId: updateRecipe
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateRecipeRequest'}
+      responses:
+        '200': {$ref: '#/components/responses/RecipeResource'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [Recipes]
+      operationId: deleteRecipe
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '204': {description: Recipe đã soft-delete}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/publish:
+    patch:
+      tags: [Recipes]
+      operationId: publishRecipe
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '200': {$ref: '#/components/responses/RecipeResource'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/unpublish:
+    patch:
+      tags: [Recipes]
+      operationId: unpublishRecipe
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '200': {$ref: '#/components/responses/RecipeResource'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/archive:
+    patch:
+      tags: [Recipes]
+      operationId: archiveRecipe
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '200': {$ref: '#/components/responses/RecipeResource'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/unarchive:
+    patch:
+      tags: [Recipes]
+      operationId: unarchiveRecipe
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '200': {$ref: '#/components/responses/RecipeResource'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /me/recipes:
+    get:
+      tags: [MyRecipes]
+      operationId: listMyRecipes
+      parameters:
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+        - {name: status, in: query, schema: {$ref: '#/components/schemas/RecipeStatus'}}
+      responses:
+        '200': {$ref: '#/components/responses/RecipePage'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /me/recipes/{id}:
+    get:
+      tags: [MyRecipes]
+      operationId: getMyRecipe
+      parameters: [{$ref: '#/components/parameters/Id'}]
+      responses:
+        '200': {$ref: '#/components/responses/RecipeResource'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/images:
+    post:
+      tags: [Images]
+      operationId: uploadRecipeImage
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: {type: string, format: binary}
+                altText: {type: [string, 'null'], maxLength: 200}
+                isPrimary: {type: boolean, default: false}
+      responses:
+        '201': {description: Image metadata created}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/images/{imageId}:
+    patch:
+      tags: [Images]
+      operationId: updateRecipeImage
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {name: imageId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                altText: {type: [string, 'null'], maxLength: 200}
+                isPrimary: {type: boolean}
+                orderIndex: {type: integer, minimum: 0}
+      responses:
+        '200': {description: Image metadata updated}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [Images]
+      operationId: deleteRecipeImage
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {name: imageId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '204': {description: Image metadata deleted; object deletion queued}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/steps:
+    post:
+      tags: [Steps]
+      operationId: createRecipeStep
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StepWrite'}
+      responses:
+        '201': {description: Step created at the end}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/steps/{stepId}:
+    put:
+      tags: [Steps]
+      operationId: updateRecipeStep
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {name: stepId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StepWrite'}
+      responses:
+        '200': {description: Step updated}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [Steps]
+      operationId: deleteRecipeStep
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {name: stepId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '204': {description: Step deleted; remaining steps renumbered}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/ingredients:
+    post:
+      tags: [Ingredients]
+      operationId: createRecipeIngredient
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IngredientWrite'}
+      responses:
+        '201': {description: Ingredient created}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipes/{id}/ingredients/{ingredientId}:
+    put:
+      tags: [Ingredients]
+      operationId: updateRecipeIngredient
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {name: ingredientId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IngredientWrite'}
+      responses:
+        '200': {description: Ingredient updated}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [Ingredients]
+      operationId: deleteRecipeIngredient
+      x-resource-owner-or-admin: true
+      parameters:
+        - {$ref: '#/components/parameters/Id'}
+        - {name: ingredientId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '204': {description: Ingredient deleted}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /health:
+    get:
+      tags: [Health]
+      operationId: health
+      security: []
+      responses:
+        '200': {description: Aggregate healthy status without topology details}
+        '503': {description: Aggregate unhealthy status}
+  /health/live:
+    get:
+      tags: [Health]
+      operationId: liveness
+      security: []
+      responses:
+        '200': {description: Process alive}
+  /health/ready:
+    get:
+      tags: [Health]
+      operationId: readiness
+      security: []
+      responses:
+        '200': {description: PostgreSQL and Redis ready}
+        '503': {description: Not ready}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id: {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    Slug: {name: slug, in: path, required: true, schema: {type: string, minLength: 1}}
+    Page: {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+    PageSize: {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 50, default: 12}}
+    Sort: {name: sort, in: query, schema: {type: string, default: -createdAt}}
+    IfMatch: {name: If-Match, in: header, required: true, schema: {type: string}, description: Quoted aggregate version ETag}
+  responses:
+    Problem:
+      description: RFC 7807 Problem Details
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ProblemDetails'}
+    AuthCreated:
+      description: Account created and session issued
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/AuthEnvelope'}
+    AuthOk:
+      description: Session issued
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/AuthEnvelope'}
+    CategoryResource:
+      description: Category resource
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: {data: {$ref: '#/components/schemas/Category'}}
+    RecipeResource:
+      description: Recipe resource
+      headers:
+        ETag: {schema: {type: string}}
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: {data: {$ref: '#/components/schemas/RecipeDetail'}}
+    RecipePage:
+      description: Paged recipe results; public operations constrain data to Published
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/RecipePage'}
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [displayName, email, password]
+      properties:
+        displayName: {type: string, minLength: 2, maxLength: 100}
+        email: {type: string, format: email}
+        password: {type: string, minLength: 8, writeOnly: true}
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: {type: string, format: email}
+        password: {type: string, writeOnly: true}
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: {type: string, minLength: 1, writeOnly: true}
+    UpdateProfileRequest:
+      type: object
+      minProperties: 1
+      properties:
+        displayName: {type: string, minLength: 2, maxLength: 100}
+        avatarUrl: {type: [string, 'null'], format: uri, maxLength: 500}
+        bio: {type: [string, 'null'], maxLength: 2000}
+    User:
+      type: object
+      required: [id, email, displayName, roles, isActive, createdAt]
+      properties:
+        id: {type: string}
+        email: {type: string, format: email}
+        displayName: {type: string}
+        avatarUrl: {type: [string, 'null'], format: uri}
+        bio: {type: [string, 'null']}
+        roles: {type: array, items: {type: string, enum: [Author, Admin]}}
+        emailConfirmed: {type: boolean}
+        isActive: {type: boolean}
+        createdAt: {type: string, format: date-time}
+    UserEnvelope:
+      type: object
+      required: [data]
+      properties: {data: {$ref: '#/components/schemas/User'}}
+    AuthEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [accessToken, refreshToken, expiresAt, user]
+          properties:
+            accessToken: {type: string, writeOnly: true}
+            refreshToken: {type: string, writeOnly: true}
+            expiresAt: {type: string, format: date-time}
+            user: {$ref: '#/components/schemas/User'}
+    Category:
+      type: object
+      required: [id, name, slug, orderIndex, recipeCount]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string, minLength: 2, maxLength: 100}
+        slug: {type: string, maxLength: 120}
+        description: {type: [string, 'null'], maxLength: 2000}
+        imageUrl: {type: [string, 'null'], format: uri}
+        orderIndex: {type: integer, minimum: 0}
+        recipeCount: {type: integer, minimum: 0}
+    CategoryWrite:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 2, maxLength: 100}
+        description: {type: [string, 'null'], maxLength: 2000}
+        imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
+        orderIndex: {type: integer, minimum: 0}
+    RecipeStatus: {type: string, enum: [draft, published, archived]}
+    RecipeDifficulty: {type: string, enum: [easy, medium, hard, expert]}
+    RecipeSummary:
+      type: object
+      required: [id, title, slug, description, prepTime, cookTime, servings, difficulty, status, category, author, createdAt, version]
+      properties:
+        id: {type: string, format: uuid}
+        title: {type: string}
+        slug: {type: string, maxLength: 220, description: Server-generated; collisions receive -2, -3 suffixes}
+        description: {type: string}
+        prepTime: {type: integer}
+        cookTime: {type: integer}
+        servings: {type: integer}
+        difficulty: {$ref: '#/components/schemas/RecipeDifficulty'}
+        status: {$ref: '#/components/schemas/RecipeStatus'}
+        primaryImageUrl: {type: [string, 'null'], format: uri}
+        category: {$ref: '#/components/schemas/Category'}
+        author: {$ref: '#/components/schemas/User'}
+        createdAt: {type: string, format: date-time}
+        publishedAt: {type: [string, 'null'], format: date-time}
+        version: {type: integer, format: int64, minimum: 1}
+    RecipeDetail:
+      allOf:
+        - {$ref: '#/components/schemas/RecipeSummary'}
+        - type: object
+          required: [ingredients, steps, images]
+          properties:
+            instructions: {type: [string, 'null']}
+            nutrition: {type: [object, 'null'], additionalProperties: true}
+            ingredients: {type: array, items: {$ref: '#/components/schemas/Ingredient'}}
+            steps: {type: array, items: {$ref: '#/components/schemas/Step'}}
+            images: {type: array, items: {$ref: '#/components/schemas/RecipeImage'}}
+    CreateRecipeRequest:
+      type: object
+      required: [title, description, categoryId, prepTime, cookTime, servings, difficulty]
+      properties:
+        title: {type: string, minLength: 5, maxLength: 200}
+        description: {type: string, minLength: 1, maxLength: 2000}
+        categoryId: {type: string, format: uuid}
+        prepTime: {type: integer, minimum: 1}
+        cookTime: {type: integer, minimum: 0}
+        servings: {type: integer, minimum: 1}
+        difficulty: {$ref: '#/components/schemas/RecipeDifficulty'}
+        instructions: {type: [string, 'null']}
+        nutrition: {type: [object, 'null'], additionalProperties: true}
+        steps: {type: array, items: {$ref: '#/components/schemas/StepWrite'}}
+        ingredients: {type: array, items: {$ref: '#/components/schemas/IngredientWrite'}}
+    UpdateRecipeRequest:
+      allOf: [{$ref: '#/components/schemas/CreateRecipeRequest'}]
+    StepWrite:
+      type: object
+      required: [title, description]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, minLength: 1, maxLength: 2000}
+        timerMinutes: {type: [integer, 'null'], minimum: 0}
+        imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
+        stepNumber: {type: integer, minimum: 1, description: Chỉ dùng khi PUT để đổi vị trí}
+    Step:
+      allOf:
+        - {$ref: '#/components/schemas/StepWrite'}
+        - type: object
+          required: [id, stepNumber]
+          properties: {id: {type: string, format: uuid}}
+    IngredientWrite:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 200}
+        quantity: {type: [number, 'null'], exclusiveMinimum: 0}
+        unit: {type: [string, 'null'], maxLength: 50}
+        notes: {type: [string, 'null'], maxLength: 500}
+        orderIndex: {type: integer, minimum: 0, default: 0}
+    Ingredient:
+      allOf:
+        - {$ref: '#/components/schemas/IngredientWrite'}
+        - type: object
+          required: [id]
+          properties: {id: {type: string, format: uuid}}
+    RecipeImage:
+      type: object
+      required: [id, isPrimary, orderIndex]
+      properties:
+        id: {type: string, format: uuid}
+        originalUrl: {type: [string, 'null'], format: uri}
+        mediumUrl: {type: [string, 'null'], format: uri}
+        thumbnailUrl: {type: [string, 'null'], format: uri}
+        altText: {type: [string, 'null']}
+        isPrimary: {type: boolean}
+        orderIndex: {type: integer}
+        processingStatus: {type: string, enum: [pending, ready, failed]}
+    PageMeta:
+      type: object
+      required: [page, pageSize, total, totalPages, hasNextPage, hasPreviousPage]
+      properties:
+        page: {type: integer}
+        pageSize: {type: integer}
+        total: {type: integer}
+        totalPages: {type: integer}
+        hasNextPage: {type: boolean}
+        hasPreviousPage: {type: boolean}
+    RecipePage:
+      type: object
+      required: [data, meta]
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/RecipeSummary'}}
+        meta: {$ref: '#/components/schemas/PageMeta'}
+    CategoryDetailEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [category, recipes]
+          properties:
+            category: {$ref: '#/components/schemas/Category'}
+            recipes: {type: array, items: {$ref: '#/components/schemas/RecipeSummary'}}
+        meta: {$ref: '#/components/schemas/PageMeta'}
+    ProblemDetails:
+      type: object
+      required: [type, title, status, code, correlationId, traceId]
+      properties:
+        type: {type: string, format: uri}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        instance: {type: string}
+        code: {type: string}
+        errors:
+          type: object
+          additionalProperties: {type: array, items: {type: string}}
+        correlationId: {type: string}
+        traceId: {type: string}
+security:
+  - bearerAuth: []
