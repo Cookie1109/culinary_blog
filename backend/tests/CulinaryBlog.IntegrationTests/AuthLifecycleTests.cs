@@ -32,14 +32,16 @@ public sealed class AuthLifecycleTests(AuthApiFactory factory) : IClassFixture<A
         await using (var scope = factory.Services.CreateAsyncScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var user = Assert.Single(dbContext.Users);
-            var storedToken = Assert.Single(dbContext.RefreshTokens);
+            var userId = Guid.Parse(registered.Data.User.Id);
+            var user = await dbContext.Users.SingleAsync(item => item.Id == userId);
+            var tokenHash = TokenService.HashRefreshToken(registered.Data.RefreshToken);
+            var storedToken = await dbContext.RefreshTokens.SingleAsync(item => item.TokenHash == tokenHash);
             Assert.NotEqual(password, user.PasswordHash);
             var passwordHashPayload = Convert.FromBase64String(user.PasswordHash!);
             Assert.True(BinaryPrimitives.ReadUInt32BigEndian(passwordHashPayload.AsSpan(5, 4)) >= 100_000);
             Assert.NotEqual(registered.Data.RefreshToken, storedToken.TokenHash);
-            Assert.Equal(TokenService.HashRefreshToken(registered.Data.RefreshToken), storedToken.TokenHash);
-            Assert.Single(dbContext.WelcomeEmailOutbox);
+            Assert.Equal(tokenHash, storedToken.TokenHash);
+            Assert.Single(dbContext.WelcomeEmailOutbox, item => item.UserId == userId);
         }
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", registered.Data.AccessToken);
