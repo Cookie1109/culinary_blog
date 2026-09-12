@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-culinary}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -111,6 +111,14 @@ services:
       ObjectStorage__SecretKey: ${MINIO_ROOT_PASSWORD:-local-development-only}
       ObjectStorage__BucketName: ${MINIO_BUCKET:-culinary-media}
       Seq__ServerUrl: http://seq
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-local-development-only-change-this-key-before-shared-use}
+      Database__ApplyMigrationsOnStartup: "true"
+      Email__Enabled: "true"
+      Email__Host: mailhog
+      Email__Port: "1025"
+      AdminSeed__Enabled: ${ADMIN_SEED_ENABLED:-false}
+      AdminSeed__Email: ${ADMIN_EMAIL:-}
+      AdminSeed__Password: ${ADMIN_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -119,6 +127,8 @@ services:
       minio-bootstrap:
         condition: service_completed_successfully
       seq:
+        condition: service_healthy
+      mailhog:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]

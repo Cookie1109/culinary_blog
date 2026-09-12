@@ -1,8 +1,13 @@
 using CulinaryBlog.Application.Abstractions.Caching;
+using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Infrastructure.Caching;
 using CulinaryBlog.Infrastructure.Configuration;
+using CulinaryBlog.Infrastructure.Email;
 using CulinaryBlog.Infrastructure.Health;
+using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +30,47 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetRequiredSection(JwtOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddOptions<AdminSeedOptions>()
+            .Bind(configuration.GetSection(AdminSeedOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(EmailOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql(databaseConnection));
+        services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequiredLength = 8;
+                options.Password.RequiredUniqueChars = 1;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            })
+            .AddRoles<IdentityRole<Guid>>()
+            .AddSignInManager()
+            .AddEntityFrameworkStores<AppDbContext>();
+        services.Configure<PasswordHasherOptions>(options =>
+        {
+            options.CompatibilityMode = PasswordHasherCompatibilityMode.IdentityV3;
+            options.IterationCount = 100_000;
+        });
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<TokenService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
+        services.AddScoped<DatabaseInitializer>();
+        services.AddHostedService<WelcomeEmailWorker>();
 
         services.AddStackExchangeRedisCache(options =>
         {

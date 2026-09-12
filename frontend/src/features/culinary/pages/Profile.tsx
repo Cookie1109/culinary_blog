@@ -10,27 +10,41 @@ export function Profile() {
   const [name, setName] = useState(user?.name ?? '')
   const [bio, setBio] = useState(user?.bio ?? '')
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
 
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-        <h1 className="font-serif text-3xl mb-4">Sign in to view your profile</h1>
+        <h1 className="font-serif text-3xl mb-4">Đăng nhập để xem hồ sơ của bạn</h1>
         <button
           onClick={() => navigate('/auth/login')}
           className="bg-primary text-primary-foreground px-8 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
         >
-          Sign In
+          Đăng nhập
         </button>
       </div>
     )
   }
 
-  const handleSave = (e: FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault()
-    updateProfile({ name, bio })
-    setEditing(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    if (name.trim().length < 2 || name.trim().length > 100) {
+      setError('Tên hiển thị phải có từ 2 đến 100 ký tự.')
+      return
+    }
+    if (bio.length > 2000) {
+      setError('Tiểu sử không được vượt quá 2.000 ký tự.')
+      return
+    }
+    try {
+      setError('')
+      await updateProfile({ name: name.trim(), bio })
+      setEditing(false)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch {
+      setError('Cập nhật hồ sơ thất bại. Vui lòng thử lại.')
+    }
   }
 
   const handleCancel = () => {
@@ -43,8 +57,8 @@ export function Profile() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 lg:py-24">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="font-serif text-4xl lg:text-5xl text-foreground mb-2">My Profile</h1>
-        <p className="text-muted-foreground">Manage your personal information and public author profile.</p>
+        <h1 className="font-serif text-4xl lg:text-5xl text-foreground mb-2">Hồ sơ cá nhân</h1>
+        <p className="text-muted-foreground">Quản lý thông tin cá nhân và hồ sơ tác giả của bạn.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -64,14 +78,16 @@ export function Profile() {
             )}
             <button
               className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center hover:bg-primary transition-colors shadow"
-              aria-label="Change avatar"
+              aria-label="Đổi ảnh đại diện"
             >
               <Camera size={14} />
             </button>
           </div>
           <div className="text-center lg:text-left">
             <p className="font-medium">{user.name}</p>
-            <p className="text-sm text-muted-foreground capitalize">{user.role}</p>
+            <p className="text-sm text-muted-foreground">
+              {user.role === 'admin' ? 'Quản trị viên' : 'Tác giả'}
+            </p>
           </div>
         </div>
 
@@ -80,7 +96,12 @@ export function Profile() {
           {saved && (
             <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm mb-6">
               <Check size={16} />
-              Profile updated successfully.
+              Cập nhật hồ sơ thành công.
+            </div>
+          )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm mb-6" role="alert">
+              {error}
             </div>
           )}
 
@@ -89,7 +110,7 @@ export function Profile() {
             <div className="mb-6 pb-6 border-b border-border">
               <div className="flex items-center justify-between mb-4">
                 <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                  Full Name
+                  Họ và tên
                 </label>
                 {!editing && (
                   <button
@@ -97,7 +118,7 @@ export function Profile() {
                     onClick={() => setEditing(true)}
                     className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
                   >
-                    <Pencil size={12} /> Edit
+                    <Pencil size={12} /> Chỉnh sửa
                   </button>
                 )}
               </div>
@@ -116,30 +137,32 @@ export function Profile() {
             {/* Email (readonly) */}
             <div className="mb-6 pb-6 border-b border-border">
               <label className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
-                Email Address
+                Địa chỉ email
               </label>
               <p className="text-foreground">{user.email}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Email cannot be changed here. Contact support if needed.
+                Email không thể thay đổi tại đây. Vui lòng liên hệ hỗ trợ nếu cần.
               </p>
             </div>
 
             {/* Bio */}
             <div className="mb-6 pb-6 border-b border-border">
               <label className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
-                Bio
+                Tiểu sử giới thiệu
               </label>
               {editing ? (
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={4}
-                  placeholder="Tell readers about yourself..."
+                  placeholder="Chia sẻ đôi nét về bạn với độc giả..."
                   className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all resize-none"
                 />
               ) : (
                 <p className="text-foreground leading-relaxed">
-                  {user.bio ?? <span className="text-muted-foreground italic">No bio yet.</span>}
+                  {user.bio ?? (
+                    <span className="text-muted-foreground italic">Chưa có thông tin giới thiệu.</span>
+                  )}
                 </p>
               )}
             </div>
@@ -147,10 +170,10 @@ export function Profile() {
             {/* Role */}
             <div className="mb-8 pb-6 border-b border-border">
               <label className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
-                Account Role
+                Vai trò tài khoản
               </label>
-              <span className="inline-block px-3 py-1 bg-secondary text-foreground text-sm capitalize border border-border">
-                {user.role}
+              <span className="inline-block px-3 py-1 bg-secondary text-foreground text-sm border border-border">
+                {user.role === 'admin' ? 'Quản trị viên' : 'Tác giả'}
               </span>
             </div>
 
@@ -161,14 +184,14 @@ export function Profile() {
                   type="submit"
                   className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
                 >
-                  <Check size={16} /> Save Changes
+                  <Check size={16} /> Lưu thay đổi
                 </button>
                 <button
                   type="button"
                   onClick={handleCancel}
                   className="flex items-center gap-2 border border-border px-6 py-3 text-sm uppercase tracking-widest hover:bg-secondary transition-colors"
                 >
-                  <X size={16} /> Cancel
+                  <X size={16} /> Hủy
                 </button>
               </div>
             ) : (
@@ -178,17 +201,17 @@ export function Profile() {
                   onClick={() => setEditing(true)}
                   className="bg-foreground text-background px-6 py-3 text-sm uppercase tracking-widest hover:bg-primary transition-colors"
                 >
-                  Edit Profile
+                  Chỉnh sửa hồ sơ
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    logout()
+                  onClick={async () => {
+                    await logout()
                     navigate('/')
                   }}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest"
                 >
-                  Sign Out
+                  Đăng xuất
                 </button>
               </div>
             )}

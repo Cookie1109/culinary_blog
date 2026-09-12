@@ -17,7 +17,7 @@ const ALL_RECIPES: Recipe[] = [
     id: '1',
     title: 'Rustic Sourdough Boule',
     slug: 'rustic-sourdough-boule',
-    category: 'Baking',
+    category: 'Làm bánh',
     status: 'Published',
     date: '2026-09-01',
     views: 1247,
@@ -26,7 +26,7 @@ const ALL_RECIPES: Recipe[] = [
     id: '2',
     title: 'Wild Mushroom Risotto',
     slug: 'wild-mushroom-risotto',
-    category: 'Dinner',
+    category: 'Món chính',
     status: 'Published',
     date: '2026-08-28',
     views: 892,
@@ -35,7 +35,7 @@ const ALL_RECIPES: Recipe[] = [
     id: '3',
     title: 'Heirloom Tomato Galette',
     slug: 'heirloom-tomato-galette',
-    category: 'Vegetarian',
+    category: 'Món chay',
     status: 'Published',
     date: '2026-08-15',
     views: 634,
@@ -44,7 +44,7 @@ const ALL_RECIPES: Recipe[] = [
     id: '4',
     title: 'Cast Iron Ribeye',
     slug: 'cast-iron-ribeye',
-    category: 'Dinner',
+    category: 'Món chính',
     status: 'Draft',
     date: '2026-09-10',
     views: 0,
@@ -53,7 +53,7 @@ const ALL_RECIPES: Recipe[] = [
     id: '5',
     title: 'Chocolate Soufflé',
     slug: 'chocolate-souffle',
-    category: 'Desserts',
+    category: 'Món tráng miệng',
     status: 'Draft',
     date: '2026-09-09',
     views: 0,
@@ -62,7 +62,7 @@ const ALL_RECIPES: Recipe[] = [
     id: '6',
     title: 'Summer Gazpacho',
     slug: 'summer-gazpacho',
-    category: 'Soups',
+    category: 'Canh & Súp',
     status: 'Archived',
     date: '2026-07-01',
     views: 421,
@@ -71,7 +71,7 @@ const ALL_RECIPES: Recipe[] = [
     id: '7',
     title: 'Slow-Roasted Tomatoes',
     slug: 'slow-roasted-tomatoes',
-    category: 'Vegetarian',
+    category: 'Món chay',
     status: 'Published',
     date: '2026-09-05',
     views: 318,
@@ -80,7 +80,7 @@ const ALL_RECIPES: Recipe[] = [
     id: '8',
     title: 'Brown Butter Financiers',
     slug: 'brown-butter-financiers',
-    category: 'Baking',
+    category: 'Làm bánh',
     status: 'Published',
     date: '2026-08-20',
     views: 756,
@@ -94,6 +94,12 @@ const STATUS_BADGE: Record<string, string> = {
 }
 
 const STATUS_FILTERS = ['All', 'Published', 'Draft', 'Archived'] as const
+const STATUS_FILTER_LABELS: Record<string, string> = {
+  All: 'Tất cả',
+  Published: 'Đã xuất bản',
+  Draft: 'Bản nháp',
+  Archived: 'Đã lưu trữ',
+}
 
 export function MyRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>(ALL_RECIPES)
@@ -124,14 +130,14 @@ export function MyRecipes() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-foreground">My Recipes</h1>
-          <p className="text-muted-foreground mt-1">{recipes.length} total recipes</p>
+          <h1 className="font-serif text-3xl lg:text-4xl text-foreground">Công thức của tôi</h1>
+          <p className="text-muted-foreground mt-1">Tổng cộng {recipes.length} công thức</p>
         </div>
         <Link
           to="/dashboard/recipes/new"
           className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors shrink-0"
         >
-          <PlusCircle size={16} /> New Recipe
+          <PlusCircle size={16} /> Tạo công thức mới
         </Link>
       </div>
 
@@ -148,7 +154,7 @@ export function MyRecipes() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search recipes…"
+            placeholder="Tìm kiếm công thức…"
             className="w-full border border-border bg-background pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
           />
         </div>
@@ -165,7 +171,7 @@ export function MyRecipes() {
                   : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
               }`}
             >
-              {s}
+              {STATUS_FILTER_LABELS[s]}
             </button>
           ))}
         </div>
@@ -175,9 +181,9 @@ export function MyRecipes() {
       <div className="bg-background border border-border overflow-hidden">
         {filtered.length === 0 ? (
           <div className="text-center py-16 px-4">
-            <p className="font-serif text-xl text-foreground mb-2">No recipes found</p>
+            <p className="font-serif text-xl text-foreground mb-2">Không tìm thấy công thức nào</p>
             <p className="text-muted-foreground text-sm">
-              Try adjusting your filters or create a new recipe.
+              Hãy thử điều chỉnh bộ lọc hoặc tạo một công thức mới.
             </p>
           </div>
         ) : (
@@ -186,19 +192,19 @@ export function MyRecipes() {
               <thead>
                 <tr className="border-b border-border bg-secondary/30">
                   <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                    Title
+                    Tiêu đề
                   </th>
                   <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium hidden sm:table-cell">
-                    Category
+                    Danh mục
                   </th>
                   <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                    Status
+                    Trạng thái
                   </th>
                   <th className="text-right px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium hidden lg:table-cell">
-                    Views
+                    Lượt xem
                   </th>
                   <th className="text-right px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium hidden md:table-cell">
-                    Date
+                    Ngày tạo
                   </th>
                   <th className="px-6 py-3" />
                 </tr>
@@ -221,9 +227,9 @@ export function MyRecipes() {
                         onChange={(e) => changeStatus(recipe.id, e.target.value as Recipe['status'])}
                         className={`px-2.5 py-1 text-xs border cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary ${STATUS_BADGE[recipe.status]}`}
                       >
-                        <option value="Draft">Draft</option>
-                        <option value="Published">Published</option>
-                        <option value="Archived">Archived</option>
+                        <option value="Draft">Bản nháp</option>
+                        <option value="Published">Đã xuất bản</option>
+                        <option value="Archived">Đã lưu trữ</option>
                       </select>
                     </td>
                     <td className="px-6 py-4 text-right text-muted-foreground hidden lg:table-cell">
@@ -241,7 +247,7 @@ export function MyRecipes() {
                           <Link
                             to={`/recipes/${recipe.slug}`}
                             className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                            aria-label="View"
+                            aria-label="Xem"
                             target="_blank"
                           >
                             <Eye size={15} />
@@ -250,7 +256,7 @@ export function MyRecipes() {
                         <Link
                           to={`/dashboard/recipes/${recipe.id}/edit`}
                           className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                          aria-label="Edit"
+                          aria-label="Chỉnh sửa"
                         >
                           <Pencil size={15} />
                         </Link>
@@ -260,20 +266,20 @@ export function MyRecipes() {
                               onClick={() => handleDelete(recipe.id)}
                               className="text-red-600 hover:text-red-700 font-medium"
                             >
-                              Delete
+                              Xóa
                             </button>
                             <button
                               onClick={() => setConfirmDelete(null)}
                               className="text-muted-foreground hover:text-foreground"
                             >
-                              Cancel
+                              Hủy
                             </button>
                           </span>
                         ) : (
                           <button
                             onClick={() => setConfirmDelete(recipe.id)}
                             className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"
-                            aria-label="Delete"
+                            aria-label="Xóa"
                           >
                             <Trash2 size={15} />
                           </button>
@@ -289,7 +295,7 @@ export function MyRecipes() {
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        Showing {filtered.length} of {recipes.length} recipes
+        Đang hiển thị {filtered.length} trên tổng số {recipes.length} công thức
       </p>
     </div>
   )

@@ -1,3 +1,4 @@
+using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Domain.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
@@ -26,6 +27,7 @@ internal sealed class GlobalExceptionHandler(
         var (status, code, title) = exception switch
         {
             ValidationException => (StatusCodes.Status400BadRequest, "VALIDATION_ERROR", "Validation failed"),
+            AuthProblemException authException => MapAuthProblem(authException),
             DomainException domainException =>
                 (StatusCodes.Status400BadRequest, domainException.Code, "Business rule violation"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "RESOURCE_NOT_FOUND", "Resource not found"),
@@ -49,11 +51,12 @@ internal sealed class GlobalExceptionHandler(
             Detail = status >= StatusCodes.Status500InternalServerError
                 ? "An unexpected error occurred."
                 : exception.Message,
-            Type = $"https://httpstatuses.com/{status}",
+            Type = $"https://culinaryblog.local/problems/{code}",
             Instance = httpContext.Request.Path,
         };
         problem.Extensions["code"] = code;
         problem.Extensions["traceId"] = httpContext.TraceIdentifier;
+        problem.Extensions["correlationId"] = httpContext.TraceIdentifier;
 
         if (exception is ValidationException validationException)
         {
@@ -71,5 +74,19 @@ internal sealed class GlobalExceptionHandler(
             ProblemDetails = problem,
             Exception = exception,
         }).ConfigureAwait(false);
+    }
+
+    private static (int Status, string Code, string Title) MapAuthProblem(AuthProblemException exception)
+    {
+        var status = exception.Code switch
+        {
+            "AUTH_EMAIL_EXISTS" or "AUTH_EXTERNAL_ACCOUNT_CONFLICT" => StatusCodes.Status409Conflict,
+            "AUTH_ACCOUNT_LOCKED" => StatusCodes.Status423Locked,
+            "AUTH_ACCOUNT_DISABLED" => StatusCodes.Status403Forbidden,
+            "USER_NOT_FOUND" => StatusCodes.Status404NotFound,
+            "AUTH_GOOGLE_TOKEN_INVALID" or "AUTH_GOOGLE_EMAIL_UNVERIFIED" => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status401Unauthorized,
+        };
+        return (status, exception.Code, status == StatusCodes.Status401Unauthorized ? "Authentication failed" : "Account request failed");
     }
 }

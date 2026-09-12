@@ -27,7 +27,7 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4" role="presentation">
-      <button className="absolute inset-0 bg-foreground/40" onClick={onClose} aria-label="Close dialog" />
+      <button className="absolute inset-0 bg-foreground/40" onClick={onClose} aria-label="Đóng hộp thoại" />
       <section
         role="dialog"
         aria-modal="true"
@@ -38,7 +38,7 @@ export function Modal({
           <h2 id="modal-title" className="font-serif text-2xl">
             {title}
           </h2>
-          <button onClick={onClose} aria-label="Close dialog" className="p-2 hover:text-primary">
+          <button onClick={onClose} aria-label="Đóng hộp thoại" className="p-2 hover:text-primary">
             <X size={20} />
           </button>
         </div>

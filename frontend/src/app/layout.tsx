@@ -1,7 +1,24 @@
 import type { Metadata } from 'next'
+import { Inter, Playfair_Display } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { Providers } from '@/components/providers'
 import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  weight: 'variable',
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-inter',
+})
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin', 'vietnamese'],
+  weight: 'variable',
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-playfair-display',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -13,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" className={`${inter.variable} ${playfairDisplay.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>

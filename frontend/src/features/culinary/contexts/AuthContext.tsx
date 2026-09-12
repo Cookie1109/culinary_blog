@@ -1,4 +1,16 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+'use client'
+
+import { useQueryClient } from '@tanstack/react-query'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  clearStoredSession,
+  loginSession,
+  logoutSession,
+  refreshSession,
+  registerSession,
+  updateProfile as updateRemoteProfile,
+  type AuthUser,
+} from '@/lib/api/auth-client'
 
 export interface User {
   id: string
@@ -6,77 +18,98 @@ export interface User {
   email: string
   avatar?: string
   bio?: string
-  role: 'admin' | 'author' | 'reader'
+  role: 'admin' | 'author'
 }
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  loginWithGoogle: () => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
-  updateProfile: (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => void
+  updateProfile: (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+function mapUser(user: AuthUser): User {
+  return {
+    id: user.id,
+    name: user.displayName,
+    email: user.email,
+    avatar: user.avatarUrl ?? undefined,
+    bio: user.bio ?? undefined,
+    role: user.roles.includes('Admin') ? 'admin' : 'author',
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const login = async (email: string, _password: string) => {
+  useEffect(() => {
+    let active = true
+    refreshSession()
+      .then((session) => {
+        if (active) setUser(mapUser(session.user))
+      })
+      .catch(() => clearStoredSession())
+      .finally(() => {
+        if (active) setIsLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const login = async (email: string, password: string) => {
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 800))
-    setUser({
-      id: 'u1',
-      name: 'Eleanor Vance',
-      email,
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&face',
-      bio: 'Food writer, home cook, and devoted recipe developer. I believe in the power of good ingredients and honest techniques.',
-      role: 'admin',
+    try {
+      const session = await loginSession(email, password)
+      setUser(mapUser(session.user))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const register = async (name: string, email: string, password: string) => {
+    setIsLoading(true)
+    try {
+      const session = await registerSession(name, email, password)
+      setUser(mapUser(session.user))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const logout = async () => {
+    try {
+      await logoutSession()
+    } finally {
+      setUser(null)
+      queryClient.removeQueries()
+    }
+  }
+
+  const updateProfile = async (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => {
+    const updated = await updateRemoteProfile({
+      displayName: data.name ?? user?.name ?? '',
+      ...(data.bio !== undefined ? { bio: data.bio } : {}),
+      ...(data.avatar !== undefined ? { avatarUrl: data.avatar } : {}),
     })
-    setIsLoading(false)
-  }
-
-  const loginWithGoogle = async () => {
-    setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 600))
-    setUser({
-      id: 'u2',
-      name: 'Eleanor Vance',
-      email: 'eleanor@example.com',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&face',
-      bio: 'Food writer and home cook. Passionate about seasonal ingredients.',
-      role: 'admin',
-    })
-    setIsLoading(false)
-  }
-
-  const logout = () => setUser(null)
-
-  const register = async (name: string, email: string, _password: string) => {
-    setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 800))
-    setUser({ id: 'u3', name, email, role: 'author' })
-    setIsLoading(false)
-  }
-
-  const updateProfile = (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => {
-    if (user) setUser({ ...user, ...data })
+    setUser(mapUser(updated))
   }
 
   return (
-    <AuthContext.Provider
-      value={{ user, isLoading, login, loginWithGoogle, logout, register, updateProfile }}
-    >
+    <AuthContext.Provider value={{ user, isLoading, login, logout, register, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
+  const context = useContext(AuthContext)
+  if (!context) throw new Error('useAuth must be used within AuthProvider')
+  return context
 }

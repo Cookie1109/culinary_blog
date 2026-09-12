@@ -227,6 +227,8 @@ Tạo nền tảng có thể build, chạy, kiểm thử và quan sát được.
 
 ## 6. Phase 2 — Identity và quản lý phiên
 
+> Trạng thái 13/09/2026: **Core Implementation Complete / Docker Acceptance Pending**. Local auth, JWT/refresh rotation, profile, policy, rate limit, migration, UI và transactional welcome-email outbox đã được triển khai. Bằng chứng tại [Phase 2 verification](./phase-2/README.md). Google OAuth (Should-have) và chuyển worker email sang Hangfire còn được hoãn; integration journey PostgreSQL đã có test nhưng chưa chạy cục bộ do Docker engine không khả dụng.
+
 ### 6.1. Mục tiêu
 
 Hoàn thành luồng tài khoản và phiên an toàn để các phase nghiệp vụ dùng chung authentication/authorization ổn định.

@@ -16,64 +16,64 @@ const INITIAL_CATEGORIES: Category[] = [
   {
     id: 'c1',
     slug: 'baking',
-    name: 'Baking',
-    description: 'Breads, pastries, cakes, and the comforting art of the oven.',
+    name: 'Làm bánh',
+    description: 'Bánh mì, bánh ngọt, bánh nướng và nghệ thuật làm ấm căn bếp từ lò nướng.',
     count: 24,
     image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=400&fit=crop',
   },
   {
     id: 'c2',
     slug: 'dinner',
-    name: 'Dinner',
-    description: 'Satisfying main courses for every weeknight and celebration.',
+    name: 'Món chính',
+    description: 'Những món ăn thịnh soạn, tròn vị cho bữa tối thường nhật lẫn ngày lễ sum vầy.',
     count: 42,
     image: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=600&h=400&fit=crop',
   },
   {
     id: 'c3',
     slug: 'vegetarian',
-    name: 'Vegetarian',
-    description: 'Vibrant plant-based dishes full of color and nutrition.',
+    name: 'Món chay',
+    description: 'Các món ăn thuần thực vật tươi ngon, tràn đầy màu sắc và dồi dào dinh dưỡng.',
     count: 18,
     image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=400&fit=crop',
   },
   {
     id: 'c4',
     slug: 'breakfast',
-    name: 'Breakfast',
-    description: 'Morning rituals: from quick eggs to weekend brunch spreads.',
+    name: 'Bữa sáng',
+    description: 'Khởi đầu ngày mới: từ món trứng nhanh gọn đến mâm brunch cuối tuần rực rỡ.',
     count: 15,
     image: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=600&h=400&fit=crop',
   },
   {
     id: 'c5',
     slug: 'desserts',
-    name: 'Desserts',
-    description: 'Sweets, confections, and the pure pleasure of sugar and cream.',
+    name: 'Món tráng miệng',
+    description: 'Bánh ngọt, kem tươi và niềm vui trọn vẹn từ đường và sữa.',
     count: 31,
     image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=400&fit=crop',
   },
   {
     id: 'c6',
     slug: 'soups',
-    name: 'Soups & Stews',
-    description: 'Warming, restorative bowls built from slow simmered depth.',
+    name: 'Canh & Súp',
+    description: 'Những tô súp ấm nóng, bổ dưỡng được ninh chậm đầy tinh túy.',
     count: 12,
     image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&h=400&fit=crop',
   },
   {
     id: 'c7',
     slug: 'salads',
-    name: 'Salads',
-    description: 'Textured, dressed, and far more interesting than you might expect.',
+    name: 'Salad',
+    description: 'Tươi giòn, thanh mát và kết hợp sốt trộn hấp dẫn hơn bạn nghĩ.',
     count: 9,
     image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=400&fit=crop',
   },
   {
     id: 'c8',
     slug: 'quick-meals',
-    name: 'Quick Meals',
-    description: 'Weeknight-ready recipes ready in 30 minutes or less.',
+    name: 'Món nhanh',
+    description: 'Các món ngon sẵn sàng lên bàn ăn chỉ trong vòng 30 phút hoặc ít hơn.',
     count: 28,
     image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop',
   },
@@ -139,8 +139,8 @@ export function Categories() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 border-b border-border pb-8">
         <div>
-          <h1 className="font-serif text-4xl lg:text-5xl text-foreground mb-2">Categories</h1>
-          <p className="text-muted-foreground">Browse recipes by culinary theme.</p>
+          <h1 className="font-serif text-4xl lg:text-5xl text-foreground mb-2">Danh mục món ăn</h1>
+          <p className="text-muted-foreground">Khám phá các công thức theo chủ đề ẩm thực.</p>
         </div>
         {isAdmin && (
           <button
@@ -148,7 +148,7 @@ export function Categories() {
             className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors shrink-0"
           >
             <Plus size={16} />
-            Add Category
+            Thêm danh mục
           </button>
         )}
       </header>
@@ -156,29 +156,29 @@ export function Categories() {
       {/* Add form */}
       {isAdmin && showAddForm && (
         <div className="mb-10 bg-secondary border border-border p-6 lg:p-8">
-          <h2 className="font-serif text-xl mb-5">New Category</h2>
+          <h2 className="font-serif text-xl mb-5">Danh mục mới</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">
-                Name
+                Tên danh mục
               </label>
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. Pasta & Grains"
+                placeholder="Ví dụ: Mỳ Ý & Ngũ cốc"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               />
             </div>
             <div>
               <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">
-                Description
+                Mô tả
               </label>
               <input
                 type="text"
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
-                placeholder="Short description"
+                placeholder="Mô tả ngắn gọn"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               />
             </div>
@@ -188,13 +188,13 @@ export function Categories() {
               onClick={handleAdd}
               className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
             >
-              <Check size={15} /> Save
+              <Check size={15} /> Lưu
             </button>
             <button
               onClick={() => setShowAddForm(false)}
               className="flex items-center gap-2 border border-border px-5 py-2.5 text-sm uppercase tracking-widest hover:bg-background transition-colors"
             >
-              <X size={15} /> Cancel
+              <X size={15} /> Hủy
             </button>
           </div>
         </div>
@@ -208,7 +208,7 @@ export function Categories() {
               <div className="border border-primary p-5 flex-1 bg-background">
                 <div className="mb-3">
                   <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
-                    Name
+                    Tên danh mục
                   </label>
                   <input
                     type="text"
@@ -220,7 +220,7 @@ export function Categories() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
-                    Description
+                    Mô tả
                   </label>
                   <textarea
                     value={editDesc}
@@ -234,13 +234,13 @@ export function Categories() {
                     onClick={() => handleEditSave(cat.id)}
                     className="flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors"
                   >
-                    <Check size={13} /> Save
+                    <Check size={13} /> Lưu
                   </button>
                   <button
                     onClick={() => setEditingId(null)}
                     className="flex items-center gap-1.5 border border-border px-4 py-2 text-xs uppercase tracking-widest hover:bg-secondary transition-colors"
                   >
-                    <X size={13} /> Cancel
+                    <X size={13} /> Hủy
                   </button>
                 </div>
               </div>
@@ -266,14 +266,14 @@ export function Categories() {
                         <button
                           onClick={() => handleEditStart(cat)}
                           className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                          aria-label={`Edit ${cat.name}`}
+                          aria-label={`Chỉnh sửa ${cat.name}`}
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           onClick={() => handleDelete(cat.id)}
                           className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"
-                          aria-label={`Delete ${cat.name}`}
+                          aria-label={`Xóa ${cat.name}`}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -285,7 +285,7 @@ export function Categories() {
                   </p>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <BookOpen size={13} strokeWidth={1.5} />
-                    <span>{cat.count} recipes</span>
+                    <span>{cat.count} công thức</span>
                   </div>
                 </div>
               </>

@@ -2,7 +2,7 @@
 
 Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây dựng theo đặc tả SRS v1.0.0. Repository sử dụng mô hình monorepo với hai ứng dụng độc lập: frontend Next.js và backend ASP.NET Core; tài liệu, hạ tầng, Docker Compose và CI được quản lý tập trung tại thư mục gốc.
 
-> **Trạng thái:** Phase 0 đã chốt baseline đặc tả. Phase 1 đã hoàn thành nền tảng kỹ thuật và vượt qua kiểm định cục bộ; các module nghiệp vụ được triển khai từ những phase tiếp theo.
+> **Trạng thái:** Phase 0 đã chốt baseline đặc tả; Phase 1 đã hoàn thành nền tảng. Phase 2 local authentication đã được triển khai và vượt qua các gate không phụ thuộc Docker; PostgreSQL auth journey còn chờ chạy trên Docker/CI.
 
 ## Công nghệ chính
 
@@ -88,6 +88,8 @@ dotnet run --project src/CulinaryBlog.Api
 
 API sử dụng địa chỉ được ASP.NET Core hiển thị trong terminal, mặc định là `http://localhost:5000` khi cấu hình local không bị ghi đè.
 
+Khi chạy backend native lần đầu, áp migration và seed role bằng lệnh `dotnet ef database update` ở phần Database migration. Docker Compose tự áp migration khi API khởi động.
+
 ### 3. Chạy frontend
 
 Mở terminal khác tại thư mục gốc:
@@ -138,11 +140,13 @@ Pipeline tại `.github/workflows/ci.yml` tự động kiểm tra backend, front
   ```
 
 - Môi trường staging và production phải lấy secret từ secret store của nền tảng triển khai.
+- JWT signing key phải có ít nhất 32 ký tự ngẫu nhiên; access token sống 15 phút và refresh token sống 7 ngày.
+- Admin seed mặc định tắt. Chỉ bật `ADMIN_SEED_ENABLED` khi đồng thời cấp `ADMIN_EMAIL` và `ADMIN_PASSWORD` qua secret an toàn.
 - API dừng ngay khi thiếu cấu hình bắt buộc cho PostgreSQL, Redis hoặc object storage.
 
 ## Database migration
 
-Phase 1 mới thiết lập `DbContext` nền tảng và chưa tạo entity nghiệp vụ. Khi bắt đầu có thay đổi schema, tạo và áp dụng migration từ thư mục `backend/`:
+Phase 2 đã tạo migration Identity/session đầu tiên. Tạo và áp dụng migration từ thư mục `backend/`:
 
 ```powershell
 dotnet ef migrations add <MigrationName> `
@@ -164,6 +168,7 @@ Production không tự động chạy migration khi API khởi động. Migratio
 - [Kế hoạch triển khai](docs/specs/Culinary_Blog_Project_Plan.md)
 - [Baseline Phase 0](docs/specs/phase-0/README.md)
 - [Báo cáo Phase 1](docs/specs/phase-1/README.md)
+- [Báo cáo Phase 2](docs/specs/phase-2/README.md)
 - [OpenAPI contract v1](docs/specs/phase-0/openapi.v1.yaml)
 
 ## Xử lý sự cố thường gặp

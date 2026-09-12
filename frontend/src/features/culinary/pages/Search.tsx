@@ -137,11 +137,28 @@ const ALL_RECIPES: Recipe[] = [
 ]
 
 const CATEGORIES = ['All', 'Baking', 'Breakfast', 'Desserts', 'Dinner', 'Soups', 'Vegetarian']
+const CATEGORY_LABELS: Record<string, string> = {
+  All: 'Tất cả',
+  Baking: 'Làm bánh',
+  Breakfast: 'Bữa sáng',
+  Desserts: 'Món tráng miệng',
+  Dinner: 'Món chính',
+  Soups: 'Canh & Súp',
+  Vegetarian: 'Món chay',
+}
+
 const DIFFICULTIES = ['All', 'Easy', 'Medium', 'Hard']
+const DIFFICULTY_LABELS: Record<string, string> = {
+  All: 'Tất cả',
+  Easy: 'Dễ',
+  Medium: 'Trung bình',
+  Hard: 'Nâng cao',
+}
+
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest First' },
-  { value: 'quickest', label: 'Quickest First' },
-  { value: 'az', label: 'A – Z' },
+  { value: 'newest', label: 'Mới nhất' },
+  { value: 'quickest', label: 'Nấu nhanh nhất' },
+  { value: 'az', label: 'Theo tên (A – Z)' },
 ]
 
 const PAGE_SIZE = 9
@@ -183,7 +200,8 @@ export function Search() {
       q === '' ||
       r.title.toLowerCase().includes(q.toLowerCase()) ||
       r.description.toLowerCase().includes(q.toLowerCase()) ||
-      r.category.toLowerCase().includes(q.toLowerCase())
+      r.category.toLowerCase().includes(q.toLowerCase()) ||
+      (CATEGORY_LABELS[r.category]?.toLowerCase() ?? '').includes(q.toLowerCase())
     const matchCat = cat === 'All' || r.category === cat
     const matchDiff = diff === 'All' || r.difficulty === diff
     const matchTime = r.time <= maxTime
@@ -202,7 +220,9 @@ export function Search() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
       {/* Search bar */}
       <div className="max-w-3xl mx-auto mb-10">
-        <h1 className="font-serif text-4xl lg:text-5xl text-foreground mb-6 text-center">Search Recipes</h1>
+        <h1 className="font-serif text-4xl lg:text-5xl text-foreground mb-6 text-center">
+          Tìm kiếm công thức
+        </h1>
         <div className="relative">
           <SearchIcon
             size={20}
@@ -216,14 +236,14 @@ export function Search() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') set('q', inputValue)
             }}
-            placeholder="Search by name, ingredient, or category…"
+            placeholder="Tìm theo tên món, nguyên liệu hoặc danh mục…"
             className="w-full border border-border bg-background pl-12 pr-28 py-4 text-base focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
           />
           <button
             onClick={() => set('q', inputValue)}
             className="absolute right-0 top-0 bottom-0 px-6 bg-primary text-primary-foreground text-sm font-medium uppercase tracking-widest hover:bg-primary/90 transition-colors"
           >
-            Search
+            Tìm kiếm
           </button>
         </div>
       </div>
@@ -235,7 +255,7 @@ export function Search() {
             {/* Category */}
             <div>
               <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3 pb-2 border-b border-border">
-                Category
+                Danh mục
               </h3>
               <ul className="space-y-1">
                 {CATEGORIES.map((c) => (
@@ -248,7 +268,7 @@ export function Search() {
                           : 'text-foreground hover:text-primary'
                       }`}
                     >
-                      {c}
+                      {CATEGORY_LABELS[c] ?? c}
                     </button>
                   </li>
                 ))}
@@ -258,7 +278,7 @@ export function Search() {
             {/* Difficulty */}
             <div>
               <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3 pb-2 border-b border-border">
-                Difficulty
+                Độ khó
               </h3>
               <ul className="space-y-1">
                 {DIFFICULTIES.map((d) => (
@@ -269,7 +289,7 @@ export function Search() {
                         diff === d ? 'text-primary font-medium' : 'text-foreground hover:text-primary'
                       }`}
                     >
-                      {d}
+                      {DIFFICULTY_LABELS[d] ?? d}
                     </button>
                   </li>
                 ))}
@@ -279,7 +299,7 @@ export function Search() {
             {/* Max time */}
             <div>
               <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3 pb-2 border-b border-border">
-                Max Time: {maxTime >= 999 ? 'Any' : `${maxTime} min`}
+                Thời gian: {maxTime >= 999 ? 'Tất cả' : `${maxTime} phút`}
               </h3>
               <input
                 type="range"
@@ -291,8 +311,8 @@ export function Search() {
                 className="w-full accent-primary"
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>10 min</span>
-                <span>3+ hrs</span>
+                <span>10 phút</span>
+                <span>Trên 3 giờ</span>
               </div>
             </div>
 
@@ -301,7 +321,7 @@ export function Search() {
                 onClick={clearAll}
                 className="text-xs text-muted-foreground hover:text-primary uppercase tracking-widest flex items-center gap-1.5 transition-colors"
               >
-                <X size={13} /> Clear all filters
+                <X size={13} /> Xóa tất cả bộ lọc
               </button>
             )}
           </div>
@@ -316,14 +336,14 @@ export function Search() {
                 onClick={() => setFiltersOpen((v) => !v)}
                 className="lg:hidden flex items-center gap-2 text-sm border border-border px-4 py-2 hover:bg-secondary transition-colors"
               >
-                <SlidersHorizontal size={15} /> Filters
+                <SlidersHorizontal size={15} /> Bộ lọc
               </button>
               <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{results.length}</span> recipes found
+                <span className="font-medium text-foreground">{results.length}</span> công thức phù hợp
                 {q && (
                   <span>
                     {' '}
-                    for "<span className="text-foreground">{q}</span>"
+                    cho "<span className="text-foreground">{q}</span>"
                   </span>
                 )}
               </p>
@@ -344,13 +364,13 @@ export function Search() {
           {paginated.length === 0 ? (
             <div className="text-center py-24">
               <SearchIcon size={40} strokeWidth={1} className="mx-auto text-muted-foreground mb-4" />
-              <p className="font-serif text-xl text-foreground mb-2">No recipes found</p>
+              <p className="font-serif text-xl text-foreground mb-2">Không tìm thấy công thức phù hợp</p>
               <p className="text-muted-foreground text-sm">
-                Try broadening your search or clearing some filters.
+                Hãy thử tìm kiếm với từ khóa khác hoặc xóa bớt tiêu chí lọc.
               </p>
               {hasFilters && (
                 <button onClick={clearAll} className="mt-6 text-sm text-primary hover:underline">
-                  Clear all filters
+                  Xóa tất cả bộ lọc
                 </button>
               )}
             </div>
@@ -370,11 +390,11 @@ export function Search() {
                   </Link>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-muted-foreground text-xs uppercase tracking-widest">
-                      {recipe.category}
+                      {CATEGORY_LABELS[recipe.category] ?? recipe.category}
                     </span>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Clock size={13} strokeWidth={1.5} />
-                      <span>{recipe.time}m</span>
+                      <span>{recipe.time} phút</span>
                     </div>
                   </div>
                   <h3 className="font-serif text-xl group-hover:text-primary transition-colors">

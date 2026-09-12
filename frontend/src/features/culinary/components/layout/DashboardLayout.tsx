@@ -3,22 +3,22 @@ import { LayoutDashboard, BookOpen, PlusCircle, Tag, User, LogOut, ChevronRight 
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
-  { to: '/dashboard/recipes', label: 'My Recipes', icon: BookOpen, end: false },
-  { to: '/dashboard/recipes/new', label: 'New Recipe', icon: PlusCircle, end: true },
+  { to: '/dashboard', label: 'Tổng quan', icon: LayoutDashboard, end: true },
+  { to: '/dashboard/recipes', label: 'Công thức của tôi', icon: BookOpen, end: false },
+  { to: '/dashboard/recipes/new', label: 'Tạo công thức mới', icon: PlusCircle, end: true },
 ]
 
 const SECONDARY_ITEMS = [
-  { to: '/categories', label: 'Categories', icon: Tag },
-  { to: '/profile', label: 'My Profile', icon: User },
+  { to: '/categories', label: 'Danh mục', icon: Tag },
+  { to: '/profile', label: 'Hồ sơ của tôi', icon: User },
 ]
 
 export function DashboardLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/')
   }
 
@@ -50,7 +50,9 @@ export function DashboardLayout() {
               )}
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                <p className="text-xs text-muted-foreground">
+                  {user.role === 'admin' ? 'Quản trị viên' : 'Tác giả'}
+                </p>
               </div>
             </div>
           </div>
@@ -70,7 +72,9 @@ export function DashboardLayout() {
           </ul>
 
           <div className="mt-8 pt-4 border-t border-border">
-            <p className="px-4 mb-2 text-xs uppercase tracking-widest text-muted-foreground">Site</p>
+            <p className="px-4 mb-2 text-xs uppercase tracking-widest text-muted-foreground">
+              Trang công khai
+            </p>
             <ul className="space-y-0.5">
               {SECONDARY_ITEMS.map(({ to, label, icon: Icon }) => (
                 <li key={to}>
@@ -94,7 +98,7 @@ export function DashboardLayout() {
             className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors w-full py-2"
           >
             <LogOut size={16} strokeWidth={1.5} />
-            Sign Out
+            Đăng xuất
           </button>
         </div>
       </aside>
@@ -104,10 +108,10 @@ export function DashboardLayout() {
         {/* Mobile breadcrumb bar */}
         <div className="md:hidden flex items-center gap-2 px-4 py-3 border-b border-border bg-secondary/40 text-sm text-muted-foreground">
           <Link to="/dashboard" className="hover:text-primary transition-colors">
-            Dashboard
+            Bảng điều khiển
           </Link>
           <ChevronRight size={14} />
-          <span className="text-foreground font-medium">Current Page</span>
+          <span className="text-foreground font-medium">Trang hiện tại</span>
         </div>
 
         {/* Mobile secondary nav */}

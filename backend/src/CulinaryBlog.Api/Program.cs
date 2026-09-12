@@ -5,6 +5,7 @@ using CulinaryBlog.Api.Presentation;
 using CulinaryBlog.Api.Telemetry;
 using CulinaryBlog.Application;
 using CulinaryBlog.Infrastructure;
+using CulinaryBlog.Infrastructure.Identity;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using Serilog.Events;
@@ -44,7 +45,7 @@ try
     builder.Services
         .AddApplication()
         .AddInfrastructure(builder.Configuration)
-        .AddPresentation()
+        .AddPresentation(builder.Configuration)
         .AddCulinaryTelemetry(builder.Configuration);
 
     var app = builder.Build();
@@ -62,6 +63,18 @@ try
         };
     });
     app.UseRateLimiter();
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
+    {
+        await using var scope = app.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>()
+            .InitializeAsync(CancellationToken.None)
+            .ConfigureAwait(false);
+    }
+
+    app.MapAuthEndpoints();
 
     app.MapGet("/api/v1", () => Results.Ok(new
     {

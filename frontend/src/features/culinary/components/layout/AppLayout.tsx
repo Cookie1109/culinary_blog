@@ -28,8 +28,8 @@ export function AppLayout() {
     }
   }, [mobileOpen])
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     setUserMenuOpen(false)
     navigate('/')
   }
@@ -49,7 +49,7 @@ export function AppLayout() {
               <button
                 onClick={() => setMobileOpen(true)}
                 className="p-2 text-foreground hover:text-primary transition-colors"
-                aria-label="Open menu"
+                aria-label="Mở menu"
               >
                 <Menu size={24} strokeWidth={1.5} />
               </button>
@@ -58,13 +58,13 @@ export function AppLayout() {
             {/* Desktop nav left */}
             <nav className="hidden lg:flex items-center gap-8">
               <NavLink to="/recipes" className={navLinkClass}>
-                Recipes
+                Công thức
               </NavLink>
               <NavLink to="/categories" className={navLinkClass}>
-                Categories
+                Danh mục
               </NavLink>
               <NavLink to="/search" className={navLinkClass}>
-                Search
+                Tìm kiếm
               </NavLink>
             </nav>
 
@@ -85,7 +85,7 @@ export function AppLayout() {
               <Link
                 to="/search"
                 className="hidden lg:flex p-2 text-foreground hover:text-primary transition-colors"
-                aria-label="Search"
+                aria-label="Tìm kiếm"
               >
                 <Search size={20} strokeWidth={1.5} />
               </Link>
@@ -128,7 +128,7 @@ export function AppLayout() {
                         className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-secondary transition-colors"
                       >
                         <User size={16} strokeWidth={1.5} />
-                        My Profile
+                        Hồ sơ của tôi
                       </Link>
                       <Link
                         to="/dashboard"
@@ -136,7 +136,7 @@ export function AppLayout() {
                         className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-secondary transition-colors"
                       >
                         <LayoutDashboard size={16} strokeWidth={1.5} />
-                        Dashboard
+                        Bảng điều khiển
                       </Link>
                       <div className="border-t border-border mt-1 pt-1">
                         <button
@@ -144,7 +144,7 @@ export function AppLayout() {
                           className="flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground hover:text-primary hover:bg-secondary transition-colors w-full text-left"
                         >
                           <LogOut size={16} strokeWidth={1.5} />
-                          Sign Out
+                          Đăng xuất
                         </button>
                       </div>
                     </div>
@@ -155,7 +155,7 @@ export function AppLayout() {
                   to="/auth/login"
                   className="flex items-center gap-2 text-sm font-medium tracking-wide uppercase hover:text-primary transition-colors"
                 >
-                  <span className="hidden sm:inline">Sign In</span>
+                  <span className="hidden sm:inline">Đăng nhập</span>
                   <User size={20} strokeWidth={1.5} />
                 </Link>
               )}
@@ -177,7 +177,7 @@ export function AppLayout() {
               <button
                 onClick={() => setMobileOpen(false)}
                 className="p-2 text-foreground hover:text-primary"
-                aria-label="Close menu"
+                aria-label="Đóng menu"
               >
                 <X size={22} strokeWidth={1.5} />
               </button>
@@ -185,10 +185,10 @@ export function AppLayout() {
             <nav className="flex-1 overflow-y-auto px-6 py-8">
               <ul className="space-y-1">
                 {[
-                  { to: '/', label: 'Home' },
-                  { to: '/recipes', label: 'Recipes' },
-                  { to: '/categories', label: 'Categories' },
-                  { to: '/search', label: 'Search' },
+                  { to: '/', label: 'Trang chủ' },
+                  { to: '/recipes', label: 'Công thức' },
+                  { to: '/categories', label: 'Danh mục' },
+                  { to: '/search', label: 'Tìm kiếm' },
                 ].map(({ to, label }) => (
                   <li key={to}>
                     <NavLink
@@ -211,7 +211,7 @@ export function AppLayout() {
                   <>
                     <li className="pt-4 pb-2">
                       <span className="text-xs uppercase tracking-widest text-muted-foreground px-4">
-                        Account
+                        Tài khoản
                       </span>
                     </li>
                     <li>
@@ -222,7 +222,7 @@ export function AppLayout() {
                           `block px-4 py-3 text-sm font-medium uppercase tracking-wide transition-colors ${isActive ? 'text-primary bg-primary/5' : 'hover:text-primary hover:bg-secondary'}`
                         }
                       >
-                        My Profile
+                        Hồ sơ của tôi
                       </NavLink>
                     </li>
                     <li>
@@ -233,7 +233,7 @@ export function AppLayout() {
                           `block px-4 py-3 text-sm font-medium uppercase tracking-wide transition-colors ${isActive ? 'text-primary bg-primary/5' : 'hover:text-primary hover:bg-secondary'}`
                         }
                       >
-                        Dashboard
+                        Bảng điều khiển
                       </NavLink>
                     </li>
                   </>
@@ -250,7 +250,7 @@ export function AppLayout() {
                   className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   <LogOut size={16} />
-                  Sign Out
+                  Đăng xuất
                 </button>
               ) : (
                 <Link
@@ -258,7 +258,7 @@ export function AppLayout() {
                   onClick={() => setMobileOpen(false)}
                   className="block w-full text-center bg-foreground text-background px-6 py-3 text-sm uppercase tracking-widest font-medium hover:bg-primary transition-colors"
                 >
-                  Sign In
+                  Đăng nhập
                 </Link>
               )}
             </div>
@@ -279,16 +279,16 @@ export function AppLayout() {
                 <span className="font-serif text-2xl tracking-tight text-foreground">Culinary Blog</span>
               </Link>
               <p className="text-muted-foreground leading-relaxed max-w-sm">
-                A carefully curated collection of recipes and culinary notes. We believe in good ingredients,
-                honest cooking, and the joy of sharing meals.
+                Bộ sưu tập công thức nấu ăn và ghi chú ẩm thực được tuyển chọn kỹ lưỡng. Chúng tôi tin vào
+                nguyên liệu tươi ngon, nấu nướng chân thành và niềm vui sẻ chia bữa ăn.
               </p>
             </div>
             <div>
-              <h3 className="font-serif text-lg mb-6 text-foreground">Explore</h3>
+              <h3 className="font-serif text-lg mb-6 text-foreground">Khám phá</h3>
               <ul className="space-y-4">
                 <li>
                   <Link to="/recipes" className="text-muted-foreground hover:text-primary transition-colors">
-                    All Recipes
+                    Tất cả công thức
                   </Link>
                 </li>
                 <li>
@@ -296,45 +296,45 @@ export function AppLayout() {
                     to="/categories"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    Categories
+                    Danh mục
                   </Link>
                 </li>
                 <li>
                   <Link to="/search" className="text-muted-foreground hover:text-primary transition-colors">
-                    Search
+                    Tìm kiếm
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-serif text-lg mb-6 text-foreground">Connect</h3>
+              <h3 className="font-serif text-lg mb-6 text-foreground">Kết nối</h3>
               <ul className="space-y-4">
                 <li>
                   <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    About Us
+                    Về chúng tôi
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    Contact
+                    Liên hệ
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    Newsletter
+                    Bản tin
                   </a>
                 </li>
               </ul>
             </div>
           </div>
           <div className="pt-8 border-t border-border/50 text-sm text-muted-foreground flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p>&copy; {new Date().getFullYear()} Culinary Blog. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Culinary Blog. Đã đăng ký bản quyền.</p>
             <div className="flex gap-4">
               <a href="#" className="hover:text-foreground transition-colors">
-                Privacy Policy
+                Chính sách bảo mật
               </a>
               <a href="#" className="hover:text-foreground transition-colors">
-                Terms of Service
+                Điều khoản dịch vụ
               </a>
             </div>
           </div>

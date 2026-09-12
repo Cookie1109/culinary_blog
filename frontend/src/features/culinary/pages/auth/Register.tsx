@@ -3,29 +3,8 @@ import { Link, useNavigate } from 'react-router'
 import { Eye, EyeOff, ChefHat, ArrowRight } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
-const GOOGLE_ICON = (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-    <path
-      d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"
-      fill="#4285F4"
-    />
-    <path
-      d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z"
-      fill="#34A853"
-    />
-    <path
-      d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z"
-      fill="#FBBC05"
-    />
-    <path
-      d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z"
-      fill="#EA4335"
-    />
-  </svg>
-)
-
 export function Register() {
-  const { register, loginWithGoogle, isLoading } = useAuth()
+  const { register, isLoading } = useAuth()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -37,15 +16,21 @@ export function Register() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!name || !email || !password || !confirm) {
-      setError('Please fill in all fields.')
+      setError('Vui lòng điền đầy đủ các trường.')
       return
     }
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      setError('Mật khẩu xác nhận không khớp.')
       return
     }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    if (
+      password.length < 8 ||
+      !/[a-z]/.test(password) ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[^a-zA-Z0-9]/.test(password)
+    ) {
+      setError('Mật khẩu cần tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.')
       return
     }
     try {
@@ -53,16 +38,7 @@ export function Register() {
       await register(name, email, password)
       navigate('/dashboard')
     } catch {
-      setError('Registration failed. Please try again.')
-    }
-  }
-
-  const handleGoogle = async () => {
-    try {
-      await loginWithGoogle()
-      navigate('/dashboard')
-    } catch {
-      setError('Google sign-up failed. Please try again.')
+      setError('Đăng ký thất bại. Vui lòng thử lại.')
     }
   }
 
@@ -72,7 +48,7 @@ export function Register() {
       <div className="hidden lg:block relative overflow-hidden bg-foreground">
         <img
           src="https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=900&h=1200&fit=crop"
-          alt="Ingredients and cooking tools spread on a wooden surface"
+          alt="Nguyên liệu và dụng cụ nấu nướng trên mặt bàn gỗ"
           className="absolute inset-0 w-full h-full object-cover opacity-55"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
@@ -83,13 +59,13 @@ export function Register() {
           </Link>
           <div className="text-white">
             <p className="font-serif text-3xl leading-snug mb-6">
-              Share your passion for food with a community that cares about every ingredient.
+              Chia sẻ niềm đam mê ẩm thực cùng cộng đồng trân quý từng nguyên liệu.
             </p>
             <ul className="space-y-3 text-white/70 text-sm">
               {[
-                'Publish and manage unlimited recipes',
-                'Upload photos and build your culinary portfolio',
-                'Full-text search for Vietnamese & international cuisines',
+                'Đăng tải và quản lý không giới hạn công thức',
+                'Tải ảnh và xây dựng hồ sơ ẩm thực cá nhân',
+                'Tìm kiếm toàn diện các món ăn Việt Nam & quốc tế',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
                   <span className="text-primary mt-0.5">—</span>
@@ -109,24 +85,8 @@ export function Register() {
               <ChefHat className="text-primary" size={24} strokeWidth={1.5} />
               <span className="font-serif text-xl">Culinary Blog</span>
             </Link>
-            <h1 className="font-serif text-4xl text-foreground mb-2">Create account</h1>
-            <p className="text-muted-foreground">Start publishing your recipes today.</p>
-          </div>
-
-          {/* Google sign up */}
-          <button
-            onClick={handleGoogle}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 border border-border py-3 text-sm font-medium hover:bg-secondary transition-colors mb-6 disabled:opacity-60"
-          >
-            {GOOGLE_ICON}
-            Continue with Google
-          </button>
-
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">or</span>
-            <div className="flex-1 h-px bg-border" />
+            <h1 className="font-serif text-4xl text-foreground mb-2">Tạo tài khoản</h1>
+            <p className="text-muted-foreground">Bắt đầu chia sẻ công thức nấu ăn của bạn ngay hôm nay.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -139,7 +99,7 @@ export function Register() {
                 htmlFor="name"
                 className="block text-xs uppercase tracking-widest text-muted-foreground mb-2"
               >
-                Full Name
+                Họ và tên
               </label>
               <input
                 id="name"
@@ -147,7 +107,7 @@ export function Register() {
                 autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Your full name"
+                placeholder="Họ và tên của bạn"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
             </div>
@@ -157,7 +117,7 @@ export function Register() {
                 htmlFor="email"
                 className="block text-xs uppercase tracking-widest text-muted-foreground mb-2"
               >
-                Email
+                Địa chỉ email
               </label>
               <input
                 id="email"
@@ -175,7 +135,7 @@ export function Register() {
                 htmlFor="password"
                 className="block text-xs uppercase tracking-widest text-muted-foreground mb-2"
               >
-                Password
+                Mật khẩu
               </label>
               <div className="relative">
                 <input
@@ -184,14 +144,14 @@ export function Register() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min. 8 characters"
+                  placeholder="Tối thiểu 8 ký tự"
                   className="w-full border border-border bg-background px-4 py-3 pr-12 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -203,7 +163,7 @@ export function Register() {
                 htmlFor="confirm"
                 className="block text-xs uppercase tracking-widest text-muted-foreground mb-2"
               >
-                Confirm Password
+                Xác nhận mật khẩu
               </label>
               <input
                 id="confirm"
@@ -211,21 +171,21 @@ export function Register() {
                 autoComplete="new-password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                placeholder="Repeat your password"
+                placeholder="Nhập lại mật khẩu"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
             </div>
 
             <p className="text-xs text-muted-foreground">
-              By creating an account, you agree to our{' '}
+              Bằng việc tạo tài khoản, bạn đồng ý với{' '}
               <a href="#" className="underline hover:text-primary">
-                Terms of Service
+                Điều khoản dịch vụ
               </a>{' '}
-              and{' '}
+              và{' '}
               <a href="#" className="underline hover:text-primary">
-                Privacy Policy
-              </a>
-              .
+                Chính sách bảo mật
+              </a>{' '}
+              của chúng tôi.
             </p>
 
             <button
@@ -234,19 +194,19 @@ export function Register() {
               className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 text-sm font-medium uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
               {isLoading ? (
-                'Creating account…'
+                'Đang tạo tài khoản…'
               ) : (
                 <>
-                  Create Account <ArrowRight size={16} />
+                  Đăng ký tài khoản <ArrowRight size={16} />
                 </>
               )}
             </button>
           </form>
 
           <p className="mt-8 text-sm text-center text-muted-foreground">
-            Already have an account?{' '}
+            Đã có tài khoản?{' '}
             <Link to="/auth/login" className="text-primary hover:underline font-medium">
-              Sign in
+              Đăng nhập
             </Link>
           </p>
         </div>

@@ -50,20 +50,26 @@ interface RecipeForm {
 }
 
 const CATEGORIES = [
-  'Baking',
-  'Breakfast',
-  'Desserts',
-  'Dinner',
-  'Salads',
-  'Soups',
-  'Vegetarian',
-  'Quick Meals',
+  'Làm bánh',
+  'Bữa sáng',
+  'Món tráng miệng',
+  'Món chính',
+  'Salad',
+  'Canh & Súp',
+  'Món chay',
+  'Món nhanh',
 ]
+
+const STATUS_LABELS: Record<RecipeForm['status'], string> = {
+  Draft: 'Bản nháp',
+  Published: 'Đã xuất bản',
+  Archived: 'Lưu trữ',
+}
 
 const EMPTY_FORM: RecipeForm = {
   title: '',
   description: '',
-  category: 'Dinner',
+  category: 'Món chính',
   difficulty: 'Medium',
   servings: 4,
   prepTime: 15,
@@ -87,58 +93,71 @@ const EMPTY_FORM: RecipeForm = {
 }
 
 const PREFILLED: RecipeForm = {
-  title: 'Rustic Sourdough Boule',
+  title: 'Bánh mì men chua Sourdough mộc mạc',
   description:
-    'A deeply flavorful, crusty sourdough bread with an airy crumb. Perfect for morning toast or pairing with hearty soups. This recipe requires a mature starter and patience, but the results are entirely worth the effort.',
-  category: 'Baking',
+    'Ổ bánh mì men tự nhiên với lớp vỏ giòn rụm và ruột bánh xốp mềm hoàn hảo. Rất thích hợp cho bữa sáng hoặc dùng kèm các món súp ấm nóng. Công thức này đòi hỏi men nuôi đạt chuẩn và một chút kiên nhẫn, nhưng thành quả sẽ hoàn toàn xứng đáng.',
+  category: 'Làm bánh',
   difficulty: 'Hard',
   servings: 12,
   prepTime: 30,
   cookTime: 45,
-  tags: 'sourdough, bread, baking, artisan',
+  tags: 'sourdough, bánh mì, làm bánh, thủ công',
   status: 'Published',
   imagePreview: 'https://images.unsplash.com/photo-1585478259715-876acc5be8eb?w=800&h=500&fit=crop',
   ingredients: [
-    { id: 'i1', qty: '500', unit: 'g', name: 'Bread flour', notes: 'Unbleached, at least 12% protein' },
-    { id: 'i2', qty: '350', unit: 'g', name: 'Water', notes: 'Room temperature (around 75°F)' },
-    { id: 'i3', qty: '100', unit: 'g', name: 'Active sourdough starter', notes: 'Recently fed and bubbly' },
-    { id: 'i4', qty: '10', unit: 'g', name: 'Fine sea salt', notes: '' },
+    {
+      id: 'i1',
+      qty: '500',
+      unit: 'g',
+      name: 'Bột mì làm bánh',
+      notes: 'Bột không tẩy trắng, hàm lượng protein tối thiểu 12%',
+    },
+    { id: 'i2', qty: '350', unit: 'g', name: 'Nước lọc', notes: 'Nhiệt độ phòng (khoảng 24°C)' },
+    {
+      id: 'i3',
+      qty: '100',
+      unit: 'g',
+      name: 'Men chua sourdough hoạt động tốt',
+      notes: 'Men mới cho ăn và đang nổi bọt khí',
+    },
+    { id: 'i4', qty: '10', unit: 'g', name: 'Muối biển tinh', notes: '' },
   ],
   steps: [
     {
       id: 's1',
-      title: 'Autolyse',
+      title: 'Tự phân giải (Autolyse)',
       description:
-        'Combine flour and 325g water. Mix until a shaggy dough forms and no dry flour remains. Cover and rest for 1 hour.',
+        'Trộn đều bột mì và 325g nước. Nhồi cho đến khi hỗn hợp bột hòa quyện và không còn bột khô. Đậy kín và ủ trong 1 giờ.',
     },
     {
       id: 's2',
-      title: 'Add Starter and Salt',
+      title: 'Thêm men starter và muối',
       description:
-        'Add starter and remaining water. Dimple the dough and pinch in salt. Mix thoroughly for 5 minutes.',
+        'Thêm men nuôi và lượng nước còn lại. Dùng đầu ngón tay ấn đều và rắc muối vào bột. Trộn đều kỹ trong 5 phút.',
     },
     {
       id: 's3',
-      title: 'Bulk Fermentation',
+      title: 'Ủ lên men khối (Bulk Fermentation)',
       description:
-        'Ferment at room temperature for 4–5 hours. Perform stretch and folds every 30 minutes during the first 2 hours.',
+        'Ủ ở nhiệt độ phòng trong 4–5 giờ. Thực hiện thao tác kéo gập bột (stretch and fold) mỗi 30 phút một lần trong 2 giờ đầu.',
     },
     {
       id: 's4',
-      title: 'Shape',
+      title: 'Tạo hình',
       description:
-        'Pre-shape into a loose round. Rest 20 minutes. Final shape into a tight boule and place seam-side up in a banneton.',
+        'Tạo hình khối cầu tròn nhẹ nhàng. Để bột nghỉ 20 phút. Tạo hình tròn chặt (boule) lần cuối rồi đặt mặt mịn úp xuống giỏ ủ banneton.',
     },
     {
       id: 's5',
-      title: 'Cold Retard',
-      description: 'Cover and refrigerate overnight (12–16 hours) to develop flavor.',
+      title: 'Ủ lạnh (Cold Retard)',
+      description:
+        'Bọc kín giỏ bột và ủ trong ngăn mát tủ lạnh qua đêm (12–16 giờ) để hương vị men phát triển đậm đà.',
     },
     {
       id: 's6',
-      title: 'Bake',
+      title: 'Nướng bánh',
       description:
-        'Preheat Dutch oven at 500°F for 1 hour. Score and bake covered 20 min, then uncovered at 450°F for 20–25 min until deeply browned.',
+        'Làm nóng trước nồi gang ở 260°C trong 1 giờ. Rạch mặt bánh và nướng đậy nắp 20 phút, sau đó mở nắp nướng tiếp ở 230°C trong 20–25 phút đến khi vỏ bánh nâu vàng giòn rụm.',
     },
   ],
   nutrition: {
@@ -153,7 +172,7 @@ const PREFILLED: RecipeForm = {
 
 const uid = () => Math.random().toString(36).slice(2, 9)
 
-const TABS = ['Basic Info', 'Ingredients', 'Method', 'Nutrition'] as const
+const TABS = ['Thông tin cơ bản', 'Nguyên liệu', 'Cách làm', 'Dinh dưỡng'] as const
 type Tab = (typeof TABS)[number]
 
 export function RecipeEditor() {
@@ -161,7 +180,7 @@ export function RecipeEditor() {
   const navigate = useNavigate()
   const isEditing = Boolean(id)
   const [form, setForm] = useState<RecipeForm>(isEditing ? PREFILLED : EMPTY_FORM)
-  const [activeTab, setActiveTab] = useState<Tab>('Basic Info')
+  const [activeTab, setActiveTab] = useState<Tab>('Thông tin cơ bản')
   const [saved, setSaved] = useState(false)
 
   const update = <K extends keyof RecipeForm>(key: K, value: RecipeForm[K]) =>
@@ -222,10 +241,10 @@ export function RecipeEditor() {
             to="/dashboard/recipes"
             className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mb-3"
           >
-            <ChevronLeft size={14} /> My Recipes
+            <ChevronLeft size={14} /> Công thức của tôi
           </Link>
           <h1 className="font-serif text-3xl lg:text-4xl text-foreground">
-            {isEditing ? 'Edit Recipe' : 'New Recipe'}
+            {isEditing ? 'Chỉnh sửa công thức' : 'Tạo công thức mới'}
           </h1>
         </div>
         <div className="flex items-center gap-3 shrink-0 pt-1">
@@ -234,27 +253,27 @@ export function RecipeEditor() {
               onClick={handlePublish}
               className="hidden sm:flex items-center gap-2 border border-green-300 text-green-700 hover:bg-green-50 px-4 py-2.5 text-xs uppercase tracking-widest transition-colors"
             >
-              <CheckCircle size={14} /> Publish
+              <CheckCircle size={14} /> Xuất bản
             </button>
           )}
           <button
             onClick={handleSave}
             className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
           >
-            <Save size={15} /> Save
+            <Save size={15} /> Lưu công thức
           </button>
         </div>
       </div>
 
       {saved && (
         <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm mb-6">
-          <CheckCircle size={16} /> Recipe saved successfully.
+          <CheckCircle size={16} /> Đã lưu công thức thành công.
         </div>
       )}
 
       {/* Status strip */}
       <div className="flex items-center gap-2 mb-8">
-        <span className="text-xs uppercase tracking-widest text-muted-foreground">Status:</span>
+        <span className="text-xs uppercase tracking-widest text-muted-foreground">Trạng thái:</span>
         {(['Draft', 'Published', 'Archived'] as const).map((s) => (
           <button
             key={s}
@@ -276,7 +295,7 @@ export function RecipeEditor() {
             ) : (
               <Archive size={12} />
             )}
-            {s}
+            {STATUS_LABELS[s]}
           </button>
         ))}
       </div>
@@ -299,25 +318,25 @@ export function RecipeEditor() {
       </div>
 
       {/* Tab: Basic Info */}
-      {activeTab === 'Basic Info' && (
+      {activeTab === 'Thông tin cơ bản' && (
         <div className="space-y-6">
           <div>
-            <label className={labelCls}>Recipe Title</label>
+            <label className={labelCls}>Tên công thức / món ăn</label>
             <input
               type="text"
               value={form.title}
               onChange={(e) => update('title', e.target.value)}
-              placeholder="e.g. Wild Mushroom Risotto"
+              placeholder="Ví dụ: Risotto nấm rừng thơm ngậy"
               className={inputCls}
             />
           </div>
 
           <div>
-            <label className={labelCls}>Description</label>
+            <label className={labelCls}>Mô tả</label>
             <textarea
               value={form.description}
               onChange={(e) => update('description', e.target.value)}
-              placeholder="A short, enticing description of the recipe..."
+              placeholder="Mô tả ngắn gọn, hấp dẫn về món ăn này..."
               rows={3}
               className={`${inputCls} resize-none`}
             />
@@ -325,7 +344,7 @@ export function RecipeEditor() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className={labelCls}>Category</label>
+              <label className={labelCls}>Danh mục</label>
               <select
                 value={form.category}
                 onChange={(e) => update('category', e.target.value)}
@@ -339,19 +358,19 @@ export function RecipeEditor() {
               </select>
             </div>
             <div>
-              <label className={labelCls}>Difficulty</label>
+              <label className={labelCls}>Độ khó</label>
               <select
                 value={form.difficulty}
                 onChange={(e) => update('difficulty', e.target.value as RecipeForm['difficulty'])}
                 className={inputCls}
               >
-                <option>Easy</option>
-                <option>Medium</option>
-                <option>Hard</option>
+                <option value="Easy">Dễ</option>
+                <option value="Medium">Trung bình</option>
+                <option value="Hard">Khó</option>
               </select>
             </div>
             <div>
-              <label className={labelCls}>Servings</label>
+              <label className={labelCls}>Khẩu phần</label>
               <input
                 type="number"
                 min={1}
@@ -364,7 +383,7 @@ export function RecipeEditor() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Prep Time (mins)</label>
+              <label className={labelCls}>Chuẩn bị (phút)</label>
               <input
                 type="number"
                 min={0}
@@ -374,7 +393,7 @@ export function RecipeEditor() {
               />
             </div>
             <div>
-              <label className={labelCls}>Cook Time (mins)</label>
+              <label className={labelCls}>Thời gian nấu (phút)</label>
               <input
                 type="number"
                 min={0}
@@ -386,19 +405,19 @@ export function RecipeEditor() {
           </div>
 
           <div>
-            <label className={labelCls}>Tags (comma separated)</label>
+            <label className={labelCls}>Thẻ phân loại (cách nhau bằng dấu phẩy)</label>
             <input
               type="text"
               value={form.tags}
               onChange={(e) => update('tags', e.target.value)}
-              placeholder="e.g. vegetarian, quick, summer"
+              placeholder="Ví dụ: món chay, nhanh gọn, mùa hè"
               className={inputCls}
             />
           </div>
 
           {/* Cover Image */}
           <div>
-            <label className={labelCls}>Cover Image</label>
+            <label className={labelCls}>Ảnh đại diện món ăn</label>
             {form.imagePreview ? (
               <div className="relative">
                 <img
@@ -409,7 +428,7 @@ export function RecipeEditor() {
                 <button
                   onClick={() => update('imagePreview', '')}
                   className="absolute top-3 right-3 bg-foreground text-background p-1.5 hover:bg-primary transition-colors"
-                  aria-label="Remove image"
+                  aria-label="Xóa ảnh"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -426,8 +445,8 @@ export function RecipeEditor() {
               >
                 <ImagePlus size={28} strokeWidth={1.5} className="text-muted-foreground" />
                 <div className="text-center">
-                  <p className="text-sm text-foreground font-medium">Click to upload cover image</p>
-                  <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP — max 10 MB</p>
+                  <p className="text-sm text-foreground font-medium">Nhấp để tải lên ảnh đại diện</p>
+                  <p className="text-xs text-muted-foreground mt-1">Hỗ trợ JPG, PNG, WebP — tối đa 10 MB</p>
                 </div>
               </div>
             )}
@@ -436,13 +455,13 @@ export function RecipeEditor() {
       )}
 
       {/* Tab: Ingredients */}
-      {activeTab === 'Ingredients' && (
+      {activeTab === 'Nguyên liệu' && (
         <div>
           <div className="grid grid-cols-12 gap-3 mb-2 text-xs uppercase tracking-widest text-muted-foreground px-1">
-            <span className="col-span-1">Qty</span>
-            <span className="col-span-1">Unit</span>
-            <span className="col-span-4">Ingredient</span>
-            <span className="col-span-5">Notes</span>
+            <span className="col-span-1">Lượng</span>
+            <span className="col-span-1">Đơn vị</span>
+            <span className="col-span-4">Tên nguyên liệu</span>
+            <span className="col-span-5">Ghi chú</span>
             <span className="col-span-1" />
           </div>
           <div className="space-y-2">
@@ -472,21 +491,21 @@ export function RecipeEditor() {
                   type="text"
                   value={ing.name}
                   onChange={(e) => updateIngredient(ing.id, 'name', e.target.value)}
-                  placeholder={`Ingredient ${idx + 1}`}
+                  placeholder={`Nguyên liệu ${idx + 1}`}
                   className="col-span-4 border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
                 />
                 <input
                   type="text"
                   value={ing.notes}
                   onChange={(e) => updateIngredient(ing.id, 'notes', e.target.value)}
-                  placeholder="Optional note"
+                  placeholder="Ghi chú (tùy chọn)"
                   className="col-span-5 border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-primary placeholder:text-muted-foreground"
                 />
                 <button
                   onClick={() => removeIngredient(ing.id)}
                   disabled={form.ingredients.length <= 1}
                   className="col-span-1 flex justify-center p-2 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-30"
-                  aria-label="Remove ingredient"
+                  aria-label="Xóa nguyên liệu"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -497,13 +516,13 @@ export function RecipeEditor() {
             onClick={addIngredient}
             className="mt-4 flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors uppercase tracking-widest"
           >
-            <Plus size={16} /> Add Ingredient
+            <Plus size={16} /> Thêm nguyên liệu
           </button>
         </div>
       )}
 
       {/* Tab: Method */}
-      {activeTab === 'Method' && (
+      {activeTab === 'Cách làm' && (
         <div className="space-y-6">
           {form.steps.map((step, idx) => (
             <div key={step.id} className="group">
@@ -517,14 +536,14 @@ export function RecipeEditor() {
                       type="text"
                       value={step.title}
                       onChange={(e) => updateStep(step.id, 'title', e.target.value)}
-                      placeholder={`Step ${idx + 1} title (e.g. Autolyse)`}
+                      placeholder={`Tiêu đề bước ${idx + 1} (ví dụ: Sơ chế nguyên liệu)`}
                       className="flex-1 border border-border bg-background px-3 py-2 text-sm font-medium focus:outline-none focus:border-primary"
                     />
                     <button
                       onClick={() => removeStep(step.id)}
                       disabled={form.steps.length <= 1}
                       className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-30 opacity-0 group-hover:opacity-100"
-                      aria-label="Remove step"
+                      aria-label="Xóa bước này"
                     >
                       <Trash2 size={15} />
                     </button>
@@ -532,7 +551,7 @@ export function RecipeEditor() {
                   <textarea
                     value={step.description}
                     onChange={(e) => updateStep(step.id, 'description', e.target.value)}
-                    placeholder="Describe this step in detail..."
+                    placeholder="Mô tả chi tiết các thao tác thực hiện bước này..."
                     rows={3}
                     className="w-full border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-primary resize-none placeholder:text-muted-foreground"
                   />
@@ -544,27 +563,27 @@ export function RecipeEditor() {
             onClick={addStep}
             className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors uppercase tracking-widest"
           >
-            <Plus size={16} /> Add Step
+            <Plus size={16} /> Thêm bước thực hiện
           </button>
         </div>
       )}
 
       {/* Tab: Nutrition */}
-      {activeTab === 'Nutrition' && (
+      {activeTab === 'Dinh dưỡng' && (
         <div>
           <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-            Optional nutritional information per serving. Leave fields blank to omit them from the published
-            recipe.
+            Thông tin dinh dưỡng trên mỗi khẩu phần (không bắt buộc). Hãy để trống các mục nếu bạn không muốn
+            hiển thị trên công thức xuất bản.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
             {(
               [
-                { key: 'calories', label: 'Calories', unit: 'kcal' },
-                { key: 'protein', label: 'Protein', unit: 'g' },
-                { key: 'carbs', label: 'Carbohydrates', unit: 'g' },
-                { key: 'fat', label: 'Total Fat', unit: 'g' },
-                { key: 'fiber', label: 'Dietary Fiber', unit: 'g' },
-                { key: 'sodium', label: 'Sodium', unit: 'mg' },
+                { key: 'calories', label: 'Calo', unit: 'kcal' },
+                { key: 'protein', label: 'Chất đạm (Protein)', unit: 'g' },
+                { key: 'carbs', label: 'Carbohydrate (Tinh bột)', unit: 'g' },
+                { key: 'fat', label: 'Chất béo', unit: 'g' },
+                { key: 'fiber', label: 'Chất xơ', unit: 'g' },
+                { key: 'sodium', label: 'Natri (Sodium)', unit: 'mg' },
               ] as { key: keyof RecipeForm['nutrition']; label: string; unit: string }[]
             ).map(({ key, label, unit }) => (
               <div key={key}>
@@ -590,18 +609,20 @@ export function RecipeEditor() {
           {Object.values(form.nutrition).some((v) => v !== '') && (
             <div className="mt-8 bg-secondary border border-border p-6">
               <h3 className="font-serif text-lg mb-4">
-                Nutrition Preview{' '}
-                <span className="text-sm text-muted-foreground font-sans font-normal">(per serving)</span>
+                Xem trước dinh dưỡng{' '}
+                <span className="text-sm text-muted-foreground font-sans font-normal">
+                  (trên mỗi khẩu phần)
+                </span>
               </h3>
               <div className="grid grid-cols-3 gap-4">
                 {(
                   [
-                    { key: 'calories', label: 'Calories', unit: 'kcal' },
-                    { key: 'protein', label: 'Protein', unit: 'g' },
-                    { key: 'carbs', label: 'Carbs', unit: 'g' },
-                    { key: 'fat', label: 'Fat', unit: 'g' },
-                    { key: 'fiber', label: 'Fiber', unit: 'g' },
-                    { key: 'sodium', label: 'Sodium', unit: 'mg' },
+                    { key: 'calories', label: 'Calo', unit: 'kcal' },
+                    { key: 'protein', label: 'Chất đạm', unit: 'g' },
+                    { key: 'carbs', label: 'Tinh bột', unit: 'g' },
+                    { key: 'fat', label: 'Chất béo', unit: 'g' },
+                    { key: 'fiber', label: 'Chất xơ', unit: 'g' },
+                    { key: 'sodium', label: 'Natri', unit: 'mg' },
                   ] as { key: keyof RecipeForm['nutrition']; label: string; unit: string }[]
                 ).map(({ key, label, unit }) =>
                   form.nutrition[key] ? (
@@ -625,7 +646,7 @@ export function RecipeEditor() {
           onClick={() => navigate('/dashboard/recipes')}
           className="text-sm text-muted-foreground hover:text-primary uppercase tracking-widest transition-colors"
         >
-          Discard Changes
+          Hủy thay đổi
         </button>
         <div className="flex gap-3">
           {form.status === 'Draft' && (
@@ -633,14 +654,14 @@ export function RecipeEditor() {
               onClick={handlePublish}
               className="flex items-center gap-2 border border-green-300 text-green-700 hover:bg-green-50 px-5 py-2.5 text-sm uppercase tracking-widest transition-colors"
             >
-              <CheckCircle size={15} /> Publish
+              <CheckCircle size={15} /> Xuất bản
             </button>
           )}
           <button
             onClick={handleSave}
             className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
           >
-            <Save size={15} /> Save
+            <Save size={15} /> Lưu công thức
           </button>
         </div>
       </div>

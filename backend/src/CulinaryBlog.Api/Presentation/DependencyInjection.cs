@@ -1,14 +1,19 @@
+using System.Text;
 using System.Threading.RateLimiting;
 using CulinaryBlog.Api.Errors;
 using CulinaryBlog.Api.Telemetry;
+using CulinaryBlog.Infrastructure.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CulinaryBlog.Api.Presentation;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddPresentation(this IServiceCollection services)
+    public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
+        var authPermitLimit = configuration.GetValue("RateLimiting:AuthPermitLimit", 10);
         services.AddProblemDetails(options =>
         {
             options.CustomizeProblemDetails = context =>
@@ -21,6 +26,40 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddTransient<CorrelationIdDelegatingHandler>();
         services.AddHttpClient("default").AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
+
+        var jwtOptions = configuration.GetRequiredSection(JwtOptions.SectionName).Get<JwtOptions>()
+            ?? throw new InvalidOperationException("JWT configuration is required.");
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtOptions.Audience,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+                    ClockSkew = TimeSpan.FromSeconds(30),
+                    NameClaimType = "name",
+                    RoleClaimType = "role",
+                };
+                options.Events = JwtProblemDetailsEvents.Create();
+            });
+        services.AddAuthorizationBuilder()
+            .AddPolicy("ActiveUser", policy => policy
+                .RequireAuthenticatedUser()
+                .AddRequirements(new ActiveUserRequirement()))
+            .AddPolicy("AuthorPolicy", policy => policy
+                .RequireAuthenticatedUser()
+                .RequireRole("Author", "Admin")
+                .AddRequirements(new ActiveUserRequirement()))
+            .AddPolicy("AdminPolicy", policy => policy
+                .RequireAuthenticatedUser()
+                .RequireRole("Admin")
+                .AddRequirements(new ActiveUserRequirement()));
 
         services.AddRateLimiter(options =>
         {
@@ -35,8 +74,19 @@ public static class DependencyInjection
                         QueueLimit = 0,
                         AutoReplenishment = true,
                     }));
+            options.AddPolicy("auth", context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = authPermitLimit,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        AutoReplenishment = true,
+                    }));
             options.OnRejected = async (context, cancellationToken) =>
             {
+                context.HttpContext.Response.Headers.RetryAfter = "60";
                 context.HttpContext.Response.ContentType = "application/problem+json";
                 await context.HttpContext.Response.WriteAsJsonAsync(
                     new

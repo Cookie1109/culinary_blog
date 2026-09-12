@@ -1,13 +1,22 @@
+using CulinaryBlog.Infrastructure.Email;
+using CulinaryBlog.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace CulinaryBlog.Infrastructure.Persistence;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<WelcomeEmailOutbox> WelcomeEmailOutbox => Set<WelcomeEmailOutbox>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-        base.OnModelCreating(modelBuilder);
+        ArgumentNullException.ThrowIfNull(builder);
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        base.OnModelCreating(builder);
     }
 }

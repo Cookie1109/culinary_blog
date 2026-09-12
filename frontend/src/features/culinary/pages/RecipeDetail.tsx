@@ -58,15 +58,21 @@ const DUMMY_RECIPE = {
   ],
 }
 
+const DIFFICULTY_MAP: Record<string, string> = {
+  Easy: 'Dễ',
+  Medium: 'Trung bình',
+  Hard: 'Nâng cao',
+}
+
 export function RecipeDetail() {
   return (
     <article className="pb-24">
       {/* Header / Hero */}
       <header className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12 text-center">
         <div className="flex items-center justify-center gap-2 text-sm uppercase tracking-widest text-primary mb-6">
-          <span>Baking</span>
+          <span>Làm bánh</span>
           <span>&bull;</span>
-          <span>{DUMMY_RECIPE.difficulty}</span>
+          <span>{DIFFICULTY_MAP[DUMMY_RECIPE.difficulty] ?? DUMMY_RECIPE.difficulty}</span>
         </div>
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif text-foreground leading-[1.1] mb-6">
           {DUMMY_RECIPE.title}
@@ -89,13 +95,13 @@ export function RecipeDetail() {
           <span className="hidden sm:inline">&bull;</span>
           <div className="flex gap-4">
             <button className="flex items-center gap-1.5 hover:text-primary transition-colors">
-              <Printer size={16} /> Print
+              <Printer size={16} /> In công thức
             </button>
             <button className="flex items-center gap-1.5 hover:text-primary transition-colors">
-              <Share2 size={16} /> Share
+              <Share2 size={16} /> Chia sẻ
             </button>
             <button className="flex items-center gap-1.5 hover:text-primary transition-colors">
-              <BookmarkPlus size={16} /> Save
+              <BookmarkPlus size={16} /> Lưu món
             </button>
           </div>
         </div>
@@ -118,21 +124,21 @@ export function RecipeDetail() {
               <div className="space-y-6">
                 <div className="flex justify-between items-center border-b border-border/50 pb-4">
                   <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    <Clock size={16} /> Prep Time
+                    <Clock size={16} /> Chuẩn bị
                   </span>
-                  <span className="font-serif text-lg">{DUMMY_RECIPE.prepTime} mins</span>
+                  <span className="font-serif text-lg">{DUMMY_RECIPE.prepTime} phút</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-border/50 pb-4">
                   <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    <ChefHat size={16} /> Cook Time
+                    <ChefHat size={16} /> Thời gian nấu
                   </span>
-                  <span className="font-serif text-lg">{DUMMY_RECIPE.cookTime} mins</span>
+                  <span className="font-serif text-lg">{DUMMY_RECIPE.cookTime} phút</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    <Users size={16} /> Yield
+                    <Users size={16} /> Khẩu phần
                   </span>
-                  <span className="font-serif text-lg">{DUMMY_RECIPE.servings} servings</span>
+                  <span className="font-serif text-lg">{DUMMY_RECIPE.servings} phần ăn</span>
                 </div>
               </div>
             </div>
@@ -140,7 +146,7 @@ export function RecipeDetail() {
             {/* Ingredients */}
             <div>
               <h3 className="text-2xl font-serif text-foreground mb-6 pb-2 border-b border-foreground">
-                Ingredients
+                Nguyên liệu
               </h3>
               <ul className="space-y-4">
                 {DUMMY_RECIPE.ingredients.map((item, idx) => (
@@ -164,7 +170,9 @@ export function RecipeDetail() {
 
           {/* Main Content - Instructions */}
           <div className="lg:col-span-8">
-            <h3 className="text-3xl font-serif text-foreground mb-8 pb-2 border-b border-border">Method</h3>
+            <h3 className="text-3xl font-serif text-foreground mb-8 pb-2 border-b border-border">
+              Các bước thực hiện
+            </h3>
             <div className="space-y-12">
               {DUMMY_RECIPE.steps.map((step) => (
                 <div key={step.step} className="flex gap-6 lg:gap-8">

@@ -1,11 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:ital,opsz,wght@0,14..32,100..900&display=swap');
 @import 'tailwindcss';
 
 @source '../features/culinary/**/*.{ts,tsx}';
 
 @theme inline {
-  --font-sans: 'Inter', sans-serif;
-  --font-serif: 'Playfair Display', serif;
+  --font-sans: var(--font-inter), sans-serif;
+  --font-serif: var(--font-playfair-display), serif;
   --color-background: #faf8f5;
   --color-foreground: #2c2a28;
   --color-card: #ffffff;

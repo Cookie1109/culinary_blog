@@ -6,7 +6,7 @@ const DUMMY_LIST = [
     id: '1',
     title: 'Rustic Sourdough Boule',
     slug: 'rustic-sourdough-boule',
-    category: 'Baking',
+    category: 'Làm bánh',
     image: 'https://images.unsplash.com/photo-1585478259715-876acc5be8eb?w=800&h=800&fit=crop',
     time: 75,
   },
@@ -14,7 +14,7 @@ const DUMMY_LIST = [
     id: '2',
     title: 'Wild Mushroom Risotto',
     slug: 'wild-mushroom-risotto',
-    category: 'Dinner',
+    category: 'Món chính',
     image: 'https://images.unsplash.com/photo-1626844131082-256783844137?w=800&h=800&fit=crop',
     time: 55,
   },
@@ -22,7 +22,7 @@ const DUMMY_LIST = [
     id: '3',
     title: 'Heirloom Tomato Galette',
     slug: 'heirloom-tomato-galette',
-    category: 'Vegetarian',
+    category: 'Món chay',
     image: 'https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?w=800&h=800&fit=crop',
     time: 55,
   },
@@ -30,7 +30,7 @@ const DUMMY_LIST = [
     id: '4',
     title: 'Cast Iron Ribeye',
     slug: 'cast-iron-ribeye',
-    category: 'Dinner',
+    category: 'Món chính',
     image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=800&fit=crop',
     time: 25,
   },
@@ -38,7 +38,7 @@ const DUMMY_LIST = [
     id: '5',
     title: 'Classic French Omelette',
     slug: 'classic-french-omelette',
-    category: 'Breakfast',
+    category: 'Bữa sáng',
     image: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?w=800&h=800&fit=crop',
     time: 15,
   },
@@ -46,7 +46,7 @@ const DUMMY_LIST = [
     id: '6',
     title: 'Miso Glazed Eggplant',
     slug: 'miso-glazed-eggplant',
-    category: 'Vegetarian',
+    category: 'Món chay',
     image: 'https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?w=800&h=800&fit=crop',
     time: 40,
   },
@@ -56,29 +56,29 @@ export function RecipesList() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <header className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-4">The Recipe Index</h1>
+        <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-4">Tất cả công thức</h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Browse our complete collection of seasonal recipes, from weeknight dinners to weekend baking
-          projects.
+          Khám phá toàn bộ bộ sưu tập công thức theo mùa, từ bữa tối gia đình ấm cúng đến các món bánh cuối
+          tuần.
         </p>
       </header>
 
       {/* Filters (Visual only) */}
       <div className="flex flex-wrap items-center justify-center gap-4 mb-16 border-b border-border pb-8">
         <button className="text-sm uppercase tracking-widest font-medium text-primary border-b border-primary pb-1">
-          All
+          Tất cả
         </button>
         <button className="text-sm uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors pb-1">
-          Baking
+          Làm bánh
         </button>
         <button className="text-sm uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors pb-1">
-          Dinner
+          Món chính
         </button>
         <button className="text-sm uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors pb-1">
-          Vegetarian
+          Món chay
         </button>
         <button className="text-sm uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors pb-1">
-          Breakfast
+          Bữa sáng
         </button>
       </div>
 
@@ -102,7 +102,7 @@ export function RecipesList() {
               </span>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Clock size={14} />
-                <span>{recipe.time}m</span>
+                <span>{recipe.time} phút</span>
               </div>
             </div>
             <h3 className="text-2xl font-serif group-hover:text-primary transition-colors">
