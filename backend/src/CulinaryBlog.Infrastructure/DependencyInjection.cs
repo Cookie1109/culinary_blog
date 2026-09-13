@@ -1,7 +1,9 @@
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Auth;
+using CulinaryBlog.Application.Content;
 using CulinaryBlog.Infrastructure.Caching;
 using CulinaryBlog.Infrastructure.Configuration;
+using CulinaryBlog.Infrastructure.Content;
 using CulinaryBlog.Infrastructure.Email;
 using CulinaryBlog.Infrastructure.Health;
 using CulinaryBlog.Infrastructure.Identity;
@@ -43,7 +45,10 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(databaseConnection));
+        services.AddScoped<AuditSaveChangesInterceptor>();
+        services.AddDbContext<AppDbContext>((serviceProvider, options) => options
+            .UseNpgsql(databaseConnection)
+            .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));
         services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -68,6 +73,7 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<TokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IContentService, ContentService>();
         services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
         services.AddScoped<DatabaseInitializer>();
         services.AddHostedService<WelcomeEmailWorker>();

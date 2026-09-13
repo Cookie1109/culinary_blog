@@ -29,6 +29,11 @@ export function DashboardLayout() {
         : 'text-foreground hover:bg-secondary hover:text-primary border-l-2 border-transparent'
     }`
 
+  const navigationItems =
+    user?.role === 'admin'
+      ? [...NAV_ITEMS, { to: '/dashboard/categories', label: 'Quản lý danh mục', icon: Tag, end: true }]
+      : NAV_ITEMS
+
   return (
     <div className="flex min-h-[calc(100vh-80px)]">
       {/* Sidebar */}
@@ -61,7 +66,7 @@ export function DashboardLayout() {
         {/* Primary nav */}
         <nav className="flex-1 py-4">
           <ul className="space-y-0.5">
-            {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+            {navigationItems.map(({ to, label, icon: Icon, end }) => (
               <li key={to}>
                 <NavLink to={to} end={end} className={linkClass}>
                   <Icon size={18} strokeWidth={1.5} />
@@ -117,7 +122,7 @@ export function DashboardLayout() {
         {/* Mobile secondary nav */}
         <nav className="md:hidden overflow-x-auto border-b border-border bg-background">
           <ul className="flex px-4 py-2 gap-1 min-w-max">
-            {NAV_ITEMS.map(({ to, label, end }) => (
+            {navigationItems.map(({ to, label, end }) => (
               <li key={to}>
                 <NavLink
                   to={to}

@@ -75,6 +75,7 @@ try
     }
 
     app.MapAuthEndpoints();
+    app.MapContentEndpoints();
 
     app.MapGet("/api/v1", () => Results.Ok(new
     {

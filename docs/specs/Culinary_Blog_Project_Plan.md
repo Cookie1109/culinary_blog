@@ -304,6 +304,8 @@ Hoàn thành luồng tài khoản và phiên an toàn để các phase nghiệp 
 
 ## 7. Phase 3 — Category và Recipe Core
 
+> Trạng thái 14/09/2026: **Implementation Complete / Local Accepted**. Backend, PostgreSQL integration tests và frontend production build đã pass; bằng chứng tại [Phase 3 verification](./phase-3/README.md). Cần chạy lại cùng gates trên clean CI runner trước khi chuyển `Accepted / Closed`.
+
 ### 7.1. Mục tiêu
 
 Xây dựng aggregate Recipe, Category và khả năng lưu nháp có ownership/concurrency đúng. Đây là nền tảng cho media, publishing và discovery.

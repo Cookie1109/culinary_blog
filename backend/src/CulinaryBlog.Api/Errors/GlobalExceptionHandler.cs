@@ -1,4 +1,5 @@
 using CulinaryBlog.Application.Auth;
+using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
@@ -28,8 +29,12 @@ internal sealed class GlobalExceptionHandler(
         {
             ValidationException => (StatusCodes.Status400BadRequest, "VALIDATION_ERROR", "Validation failed"),
             AuthProblemException authException => MapAuthProblem(authException),
+            ContentProblemException contentException => MapContentProblem(contentException),
             DomainException domainException =>
-                (StatusCodes.Status400BadRequest, domainException.Code, "Business rule violation"),
+                (domainException.Code.Contains("TRANSITION", StringComparison.Ordinal) ?
+                    StatusCodes.Status409Conflict : StatusCodes.Status400BadRequest,
+                    domainException.Code,
+                    "Business rule violation"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "RESOURCE_NOT_FOUND", "Resource not found"),
             UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "FORBIDDEN", "Access denied"),
             _ => (StatusCodes.Status500InternalServerError, "INTERNAL_ERROR", "Unexpected server error"),
@@ -57,6 +62,20 @@ internal sealed class GlobalExceptionHandler(
         problem.Extensions["code"] = code;
         problem.Extensions["traceId"] = httpContext.TraceIdentifier;
         problem.Extensions["correlationId"] = httpContext.TraceIdentifier;
+
+        if (exception is ContentProblemException { CurrentVersion: not null } contentProblem)
+        {
+            var etag = $"\"{contentProblem.CurrentVersion.Value}\"";
+            problem.Extensions["currentETag"] = etag;
+            httpContext.Response.OnStarting(
+                static state =>
+                {
+                    var (context, value) = ((HttpContext Context, string Value))state;
+                    context.Response.Headers.ETag = value;
+                    return Task.CompletedTask;
+                },
+                (httpContext, etag));
+        }
 
         if (exception is ValidationException validationException)
         {
@@ -88,5 +107,18 @@ internal sealed class GlobalExceptionHandler(
             _ => StatusCodes.Status401Unauthorized,
         };
         return (status, exception.Code, status == StatusCodes.Status401Unauthorized ? "Authentication failed" : "Account request failed");
+    }
+
+    private static (int Status, string Code, string Title) MapContentProblem(ContentProblemException exception)
+    {
+        var status = exception.Kind switch
+        {
+            ContentProblemKind.BadRequest => StatusCodes.Status400BadRequest,
+            ContentProblemKind.Forbidden => StatusCodes.Status403Forbidden,
+            ContentProblemKind.NotFound => StatusCodes.Status404NotFound,
+            ContentProblemKind.Conflict => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status500InternalServerError,
+        };
+        return (status, exception.Code, exception.Kind == ContentProblemKind.Conflict ? "Content conflict" : "Content request failed");
     }
 }

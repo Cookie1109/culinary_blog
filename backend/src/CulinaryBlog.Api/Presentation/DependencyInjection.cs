@@ -1,4 +1,6 @@
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using CulinaryBlog.Api.Errors;
 using CulinaryBlog.Api.Telemetry;
@@ -22,6 +24,8 @@ public static class DependencyInjection
                 context.ProblemDetails.Extensions.TryAdd("traceId", context.HttpContext.TraceIdentifier);
             };
         });
+        services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddHttpContextAccessor();
         services.AddTransient<CorrelationIdDelegatingHandler>();

@@ -1,302 +1,203 @@
+'use client'
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Eye, Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { PlusCircle, Pencil, Trash2, Eye, Search } from 'lucide-react'
+import { ApiProblem } from '@/lib/api/problem-details'
+import { deleteRecipe, listMyRecipes, type RecipeStatus } from '@/lib/api/content-client'
 
-interface Recipe {
-  id: string
-  title: string
-  slug: string
-  category: string
-  status: 'Published' | 'Draft' | 'Archived'
-  date: string
-  views: number
-}
-
-const ALL_RECIPES: Recipe[] = [
-  {
-    id: '1',
-    title: 'Rustic Sourdough Boule',
-    slug: 'rustic-sourdough-boule',
-    category: 'Làm bánh',
-    status: 'Published',
-    date: '2026-09-01',
-    views: 1247,
-  },
-  {
-    id: '2',
-    title: 'Wild Mushroom Risotto',
-    slug: 'wild-mushroom-risotto',
-    category: 'Món chính',
-    status: 'Published',
-    date: '2026-08-28',
-    views: 892,
-  },
-  {
-    id: '3',
-    title: 'Heirloom Tomato Galette',
-    slug: 'heirloom-tomato-galette',
-    category: 'Món chay',
-    status: 'Published',
-    date: '2026-08-15',
-    views: 634,
-  },
-  {
-    id: '4',
-    title: 'Cast Iron Ribeye',
-    slug: 'cast-iron-ribeye',
-    category: 'Món chính',
-    status: 'Draft',
-    date: '2026-09-10',
-    views: 0,
-  },
-  {
-    id: '5',
-    title: 'Chocolate Soufflé',
-    slug: 'chocolate-souffle',
-    category: 'Món tráng miệng',
-    status: 'Draft',
-    date: '2026-09-09',
-    views: 0,
-  },
-  {
-    id: '6',
-    title: 'Summer Gazpacho',
-    slug: 'summer-gazpacho',
-    category: 'Canh & Súp',
-    status: 'Archived',
-    date: '2026-07-01',
-    views: 421,
-  },
-  {
-    id: '7',
-    title: 'Slow-Roasted Tomatoes',
-    slug: 'slow-roasted-tomatoes',
-    category: 'Món chay',
-    status: 'Published',
-    date: '2026-09-05',
-    views: 318,
-  },
-  {
-    id: '8',
-    title: 'Brown Butter Financiers',
-    slug: 'brown-butter-financiers',
-    category: 'Làm bánh',
-    status: 'Published',
-    date: '2026-08-20',
-    views: 756,
-  },
+const STATUS_FILTERS: { value: RecipeStatus | undefined; label: string }[] = [
+  { value: undefined, label: 'Tất cả' },
+  { value: 'published', label: 'Đã xuất bản' },
+  { value: 'draft', label: 'Bản nháp' },
+  { value: 'archived', label: 'Đã lưu trữ' },
 ]
 
-const STATUS_BADGE: Record<string, string> = {
-  Published: 'bg-green-50 text-green-700 border border-green-200',
-  Draft: 'bg-amber-50 text-amber-700 border border-amber-200',
-  Archived: 'bg-secondary text-muted-foreground border border-border',
+const STATUS_LABELS: Record<RecipeStatus, string> = {
+  draft: 'Bản nháp',
+  published: 'Đã xuất bản',
+  archived: 'Đã lưu trữ',
 }
 
-const STATUS_FILTERS = ['All', 'Published', 'Draft', 'Archived'] as const
-const STATUS_FILTER_LABELS: Record<string, string> = {
-  All: 'Tất cả',
-  Published: 'Đã xuất bản',
-  Draft: 'Bản nháp',
-  Archived: 'Đã lưu trữ',
+const STATUS_BADGE: Record<RecipeStatus, string> = {
+  published: 'bg-green-50 text-green-700 border-green-200',
+  draft: 'bg-amber-50 text-amber-700 border-amber-200',
+  archived: 'bg-secondary text-muted-foreground border-border',
 }
 
 export function MyRecipes() {
-  const [recipes, setRecipes] = useState<Recipe[]>(ALL_RECIPES)
-  const [statusFilter, setStatusFilter] = useState<string>('All')
-  const [query, setQuery] = useState('')
+  const queryClient = useQueryClient()
+  const [status, setStatus] = useState<RecipeStatus | undefined>()
+  const [search, setSearch] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-
-  const filtered = recipes.filter((r) => {
-    const matchStatus = statusFilter === 'All' || r.status === statusFilter
-    const matchQuery =
-      query === '' ||
-      r.title.toLowerCase().includes(query.toLowerCase()) ||
-      r.category.toLowerCase().includes(query.toLowerCase())
-    return matchStatus && matchQuery
+  const recipesQuery = useQuery({
+    queryKey: ['my-recipes', status],
+    queryFn: () => listMyRecipes(status),
+  })
+  const removeRecipe = useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) => deleteRecipe(id, version),
+    onSuccess: async () => {
+      setConfirmDelete(null)
+      await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+    },
   })
 
-  const handleDelete = (id: string) => {
-    setRecipes((prev) => prev.filter((r) => r.id !== id))
-    setConfirmDelete(null)
-  }
-
-  const changeStatus = (id: string, status: Recipe['status']) => {
-    setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
-  }
+  const recipes = recipesQuery.data?.data ?? []
+  const normalizedSearch = search.trim().toLocaleLowerCase('vi')
+  const filtered = recipes.filter(
+    (recipe) =>
+      !normalizedSearch ||
+      recipe.title.toLocaleLowerCase('vi').includes(normalizedSearch) ||
+      recipe.category.name.toLocaleLowerCase('vi').includes(normalizedSearch),
+  )
+  const error = recipesQuery.error instanceof ApiProblem ? recipesQuery.error.problem.detail : null
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-foreground">Công thức của tôi</h1>
-          <p className="text-muted-foreground mt-1">Tổng cộng {recipes.length} công thức</p>
+          <h1 className="font-serif text-3xl text-foreground lg:text-4xl">Công thức của tôi</h1>
+          <p className="mt-1 text-muted-foreground">
+            {recipesQuery.data
+              ? `Tổng cộng ${recipesQuery.data.meta.total} công thức`
+              : 'Quản lý bản nháp của bạn'}
+          </p>
         </div>
         <Link
           to="/dashboard/recipes/new"
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors shrink-0"
+          className="flex shrink-0 items-center gap-2 bg-primary px-5 py-3 text-sm uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <PlusCircle size={16} /> Tạo công thức mới
         </Link>
       </div>
 
-      {/* Filters bar */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        {/* Search */}
-        <div className="relative flex-1 max-w-sm">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+        <div className="relative max-w-sm flex-1">
           <Search
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
             size={16}
-            strokeWidth={1.5}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
           />
           <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
             placeholder="Tìm kiếm công thức…"
-            className="w-full border border-border bg-background pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
+            className="w-full border border-border bg-background py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
-
-        {/* Status filter */}
-        <div className="flex gap-1 border border-border bg-background">
-          {STATUS_FILTERS.map((s) => (
+        <div className="flex border border-border bg-background">
+          {STATUS_FILTERS.map((item) => (
             <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-4 py-2.5 text-xs uppercase tracking-widest font-medium transition-colors ${
-                statusFilter === s
-                  ? 'bg-foreground text-background'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-              }`}
+              key={item.label}
+              onClick={() => setStatus(item.value)}
+              className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest transition-colors ${status === item.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-secondary'}`}
             >
-              {STATUS_FILTER_LABELS[s]}
+              {item.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-background border border-border overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16 px-4">
-            <p className="font-serif text-xl text-foreground mb-2">Không tìm thấy công thức nào</p>
-            <p className="text-muted-foreground text-sm">
-              Hãy thử điều chỉnh bộ lọc hoặc tạo một công thức mới.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-secondary/30">
-                  <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                    Tiêu đề
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium hidden sm:table-cell">
-                    Danh mục
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                    Trạng thái
-                  </th>
-                  <th className="text-right px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium hidden lg:table-cell">
-                    Lượt xem
-                  </th>
-                  <th className="text-right px-6 py-3 text-xs uppercase tracking-widest text-muted-foreground font-medium hidden md:table-cell">
-                    Ngày tạo
-                  </th>
-                  <th className="px-6 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((recipe) => (
-                  <tr
-                    key={recipe.id}
-                    className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors group"
-                  >
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-foreground">{recipe.title}</span>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground hidden sm:table-cell">
-                      {recipe.category}
-                    </td>
-                    <td className="px-6 py-4">
-                      <select
-                        value={recipe.status}
-                        onChange={(e) => changeStatus(recipe.id, e.target.value as Recipe['status'])}
-                        className={`px-2.5 py-1 text-xs border cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary ${STATUS_BADGE[recipe.status]}`}
-                      >
-                        <option value="Draft">Bản nháp</option>
-                        <option value="Published">Đã xuất bản</option>
-                        <option value="Archived">Đã lưu trữ</option>
-                      </select>
-                    </td>
-                    <td className="px-6 py-4 text-right text-muted-foreground hidden lg:table-cell">
-                      <span className="flex items-center justify-end gap-1.5">
-                        <Eye size={13} strokeWidth={1.5} />
-                        {recipe.views > 0 ? recipe.views.toLocaleString() : '—'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-muted-foreground hidden md:table-cell">
-                      {recipe.date}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {recipe.status === 'Published' && (
-                          <Link
-                            to={`/recipes/${recipe.slug}`}
-                            className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                            aria-label="Xem"
-                            target="_blank"
-                          >
-                            <Eye size={15} />
-                          </Link>
-                        )}
-                        <Link
-                          to={`/dashboard/recipes/${recipe.id}/edit`}
-                          className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                          aria-label="Chỉnh sửa"
-                        >
-                          <Pencil size={15} />
-                        </Link>
-                        {confirmDelete === recipe.id ? (
-                          <span className="flex items-center gap-2 text-xs">
-                            <button
-                              onClick={() => handleDelete(recipe.id)}
-                              className="text-red-600 hover:text-red-700 font-medium"
-                            >
-                              Xóa
-                            </button>
-                            <button
-                              onClick={() => setConfirmDelete(null)}
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              Hủy
-                            </button>
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => setConfirmDelete(recipe.id)}
-                            className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"
-                            aria-label="Xóa"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {recipesQuery.isPending && (
+        <div className="border border-border p-10 text-center text-muted-foreground" role="status">
+          Đang tải công thức…
+        </div>
+      )}
+      {recipesQuery.isError && (
+        <div className="border border-red-200 bg-red-50 p-6 text-red-700" role="alert">
+          <p>{error ?? 'Không thể tải danh sách công thức.'}</p>
+          <button className="mt-3 underline" onClick={() => recipesQuery.refetch()}>
+            Thử lại
+          </button>
+        </div>
+      )}
+      {removeRecipe.error && (
+        <p className="mb-4 border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+          Không thể xóa công thức. Hãy tải lại dữ liệu và thử lại.
+        </p>
+      )}
 
-      <p className="mt-4 text-xs text-muted-foreground">
-        Đang hiển thị {filtered.length} trên tổng số {recipes.length} công thức
-      </p>
+      {recipesQuery.isSuccess && (
+        <div className="overflow-hidden border border-border bg-background">
+          {filtered.length === 0 ? (
+            <div className="px-4 py-16 text-center">
+              <p className="mb-2 font-serif text-xl">Không tìm thấy công thức nào</p>
+              <p className="text-sm text-muted-foreground">Hãy đổi bộ lọc hoặc tạo bản nháp đầu tiên.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
+                  <tr>
+                    <th className="px-6 py-3">Tiêu đề</th>
+                    <th className="hidden px-6 py-3 sm:table-cell">Danh mục</th>
+                    <th className="px-6 py-3">Trạng thái</th>
+                    <th className="hidden px-6 py-3 text-right md:table-cell">Ngày tạo</th>
+                    <th className="px-6 py-3">
+                      <span className="sr-only">Thao tác</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((recipe) => (
+                    <tr
+                      key={recipe.id}
+                      className="border-b border-border last:border-0 hover:bg-secondary/30"
+                    >
+                      <td className="px-6 py-4 font-medium">{recipe.title}</td>
+                      <td className="hidden px-6 py-4 text-muted-foreground sm:table-cell">
+                        {recipe.category.name}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`border px-2.5 py-1 text-xs ${STATUS_BADGE[recipe.status]}`}>
+                          {STATUS_LABELS[recipe.status]}
+                        </span>
+                      </td>
+                      <td className="hidden px-6 py-4 text-right text-muted-foreground md:table-cell">
+                        {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          {recipe.status === 'published' && (
+                            <Link to={`/recipes/${recipe.slug}`} aria-label="Xem công thức">
+                              <Eye size={15} />
+                            </Link>
+                          )}
+                          <Link to={`/dashboard/recipes/${recipe.id}/edit`} aria-label="Chỉnh sửa công thức">
+                            <Pencil size={15} />
+                          </Link>
+                          {confirmDelete === recipe.id ? (
+                            <span className="flex gap-2 text-xs">
+                              <button
+                                disabled={removeRecipe.isPending}
+                                className="font-medium text-red-600"
+                                onClick={() =>
+                                  removeRecipe.mutate({ id: recipe.id, version: recipe.version })
+                                }
+                              >
+                                Xóa
+                              </button>
+                              <button onClick={() => setConfirmDelete(null)}>Hủy</button>
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDelete(recipe.id)}
+                              aria-label="Xóa công thức"
+                              className="text-muted-foreground hover:text-red-600"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
