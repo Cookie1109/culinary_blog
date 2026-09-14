@@ -6,6 +6,8 @@ using CulinaryBlog.Api.Telemetry;
 using CulinaryBlog.Application;
 using CulinaryBlog.Infrastructure;
 using CulinaryBlog.Infrastructure.Identity;
+using CulinaryBlog.Infrastructure.Jobs;
+using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using Serilog.Events;
@@ -50,7 +52,6 @@ try
 
     var app = builder.Build();
 
-    app.UseExceptionHandler();
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseSerilogRequestLogging(options =>
     {
@@ -62,9 +63,16 @@ try
             diagnosticContext.Set("UserId", httpContext.User.FindFirst("sub")?.Value ?? "anonymous");
         };
     });
+    app.UseExceptionHandler();
     app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseHangfireDashboard("/jobs", new DashboardOptions
+    {
+        Authorization = [new AdminDashboardAuthorizationFilter()],
+        DashboardTitle = "Culinary Blog Jobs",
+    });
 
     if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
     {
@@ -76,6 +84,11 @@ try
 
     app.MapAuthEndpoints();
     app.MapContentEndpoints();
+
+    RecurringJob.AddOrUpdate<ImageReconciliationJob>(
+        "media-reconciliation",
+        job => job.RunAsync(CancellationToken.None),
+        Cron.Daily);
 
     app.MapGet("/api/v1", () => Results.Ok(new
     {

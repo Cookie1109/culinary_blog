@@ -412,7 +412,7 @@ paths:
                 altText: {type: [string, 'null'], maxLength: 200}
                 isPrimary: {type: boolean, default: false}
       responses:
-        '201': {description: Image metadata created}
+        '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
@@ -438,7 +438,7 @@ paths:
                 isPrimary: {type: boolean}
                 orderIndex: {type: integer, minimum: 0}
       responses:
-        '200': {description: Image metadata updated}
+        '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
@@ -471,7 +471,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/StepWrite'}
       responses:
-        '201': {description: Step created at the end}
+        '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
@@ -491,7 +491,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/StepWrite'}
       responses:
-        '200': {description: Step updated}
+        '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
@@ -524,7 +524,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/IngredientWrite'}
       responses:
-        '201': {description: Ingredient created}
+        '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
@@ -544,7 +544,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/IngredientWrite'}
       responses:
-        '200': {description: Ingredient updated}
+        '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
@@ -563,6 +563,24 @@ paths:
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
+  /media/{imageId}/{variant}:
+    get:
+      tags: [Images]
+      operationId: getRecipeImageVariant
+      description: Published media is public; Draft/Archived media requires owner or Admin authorization.
+      security: [{bearerAuth: []}, {}]
+      parameters:
+        - {name: imageId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: variant, in: path, required: true, schema: {type: string, enum: [original, medium, thumbnail]}}
+      responses:
+        '200':
+          description: Image bytes
+          content:
+            image/jpeg: {schema: {type: string, format: binary}}
+            image/png: {schema: {type: string, format: binary}}
+            image/webp: {schema: {type: string, format: binary}}
+        '404': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
   /health:
     get:
       tags: [Health]
@@ -638,6 +656,13 @@ components:
       content:
         application/json:
           schema: {$ref: '#/components/schemas/RecipePage'}
+    ChildMutation:
+      description: Recipe child resource created or updated
+      headers:
+        ETag: {schema: {type: string}}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ChildMutationEnvelope'}
   schemas:
     RegisterRequest:
       type: object
@@ -796,13 +821,27 @@ components:
       required: [id, isPrimary, orderIndex]
       properties:
         id: {type: string, format: uuid}
-        originalUrl: {type: [string, 'null'], format: uri}
-        mediumUrl: {type: [string, 'null'], format: uri}
-        thumbnailUrl: {type: [string, 'null'], format: uri}
+        originalUrl: {type: [string, 'null'], description: Controlled API media path}
+        mediumUrl: {type: [string, 'null'], description: Controlled API media path when ready}
+        thumbnailUrl: {type: [string, 'null'], description: Controlled API media path when ready}
         altText: {type: [string, 'null']}
         isPrimary: {type: boolean}
         orderIndex: {type: integer}
         processingStatus: {type: string, enum: [pending, ready, failed]}
+    ChildMutationEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          oneOf:
+            - {$ref: '#/components/schemas/Ingredient'}
+            - {$ref: '#/components/schemas/Step'}
+            - {$ref: '#/components/schemas/RecipeImage'}
+        meta:
+          type: object
+          required: [recipeVersion]
+          properties:
+            recipeVersion: {type: integer, format: int64, minimum: 1}
     PageMeta:
       type: object
       required: [page, pageSize, total, totalPages, hasNextPage, hasPreviousPage]

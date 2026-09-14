@@ -44,3 +44,41 @@ internal sealed class RecipeWriteRequestValidator : AbstractValidator<RecipeWrit
         });
     }
 }
+
+internal sealed class IngredientWriteRequestValidator : AbstractValidator<IngredientWriteRequest>
+{
+    public IngredientWriteRequestValidator()
+    {
+        RuleFor(request => request.Name).NotEmpty().MaximumLength(200);
+        RuleFor(request => request.Quantity).GreaterThan(0).When(request => request.Quantity.HasValue);
+        RuleFor(request => request.Unit).MaximumLength(50);
+        RuleFor(request => request.Notes).MaximumLength(500);
+        RuleFor(request => request.OrderIndex).GreaterThanOrEqualTo(0);
+    }
+}
+
+internal sealed class StepWriteRequestValidator : AbstractValidator<StepWriteRequest>
+{
+    public StepWriteRequestValidator()
+    {
+        RuleFor(request => request.Title).NotEmpty().MaximumLength(200);
+        RuleFor(request => request.Description).NotEmpty().MaximumLength(2000);
+        RuleFor(request => request.TimerMinutes).GreaterThanOrEqualTo(0).When(request => request.TimerMinutes.HasValue);
+        RuleFor(request => request.ImageUrl).MaximumLength(500).Must(BeSafeUrl)
+            .When(request => !string.IsNullOrWhiteSpace(request.ImageUrl));
+        RuleFor(request => request.StepNumber).GreaterThan(0).When(request => request.StepNumber.HasValue);
+    }
+
+    private static bool BeSafeUrl(string? value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+}
+
+internal sealed class ImageMetadataRequestValidator : AbstractValidator<ImageMetadataRequest>
+{
+    public ImageMetadataRequestValidator()
+    {
+        RuleFor(request => request.AltText).MaximumLength(200);
+        RuleFor(request => request.OrderIndex).GreaterThanOrEqualTo(0).When(request => request.OrderIndex.HasValue);
+    }
+}

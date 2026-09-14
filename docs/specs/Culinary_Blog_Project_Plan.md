@@ -380,6 +380,8 @@ Xây dựng aggregate Recipe, Category và khả năng lưu nháp có ownership/
 
 ## 8. Phase 4 — Thành phần công thức, media và background jobs
 
+> Trạng thái 15/09/2026: **Implementation Complete / Docker Acceptance Pending**. Ingredient, step, nutrition, secure image pipeline, Hangfire PostgreSQL jobs, transactional media outbox và authoring wizard đã được triển khai. Backend/frontend local gates đã pass; bằng chứng tại [Phase 4 verification](./phase-4/README.md). Integration suite PostgreSQL/MinIO đã được thêm nhưng chưa thể chạy cục bộ vì Docker Engine không khả dụng.
+
 ### 8.1. Mục tiêu
 
 Cho phép Author hoàn thiện toàn bộ nội dung một công thức: nguyên liệu, các bước, dinh dưỡng và ảnh; các tác vụ chậm chạy an toàn ngoài HTTP request.

@@ -34,6 +34,16 @@ public sealed class Recipe : BaseEntity
 
     public RecipeNutrition? Nutrition { get; private set; }
 
+    public void MarkCompositionChanged()
+    {
+        if (Status == RecipeStatus.Archived)
+        {
+            throw new DomainException("RECIPE_INVALID_TRANSITION", "An archived recipe must be unarchived before editing.");
+        }
+
+        Version++;
+    }
+
     public static Recipe Create(
         Guid id,
         Guid authorId,

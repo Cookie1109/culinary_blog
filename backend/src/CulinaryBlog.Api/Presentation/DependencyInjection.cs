@@ -6,6 +6,7 @@ using CulinaryBlog.Api.Errors;
 using CulinaryBlog.Api.Telemetry;
 using CulinaryBlog.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,6 +17,8 @@ public static class DependencyInjection
     public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
         var authPermitLimit = configuration.GetValue("RateLimiting:AuthPermitLimit", 10);
+        var globalPermitLimit = configuration.GetValue("RateLimiting:GlobalPermitLimit", 100);
+        var uploadPermitLimit = configuration.GetValue("RateLimiting:UploadPermitLimit", 5);
         services.AddProblemDetails(options =>
         {
             options.CustomizeProblemDetails = context =>
@@ -27,6 +30,11 @@ public static class DependencyInjection
         services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
         services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.Configure<FormOptions>(options =>
+        {
+            options.MemoryBufferThreshold = 64 * 1024;
+            options.MultipartBodyLengthLimit = 6 * 1024 * 1024;
+        });
         services.AddHttpContextAccessor();
         services.AddTransient<CorrelationIdDelegatingHandler>();
         services.AddHttpClient("default").AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
@@ -69,21 +77,33 @@ public static class DependencyInjection
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 100,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0,
-                        AutoReplenishment = true,
-                    }));
+                context.Request.Path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase)
+                    ? RateLimitPartition.GetNoLimiter("health")
+                    : RateLimitPartition.GetFixedWindowLimiter(
+                        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = globalPermitLimit,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0,
+                            AutoReplenishment = true,
+                        }));
             options.AddPolicy("auth", context =>
                 RateLimitPartition.GetFixedWindowLimiter(
                     context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = authPermitLimit,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        AutoReplenishment = true,
+                    }));
+            options.AddPolicy("upload", context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = uploadPermitLimit,
                         Window = TimeSpan.FromMinutes(1),
                         QueueLimit = 0,
                         AutoReplenishment = true,

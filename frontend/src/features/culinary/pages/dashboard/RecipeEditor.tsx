@@ -5,6 +5,7 @@ import { ChevronLeft, Save } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ApiProblem } from '@/lib/api/problem-details'
+import { RecipeCompositionWizard } from './RecipeCompositionWizard'
 import {
   createRecipe,
   getMyRecipe,
@@ -150,6 +151,11 @@ export function RecipeEditor() {
     save.mutate(toPayload(form))
   }
 
+  const handleCompositionChanged = async (nextVersion: number) => {
+    setVersion(nextVersion)
+    await recipeQuery.refetch()
+  }
+
   const conflict =
     save.error instanceof ApiProblem && save.error.problem.code === 'RECIPE_CONCURRENCY_CONFLICT'
   const remoteError = save.error instanceof ApiProblem ? save.error.problem.detail : null
@@ -174,226 +180,241 @@ export function RecipeEditor() {
   }
 
   return (
-    <form className="max-w-4xl" onSubmit={handleSubmit}>
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <Link
-            to="/dashboard/recipes"
-            className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-primary"
+    <div className="max-w-4xl">
+      <form onSubmit={handleSubmit}>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <Link
+              to="/dashboard/recipes"
+              className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-primary"
+            >
+              <ChevronLeft size={14} /> Công thức của tôi
+            </Link>
+            <h1 className="font-serif text-3xl lg:text-4xl">
+              {isEditing ? 'Chỉnh sửa bản nháp' : 'Tạo bản nháp mới'}
+            </h1>
+          </div>
+          <button
+            type="submit"
+            disabled={save.isPending || categoriesQuery.isPending}
+            className="flex items-center gap-2 bg-primary px-5 py-2.5 text-sm uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
-            <ChevronLeft size={14} /> Công thức của tôi
-          </Link>
-          <h1 className="font-serif text-3xl lg:text-4xl">
-            {isEditing ? 'Chỉnh sửa bản nháp' : 'Tạo bản nháp mới'}
-          </h1>
-        </div>
-        <button
-          type="submit"
-          disabled={save.isPending || categoriesQuery.isPending}
-          className="flex items-center gap-2 bg-primary px-5 py-2.5 text-sm uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-        >
-          <Save size={15} /> {save.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}
-        </button>
-      </div>
-
-      {saved && (
-        <p
-          role="status"
-          className="mb-6 border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
-        >
-          Đã lưu bản nháp thành công.
-        </p>
-      )}
-      {(clientError || (save.isError && !conflict)) && (
-        <p role="alert" className="mb-6 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {clientError ?? remoteError ?? 'Không thể lưu bản nháp.'}
-        </p>
-      )}
-      {conflict && (
-        <div role="alert" className="mb-6 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
-          <p>Bản nháp đã được cập nhật ở nơi khác. Thay đổi hiện tại chưa được ghi đè.</p>
-          <button type="button" className="mt-2 font-medium underline" onClick={() => recipeQuery.refetch()}>
-            Tải phiên bản mới nhất
+            <Save size={15} /> {save.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}
           </button>
         </div>
-      )}
 
-      <section className="space-y-6 border-b border-border pb-10" aria-labelledby="basic-heading">
-        <h2 id="basic-heading" className="font-serif text-2xl">
-          Thông tin cơ bản
-        </h2>
-        <div>
-          <label htmlFor="title" className={labelClass}>
-            Tên công thức
-          </label>
-          <input
-            id="title"
-            required
-            minLength={5}
-            maxLength={200}
-            value={form.title}
-            onChange={(event) => update('title', event.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label htmlFor="description" className={labelClass}>
-            Mô tả
-          </label>
-          <textarea
-            id="description"
-            required
-            maxLength={2000}
-            rows={4}
-            value={form.description}
-            onChange={(event) => update('description', event.target.value)}
-            className={`${inputClass} resize-y`}
-          />
-        </div>
-        <div>
-          <label htmlFor="instructions" className={labelClass}>
-            Ghi chú hướng dẫn tổng quát (không bắt buộc)
-          </label>
-          <textarea
-            id="instructions"
-            rows={3}
-            value={form.instructions}
-            onChange={(event) => update('instructions', event.target.value)}
-            className={`${inputClass} resize-y`}
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label htmlFor="category" className={labelClass}>
-              Danh mục
-            </label>
-            <select
-              id="category"
-              required
-              value={form.categoryId}
-              onChange={(event) => update('categoryId', event.target.value)}
-              className={inputClass}
-              disabled={categoriesQuery.isPending}
+        {saved && (
+          <p
+            role="status"
+            className="mb-6 border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+          >
+            Đã lưu bản nháp thành công.
+          </p>
+        )}
+        {(clientError || (save.isError && !conflict)) && (
+          <p role="alert" className="mb-6 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {clientError ?? remoteError ?? 'Không thể lưu bản nháp.'}
+          </p>
+        )}
+        {conflict && (
+          <div role="alert" className="mb-6 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+            <p>Bản nháp đã được cập nhật ở nơi khác. Thay đổi hiện tại chưa được ghi đè.</p>
+            <button
+              type="button"
+              className="mt-2 font-medium underline"
+              onClick={() => recipeQuery.refetch()}
             >
-              <option value="">Chọn danh mục</option>
-              {categoriesQuery.data?.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+              Tải phiên bản mới nhất
+            </button>
           </div>
-          <div>
-            <label htmlFor="difficulty" className={labelClass}>
-              Độ khó
-            </label>
-            <select
-              id="difficulty"
-              value={form.difficulty}
-              onChange={(event) => update('difficulty', event.target.value as RecipeDifficulty)}
-              className={inputClass}
-            >
-              <option value="easy">Dễ</option>
-              <option value="medium">Trung bình</option>
-              <option value="hard">Khó</option>
-              <option value="expert">Chuyên gia</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="servings" className={labelClass}>
-              Khẩu phần
-            </label>
-            <input
-              id="servings"
-              type="number"
-              min={1}
-              required
-              value={form.servings}
-              onChange={(event) => update('servings', Number(event.target.value))}
-              className={inputClass}
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="prepTime" className={labelClass}>
-              Chuẩn bị (phút)
-            </label>
-            <input
-              id="prepTime"
-              type="number"
-              min={1}
-              required
-              value={form.prepTime}
-              onChange={(event) => update('prepTime', Number(event.target.value))}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label htmlFor="cookTime" className={labelClass}>
-              Nấu (phút)
-            </label>
-            <input
-              id="cookTime"
-              type="number"
-              min={0}
-              required
-              value={form.cookTime}
-              onChange={(event) => update('cookTime', Number(event.target.value))}
-              className={inputClass}
-            />
-          </div>
-        </div>
-      </section>
+        )}
 
-      <section className="mt-10" aria-labelledby="nutrition-heading">
-        <h2 id="nutrition-heading" className="font-serif text-2xl">
-          Dinh dưỡng mỗi khẩu phần
-        </h2>
-        <p className="mb-6 mt-1 text-sm text-muted-foreground">
-          Không bắt buộc; để trống nếu chưa có dữ liệu.
-        </p>
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
-          {NUTRITION_FIELDS.map(({ key, label, unit }) => (
-            <div key={key}>
-              <label htmlFor={key} className={labelClass}>
-                {label}
+        <section className="space-y-6 border-b border-border pb-10" aria-labelledby="basic-heading">
+          <h2 id="basic-heading" className="font-serif text-2xl">
+            Thông tin cơ bản
+          </h2>
+          <div>
+            <label htmlFor="title" className={labelClass}>
+              Tên công thức
+            </label>
+            <input
+              id="title"
+              required
+              minLength={5}
+              maxLength={200}
+              value={form.title}
+              onChange={(event) => update('title', event.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="description" className={labelClass}>
+              Mô tả
+            </label>
+            <textarea
+              id="description"
+              required
+              maxLength={2000}
+              rows={4}
+              value={form.description}
+              onChange={(event) => update('description', event.target.value)}
+              className={`${inputClass} resize-y`}
+            />
+          </div>
+          <div>
+            <label htmlFor="instructions" className={labelClass}>
+              Ghi chú hướng dẫn tổng quát (không bắt buộc)
+            </label>
+            <textarea
+              id="instructions"
+              rows={3}
+              value={form.instructions}
+              onChange={(event) => update('instructions', event.target.value)}
+              className={`${inputClass} resize-y`}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label htmlFor="category" className={labelClass}>
+                Danh mục
               </label>
-              <div className="relative">
-                <input
-                  id={key}
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={form.nutrition[key]}
-                  onChange={(event) => update('nutrition', { ...form.nutrition, [key]: event.target.value })}
-                  className={`${inputClass} pr-14`}
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                  {unit}
-                </span>
-              </div>
+              <select
+                id="category"
+                required
+                value={form.categoryId}
+                onChange={(event) => update('categoryId', event.target.value)}
+                className={inputClass}
+                disabled={categoriesQuery.isPending}
+              >
+                <option value="">Chọn danh mục</option>
+                {categoriesQuery.data?.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          ))}
-        </div>
-      </section>
+            <div>
+              <label htmlFor="difficulty" className={labelClass}>
+                Độ khó
+              </label>
+              <select
+                id="difficulty"
+                value={form.difficulty}
+                onChange={(event) => update('difficulty', event.target.value as RecipeDifficulty)}
+                className={inputClass}
+              >
+                <option value="easy">Dễ</option>
+                <option value="medium">Trung bình</option>
+                <option value="hard">Khó</option>
+                <option value="expert">Chuyên gia</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="servings" className={labelClass}>
+                Khẩu phần
+              </label>
+              <input
+                id="servings"
+                type="number"
+                min={1}
+                required
+                value={form.servings}
+                onChange={(event) => update('servings', Number(event.target.value))}
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="prepTime" className={labelClass}>
+                Chuẩn bị (phút)
+              </label>
+              <input
+                id="prepTime"
+                type="number"
+                min={1}
+                required
+                value={form.prepTime}
+                onChange={(event) => update('prepTime', Number(event.target.value))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="cookTime" className={labelClass}>
+                Nấu (phút)
+              </label>
+              <input
+                id="cookTime"
+                type="number"
+                min={0}
+                required
+                value={form.cookTime}
+                onChange={(event) => update('cookTime', Number(event.target.value))}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        </section>
 
-      <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard/recipes')}
-          className="text-sm uppercase tracking-widest text-muted-foreground hover:text-primary"
-        >
-          Hủy thay đổi
-        </button>
-        <button
-          type="submit"
-          disabled={save.isPending}
-          className="flex items-center gap-2 bg-primary px-6 py-2.5 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-60"
-        >
-          <Save size={15} /> Lưu bản nháp
-        </button>
-      </div>
-    </form>
+        <section className="mt-10" aria-labelledby="nutrition-heading">
+          <h2 id="nutrition-heading" className="font-serif text-2xl">
+            Dinh dưỡng mỗi khẩu phần
+          </h2>
+          <p className="mb-6 mt-1 text-sm text-muted-foreground">
+            Không bắt buộc; để trống nếu chưa có dữ liệu.
+          </p>
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+            {NUTRITION_FIELDS.map(({ key, label, unit }) => (
+              <div key={key}>
+                <label htmlFor={key} className={labelClass}>
+                  {label}
+                </label>
+                <div className="relative">
+                  <input
+                    id={key}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.nutrition[key]}
+                    onChange={(event) =>
+                      update('nutrition', { ...form.nutrition, [key]: event.target.value })
+                    }
+                    className={`${inputClass} pr-14`}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    {unit}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/recipes')}
+            className="text-sm uppercase tracking-widest text-muted-foreground hover:text-primary"
+          >
+            Hủy thay đổi
+          </button>
+          <button
+            type="submit"
+            disabled={save.isPending}
+            className="flex items-center gap-2 bg-primary px-6 py-2.5 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-60"
+          >
+            <Save size={15} /> Lưu bản nháp
+          </button>
+        </div>
+      </form>
+      {isEditing && recipeQuery.data && (
+        <RecipeCompositionWizard
+          recipe={recipeQuery.data}
+          version={version}
+          onChanged={handleCompositionChanged}
+        />
+      )}
+    </div>
   )
 }

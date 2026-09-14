@@ -2,7 +2,7 @@
 
 Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây dựng theo đặc tả SRS v1.0.0. Repository sử dụng mô hình monorepo với hai ứng dụng độc lập: frontend Next.js và backend ASP.NET Core; tài liệu, hạ tầng, Docker Compose và CI được quản lý tập trung tại thư mục gốc.
 
-> **Trạng thái:** Phase 0 đã chốt baseline đặc tả; Phase 1 đã hoàn thành nền tảng. Phase 2 local authentication đã được triển khai và vượt qua các gate không phụ thuộc Docker; PostgreSQL auth journey còn chờ chạy trên Docker/CI.
+> **Trạng thái:** Phase 0 đã chốt baseline đặc tả; Phase 1–3 đã hoàn thành. Phase 4 đã triển khai ingredient/step/media/Hangfire và pass các local static gates; nghiệm thu integration PostgreSQL/MinIO còn chờ Docker Engine.
 
 ## Công nghệ chính
 
@@ -11,6 +11,7 @@ Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây d�
 | Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS 4, TanStack Query |
 | Backend | .NET 10, ASP.NET Core, Entity Framework Core, MediatR, FluentValidation |
 | Dữ liệu | PostgreSQL 16, Redis 7, MinIO |
+| Background jobs | Hangfire với PostgreSQL storage, transactional media outbox |
 | Quan sát hệ thống | Serilog, Seq, OpenTelemetry, health checks |
 | Hạ tầng phát triển | Docker Compose, Nginx, MailHog |
 | Chất lượng | xUnit, Testcontainers, ESLint, TypeScript strict, GitHub Actions |
@@ -33,7 +34,7 @@ culinary-blog/
 ### Yêu cầu
 
 - Docker Desktop hỗ trợ Docker Compose v2
-- Các cổng `5432`, `6379`, `8080`, `8025`, `9000`, `9001` và `5341` đang khả dụng
+- Các cổng `5433`, `6379`, `8080`, `8025`, `9000`, `9001` và `5341` đang khả dụng
 
 ### Khởi động
 
@@ -169,6 +170,8 @@ Production không tự động chạy migration khi API khởi động. Migratio
 - [Baseline Phase 0](docs/specs/phase-0/README.md)
 - [Báo cáo Phase 1](docs/specs/phase-1/README.md)
 - [Báo cáo Phase 2](docs/specs/phase-2/README.md)
+- [Báo cáo Phase 3](docs/specs/phase-3/README.md)
+- [Báo cáo Phase 4](docs/specs/phase-4/README.md)
 - [OpenAPI contract v1](docs/specs/phase-0/openapi.v1.yaml)
 
 ## Xử lý sự cố thường gặp

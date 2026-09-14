@@ -2,6 +2,7 @@ using CulinaryBlog.Domain.Categories;
 using CulinaryBlog.Domain.Recipes;
 using CulinaryBlog.Infrastructure.Email;
 using CulinaryBlog.Infrastructure.Identity;
+using CulinaryBlog.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Category> Categories => Set<Category>();
 
     public DbSet<Recipe> Recipes => Set<Recipe>();
+
+    public DbSet<RecipeIngredient> RecipeIngredients => Set<RecipeIngredient>();
+
+    public DbSet<RecipeStep> RecipeSteps => Set<RecipeStep>();
+
+    public DbSet<RecipeImage> RecipeImages => Set<RecipeImage>();
+
+    public DbSet<MediaOutboxMessage> MediaOutbox => Set<MediaOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

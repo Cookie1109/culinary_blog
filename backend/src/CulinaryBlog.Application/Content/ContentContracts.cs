@@ -16,6 +16,52 @@ public sealed record NutritionDto(
     decimal? Fiber,
     decimal? Sodium);
 
+public sealed record IngredientWriteRequest(
+    string Name,
+    decimal? Quantity,
+    string? Unit,
+    string? Notes,
+    int OrderIndex = 0);
+
+public sealed record IngredientDto(
+    Guid Id,
+    string Name,
+    decimal? Quantity,
+    string? Unit,
+    string? Notes,
+    int OrderIndex);
+
+public sealed record StepWriteRequest(
+    string Title,
+    string Description,
+    int? TimerMinutes,
+    string? ImageUrl,
+    int? StepNumber = null);
+
+public sealed record StepDto(
+    Guid Id,
+    int StepNumber,
+    string Title,
+    string Description,
+    int? TimerMinutes,
+    string? ImageUrl);
+
+public sealed record ImageMetadataRequest(string? AltText, bool? IsPrimary, int? OrderIndex);
+
+public sealed record RecipeImageDto(
+    Guid Id,
+    string OriginalUrl,
+    string? MediumUrl,
+    string? ThumbnailUrl,
+    string? AltText,
+    bool IsPrimary,
+    int OrderIndex,
+    string ProcessingStatus);
+
+public sealed record ChildMutationDto<T>(T Resource, long RecipeVersion);
+
+public sealed record MediaFileDto(Stream Content, string ContentType);
+
 public sealed record RecipeWriteRequest(
     string Title,
     string Description,
@@ -65,9 +111,9 @@ public sealed record RecipeDto(
     long Version,
     string? Instructions,
     NutritionDto? Nutrition,
-    IReadOnlyCollection<object> Ingredients,
-    IReadOnlyCollection<object> Steps,
-    IReadOnlyCollection<object> Images);
+    IReadOnlyCollection<IngredientDto> Ingredients,
+    IReadOnlyCollection<StepDto> Steps,
+    IReadOnlyCollection<RecipeImageDto> Images);
 
 public sealed record PageMeta(
     int Page,
@@ -133,4 +179,35 @@ public interface IContentService
         int page,
         int pageSize,
         CancellationToken cancellationToken);
+
+    Task<ChildMutationDto<IngredientDto>> CreateIngredientAsync(
+        Guid recipeId, Guid userId, bool isAdmin, long expectedVersion, IngredientWriteRequest request, CancellationToken cancellationToken);
+
+    Task<ChildMutationDto<IngredientDto>> UpdateIngredientAsync(
+        Guid recipeId, Guid ingredientId, Guid userId, bool isAdmin, long expectedVersion, IngredientWriteRequest request, CancellationToken cancellationToken);
+
+    Task<long> DeleteIngredientAsync(
+        Guid recipeId, Guid ingredientId, Guid userId, bool isAdmin, long expectedVersion, CancellationToken cancellationToken);
+
+    Task<ChildMutationDto<StepDto>> CreateStepAsync(
+        Guid recipeId, Guid userId, bool isAdmin, long expectedVersion, StepWriteRequest request, CancellationToken cancellationToken);
+
+    Task<ChildMutationDto<StepDto>> UpdateStepAsync(
+        Guid recipeId, Guid stepId, Guid userId, bool isAdmin, long expectedVersion, StepWriteRequest request, CancellationToken cancellationToken);
+
+    Task<long> DeleteStepAsync(
+        Guid recipeId, Guid stepId, Guid userId, bool isAdmin, long expectedVersion, CancellationToken cancellationToken);
+
+    Task<ChildMutationDto<RecipeImageDto>> UploadImageAsync(
+        Guid recipeId, Guid userId, bool isAdmin, long expectedVersion, Stream content, long length, string contentType,
+        string? altText, bool isPrimary, CancellationToken cancellationToken);
+
+    Task<ChildMutationDto<RecipeImageDto>> UpdateImageAsync(
+        Guid recipeId, Guid imageId, Guid userId, bool isAdmin, long expectedVersion, ImageMetadataRequest request, CancellationToken cancellationToken);
+
+    Task<long> DeleteImageAsync(
+        Guid recipeId, Guid imageId, Guid userId, bool isAdmin, long expectedVersion, CancellationToken cancellationToken);
+
+    Task<MediaFileDto> OpenMediaAsync(
+        Guid imageId, string variant, Guid? userId, bool isAdmin, CancellationToken cancellationToken);
 }

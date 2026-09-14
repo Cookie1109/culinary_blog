@@ -7,4 +7,8 @@
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CulinaryBlog.UnitTests" />
+  </ItemGroup>
 </Project>

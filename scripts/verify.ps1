@@ -17,6 +17,7 @@ try {
     npm ci
     npm run generate:api
     npm run format
+    npm test
     npm run lint
     npm run typecheck
     npm run build

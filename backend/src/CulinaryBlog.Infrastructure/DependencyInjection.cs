@@ -1,13 +1,18 @@
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Content;
+using CulinaryBlog.Application.Media;
 using CulinaryBlog.Infrastructure.Caching;
 using CulinaryBlog.Infrastructure.Configuration;
 using CulinaryBlog.Infrastructure.Content;
 using CulinaryBlog.Infrastructure.Email;
 using CulinaryBlog.Infrastructure.Health;
 using CulinaryBlog.Infrastructure.Identity;
+using CulinaryBlog.Infrastructure.Jobs;
+using CulinaryBlog.Infrastructure.Media;
 using CulinaryBlog.Infrastructure.Persistence;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -74,9 +79,21 @@ public static class DependencyInjection
         services.AddScoped<TokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IContentService, ContentService>();
+        services.AddSingleton<IFileStorageService, MinioFileStorageService>();
         services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
         services.AddScoped<DatabaseInitializer>();
         services.AddHostedService<WelcomeEmailWorker>();
+        services.AddHostedService<MediaOutboxDispatcher>();
+        services.AddTransient<ImageProcessingJob>();
+        services.AddTransient<ObjectDeletionJob>();
+        services.AddTransient<ImageReconciliationJob>();
+
+        services.AddHangfire(configurationBuilder => configurationBuilder
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(databaseConnection)));
+        services.AddHangfireServer(options => options.WorkerCount = Math.Max(1, Environment.ProcessorCount / 2));
 
         services.AddStackExchangeRedisCache(options =>
         {

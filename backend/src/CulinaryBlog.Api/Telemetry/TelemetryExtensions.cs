@@ -1,3 +1,4 @@
+using CulinaryBlog.Infrastructure.Jobs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -30,7 +31,7 @@ internal static class TelemetryExtensions
 
         openTelemetry.WithMetrics(metrics =>
         {
-            metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation();
+            metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation().AddMeter(MediaJobMetrics.MeterName);
             if (Uri.TryCreate(otlpEndpoint, UriKind.Absolute, out var endpoint))
             {
                 metrics.AddOtlpExporter(options => options.Endpoint = endpoint);

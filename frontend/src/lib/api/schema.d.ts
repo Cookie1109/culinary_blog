@@ -436,6 +436,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/{imageId}/{variant}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Published media is public; Draft/Archived media requires owner or Admin authorization. */
+        get: operations["getRecipeImageVariant"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -633,17 +650,24 @@ export interface components {
         RecipeImage: {
             /** Format: uuid */
             id: string;
-            /** Format: uri */
+            /** @description Controlled API media path */
             originalUrl?: string | null;
-            /** Format: uri */
+            /** @description Controlled API media path when ready */
             mediumUrl?: string | null;
-            /** Format: uri */
+            /** @description Controlled API media path when ready */
             thumbnailUrl?: string | null;
             altText?: string | null;
             isPrimary: boolean;
             orderIndex: number;
             /** @enum {string} */
             processingStatus?: "pending" | "ready" | "failed";
+        };
+        ChildMutationEnvelope: {
+            data: components["schemas"]["Ingredient"] | components["schemas"]["Step"] | components["schemas"]["RecipeImage"];
+            meta: {
+                /** Format: int64 */
+                recipeVersion: number;
+            };
         };
         PageMeta: {
             page: number;
@@ -737,6 +761,16 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["RecipePage"];
+            };
+        };
+        /** @description Recipe child resource created or updated */
+        ChildMutation: {
+            headers: {
+                ETag?: string;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ChildMutationEnvelope"];
             };
         };
     };
@@ -1323,13 +1357,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Image metadata created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            201: components["responses"]["ChildMutation"];
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
@@ -1388,13 +1416,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Image metadata updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            200: components["responses"]["ChildMutation"];
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
@@ -1419,13 +1441,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Step created at the end */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            201: components["responses"]["ChildMutation"];
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
@@ -1451,13 +1467,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Step updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            200: components["responses"]["ChildMutation"];
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
@@ -1510,13 +1520,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Ingredient created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            201: components["responses"]["ChildMutation"];
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
@@ -1542,13 +1546,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Ingredient updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            200: components["responses"]["ChildMutation"];
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
@@ -1581,6 +1579,33 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    getRecipeImageVariant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                imageId: string;
+                variant: "original" | "medium" | "thumbnail";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/webp": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     health: {

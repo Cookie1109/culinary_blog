@@ -51,7 +51,10 @@ internal sealed class AuditSaveChangesInterceptor(
             {
                 entry.Property(entity => entity.UpdatedAt).CurrentValue = now;
                 entry.Property(entity => entity.UpdatedBy).CurrentValue = actor;
-                entry.Property(entity => entity.Version).CurrentValue++;
+                if (!entry.Property(entity => entity.Version).IsModified)
+                {
+                    entry.Property(entity => entity.Version).CurrentValue++;
+                }
                 if (entry.Property(entity => entity.IsDeleted).CurrentValue &&
                     entry.Property(entity => entity.DeletedAt).CurrentValue is null)
                 {

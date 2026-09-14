@@ -1,4 +1,5 @@
 using CulinaryBlog.Application.Content;
+using CulinaryBlog.Application.Media;
 using CulinaryBlog.Domain.Categories;
 using CulinaryBlog.Domain.Common;
 using CulinaryBlog.Domain.Recipes;
@@ -10,9 +11,11 @@ using Npgsql;
 
 namespace CulinaryBlog.Infrastructure.Content;
 
-internal sealed class ContentService(
+internal sealed partial class ContentService(
     AppDbContext dbContext,
-    UserManager<ApplicationUser> userManager) : IContentService
+    UserManager<ApplicationUser> userManager,
+    IFileStorageService fileStorage,
+    TimeProvider timeProvider) : IContentService
 {
     private const int MaximumPageSize = 50;
 
@@ -420,6 +423,35 @@ internal sealed class ContentService(
         var author = await userManager.FindByIdAsync(recipe.AuthorId.ToString()).ConfigureAwait(false)
             ?? throw NotFound("USER_NOT_FOUND", "Recipe author was not found.");
         var roles = await userManager.GetRolesAsync(author).ConfigureAwait(false);
+        var ingredients = await dbContext.RecipeIngredients.AsNoTracking()
+            .Where(item => item.RecipeId == recipe.Id)
+            .OrderBy(item => item.OrderIndex)
+            .ThenBy(item => item.CreatedAt)
+            .Select(item => new IngredientDto(item.Id, item.Name, item.Quantity, item.Unit, item.Notes, item.OrderIndex))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var steps = await dbContext.RecipeSteps.AsNoTracking()
+            .Where(item => item.RecipeId == recipe.Id)
+            .OrderBy(item => item.StepNumber)
+            .Select(item => new StepDto(item.Id, item.StepNumber, item.Title, item.Description, item.TimerMinutes, item.ImageUrl))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var imageEntities = await dbContext.RecipeImages.AsNoTracking()
+            .Where(item => item.RecipeId == recipe.Id)
+            .OrderBy(item => item.OrderIndex)
+            .ThenBy(item => item.CreatedAt)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var images = imageEntities.Select(item => new RecipeImageDto(
+                item.Id,
+                MediaUrl(item.Id, "original"),
+                item.MediumObjectKey == null ? null : MediaUrl(item.Id, "medium"),
+                item.ThumbnailObjectKey == null ? null : MediaUrl(item.Id, "thumbnail"),
+                item.AltText,
+                item.IsPrimary,
+                item.OrderIndex,
+                item.ProcessingStatus.ToString().ToLowerInvariant()))
+            .ToArray();
         return new RecipeDto(
             recipe.Id,
             recipe.Title,
@@ -430,7 +462,7 @@ internal sealed class ContentService(
             recipe.Servings,
             recipe.Difficulty.ToString().ToLowerInvariant(),
             recipe.Status.ToString().ToLowerInvariant(),
-            null,
+            images.FirstOrDefault(image => image.IsPrimary)?.ThumbnailUrl,
             ToCategoryDto(category, categoryCount),
             new RecipeAuthorDto(
                 author.Id.ToString(),
@@ -447,9 +479,9 @@ internal sealed class ContentService(
             recipe.Version,
             recipe.Instructions,
             ToNutritionDto(recipe.Nutrition),
-            [],
-            [],
-            []);
+            ingredients,
+            steps,
+            images);
     }
 
     private async Task<IReadOnlyCollection<CategoryDto>> MapCategoriesAsync(
@@ -489,6 +521,8 @@ internal sealed class ContentService(
             nutrition.Fat,
             nutrition.Fiber,
             nutrition.Sodium);
+
+    private static string MediaUrl(Guid imageId, string variant) => $"/api/v1/media/{imageId}/{variant}";
 
     private static void EnsureVersion(Recipe recipe, long expectedVersion)
     {

@@ -43,8 +43,10 @@ public sealed class UpdateProfileRequestValidator : AbstractValidator<UpdateProf
         RuleFor(request => request.DisplayName).NotEmpty().Length(2, 100).When(request => request.UpdateDisplayName);
         RuleFor(request => request.AvatarUrl)
             .MaximumLength(500)
-            .Must(value => value is null || Uri.TryCreate(value, UriKind.Absolute, out _))
-            .WithMessage("AvatarUrl must be an absolute URL.")
+            .Must(value => value is null ||
+                (Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+                 (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
+            .WithMessage("AvatarUrl must be an absolute HTTP or HTTPS URL.")
             .When(request => request.UpdateAvatarUrl);
         RuleFor(request => request.Bio).MaximumLength(2000).When(request => request.UpdateBio);
         RuleFor(request => request)

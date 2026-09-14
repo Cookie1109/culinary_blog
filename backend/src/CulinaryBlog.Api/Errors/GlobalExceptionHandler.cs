@@ -117,6 +117,7 @@ internal sealed class GlobalExceptionHandler(
             ContentProblemKind.Forbidden => StatusCodes.Status403Forbidden,
             ContentProblemKind.NotFound => StatusCodes.Status404NotFound,
             ContentProblemKind.Conflict => StatusCodes.Status409Conflict,
+            ContentProblemKind.ServiceUnavailable => StatusCodes.Status503ServiceUnavailable,
             _ => StatusCodes.Status500InternalServerError,
         };
         return (status, exception.Code, exception.Kind == ContentProblemKind.Conflict ? "Content conflict" : "Content request failed");

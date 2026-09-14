@@ -1,133 +1,116 @@
-import { Link } from 'react-router'
-import { Clock } from 'lucide-react'
+'use client'
 
-const DUMMY_LIST = [
-  {
-    id: '1',
-    title: 'Rustic Sourdough Boule',
-    slug: 'rustic-sourdough-boule',
-    category: 'Làm bánh',
-    image: 'https://images.unsplash.com/photo-1585478259715-876acc5be8eb?w=800&h=800&fit=crop',
-    time: 75,
-  },
-  {
-    id: '2',
-    title: 'Wild Mushroom Risotto',
-    slug: 'wild-mushroom-risotto',
-    category: 'Món chính',
-    image: 'https://images.unsplash.com/photo-1626844131082-256783844137?w=800&h=800&fit=crop',
-    time: 55,
-  },
-  {
-    id: '3',
-    title: 'Heirloom Tomato Galette',
-    slug: 'heirloom-tomato-galette',
-    category: 'Món chay',
-    image: 'https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?w=800&h=800&fit=crop',
-    time: 55,
-  },
-  {
-    id: '4',
-    title: 'Cast Iron Ribeye',
-    slug: 'cast-iron-ribeye',
-    category: 'Món chính',
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=800&fit=crop',
-    time: 25,
-  },
-  {
-    id: '5',
-    title: 'Classic French Omelette',
-    slug: 'classic-french-omelette',
-    category: 'Bữa sáng',
-    image: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?w=800&h=800&fit=crop',
-    time: 15,
-  },
-  {
-    id: '6',
-    title: 'Miso Glazed Eggplant',
-    slug: 'miso-glazed-eggplant',
-    category: 'Món chay',
-    image: 'https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?w=800&h=800&fit=crop',
-    time: 40,
-  },
-]
+import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router'
+import { RecipeCard } from '@/features/culinary/components/RecipeCard'
+import {
+  listCategories,
+  listPublishedRecipes,
+  listPublishedRecipesByCategory,
+} from '@/lib/api/content-client'
+
+const PAGE_SIZE = 12
 
 export function RecipesList() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const category = searchParams.get('category') ?? ''
+  const requestedPage = Number.parseInt(searchParams.get('page') ?? '1', 10)
+  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
+  const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
+  const recipesQuery = useQuery({
+    queryKey: ['public-recipes', category, page],
+    queryFn: async () => {
+      if (!category) return listPublishedRecipes(page, PAGE_SIZE)
+      const result = await listPublishedRecipesByCategory(category, page, PAGE_SIZE)
+      return { data: result.data.recipes, meta: result.meta }
+    },
+  })
+  const recipes = recipesQuery.data?.data ?? []
+
+  const selectCategory = (slug: string) => {
+    const next = new URLSearchParams(searchParams)
+    if (slug) next.set('category', slug)
+    else next.delete('category')
+    next.delete('page')
+    setSearchParams(next)
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <header className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-4">Tất cả công thức</h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Khám phá toàn bộ bộ sưu tập công thức theo mùa, từ bữa tối gia đình ấm cúng đến các món bánh cuối
-          tuần.
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <header className="mb-12 text-center">
+        <h1 className="mb-4 font-serif text-4xl text-foreground md:text-5xl">Tất cả công thức</h1>
+        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+          Khám phá những công thức đã được cộng đồng xuất bản.
         </p>
       </header>
 
-      {/* Filters (Visual only) */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mb-16 border-b border-border pb-8">
-        <button className="text-sm uppercase tracking-widest font-medium text-primary border-b border-primary pb-1">
+      <div className="mb-16 flex flex-wrap items-center justify-center gap-4 border-b border-border pb-8">
+        <button
+          type="button"
+          onClick={() => selectCategory('')}
+          aria-pressed={!category}
+          className={!category ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}
+        >
           Tất cả
         </button>
-        <button className="text-sm uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors pb-1">
-          Làm bánh
-        </button>
-        <button className="text-sm uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors pb-1">
-          Món chính
-        </button>
-        <button className="text-sm uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors pb-1">
-          Món chay
-        </button>
-        <button className="text-sm uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors pb-1">
-          Bữa sáng
-        </button>
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-        {DUMMY_LIST.map((recipe) => (
-          <div key={recipe.id} className="group cursor-pointer">
-            <Link
-              to={`/recipes/${recipe.slug}`}
-              className="block overflow-hidden bg-muted mb-4 aspect-square"
-            >
-              <img
-                src={recipe.image}
-                alt={recipe.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-            </Link>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-muted-foreground text-xs uppercase tracking-widest">
-                {recipe.category}
-              </span>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Clock size={14} />
-                <span>{recipe.time} phút</span>
-              </div>
-            </div>
-            <h3 className="text-2xl font-serif group-hover:text-primary transition-colors">
-              <Link to={`/recipes/${recipe.slug}`}>{recipe.title}</Link>
-            </h3>
-          </div>
+        {(categoriesQuery.data ?? []).map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => selectCategory(item.slug)}
+            aria-pressed={category === item.slug}
+            className={
+              category === item.slug ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+            }
+          >
+            {item.name}
+          </button>
         ))}
       </div>
 
-      {/* Pagination (Visual) */}
-      <div className="mt-20 flex justify-center gap-2">
-        <button className="w-10 h-10 border border-foreground bg-foreground text-background font-serif text-lg">
-          1
-        </button>
-        <button className="w-10 h-10 border border-border text-muted-foreground hover:border-foreground hover:text-foreground transition-colors font-serif text-lg">
-          2
-        </button>
-        <button className="w-10 h-10 border border-border text-muted-foreground hover:border-foreground hover:text-foreground transition-colors font-serif text-lg">
-          3
-        </button>
-        <span className="w-10 h-10 flex items-center justify-center text-muted-foreground">...</span>
-        <button className="w-10 h-10 border border-border text-muted-foreground hover:border-foreground hover:text-foreground transition-colors font-serif text-lg">
-          12
-        </button>
-      </div>
+      {recipesQuery.isPending ? (
+        <p role="status" className="py-20 text-center text-muted-foreground">
+          Đang tải công thức…
+        </p>
+      ) : recipesQuery.isError ? (
+        <p role="alert" className="py-20 text-center text-red-600">
+          Không thể tải danh sách công thức.
+        </p>
+      ) : recipes.length === 0 ? (
+        <p className="py-20 text-center text-muted-foreground">Không có công thức phù hợp.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
+          {recipes.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} />
+          ))}
+        </div>
+      )}
+
+      {(recipesQuery.data?.meta.totalPages ?? 0) > 1 && (
+        <nav className="mt-20 flex justify-center gap-2" aria-label="Phân trang công thức">
+          {Array.from({ length: recipesQuery.data!.meta.totalPages }, (_, index) => index + 1).map(
+            (pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                aria-current={pageNumber === page ? 'page' : undefined}
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams)
+                  next.set('page', String(pageNumber))
+                  setSearchParams(next)
+                }}
+                className={`h-10 w-10 border font-serif text-lg ${
+                  pageNumber === page
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-border text-muted-foreground hover:border-foreground'
+                }`}
+              >
+                {pageNumber}
+              </button>
+            ),
+          )}
+        </nav>
+      )}
     </div>
   )
 }

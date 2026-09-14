@@ -6,6 +6,7 @@ public enum ContentProblemKind
     Forbidden,
     NotFound,
     Conflict,
+    ServiceUnavailable,
 }
 
 public sealed class ContentProblemException(

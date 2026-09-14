@@ -22,6 +22,20 @@ internal static class ContentEndpoints
         recipes.MapPost("/", CreateRecipeAsync).RequireAuthorization("AuthorPolicy");
         recipes.MapPut("/{id:guid}", UpdateRecipeAsync).RequireAuthorization("AuthorPolicy");
         recipes.MapDelete("/{id:guid}", DeleteRecipeAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapPost("/{id:guid}/ingredients", CreateIngredientAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapPut("/{id:guid}/ingredients/{ingredientId:guid}", UpdateIngredientAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapDelete("/{id:guid}/ingredients/{ingredientId:guid}", DeleteIngredientAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapPost("/{id:guid}/steps", CreateStepAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapPut("/{id:guid}/steps/{stepId:guid}", UpdateStepAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapDelete("/{id:guid}/steps/{stepId:guid}", DeleteStepAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapPost("/{id:guid}/images", UploadImageAsync)
+            .RequireAuthorization("AuthorPolicy")
+            .RequireRateLimiting("upload")
+            .DisableAntiforgery();
+        recipes.MapPatch("/{id:guid}/images/{imageId:guid}", UpdateImageAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapDelete("/{id:guid}/images/{imageId:guid}", DeleteImageAsync).RequireAuthorization("AuthorPolicy");
+
+        endpoints.MapGet("/api/v1/media/{imageId:guid}/{variant}", OpenMediaAsync).AllowAnonymous();
 
         var mine = endpoints.MapGroup("/api/v1/me/recipes").RequireAuthorization("AuthorPolicy");
         mine.MapGet("/", ListMyRecipesAsync);
@@ -213,6 +227,180 @@ internal static class ContentEndpoints
         CancellationToken cancellationToken) =>
         Results.Ok(await contentService.ListAdminRecipesAsync(status, authorId, page ?? 1, pageSize ?? 12, cancellationToken).ConfigureAwait(false));
 
+    private static async Task<IResult> CreateIngredientAsync(
+        Guid id,
+        IngredientWriteRequest request,
+        ClaimsPrincipal principal,
+        IValidator<IngredientWriteRequest> validator,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        var result = await contentService.CreateIngredientAsync(
+            id, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), request, cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, result.RecipeVersion);
+        return Results.Created($"/api/v1/recipes/{id}/ingredients/{result.Resource.Id}",
+            new { data = result.Resource, meta = new { recipeVersion = result.RecipeVersion } });
+    }
+
+    private static async Task<IResult> UpdateIngredientAsync(
+        Guid id,
+        Guid ingredientId,
+        IngredientWriteRequest request,
+        ClaimsPrincipal principal,
+        IValidator<IngredientWriteRequest> validator,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        var result = await contentService.UpdateIngredientAsync(
+            id, ingredientId, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), request, cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, result.RecipeVersion);
+        return Results.Ok(new { data = result.Resource, meta = new { recipeVersion = result.RecipeVersion } });
+    }
+
+    private static async Task<IResult> DeleteIngredientAsync(
+        Guid id,
+        Guid ingredientId,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var version = await contentService.DeleteIngredientAsync(
+            id, ingredientId, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, version);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> CreateStepAsync(
+        Guid id,
+        StepWriteRequest request,
+        ClaimsPrincipal principal,
+        IValidator<StepWriteRequest> validator,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        var result = await contentService.CreateStepAsync(
+            id, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), request, cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, result.RecipeVersion);
+        return Results.Created($"/api/v1/recipes/{id}/steps/{result.Resource.Id}",
+            new { data = result.Resource, meta = new { recipeVersion = result.RecipeVersion } });
+    }
+
+    private static async Task<IResult> UpdateStepAsync(
+        Guid id,
+        Guid stepId,
+        StepWriteRequest request,
+        ClaimsPrincipal principal,
+        IValidator<StepWriteRequest> validator,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        var result = await contentService.UpdateStepAsync(
+            id, stepId, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), request, cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, result.RecipeVersion);
+        return Results.Ok(new { data = result.Resource, meta = new { recipeVersion = result.RecipeVersion } });
+    }
+
+    private static async Task<IResult> DeleteStepAsync(
+        Guid id,
+        Guid stepId,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var version = await contentService.DeleteStepAsync(
+            id, stepId, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, version);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> UploadImageAsync(
+        Guid id,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!httpContext.Request.HasFormContentType)
+        {
+            throw new ContentProblemException("FILE_MIME_INVALID", "A multipart image upload is required.", ContentProblemKind.BadRequest);
+        }
+
+        var form = await httpContext.Request.ReadFormAsync(cancellationToken).ConfigureAwait(false);
+        var file = form.Files.GetFile("file")
+            ?? throw new ContentProblemException("VALIDATION_ERROR", "The file field is required.", ContentProblemKind.BadRequest);
+        var isPrimary = bool.TryParse(form["isPrimary"], out var parsedPrimary) && parsedPrimary;
+        await using var content = file.OpenReadStream();
+        var result = await contentService.UploadImageAsync(
+            id,
+            GetUserId(principal),
+            principal.IsInRole("Admin"),
+            ReadEtag(httpContext),
+            content,
+            file.Length,
+            file.ContentType,
+            form["altText"].FirstOrDefault(),
+            isPrimary,
+            cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, result.RecipeVersion);
+        return Results.Created($"/api/v1/recipes/{id}/images/{result.Resource.Id}",
+            new { data = result.Resource, meta = new { recipeVersion = result.RecipeVersion } });
+    }
+
+    private static async Task<IResult> UpdateImageAsync(
+        Guid id,
+        Guid imageId,
+        ImageMetadataRequest request,
+        ClaimsPrincipal principal,
+        IValidator<ImageMetadataRequest> validator,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        var result = await contentService.UpdateImageAsync(
+            id, imageId, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), request, cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, result.RecipeVersion);
+        return Results.Ok(new { data = result.Resource, meta = new { recipeVersion = result.RecipeVersion } });
+    }
+
+    private static async Task<IResult> DeleteImageAsync(
+        Guid id,
+        Guid imageId,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var version = await contentService.DeleteImageAsync(
+            id, imageId, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), cancellationToken).ConfigureAwait(false);
+        SetEtag(httpContext, version);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> OpenMediaAsync(
+        Guid imageId,
+        string variant,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var file = await contentService.OpenMediaAsync(
+            imageId, variant, GetOptionalUserId(principal), principal.IsInRole("Admin"), cancellationToken).ConfigureAwait(false);
+        httpContext.Response.Headers.CacheControl = principal.Identity?.IsAuthenticated == true ? "private, no-store" : "public, max-age=300";
+        return Results.Stream(file.Content, file.ContentType, enableRangeProcessing: true);
+    }
+
     private static Guid GetUserId(ClaimsPrincipal principal)
     {
         var value = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub");
@@ -222,6 +410,12 @@ internal static class ContentEndpoints
         }
 
         return userId;
+    }
+
+    private static Guid? GetOptionalUserId(ClaimsPrincipal principal)
+    {
+        var value = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub");
+        return Guid.TryParse(value, out var userId) ? userId : null;
     }
 
     private static long ReadEtag(HttpContext context)
