@@ -68,11 +68,15 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
 
-    app.UseHangfireDashboard("/jobs", new DashboardOptions
+    var backgroundJobsEnabled = builder.Configuration.GetValue("BackgroundJobs:Enabled", true);
+    if (backgroundJobsEnabled)
     {
-        Authorization = [new AdminDashboardAuthorizationFilter()],
-        DashboardTitle = "Culinary Blog Jobs",
-    });
+        app.UseHangfireDashboard("/jobs", new DashboardOptions
+        {
+            Authorization = [new AdminDashboardAuthorizationFilter()],
+            DashboardTitle = "Culinary Blog Jobs",
+        });
+    }
 
     if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
     {
@@ -85,10 +89,13 @@ try
     app.MapAuthEndpoints();
     app.MapContentEndpoints();
 
-    RecurringJob.AddOrUpdate<ImageReconciliationJob>(
-        "media-reconciliation",
-        job => job.RunAsync(CancellationToken.None),
-        Cron.Daily);
+    if (backgroundJobsEnabled)
+    {
+        RecurringJob.AddOrUpdate<ImageReconciliationJob>(
+            "media-reconciliation",
+            job => job.RunAsync(CancellationToken.None),
+            Cron.Daily);
+    }
 
     app.MapGet("/api/v1", () => Results.Ok(new
     {

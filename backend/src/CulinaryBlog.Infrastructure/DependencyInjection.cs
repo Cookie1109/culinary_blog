@@ -31,6 +31,7 @@ public static class DependencyInjection
     {
         var databaseConnection = RequireConnectionString(configuration, "Database");
         var redisConnection = RequireConnectionString(configuration, "Redis");
+        var backgroundJobsEnabled = configuration.GetValue("BackgroundJobs:Enabled", true);
 
         services.AddOptions<ObjectStorageOptions>()
             .Bind(configuration.GetRequiredSection(ObjectStorageOptions.SectionName))
@@ -83,7 +84,6 @@ public static class DependencyInjection
         services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
         services.AddScoped<DatabaseInitializer>();
         services.AddHostedService<WelcomeEmailWorker>();
-        services.AddHostedService<MediaOutboxDispatcher>();
         services.AddTransient<ImageProcessingJob>();
         services.AddTransient<ObjectDeletionJob>();
         services.AddTransient<ImageReconciliationJob>();
@@ -93,7 +93,11 @@ public static class DependencyInjection
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(databaseConnection)));
-        services.AddHangfireServer(options => options.WorkerCount = Math.Max(1, Environment.ProcessorCount / 2));
+        if (backgroundJobsEnabled)
+        {
+            services.AddHostedService<MediaOutboxDispatcher>();
+            services.AddHangfireServer(options => options.WorkerCount = Math.Max(1, Environment.ProcessorCount / 2));
+        }
 
         services.AddStackExchangeRedisCache(options =>
         {

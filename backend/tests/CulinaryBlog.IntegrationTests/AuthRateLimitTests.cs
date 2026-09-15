@@ -50,6 +50,7 @@ public sealed class AuthRateLimitTests : IClassFixture<ApiFactory>
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
+            builder.UseSetting("BackgroundJobs:Enabled", "false");
             builder.UseSetting("RateLimiting:GlobalPermitLimit", "1");
         }
     }
