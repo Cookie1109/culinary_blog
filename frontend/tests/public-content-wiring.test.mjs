@@ -22,7 +22,10 @@ test('public pages use API data instead of bundled recipe fixtures', async () =>
 })
 
 test('recipe detail route maps an API 404 to the Next.js not-found response', async () => {
-  const source = await readFile(new URL('../src/app/(public)/recipes/[slug]/page.tsx', import.meta.url), 'utf8')
+  const source = await readFile(
+    new URL('../src/app/(public)/recipes/[slug]/page.tsx', import.meta.url),
+    'utf8',
+  )
 
   assert.match(source, /response\.status === 404/)
   assert.match(source, /notFound\(\)/)

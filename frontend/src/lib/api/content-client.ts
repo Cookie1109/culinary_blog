@@ -291,7 +291,12 @@ export function uploadRecipeImage(
   form.set('file', file)
   form.set('altText', altText)
   form.set('isPrimary', String(isPrimary))
-  return authenticatedUpload<MutationEnvelope<RecipeImage>>(`/recipes/${recipeId}/images`, form, onProgress, version)
+  return authenticatedUpload<MutationEnvelope<RecipeImage>>(
+    `/recipes/${recipeId}/images`,
+    form,
+    onProgress,
+    version,
+  )
 }
 
 export function updateRecipeImage(

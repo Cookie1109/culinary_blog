@@ -117,7 +117,8 @@ export function Search() {
 
       <div className="mb-6 flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{recipesQuery.data?.meta.total ?? 0}</span> công thức phù hợp
+          <span className="font-medium text-foreground">{recipesQuery.data?.meta.total ?? 0}</span> công thức
+          phù hợp
         </p>
         {hasFilters && (
           <button

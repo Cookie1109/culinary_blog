@@ -266,11 +266,13 @@ paths:
       operationId: searchPublishedRecipes
       security: []
       parameters:
-        - {name: q, in: query, required: true, schema: {type: string, minLength: 2, maxLength: 100}}
+        - {name: q, in: query, schema: {type: string, minLength: 2, maxLength: 100}}
         - {$ref: '#/components/parameters/Page'}
         - {$ref: '#/components/parameters/PageSize'}
-        - {name: categoryId, in: query, schema: {type: string, format: uuid}}
+        - {name: category, in: query, description: Category slug, schema: {type: string}}
         - {name: difficulty, in: query, schema: {$ref: '#/components/schemas/RecipeDifficulty'}}
+        - {name: maxTime, in: query, description: Maximum preparation plus cooking time in minutes, schema: {type: integer, minimum: 1}}
+        - {name: sort, in: query, schema: {type: string, enum: [relevance, newest, quickest, az], default: relevance}}
       responses:
         '200': {$ref: '#/components/responses/RecipePage'}
         '400': {$ref: '#/components/responses/Problem'}

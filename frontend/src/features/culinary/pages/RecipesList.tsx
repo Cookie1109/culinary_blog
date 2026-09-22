@@ -109,7 +109,9 @@ export function RecipesList() {
       ) : recipes.length === 0 ? (
         <p className="py-20 text-center text-muted-foreground">Không có công thức phù hợp.</p>
       ) : (
-        <div className={`grid grid-cols-1 gap-x-8 gap-y-16 ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'mx-auto max-w-2xl'}`}>
+        <div
+          className={`grid grid-cols-1 gap-x-8 gap-y-16 ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'mx-auto max-w-2xl'}`}
+        >
           {recipes.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
