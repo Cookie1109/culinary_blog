@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
-using CulinaryBlog.Application;
+using CulinaryBlog.Application.Abstractions.Persistence;
+using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Features.Recipes.Queries;
 using CulinaryBlog.Domain.Recipes;
 using NSubstitute;
@@ -20,7 +21,7 @@ public class SearchPublishedRecipesQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_Call_Repository_With_Correct_Arguments()
+    public async Task HandleCallsRepositoryWithCorrectArguments()
     {
         // Arrange
         var request = new SearchPublishedRecipesQuery(
@@ -34,10 +35,8 @@ public class SearchPublishedRecipesQueryHandlerTests
         );
 
         var expectedResult = new PageEnvelope<RecipeDto>(
-            [], 
-            0,
-            2,
-            10
+            [],
+            new PageMeta(2, 10, 0, 0, false, true)
         );
 
         _repository.SearchPublishedRecipesAsync(

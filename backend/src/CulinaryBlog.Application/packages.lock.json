@@ -1,7 +1,7 @@
 {
   "version": 2,
   "dependencies": {
-    "net9.0": {
+    "net10.0": {
       "FluentValidation.DependencyInjectionExtensions": {
         "type": "Direct",
         "requested": "[12.1.1, )",
@@ -14,11 +14,11 @@
       },
       "Mapster": {
         "type": "Direct",
-        "requested": "[9.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "R2WUPwRS1EWVMNp7RE72GaDUVCliAWuKGt75tTYUOzPpM/40aVPDLhljGA465jA8PTLLID0n0cvbRtCzUXYDWg==",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "ap0sVf4YxqYVSj2wafyrknuj2hWkWhpSm+SXTvrOQlc2vLG7u51dJ8GazaSHLLG6saHN5uPCBeP+YIqXS0a1vg==",
         "dependencies": {
-          "Mapster.Core": "10.0.0"
+          "Mapster.Core": "10.0.12"
         }
       },
       "MediatR": {
@@ -33,11 +33,11 @@
       },
       "Microsoft.Extensions.Logging.Abstractions": {
         "type": "Direct",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "g0UfujELzlLbHoVG8kPKVBaW470Ewi+jnptGS9KUi6jcb+k2StujtK3m26DFSGGwQ/+bVgZfsWqNzlP6YOejvw==",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "+24lC4plfbEDNfLAdTV/SWKS7dW+16X4HdydO3R++134kSNTzcbYA4KpR1Hdh6uWisB8Za3AzwyOn+K+NxWIug==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.0"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.12"
         }
       },
       "FluentValidation": {
@@ -47,8 +47,8 @@
       },
       "Mapster.Core": {
         "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "RHPuFw8JyjPzW8CyMjBFtCsdxd8bTniFcU2ARjpmp2n3c8B30tFCjpQWmajSObdud2eTLVnNCqY3ZweHx+m4+w=="
+        "resolved": "10.0.12",
+        "contentHash": "iLPB0xAzxMWKhbBjWb4ZdQMV/TNEuZafDOoONhtDjBD4bEmf6BwcZt2v0MHhS7xbjwi1JUR266XMarfEs9BUIw=="
       },
       "MediatR.Contracts": {
         "type": "Transitive",
@@ -57,8 +57,8 @@
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "+6f2qv2a3dLwd5w6JanPIPs47CxRbnk+ZocMJUhv9NxP88VlOcJYZs9jY+MYSjxvady08bUZn6qgiNh7DadGgg=="
+        "resolved": "10.0.12",
+        "contentHash": "9/qymSh7hVDMGTGwrLz8MRp5zRyXy9adGDOs4HwRdnLil3oZGYuWeZjbmHgCQ9BL1qBroVfgUK3U/nb61617Cw=="
       },
       "culinaryblog.domain": {
         "type": "Project"

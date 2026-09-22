@@ -25,7 +25,7 @@ public class DeleteRecipeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_Throw_ContentProblemException_NotFound_When_RecipeDoesNotExist()
+    public async Task HandleThrowsNotFoundWhenRecipeDoesNotExist()
     {
         // Arrange
         var command = new DeleteRecipeCommand(Guid.NewGuid(), Guid.NewGuid(), false, 1);
@@ -38,11 +38,11 @@ public class DeleteRecipeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_Throw_ContentProblemException_Forbidden_When_UserIsNotAuthorAndNotAdmin()
+    public async Task HandleThrowsForbiddenWhenUserIsNotAuthorAndNotAdmin()
     {
         // Arrange
         var command = new DeleteRecipeCommand(Guid.NewGuid(), Guid.NewGuid(), false, 1);
-        var recipe = Recipe.Create(command.Id, Guid.NewGuid(), "slug", "Title", "Desc", Guid.NewGuid(), 10, 20, 2, RecipeDifficulty.Easy, [], null);
+        var recipe = Recipe.Create(command.Id, Guid.NewGuid(), "slug", "Title", "Desc", Guid.NewGuid(), 10, 20, 2, RecipeDifficulty.Easy, null, null);
         _recipeRepository.GetByIdAsync(command.Id, Arg.Any<CancellationToken>()).Returns(recipe);
 
         // Act & Assert
@@ -52,12 +52,12 @@ public class DeleteRecipeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_Throw_ContentProblemException_Conflict_When_ExpectedVersionDoesNotMatch()
+    public async Task HandleThrowsConflictWhenExpectedVersionDoesNotMatch()
     {
         // Arrange
         var authorId = Guid.NewGuid();
         var command = new DeleteRecipeCommand(Guid.NewGuid(), authorId, false, 2);
-        var recipe = Recipe.Create(command.Id, authorId, "slug", "Title", "Desc", Guid.NewGuid(), 10, 20, 2, RecipeDifficulty.Easy, [], null);
+        var recipe = Recipe.Create(command.Id, authorId, "slug", "Title", "Desc", Guid.NewGuid(), 10, 20, 2, RecipeDifficulty.Easy, null, null);
         // Default version is 1, so expected 2 will fail.
         _recipeRepository.GetByIdAsync(command.Id, Arg.Any<CancellationToken>()).Returns(recipe);
 
@@ -69,12 +69,12 @@ public class DeleteRecipeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_DeleteRecipe_And_SaveChanges_When_CommandIsValid_And_UserIsAuthor()
+    public async Task HandleDeletesRecipeAndSavesChangesWhenUserIsAuthor()
     {
         // Arrange
         var authorId = Guid.NewGuid();
         var command = new DeleteRecipeCommand(Guid.NewGuid(), authorId, false, 1);
-        var recipe = Recipe.Create(command.Id, authorId, "slug", "Title", "Desc", Guid.NewGuid(), 10, 20, 2, RecipeDifficulty.Easy, [], null);
+        var recipe = Recipe.Create(command.Id, authorId, "slug", "Title", "Desc", Guid.NewGuid(), 10, 20, 2, RecipeDifficulty.Easy, null, null);
         _recipeRepository.GetByIdAsync(command.Id, Arg.Any<CancellationToken>()).Returns(recipe);
 
         // Act
@@ -86,13 +86,13 @@ public class DeleteRecipeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_DeleteRecipe_And_SaveChanges_When_CommandIsValid_And_UserIsAdmin()
+    public async Task HandleDeletesRecipeAndSavesChangesWhenUserIsAdmin()
     {
         // Arrange
         var adminId = Guid.NewGuid();
         var authorId = Guid.NewGuid(); // Different from admin
         var command = new DeleteRecipeCommand(Guid.NewGuid(), adminId, true, 1);
-        var recipe = Recipe.Create(command.Id, authorId, "slug", "Title", "Desc", Guid.NewGuid(), 10, 20, 2, RecipeDifficulty.Easy, [], null);
+        var recipe = Recipe.Create(command.Id, authorId, "slug", "Title", "Desc", Guid.NewGuid(), 10, 20, 2, RecipeDifficulty.Easy, null, null);
         _recipeRepository.GetByIdAsync(command.Id, Arg.Any<CancellationToken>()).Returns(recipe);
 
         // Act
