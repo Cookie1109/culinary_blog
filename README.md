@@ -104,6 +104,13 @@ npm run dev
 
 Frontend chạy tại [http://localhost:3000](http://localhost:3000). Khi đi qua Nginx, các request API sử dụng prefix `/api/v1`.
 
+Để dùng Auth.js khi chạy riêng frontend, đặt AUTH_SECRET (chuỗi ngẫu nhiên ít nhất 32 ký tự),
+AUTH_TRUST_HOST=true và INTERNAL_API_BASE_URL (mặc định http://localhost:5000/api/v1)
+trong frontend/.env.local.
+Đăng nhập Google cần thêm AUTH_GOOGLE_ID và AUTH_GOOGLE_SECRET cho frontend,
+đồng thời cấu hình Google:ClientId cùng client ID đó cho backend. Docker Compose lấy các
+giá trị này từ .env ở thư mục gốc.
+
 ## Kiểm tra chất lượng
 
 Chạy toàn bộ quality gates:
@@ -142,6 +149,7 @@ Pipeline tại `.github/workflows/ci.yml` tự động kiểm tra backend, front
 
 - Môi trường staging và production phải lấy secret từ secret store của nền tảng triển khai.
 - JWT signing key phải có ít nhất 32 ký tự ngẫu nhiên; access token sống 15 phút và refresh token sống 7 ngày.
+- Auth.js giữ refresh token trong cookie phiên mã hóa, HTTP-only; không lưu token trong sessionStorage.
 - Admin seed mặc định tắt. Chỉ bật `ADMIN_SEED_ENABLED` khi đồng thời cấp `ADMIN_EMAIL` và `ADMIN_PASSWORD` qua secret an toàn.
 - API dừng ngay khi thiếu cấu hình bắt buộc cho PostgreSQL, Redis hoặc object storage.
 
