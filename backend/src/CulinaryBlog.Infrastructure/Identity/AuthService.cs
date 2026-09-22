@@ -3,8 +3,10 @@ using CulinaryBlog.Infrastructure.Email;
 using CulinaryBlog.Infrastructure.Persistence;
 using FluentValidation;
 using FluentValidation.Results;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace CulinaryBlog.Infrastructure.Identity;
@@ -15,6 +17,7 @@ internal sealed class AuthService(
     AppDbContext dbContext,
     TokenService tokenService,
     IOptions<JwtOptions> jwtOptions,
+    IConfiguration configuration,
     TimeProvider timeProvider) : IAuthService
 {
     private const string AuthorRole = "Author";
@@ -116,6 +119,90 @@ internal sealed class AuthService(
             ipAddress,
             userAgent,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<AuthSessionDto> LoginWithGoogleAsync(
+        string idToken,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken)
+    {
+        var clientId = configuration["Google:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            throw new AuthProblemException("AUTH_GOOGLE_UNAVAILABLE", "Google sign-in is not configured.");
+        }
+
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                idToken,
+                new GoogleJsonWebSignature.ValidationSettings { Audience = [clientId] }).ConfigureAwait(false);
+        }
+        catch (InvalidJwtException)
+        {
+            throw new AuthProblemException("AUTH_GOOGLE_TOKEN_INVALID", "The Google ID token is invalid.");
+        }
+
+        if (!payload.EmailVerified || string.IsNullOrWhiteSpace(payload.Email))
+        {
+            throw new AuthProblemException("AUTH_GOOGLE_EMAIL_UNVERIFIED", "A verified Google email is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(payload.Subject) || payload.Email.Length > 256)
+        {
+            throw new AuthProblemException("AUTH_GOOGLE_TOKEN_INVALID", "The Google ID token is invalid.");
+        }
+
+        await using var transaction = await dbContext.Database
+            .BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        var user = await userManager.FindByLoginAsync("Google", payload.Subject).ConfigureAwait(false);
+        if (user is null)
+        {
+            user = await userManager.FindByEmailAsync(payload.Email).ConfigureAwait(false);
+            if (user is not null)
+            {
+                var authoritativeEmail = payload.Email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase)
+                    || !string.IsNullOrWhiteSpace(payload.HostedDomain);
+                var googleLogins = await userManager.GetLoginsAsync(user).ConfigureAwait(false);
+                if (!authoritativeEmail || googleLogins.Any(login => login.LoginProvider == "Google"))
+                {
+                    throw new AuthProblemException("AUTH_EXTERNAL_ACCOUNT_CONFLICT", "This email belongs to another account.");
+                }
+            }
+            else
+            {
+                var displayName = string.IsNullOrWhiteSpace(payload.Name)
+                    ? payload.Email.Split('@')[0]
+                    : payload.Name.Trim();
+                user = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = payload.Email,
+                    Email = payload.Email,
+                    EmailConfirmed = true,
+                    DisplayName = displayName[..Math.Min(displayName.Length, 100)],
+                    IsActive = true,
+                    CreatedAt = timeProvider.GetUtcNow(),
+                };
+                ThrowIfIdentityFailed(await userManager.CreateAsync(user).ConfigureAwait(false));
+                ThrowIfIdentityFailed(await userManager.AddToRoleAsync(user, AuthorRole).ConfigureAwait(false));
+            }
+
+            ThrowIfIdentityFailed(await userManager.AddLoginAsync(
+                user, new UserLoginInfo("Google", payload.Subject, "Google")).ConfigureAwait(false));
+        }
+
+        if (!user.IsActive)
+        {
+            throw new AuthProblemException("AUTH_ACCOUNT_DISABLED", "This account is disabled.");
+        }
+
+        var session = await CreateSessionAsync(
+            user, Guid.NewGuid(), ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return session;
     }
 
     public async Task<AuthSessionDto> RefreshAsync(

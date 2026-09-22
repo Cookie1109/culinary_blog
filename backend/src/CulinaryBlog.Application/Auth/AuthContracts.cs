@@ -4,6 +4,8 @@ public sealed record RegisterRequest(string DisplayName, string Email, string Pa
 
 public sealed record LoginRequest(string Email, string Password);
 
+public sealed record GoogleLoginRequest(string IdToken);
+
 public sealed record RefreshTokenRequest(string RefreshToken);
 
 public sealed record UpdateProfileRequest(
@@ -43,6 +45,12 @@ public interface IAuthService
 
     Task<AuthSessionDto> LoginAsync(
         LoginRequest request,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken);
+
+    Task<AuthSessionDto> LoginWithGoogleAsync(
+        string idToken,
         string? ipAddress,
         string? userAgent,
         CancellationToken cancellationToken);

@@ -154,6 +154,22 @@
         "resolved": "12.1.1",
         "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
       },
+      "Google.Apis": {
+        "type": "Transitive",
+        "resolved": "1.76.0",
+        "contentHash": "sIhJW2vT1cXE/yUFp1q1Mv7EUgbGu2uMIcqqv+BgElRdGQApxiYpZ/jG6hFkQB8/AG9kGurJOzLOM9PZ++GEtA==",
+        "dependencies": {
+          "Google.Apis.Core": "1.76.0"
+        }
+      },
+      "Google.Apis.Core": {
+        "type": "Transitive",
+        "resolved": "1.76.0",
+        "contentHash": "P2nFbC0SsnUe8sGjhpCLs6CHIWFzURgUS2M9l9aUV1vJjVXpesRbegEYZS/dLKehcgx8twDP7xA5OMGygMD55g==",
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.4"
+        }
+      },
       "Hangfire.Core": {
         "type": "Transitive",
         "resolved": "1.8.25",
@@ -174,6 +190,11 @@
         "type": "Transitive",
         "resolved": "2.14.1",
         "contentHash": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw=="
+      },
+      "Mapster.Core": {
+        "type": "Transitive",
+        "resolved": "10.0.12",
+        "contentHash": "iLPB0xAzxMWKhbBjWb4ZdQMV/TNEuZafDOoONhtDjBD4bEmf6BwcZt2v0MHhS7xbjwi1JUR266XMarfEs9BUIw=="
       },
       "MediatR.Contracts": {
         "type": "Transitive",
@@ -420,8 +441,8 @@
       },
       "System.CodeDom": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "CPc6tWO1LAer3IzfZufDBRL+UZQcj5uS207NHALQzP84Vp/z6wF0Aa0YZImOQY8iStY0A2zI/e3ihKNPfUm8XA=="
+        "resolved": "7.0.0",
+        "contentHash": "GLltyqEsE5/3IE+zYRP5sNa1l44qKl9v+bfdMcwg+M9qnQf47wK3H0SUR/T+3N4JEQXF3vV4CSuuo0rsg+nq2A=="
       },
       "System.Composition": {
         "type": "Transitive",
@@ -476,6 +497,14 @@
         "resolved": "10.0.12",
         "contentHash": "jDix4bBMYnpZdSPcnY+KDV6ik3SRMzpMKby/bZl/XUwIiflwRNAFZ0oOl61R/pSaveIJ8t1gs2BUlrGsPs/bcg=="
       },
+      "System.Management": {
+        "type": "Transitive",
+        "resolved": "7.0.2",
+        "contentHash": "/qEUN91mP/MUQmJnM5y5BdT7ZoPuVrtxnFlbJ8a3kBJGhe2wCzBfnPFtK2wTtEEcf3DMGR9J00GZZfg6HRI6yA==",
+        "dependencies": {
+          "System.CodeDom": "7.0.0"
+        }
+      },
       "System.Reactive": {
         "type": "Transitive",
         "resolved": "6.0.1",
@@ -486,6 +515,7 @@
         "dependencies": {
           "CulinaryBlog.Domain": "[1.0.0, )",
           "FluentValidation.DependencyInjectionExtensions": "[12.1.1, )",
+          "Mapster": "[10.0.12, )",
           "MediatR": "[12.5.0, )"
         }
       },
@@ -497,6 +527,7 @@
         "dependencies": {
           "CulinaryBlog.Application": "[1.0.0, )",
           "CulinaryBlog.Domain": "[1.0.0, )",
+          "Google.Apis.Auth": "[1.76.0, )",
           "Hangfire.AspNetCore": "[1.8.25, )",
           "Hangfire.PostgreSql": "[1.21.1, )",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.12, )",
@@ -519,6 +550,17 @@
           "FluentValidation": "12.1.1"
         }
       },
+      "Google.Apis.Auth": {
+        "type": "CentralTransitive",
+        "requested": "[1.76.0, )",
+        "resolved": "1.76.0",
+        "contentHash": "WzRCykQ0OApOEFdUYYBJ6riIxs+xk635s0KsGb83zJcABa66DCgaAXiWZuZjSqnwA3hjm7u8mmzR4EUHpJ1UfQ==",
+        "dependencies": {
+          "Google.Apis": "1.76.0",
+          "Google.Apis.Core": "1.76.0",
+          "System.Management": "7.0.2"
+        }
+      },
       "Hangfire.AspNetCore": {
         "type": "CentralTransitive",
         "requested": "[1.8.25, )",
@@ -538,6 +580,15 @@
           "Dapper.AOT": "1.0.48",
           "Hangfire.Core": "1.8.0",
           "Npgsql": "6.0.11"
+        }
+      },
+      "Mapster": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "ap0sVf4YxqYVSj2wafyrknuj2hWkWhpSm+SXTvrOQlc2vLG7u51dJ8GazaSHLLG6saHN5uPCBeP+YIqXS0a1vg==",
+        "dependencies": {
+          "Mapster.Core": "10.0.12"
         }
       },
       "MediatR": {

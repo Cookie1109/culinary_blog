@@ -15,6 +15,7 @@ internal static class AuthEndpoints
 
         auth.MapPost("/register", RegisterAsync).AllowAnonymous();
         auth.MapPost("/login", LoginAsync).AllowAnonymous();
+        auth.MapPost("/google", GoogleLoginAsync).AllowAnonymous();
         auth.MapPost("/refresh", RefreshAsync).AllowAnonymous();
         auth.MapPost("/logout", LogoutAsync).AllowAnonymous();
         auth.MapGet("/me", GetMeAsync).RequireAuthorization("AuthorPolicy");
@@ -49,6 +50,22 @@ internal static class AuthEndpoints
         await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
         var session = await authService.LoginAsync(
             request,
+            GetIpAddress(httpContext),
+            GetUserAgent(httpContext),
+            cancellationToken).ConfigureAwait(false);
+        return Results.Ok(new DataEnvelope<AuthSessionDto>(session));
+    }
+
+    private static async Task<IResult> GoogleLoginAsync(
+        GoogleLoginRequest request,
+        IValidator<GoogleLoginRequest> validator,
+        IAuthService authService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        var session = await authService.LoginWithGoogleAsync(
+            request.IdToken,
             GetIpAddress(httpContext),
             GetUserAgent(httpContext),
             cancellationToken).ConfigureAwait(false);

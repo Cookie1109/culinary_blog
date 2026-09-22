@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
 
 #nullable disable
 
@@ -147,6 +148,10 @@ namespace CulinaryBlog.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("PublishedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector");
+
                     b.Property<int>("Servings")
                         .HasColumnType("integer");
 
@@ -182,6 +187,9 @@ namespace CulinaryBlog.Infrastructure.Persistence.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("PublishedAt");
+
+                    b.HasIndex("SearchVector")
+                        .HasMethod("GIN");
 
                     b.HasIndex("Slug")
                         .IsUnique();

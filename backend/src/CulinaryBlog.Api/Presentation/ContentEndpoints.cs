@@ -1,7 +1,10 @@
 using System.Security.Claims;
 using CulinaryBlog.Application.Content;
+using CulinaryBlog.Application.Features.Recipes.Commands;
+using CulinaryBlog.Application.Features.Recipes.Queries;
 using CulinaryBlog.Domain.Recipes;
 using FluentValidation;
+using MediatR;
 
 namespace CulinaryBlog.Api.Presentation;
 
@@ -18,22 +21,24 @@ internal static class ContentEndpoints
 
         var recipes = endpoints.MapGroup("/api/v1/recipes");
         recipes.MapGet("/", ListPublishedRecipesAsync).AllowAnonymous();
+        recipes.MapGet("/search", SearchPublishedRecipesAsync).AllowAnonymous();
         recipes.MapGet("/{slug}", GetPublishedRecipeAsync).AllowAnonymous();
         recipes.MapPost("/", CreateRecipeAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapPut("/{id:guid}", UpdateRecipeAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapDelete("/{id:guid}", DeleteRecipeAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapPost("/{id:guid}/ingredients", CreateIngredientAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapPut("/{id:guid}/ingredients/{ingredientId:guid}", UpdateIngredientAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapDelete("/{id:guid}/ingredients/{ingredientId:guid}", DeleteIngredientAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapPost("/{id:guid}/steps", CreateStepAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapPut("/{id:guid}/steps/{stepId:guid}", UpdateStepAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapDelete("/{id:guid}/steps/{stepId:guid}", DeleteStepAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapPut("/{id:guid}", UpdateRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapDelete("/{id:guid}", DeleteRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPost("/{id:guid}/ingredients", CreateIngredientAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPut("/{id:guid}/ingredients/{ingredientId:guid}", UpdateIngredientAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapDelete("/{id:guid}/ingredients/{ingredientId:guid}", DeleteIngredientAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPost("/{id:guid}/steps", CreateStepAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPut("/{id:guid}/steps/{stepId:guid}", UpdateStepAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapDelete("/{id:guid}/steps/{stepId:guid}", DeleteStepAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
         recipes.MapPost("/{id:guid}/images", UploadImageAsync)
             .RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>()
             .RequireRateLimiting("upload")
             .DisableAntiforgery();
-        recipes.MapPatch("/{id:guid}/images/{imageId:guid}", UpdateImageAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapDelete("/{id:guid}/images/{imageId:guid}", DeleteImageAsync).RequireAuthorization("AuthorPolicy");
+        recipes.MapPatch("/{id:guid}/images/{imageId:guid}", UpdateImageAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapDelete("/{id:guid}/images/{imageId:guid}", DeleteImageAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
 
         endpoints.MapGet("/api/v1/media/{imageId:guid}/{variant}", OpenMediaAsync).AllowAnonymous();
 
@@ -52,6 +57,32 @@ internal static class ContentEndpoints
         IContentService contentService,
         CancellationToken cancellationToken) =>
         Results.Ok(new { data = await contentService.ListCategoriesAsync(cancellationToken).ConfigureAwait(false) });
+
+    private static async Task<IResult> SearchPublishedRecipesAsync(
+        string? q,
+        string? category,
+        string? difficulty,
+        int? maxTime,
+        string? sort,
+        int? page,
+        int? pageSize,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        RecipeDifficulty? parsedDifficulty = null;
+        if (!string.IsNullOrWhiteSpace(difficulty))
+        {
+            if (!Enum.TryParse<RecipeDifficulty>(difficulty, true, out var parsed) || !Enum.IsDefined(parsed))
+            {
+                throw new ContentProblemException("VALIDATION_ERROR", "Difficulty is invalid.", ContentProblemKind.BadRequest);
+            }
+
+            parsedDifficulty = parsed;
+        }
+
+        return Results.Ok(await sender.Send(new SearchPublishedRecipesQuery(
+            q, category, parsedDifficulty, maxTime, sort, page ?? 1, pageSize ?? 12), cancellationToken).ConfigureAwait(false));
+    }
 
     private static async Task<IResult> GetCategoryAsync(
         string slug,
@@ -142,17 +173,14 @@ internal static class ContentEndpoints
     private static async Task<IResult> DeleteRecipeAsync(
         Guid id,
         ClaimsPrincipal principal,
-        IContentService contentService,
+        ISender sender,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
         try
         {
-            await contentService.DeleteRecipeAsync(
-                id,
-                GetUserId(principal),
-                principal.IsInRole("Admin"),
-                ReadEtag(httpContext),
+            await sender.Send(new DeleteRecipeCommand(
+                id, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext)),
                 cancellationToken).ConfigureAwait(false);
             return Results.NoContent();
         }

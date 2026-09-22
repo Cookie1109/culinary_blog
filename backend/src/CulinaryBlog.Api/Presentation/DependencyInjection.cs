@@ -71,7 +71,10 @@ public static class DependencyInjection
             .AddPolicy("AdminPolicy", policy => policy
                 .RequireAuthenticatedUser()
                 .RequireRole("Admin")
-                .AddRequirements(new ActiveUserRequirement()));
+                .AddRequirements(new ActiveUserRequirement()))
+            .AddPolicy("RecipeOwnerPolicy", policy => policy
+                .RequireAuthenticatedUser()
+                .AddRequirements(new RecipeOwnerRequirement()));
 
         services.AddRateLimiter(options =>
         {

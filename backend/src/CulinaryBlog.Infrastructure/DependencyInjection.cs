@@ -1,4 +1,5 @@
 using CulinaryBlog.Application.Abstractions.Caching;
+using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Media;
@@ -78,10 +79,15 @@ public static class DependencyInjection
         });
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<TokenService>();
+        services.AddScoped<IRecipeRepository, RecipeRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IContentService, ContentService>();
+        services.AddScoped<ContentService>();
+        services.AddScoped<IContentService>(provider => provider.GetRequiredService<ContentService>());
+        services.AddScoped<IRecipeSearchRepository>(provider => provider.GetRequiredService<ContentService>());
         services.AddSingleton<IFileStorageService, MinioFileStorageService>();
         services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, RecipeAuthorizationHandler>();
         services.AddScoped<DatabaseInitializer>();
         services.AddHostedService<WelcomeEmailWorker>();
         services.AddTransient<ImageProcessingJob>();

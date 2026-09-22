@@ -102,6 +102,7 @@ internal sealed class GlobalExceptionHandler(
             "AUTH_EMAIL_EXISTS" or "AUTH_EXTERNAL_ACCOUNT_CONFLICT" => StatusCodes.Status409Conflict,
             "AUTH_ACCOUNT_LOCKED" => StatusCodes.Status423Locked,
             "AUTH_ACCOUNT_DISABLED" => StatusCodes.Status403Forbidden,
+            "AUTH_GOOGLE_UNAVAILABLE" => StatusCodes.Status503ServiceUnavailable,
             "USER_NOT_FOUND" => StatusCodes.Status404NotFound,
             "AUTH_GOOGLE_TOKEN_INVALID" or "AUTH_GOOGLE_EMAIL_UNVERIFIED" => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status401Unauthorized,

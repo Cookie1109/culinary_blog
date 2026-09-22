@@ -1,4 +1,8 @@
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 using CulinaryBlog.Application.Content;
+using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Media;
 using CulinaryBlog.Domain.Categories;
 using CulinaryBlog.Domain.Common;
@@ -8,14 +12,16 @@ using CulinaryBlog.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using NpgsqlTypes;
 
 namespace CulinaryBlog.Infrastructure.Content;
 
 internal sealed partial class ContentService(
     AppDbContext dbContext,
+    IUnitOfWork unitOfWork,
     UserManager<ApplicationUser> userManager,
     IFileStorageService fileStorage,
-    TimeProvider timeProvider) : IContentService
+    TimeProvider timeProvider) : IContentService, IRecipeSearchRepository
 {
     private const int MaximumPageSize = 50;
 
@@ -156,8 +162,7 @@ internal sealed partial class ContentService(
         for (var suffix = 1; suffix <= 20; suffix++)
         {
             var slug = WithSuffix(baseSlug, suffix, 220);
-            if (await dbContext.Recipes.IgnoreQueryFilters()
-                .AnyAsync(recipe => recipe.Slug == slug, cancellationToken).ConfigureAwait(false))
+            if (await unitOfWork.Recipes.SlugExistsAsync(slug, null, cancellationToken).ConfigureAwait(false))
             {
                 continue;
             }
@@ -175,10 +180,10 @@ internal sealed partial class ContentService(
                 request.Difficulty,
                 request.Instructions,
                 ToNutrition(request.Nutrition));
-            dbContext.Recipes.Add(recipe);
+            unitOfWork.Recipes.Add(recipe);
             try
             {
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
             }
             catch (DbUpdateException exception) when (IsUniqueViolation(exception, "Slug"))
@@ -219,19 +224,6 @@ internal sealed partial class ContentService(
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task DeleteRecipeAsync(
-        Guid id,
-        Guid userId,
-        bool isAdmin,
-        long expectedVersion,
-        CancellationToken cancellationToken)
-    {
-        var recipe = await FindRecipeForMutationAsync(id, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        recipe.Delete();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-    }
-
     public async Task<RecipeDto> GetPublishedRecipeAsync(string slug, CancellationToken cancellationToken)
     {
         var recipe = await dbContext.Recipes.AsNoTracking()
@@ -252,6 +244,85 @@ internal sealed partial class ContentService(
             page,
             pageSize,
             cancellationToken);
+
+    public async Task<PageEnvelope<RecipeDto>> SearchPublishedRecipesAsync(
+        string? search,
+        string? category,
+        RecipeDifficulty? difficulty,
+        int? maxTime,
+        string? sort,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        ValidatePage(page, pageSize);
+        var query = dbContext.Recipes.AsNoTracking().Where(recipe => recipe.Status == RecipeStatus.Published);
+        var terms = Regex.Matches(RemoveAccents(search ?? string.Empty), @"[\p{L}\p{N}]+")
+            .Select(match => match.Value)
+            .Take(20)
+            .ToArray();
+        if (!string.IsNullOrWhiteSpace(search) && terms.Length == 0)
+        {
+            return new PageEnvelope<RecipeDto>([], CreateMeta(page, pageSize, 0));
+        }
+
+        var tsQuery = string.Join(" & ", terms.Select(term => term + ":*"));
+        if (terms.Length > 0)
+        {
+            query = query.Where(recipe => EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                .Matches(EF.Functions.ToTsQuery("simple", tsQuery)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(recipe => dbContext.Categories.Any(item =>
+                item.Id == recipe.CategoryId && item.Slug == category));
+        }
+
+        if (difficulty.HasValue)
+        {
+            query = query.Where(recipe => recipe.Difficulty == difficulty.Value);
+        }
+
+        if (maxTime.HasValue)
+        {
+            query = query.Where(recipe => recipe.PrepTime + recipe.CookTime <= maxTime.Value);
+        }
+
+        var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+        var ordered = sort switch
+        {
+            "quickest" => query.OrderBy(recipe => recipe.PrepTime + recipe.CookTime)
+                .ThenByDescending(recipe => recipe.PublishedAt),
+            "az" => query.OrderBy(recipe => recipe.Title).ThenByDescending(recipe => recipe.PublishedAt),
+            "newest" => query.OrderByDescending(recipe => recipe.PublishedAt),
+            _ when terms.Length > 0 => query.OrderByDescending(recipe =>
+                    EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                        .Rank(EF.Functions.ToTsQuery("simple", tsQuery)))
+                .ThenByDescending(recipe => recipe.PublishedAt),
+            _ => query.OrderByDescending(recipe => recipe.PublishedAt),
+        };
+        var recipes = await ordered.Skip((page - 1) * pageSize).Take(pageSize)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        return new PageEnvelope<RecipeDto>(
+            await MapRecipesAsync(recipes, cancellationToken).ConfigureAwait(false),
+            CreateMeta(page, pageSize, total));
+    }
+
+    private static string RemoveAccents(string value)
+    {
+        var normalized = value.Normalize(NormalizationForm.FormD);
+        var result = new StringBuilder(normalized.Length);
+        foreach (var character in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+            {
+                result.Append(character is 'đ' or 'Đ' ? 'd' : char.ToLowerInvariant(character));
+            }
+        }
+
+        return result.ToString().Normalize(NormalizationForm.FormC);
+    }
 
     public async Task<RecipeDto> GetMyRecipeAsync(Guid id, Guid userId, CancellationToken cancellationToken)
     {
@@ -335,7 +406,7 @@ internal sealed partial class ContentService(
         bool isAdmin,
         CancellationToken cancellationToken)
     {
-        var recipe = await dbContext.Recipes.SingleOrDefaultAsync(item => item.Id == id, cancellationToken)
+        var recipe = await unitOfWork.Recipes.GetByIdAsync(id, cancellationToken)
             .ConfigureAwait(false)
             ?? throw NotFound("RECIPE_NOT_FOUND", "Recipe was not found.");
         if (!isAdmin && recipe.AuthorId != userId)
@@ -350,20 +421,7 @@ internal sealed partial class ContentService(
     {
         try
         {
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            var currentVersion = await dbContext.Recipes.AsNoTracking()
-                .Where(item => item.Id == recipe.Id)
-                .Select(item => (long?)item.Version)
-                .SingleOrDefaultAsync(cancellationToken)
-                .ConfigureAwait(false);
-            throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT",
-                "The recipe was changed by another request.",
-                ContentProblemKind.Conflict,
-                currentVersion);
+            await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (DbUpdateException exception) when (IsUniqueViolation(exception, "Slug"))
         {
@@ -380,8 +438,7 @@ internal sealed partial class ContentService(
         for (var suffix = 1; suffix <= 20; suffix++)
         {
             var candidate = WithSuffix(baseSlug, suffix, 220);
-            if (!await dbContext.Recipes.IgnoreQueryFilters()
-                .AnyAsync(recipe => recipe.Id != recipeId && recipe.Slug == candidate, cancellationToken)
+            if (!await unitOfWork.Recipes.SlugExistsAsync(candidate, recipeId, cancellationToken)
                 .ConfigureAwait(false))
             {
                 return candidate;
@@ -478,7 +535,7 @@ internal sealed partial class ContentService(
             recipe.PublishedAt,
             recipe.Version,
             recipe.Instructions,
-            ToNutritionDto(recipe.Nutrition),
+            RecipeMappings.ToNutritionDto(recipe.Nutrition),
             ingredients,
             steps,
             images);
@@ -503,18 +560,6 @@ internal sealed partial class ContentService(
     private static RecipeNutrition? ToNutrition(NutritionDto? nutrition) => nutrition is null
         ? null
         : RecipeNutrition.Create(
-            nutrition.Calories,
-            nutrition.Protein,
-            nutrition.Carbohydrates,
-            nutrition.Fat,
-            nutrition.Fiber,
-            nutrition.Sodium);
-
-    private static NutritionDto? ToNutritionDto(RecipeNutrition? nutrition) => nutrition is null ||
-        (nutrition.Calories is null && nutrition.Protein is null && nutrition.Carbohydrates is null &&
-         nutrition.Fat is null && nutrition.Fiber is null && nutrition.Sodium is null)
-        ? null
-        : new NutritionDto(
             nutrition.Calories,
             nutrition.Protein,
             nutrition.Carbohydrates,

@@ -42,6 +42,11 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
         using var forbiddenResponse = await _client.GetAsync($"/api/v1/me/recipes/{created.Data.Id}");
         Assert.Equal(HttpStatusCode.Forbidden, forbiddenResponse.StatusCode);
 
+        using var forbiddenUpdate = CreatePut(
+            created.Data.Id, 1, RecipeBody(categoryId, "Another author's update"));
+        using var forbiddenUpdateResponse = await _client.SendAsync(forbiddenUpdate);
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenUpdateResponse.StatusCode);
+
         await using (var adminScope = factory.Services.CreateAsyncScope())
         {
             var userManager = adminScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();

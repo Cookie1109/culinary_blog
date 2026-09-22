@@ -3,6 +3,7 @@ using CulinaryBlog.Domain.Recipes;
 using CulinaryBlog.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NpgsqlTypes;
 
 namespace CulinaryBlog.Infrastructure.Persistence.Configurations;
 
@@ -37,6 +38,9 @@ internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
         builder.Property(recipe => recipe.Difficulty).HasConversion<int>();
         builder.Property(recipe => recipe.Status).HasConversion<int>();
         builder.Property(recipe => recipe.Version).HasDefaultValue(1).IsConcurrencyToken();
+        builder.Property<NpgsqlTsVector>("SearchVector")
+            .HasColumnType("tsvector")
+            .ValueGeneratedOnAddOrUpdate();
         builder.OwnsOne(recipe => recipe.Nutrition, nutrition =>
         {
             nutrition.Property(value => value.Calories).HasPrecision(8, 2).HasColumnName("Nutrition_Calories");
@@ -50,6 +54,7 @@ internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
         builder.HasOne<Category>().WithMany().HasForeignKey(recipe => recipe.CategoryId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(recipe => recipe.AuthorId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(recipe => recipe.Slug).IsUnique();
+        builder.HasIndex("SearchVector").HasMethod("GIN");
         builder.HasIndex(recipe => recipe.Status);
         builder.HasIndex(recipe => recipe.CategoryId);
         builder.HasIndex(recipe => recipe.AuthorId);

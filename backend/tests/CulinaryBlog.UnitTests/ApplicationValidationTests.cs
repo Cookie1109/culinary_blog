@@ -1,5 +1,7 @@
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Content;
+using CulinaryBlog.Application.Features.Recipes.Queries;
+using CulinaryBlog.Domain.Recipes;
 
 namespace CulinaryBlog.UnitTests;
 
@@ -12,6 +14,8 @@ public sealed class ApplicationValidationTests
             new RegisterRequest("Test Author", "author@example.com", "Valid#Password1"))).IsValid);
         Assert.True((await new LoginRequestValidator().ValidateAsync(
             new LoginRequest("author@example.com", "Valid#Password1"))).IsValid);
+        Assert.True((await new GoogleLoginRequestValidator().ValidateAsync(
+            new GoogleLoginRequest("signed-id-token"))).IsValid);
         Assert.True((await new RefreshTokenRequestValidator().ValidateAsync(
             new RefreshTokenRequest("refresh-token"))).IsValid);
         Assert.True((await new UpdateProfileRequestValidator().ValidateAsync(
@@ -22,11 +26,22 @@ public sealed class ApplicationValidationTests
     public async Task AuthValidatorsRejectInvalidRequests()
     {
         Assert.False((await new LoginRequestValidator().ValidateAsync(new LoginRequest("bad", string.Empty))).IsValid);
+        Assert.False((await new GoogleLoginRequestValidator().ValidateAsync(new GoogleLoginRequest(string.Empty))).IsValid);
         Assert.False((await new RefreshTokenRequestValidator().ValidateAsync(new RefreshTokenRequest(string.Empty))).IsValid);
         Assert.False((await new UpdateProfileRequestValidator().ValidateAsync(
             new UpdateProfileRequest(null, null, null))).IsValid);
         Assert.False((await new UpdateProfileRequestValidator().ValidateAsync(
             new UpdateProfileRequest(null, "javascript:alert(1)", null, false, true))).IsValid);
+    }
+
+    [Fact]
+    public async Task SearchQueryRejectsInvalidPageAndFilters()
+    {
+        var validator = new SearchPublishedRecipesQueryValidator();
+        Assert.True((await validator.ValidateAsync(
+            new SearchPublishedRecipesQuery("phở", null, RecipeDifficulty.Easy, null, "relevance", 1, 12))).IsValid);
+        Assert.False((await validator.ValidateAsync(
+            new SearchPublishedRecipesQuery("x", null, null, 0, "random", 0, 51))).IsValid);
     }
 
     [Fact]
