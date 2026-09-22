@@ -423,19 +423,19 @@ internal sealed partial class ContentService(
         {
             await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch (DbUpdateException exception) when (IsUniqueViolation(exception, "Slug"))
+        catch (Exception exception) when (IsUniqueViolation(exception, "Slug"))
         {
             throw Conflict("RECIPE_SLUG_EXISTS", "A recipe already owns this slug.");
         }
-        catch (DbUpdateException exception) when (IsUniqueViolation(exception, "RecipeImages"))
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeImages"))
         {
             throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
         }
-        catch (DbUpdateException exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
         {
             throw Conflict("STEP_NUMBER_CONFLICT", "A step number conflict occurred.");
         }
-        catch (DbUpdateException exception) when (IsDeadlockOrSerialization(exception))
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
                 "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
@@ -620,15 +620,21 @@ internal sealed partial class ContentService(
         return prefix + ending;
     }
 
-    private static bool IsUniqueViolation(DbUpdateException exception, string property) =>
-        exception.InnerException is PostgresException postgresException &&
-        postgresException.SqlState == PostgresErrorCodes.UniqueViolation &&
-        (postgresException.ConstraintName?.Contains(property, StringComparison.OrdinalIgnoreCase) ?? false);
+    private static bool IsUniqueViolation(Exception exception, string property)
+    {
+        var postgresException = exception as PostgresException ?? exception.InnerException as PostgresException;
+        return postgresException is not null &&
+            postgresException.SqlState == PostgresErrorCodes.UniqueViolation &&
+            (postgresException.ConstraintName?.Contains(property, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
 
-    private static bool IsDeadlockOrSerialization(DbUpdateException exception) =>
-        exception.InnerException is PostgresException postgresException &&
-        (postgresException.SqlState == PostgresErrorCodes.DeadlockDetected ||
-         postgresException.SqlState == PostgresErrorCodes.SerializationFailure);
+    private static bool IsDeadlockOrSerialization(Exception exception)
+    {
+        var postgresException = exception as PostgresException ?? exception.InnerException as PostgresException;
+        return postgresException is not null &&
+            (postgresException.SqlState == PostgresErrorCodes.DeadlockDetected ||
+             postgresException.SqlState == PostgresErrorCodes.SerializationFailure);
+    }
 
     private static PageMeta CreateMeta(int page, int pageSize, int total)
     {

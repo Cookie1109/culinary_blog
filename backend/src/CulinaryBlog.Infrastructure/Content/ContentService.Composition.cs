@@ -260,20 +260,7 @@ internal sealed partial class ContentService
                 {
                     current.UpdateMetadata(current.AltText, false, current.OrderIndex);
                 }
-                try
-                {
-                    await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                }
-                catch (DbUpdateException exception) when (IsUniqueViolation(exception, "RecipeImages"))
-                {
-                    throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
-                }
-                catch (DbUpdateException exception) when (IsDeadlockOrSerialization(exception))
-                {
-                    throw new ContentProblemException(
-                        "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
-                        ContentProblemKind.Conflict);
-                }
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
 
             var image = RecipeImage.Create(imageId, recipeId, objectKey, detectedContentType, altText, makePrimary, existingImages.Count);
@@ -290,6 +277,34 @@ internal sealed partial class ContentService
                 await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
             }
             throw;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (objectKey is not null)
+            {
+                await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
+            }
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeImages"))
+        {
+            if (objectKey is not null)
+            {
+                await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
+            }
+            throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
+        }
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
+        {
+            if (objectKey is not null)
+            {
+                await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
+            }
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
         }
         catch (Exception)
         {
@@ -314,53 +329,63 @@ internal sealed partial class ContentService
         ImageMetadataRequest request,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        var images = await dbContext.RecipeImages.Where(item => item.RecipeId == recipeId)
-            .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var image = images.SingleOrDefault(item => item.Id == imageId)
-            ?? throw NotFound("IMAGE_NOT_FOUND", "Recipe image was not found.");
-        var makePrimary = request.IsPrimary ?? image.IsPrimary;
-        if (makePrimary)
+        try
         {
-            var currentPrimary = images.SingleOrDefault(item => item.IsPrimary && item.Id != imageId);
-            if (currentPrimary is not null)
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            EnsureVersion(recipe, expectedVersion);
+            var images = await dbContext.RecipeImages.Where(item => item.RecipeId == recipeId)
+                .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var image = images.SingleOrDefault(item => item.Id == imageId)
+                ?? throw NotFound("IMAGE_NOT_FOUND", "Recipe image was not found.");
+            var makePrimary = request.IsPrimary ?? image.IsPrimary;
+            if (makePrimary)
             {
-                currentPrimary.UpdateMetadata(currentPrimary.AltText, false, currentPrimary.OrderIndex);
-                try
+                var currentPrimary = images.SingleOrDefault(item => item.IsPrimary && item.Id != imageId);
+                if (currentPrimary is not null)
                 {
+                    currentPrimary.UpdateMetadata(currentPrimary.AltText, false, currentPrimary.OrderIndex);
                     await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 }
-                catch (DbUpdateException exception) when (IsUniqueViolation(exception, "RecipeImages"))
-                {
-                    throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
-                }
-                catch (DbUpdateException exception) when (IsDeadlockOrSerialization(exception))
-                {
-                    throw new ContentProblemException(
-                        "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
-                        ContentProblemKind.Conflict);
-                }
             }
+            else if (image.IsPrimary && images.Count > 0)
+            {
+                throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
+            }
+
+            var targetIndex = Math.Min(request.OrderIndex ?? image.OrderIndex, images.Count - 1);
+            images.Remove(image);
+            images.Insert(targetIndex, image);
+            for (var index = 0; index < images.Count; index++)
+            {
+                var item = images[index];
+                item.UpdateMetadata(item.Id == imageId ? request.AltText : item.AltText, item.Id == imageId ? makePrimary : item.IsPrimary, index);
+            }
+            recipe.MarkCompositionChanged();
+            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new ChildMutationDto<RecipeImageDto>(ToImageDto(image), recipe.Version);
         }
-        else if (image.IsPrimary && images.Count > 0)
+        catch (ContentProblemException)
+        {
+            throw;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeImages"))
         {
             throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
         }
-
-        var targetIndex = Math.Min(request.OrderIndex ?? image.OrderIndex, images.Count - 1);
-        images.Remove(image);
-        images.Insert(targetIndex, image);
-        for (var index = 0; index < images.Count; index++)
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
-            var item = images[index];
-            item.UpdateMetadata(item.Id == imageId ? request.AltText : item.AltText, item.Id == imageId ? makePrimary : item.IsPrimary, index);
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
         }
-        recipe.MarkCompositionChanged();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return new ChildMutationDto<RecipeImageDto>(ToImageDto(image), recipe.Version);
     }
 
     public async Task<long> DeleteImageAsync(
@@ -371,41 +396,64 @@ internal sealed partial class ContentService
         long expectedVersion,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        var image = await dbContext.RecipeImages.IgnoreQueryFilters().SingleOrDefaultAsync(
-            item => item.Id == imageId && item.RecipeId == recipeId, cancellationToken).ConfigureAwait(false)
-            ?? throw NotFound("IMAGE_NOT_FOUND", "Recipe image was not found.");
-        if (image.IsDeleted)
+        try
         {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            EnsureVersion(recipe, expectedVersion);
+            var image = await dbContext.RecipeImages.IgnoreQueryFilters().SingleOrDefaultAsync(
+                item => item.Id == imageId && item.RecipeId == recipeId, cancellationToken).ConfigureAwait(false)
+                ?? throw NotFound("IMAGE_NOT_FOUND", "Recipe image was not found.");
+            if (image.IsDeleted)
+            {
+                return recipe.Version;
+            }
+            var wasPrimary = image.IsPrimary;
+            image.Delete();
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            if (wasPrimary)
+            {
+                var replacement = await dbContext.RecipeImages.Where(item => item.RecipeId == recipeId)
+                    .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                replacement?.UpdateMetadata(replacement.AltText, true, replacement.OrderIndex);
+            }
+
+            var remainingImages = await dbContext.RecipeImages.Where(item => item.RecipeId == recipeId)
+                .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
+            for (var index = 0; index < remainingImages.Count; index++)
+            {
+                var item = remainingImages[index];
+                item.UpdateMetadata(item.AltText, item.IsPrimary, index);
+            }
+
+            dbContext.MediaOutbox.Add(CreateOutbox(
+                MediaOutboxTypes.DeleteObjects,
+                new DeleteObjectsPayload(new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey }.OfType<string>().ToArray())));
+            recipe.MarkCompositionChanged();
+            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return recipe.Version;
         }
-        var wasPrimary = image.IsPrimary;
-        image.Delete();
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        if (wasPrimary)
+        catch (ContentProblemException)
         {
-            var replacement = await dbContext.RecipeImages.Where(item => item.RecipeId == recipeId)
-                .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            replacement?.UpdateMetadata(replacement.AltText, true, replacement.OrderIndex);
+            throw;
         }
-
-        var remainingImages = await dbContext.RecipeImages.Where(item => item.RecipeId == recipeId)
-            .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
-        for (var index = 0; index < remainingImages.Count; index++)
+        catch (DbUpdateConcurrencyException)
         {
-            var item = remainingImages[index];
-            item.UpdateMetadata(item.AltText, item.IsPrimary, index);
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
         }
-
-        dbContext.MediaOutbox.Add(CreateOutbox(
-            MediaOutboxTypes.DeleteObjects,
-            new DeleteObjectsPayload(new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey }.OfType<string>().ToArray())));
-        recipe.MarkCompositionChanged();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return recipe.Version;
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeImages"))
+        {
+            throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
+        }
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
     }
 
     public async Task<MediaFileDto> OpenMediaAsync(

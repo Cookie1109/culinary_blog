@@ -4,6 +4,7 @@ using CulinaryBlog.Domain.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CulinaryBlog.Api.Errors;
 
@@ -37,6 +38,7 @@ internal sealed class GlobalExceptionHandler(
                     "Business rule violation"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "RESOURCE_NOT_FOUND", "Resource not found"),
             UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "FORBIDDEN", "Access denied"),
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "RECIPE_CONCURRENCY_CONFLICT", "The resource was modified by another request."),
             _ => (StatusCodes.Status500InternalServerError, "INTERNAL_ERROR", "Unexpected server error"),
         };
 
