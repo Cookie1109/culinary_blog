@@ -26,7 +26,7 @@ internal sealed partial class ContentService
         long expectedVersion,
         IngredientWriteRequest request,
         CancellationToken cancellationToken)
-    {
+    {\n        try\n        {    
         var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
         recipe.MarkCompositionChanged();
@@ -43,6 +43,27 @@ internal sealed partial class ContentService
         dbContext.RecipeIngredients.Add(ingredient);
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
+    \        }
+        catch (ContentProblemException)
+        {
+            throw;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
+        {
+            throw Conflict("STEP_NUMBER_CONFLICT", "A step number conflict occurred.");
+        }
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
     }
 
     public async Task<ChildMutationDto<IngredientDto>> UpdateIngredientAsync(
@@ -53,7 +74,7 @@ internal sealed partial class ContentService
         long expectedVersion,
         IngredientWriteRequest request,
         CancellationToken cancellationToken)
-    {
+    {\n        try\n        {    
         var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
         var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
@@ -71,6 +92,27 @@ internal sealed partial class ContentService
         recipe.MarkCompositionChanged();
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
+    \        }
+        catch (ContentProblemException)
+        {
+            throw;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
+        {
+            throw Conflict("STEP_NUMBER_CONFLICT", "A step number conflict occurred.");
+        }
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
     }
 
     public async Task<long> DeleteIngredientAsync(
@@ -80,7 +122,7 @@ internal sealed partial class ContentService
         bool isAdmin,
         long expectedVersion,
         CancellationToken cancellationToken)
-    {
+    {\n        try\n        {    
         var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
         var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
@@ -101,6 +143,27 @@ internal sealed partial class ContentService
         recipe.MarkCompositionChanged();
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         return recipe.Version;
+    \        }
+        catch (ContentProblemException)
+        {
+            throw;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
+        {
+            throw Conflict("STEP_NUMBER_CONFLICT", "A step number conflict occurred.");
+        }
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
     }
 
     public async Task<ChildMutationDto<StepDto>> CreateStepAsync(
@@ -110,7 +173,7 @@ internal sealed partial class ContentService
         long expectedVersion,
         StepWriteRequest request,
         CancellationToken cancellationToken)
-    {
+    {\n        try\n        {    
         var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
         var number = await dbContext.RecipeSteps.CountAsync(item => item.RecipeId == recipeId, cancellationToken).ConfigureAwait(false) + 1;
@@ -119,6 +182,27 @@ internal sealed partial class ContentService
         recipe.MarkCompositionChanged();
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
+    \        }
+        catch (ContentProblemException)
+        {
+            throw;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
+        {
+            throw Conflict("STEP_NUMBER_CONFLICT", "A step number conflict occurred.");
+        }
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
     }
 
     public async Task<ChildMutationDto<StepDto>> UpdateStepAsync(
@@ -129,7 +213,7 @@ internal sealed partial class ContentService
         long expectedVersion,
         StepWriteRequest request,
         CancellationToken cancellationToken)
-    {
+    {\n        try\n        {    
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
@@ -164,6 +248,27 @@ internal sealed partial class ContentService
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
+    \        }
+        catch (ContentProblemException)
+        {
+            throw;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
+        {
+            throw Conflict("STEP_NUMBER_CONFLICT", "A step number conflict occurred.");
+        }
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
     }
 
     public async Task<long> DeleteStepAsync(
@@ -173,7 +278,7 @@ internal sealed partial class ContentService
         bool isAdmin,
         long expectedVersion,
         CancellationToken cancellationToken)
-    {
+    {\n        try\n        {    
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
@@ -204,6 +309,27 @@ internal sealed partial class ContentService
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return recipe.Version;
+    \        }
+        catch (ContentProblemException)
+        {
+            throw;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
+        catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
+        {
+            throw Conflict("STEP_NUMBER_CONFLICT", "A step number conflict occurred.");
+        }
+        catch (Exception exception) when (IsDeadlockOrSerialization(exception))
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
     }
 
     public async Task<ChildMutationDto<RecipeImageDto>> UploadImageAsync(
