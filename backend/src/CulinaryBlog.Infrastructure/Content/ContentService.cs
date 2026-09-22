@@ -620,9 +620,21 @@ internal sealed partial class ContentService(
         return prefix + ending;
     }
 
+    private static PostgresException? GetPostgresException(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is PostgresException pgEx)
+            {
+                return pgEx;
+            }
+        }
+        return null;
+    }
+
     private static bool IsUniqueViolation(Exception exception, string property)
     {
-        var postgresException = exception as PostgresException ?? exception.InnerException as PostgresException;
+        var postgresException = GetPostgresException(exception);
         return postgresException is not null &&
             postgresException.SqlState == PostgresErrorCodes.UniqueViolation &&
             (postgresException.ConstraintName?.Contains(property, StringComparison.OrdinalIgnoreCase) ?? false);
@@ -630,7 +642,7 @@ internal sealed partial class ContentService(
 
     private static bool IsDeadlockOrSerialization(Exception exception)
     {
-        var postgresException = exception as PostgresException ?? exception.InnerException as PostgresException;
+        var postgresException = GetPostgresException(exception);
         return postgresException is not null &&
             (postgresException.SqlState == PostgresErrorCodes.DeadlockDetected ||
              postgresException.SqlState == PostgresErrorCodes.SerializationFailure);
