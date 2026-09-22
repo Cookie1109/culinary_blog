@@ -35,13 +35,24 @@ internal sealed class UnitOfWork(AppDbContext dbContext, IRecipeRepository recip
             return await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (DbUpdateConcurrencyException exception)
-            when (exception.Entries.Any(entry => entry.Entity is Recipe))
         {
-            var recipe = (Recipe)exception.Entries.First(entry => entry.Entity is Recipe).Entity;
-            var currentVersion = await dbContext.Recipes.AsNoTracking()
-                .Where(item => item.Id == recipe.Id)
-                .Select(item => (long?)item.Version)
-                .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            long? currentVersion = null;
+            var recipeEntry = exception.Entries.FirstOrDefault(entry => entry.Entity is Recipe);
+            if (recipeEntry?.Entity is Recipe recipe)
+            {
+                try
+                {
+                    currentVersion = await dbContext.Recipes.AsNoTracking()
+                        .Where(item => item.Id == recipe.Id)
+                        .Select(item => (long?)item.Version)
+                        .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Fall back to null if the connection or transaction cannot execute further queries
+                }
+            }
+
             throw new ContentProblemException(
                 "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
                 ContentProblemKind.Conflict, currentVersion);

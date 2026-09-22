@@ -53,11 +53,40 @@ public sealed class DeleteRecipeCommandTests
         Assert.Equal(0, unitOfWork.SaveCount);
     }
 
+    [Fact]
+    public async Task AdminCanSoftDeleteRecipeOfOtherAuthor()
+    {
+        var ownerId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        var recipe = CreateRecipe(ownerId);
+        var unitOfWork = new FakeUnitOfWork(recipe);
+
+        await new DeleteRecipeCommandHandler(unitOfWork).Handle(
+            new DeleteRecipeCommand(recipe.Id, adminId, true, recipe.Version), CancellationToken.None);
+
+        Assert.True(recipe.IsDeleted);
+        Assert.Equal(1, unitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task NonExistentRecipeThrowsNotFound()
+    {
+        var unitOfWork = new FakeUnitOfWork(null);
+
+        var exception = await Assert.ThrowsAsync<ContentProblemException>(() =>
+            new DeleteRecipeCommandHandler(unitOfWork).Handle(
+                new DeleteRecipeCommand(Guid.NewGuid(), Guid.NewGuid(), false, 1), CancellationToken.None));
+
+        Assert.Equal(ContentProblemKind.NotFound, exception.Kind);
+        Assert.Equal("RECIPE_NOT_FOUND", exception.Code);
+        Assert.Equal(0, unitOfWork.SaveCount);
+    }
+
     private static Recipe CreateRecipe(Guid ownerId) => Recipe.Create(
         Guid.NewGuid(), ownerId, "sample-recipe", "Sample recipe", "Description",
         Guid.NewGuid(), 10, 10, 2, RecipeDifficulty.Easy, null, null);
 
-    private sealed class FakeUnitOfWork(Recipe recipe) : IUnitOfWork
+    private sealed class FakeUnitOfWork(Recipe? recipe) : IUnitOfWork
     {
         public IRecipeRepository Recipes { get; } = new FakeRecipeRepository(recipe);
 
@@ -70,10 +99,10 @@ public sealed class DeleteRecipeCommandTests
         }
     }
 
-    private sealed class FakeRecipeRepository(Recipe recipe) : IRecipeRepository
+    private sealed class FakeRecipeRepository(Recipe? recipe) : IRecipeRepository
     {
         public Task<Recipe?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
-            Task.FromResult<Recipe?>(id == recipe.Id ? recipe : null);
+            Task.FromResult(recipe is not null && id == recipe.Id ? recipe : null);
 
         public Task<bool> SlugExistsAsync(string slug, Guid? excludedId, CancellationToken cancellationToken) =>
             Task.FromResult(false);

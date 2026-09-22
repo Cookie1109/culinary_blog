@@ -260,7 +260,20 @@ internal sealed partial class ContentService
                 {
                     current.UpdateMetadata(current.AltText, false, current.OrderIndex);
                 }
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (DbUpdateException exception) when (IsUniqueViolation(exception, "RecipeImages"))
+                {
+                    throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
+                }
+                catch (DbUpdateException exception) when (IsDeadlockOrSerialization(exception))
+                {
+                    throw new ContentProblemException(
+                        "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                        ContentProblemKind.Conflict);
+                }
             }
 
             var image = RecipeImage.Create(imageId, recipeId, objectKey, detectedContentType, altText, makePrimary, existingImages.Count);
@@ -315,7 +328,20 @@ internal sealed partial class ContentService
             if (currentPrimary is not null)
             {
                 currentPrimary.UpdateMetadata(currentPrimary.AltText, false, currentPrimary.OrderIndex);
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (DbUpdateException exception) when (IsUniqueViolation(exception, "RecipeImages"))
+                {
+                    throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
+                }
+                catch (DbUpdateException exception) when (IsDeadlockOrSerialization(exception))
+                {
+                    throw new ContentProblemException(
+                        "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                        ContentProblemKind.Conflict);
+                }
             }
         }
         else if (image.IsPrimary && images.Count > 0)

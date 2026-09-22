@@ -427,6 +427,20 @@ internal sealed partial class ContentService(
         {
             throw Conflict("RECIPE_SLUG_EXISTS", "A recipe already owns this slug.");
         }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception, "RecipeImages"))
+        {
+            throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
+        {
+            throw Conflict("STEP_NUMBER_CONFLICT", "A step number conflict occurred.");
+        }
+        catch (DbUpdateException exception) when (IsDeadlockOrSerialization(exception))
+        {
+            throw new ContentProblemException(
+                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                ContentProblemKind.Conflict);
+        }
     }
 
     private async Task<string> AllocateRecipeSlugAsync(
@@ -610,6 +624,11 @@ internal sealed partial class ContentService(
         exception.InnerException is PostgresException postgresException &&
         postgresException.SqlState == PostgresErrorCodes.UniqueViolation &&
         (postgresException.ConstraintName?.Contains(property, StringComparison.OrdinalIgnoreCase) ?? false);
+
+    private static bool IsDeadlockOrSerialization(DbUpdateException exception) =>
+        exception.InnerException is PostgresException postgresException &&
+        (postgresException.SqlState == PostgresErrorCodes.DeadlockDetected ||
+         postgresException.SqlState == PostgresErrorCodes.SerializationFailure);
 
     private static PageMeta CreateMeta(int page, int pageSize, int total)
     {
