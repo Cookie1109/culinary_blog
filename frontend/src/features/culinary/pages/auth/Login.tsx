@@ -1,9 +1,12 @@
+'use client'
+
 import { useState, type FormEvent } from 'react'
+import { signIn } from 'next-auth/react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Eye, EyeOff, ChefHat, ArrowRight } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
-export function Login() {
+export function Login({ googleEnabled }: { googleEnabled: boolean }) {
   const { login, isLoading } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -136,9 +139,24 @@ export function Login() {
             </button>
           </form>
 
+          {googleEnabled && (
+            <button
+              type="button"
+              onClick={() => {
+                const returnTo = searchParams.get('returnTo')
+                const callbackUrl =
+                  returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/dashboard'
+                void signIn('google', { callbackUrl })
+              }}
+              className="mt-4 w-full border border-border px-4 py-3 text-sm font-medium hover:bg-secondary"
+            >
+              Tiếp tục với Google
+            </button>
+          )}
+
           <p className="mt-8 text-sm text-center text-muted-foreground">
             Chưa có tài khoản?{' '}
-            <Link to="/auth/register" className="text-primary hover:underline font-medium">
+            <Link to="/register" className="text-primary hover:underline font-medium">
               Tạo tài khoản mới
             </Link>
           </p>

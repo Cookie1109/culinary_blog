@@ -1,16 +1,11 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
+import { signIn, signOut, useSession } from 'next-auth/react'
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import {
-  clearStoredSession,
-  loginSession,
-  logoutSession,
-  refreshSession,
-  registerSession,
-  updateProfile as updateRemoteProfile,
-  type AuthUser,
-} from '@/lib/api/auth-client'
+import { updateProfile as updateRemoteProfile } from '@/lib/api/auth-client'
+import { configureSessionRefresh } from '@/lib/api/axios'
+import type { AuthUser } from '@/lib/api/auth-types'
 
 export interface User {
   id: string
@@ -45,64 +40,61 @@ function mapUser(user: AuthUser): User {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: session, status, update } = useSession()
+  const [busy, setBusy] = useState(false)
+  const user = session?.backendUser ? mapUser(session.backendUser) : null
 
   useEffect(() => {
-    let active = true
-    refreshSession()
-      .then((session) => {
-        if (active) setUser(mapUser(session.user))
-      })
-      .catch(() => clearStoredSession())
-      .finally(() => {
-        if (active) setIsLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [])
+    configureSessionRefresh(() => update({ refresh: true }))
+    return () => configureSessionRefresh(null)
+  }, [update])
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true)
+    setBusy(true)
     try {
-      const session = await loginSession(email, password)
-      setUser(mapUser(session.user))
+      const result = await signIn('credentials', { email, password, redirect: false })
+      if (result?.error) throw new Error(result.error)
+      await update()
     } finally {
-      setIsLoading(false)
+      setBusy(false)
     }
   }
 
   const register = async (name: string, email: string, password: string) => {
-    setIsLoading(true)
+    setBusy(true)
     try {
-      const session = await registerSession(name, email, password)
-      setUser(mapUser(session.user))
+      const result = await signIn('credentials', {
+        email,
+        password,
+        displayName: name,
+        mode: 'register',
+        redirect: false,
+      })
+      if (result?.error) throw new Error(result.error)
+      await update()
     } finally {
-      setIsLoading(false)
+      setBusy(false)
     }
   }
 
   const logout = async () => {
-    try {
-      await logoutSession()
-    } finally {
-      setUser(null)
-      queryClient.removeQueries()
-    }
+    await signOut({ redirect: false })
+    queryClient.removeQueries()
   }
 
   const updateProfile = async (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => {
-    const updated = await updateRemoteProfile({
+    await updateRemoteProfile({
       displayName: data.name ?? user?.name ?? '',
       ...(data.bio !== undefined ? { bio: data.bio } : {}),
       ...(data.avatar !== undefined ? { avatarUrl: data.avatar } : {}),
     })
-    setUser(mapUser(updated))
+    await update()
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, register, updateProfile }}>
+    <AuthContext.Provider
+      value={{ user, isLoading: status === 'loading' || busy, login, logout, register, updateProfile }}
+    >
       {children}
     </AuthContext.Provider>
   )

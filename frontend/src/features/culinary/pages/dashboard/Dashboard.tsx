@@ -75,7 +75,7 @@ export function Dashboard() {
       <div className="text-center py-16">
         <p className="font-serif text-2xl mb-4">Bạn cần đăng nhập để truy cập bảng điều khiển.</p>
         <button
-          onClick={() => navigate('/auth/login')}
+          onClick={() => navigate('/login')}
           className="bg-primary text-primary-foreground px-8 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
         >
           Đăng nhập

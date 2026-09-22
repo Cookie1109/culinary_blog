@@ -17,7 +17,7 @@ export function Profile() {
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
         <h1 className="font-serif text-3xl mb-4">Đăng nhập để xem hồ sơ của bạn</h1>
         <button
-          onClick={() => navigate('/auth/login')}
+          onClick={() => navigate('/login')}
           className="bg-primary text-primary-foreground px-8 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
         >
           Đăng nhập

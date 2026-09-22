@@ -205,7 +205,7 @@ export function Register() {
 
           <p className="mt-8 text-sm text-center text-muted-foreground">
             Đã có tài khoản?{' '}
-            <Link to="/auth/login" className="text-primary hover:underline font-medium">
+            <Link to="/login" className="text-primary hover:underline font-medium">
               Đăng nhập
             </Link>
           </p>

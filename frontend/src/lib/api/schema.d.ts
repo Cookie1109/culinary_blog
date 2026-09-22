@@ -1131,12 +1131,16 @@ export interface operations {
     };
     searchPublishedRecipes: {
         parameters: {
-            query: {
-                q: string;
+            query?: {
+                q?: string;
                 page?: components["parameters"]["Page"];
                 pageSize?: components["parameters"]["PageSize"];
-                categoryId?: string;
+                /** @description Category slug */
+                category?: string;
                 difficulty?: components["schemas"]["RecipeDifficulty"];
+                /** @description Maximum preparation plus cooking time in minutes */
+                maxTime?: number;
+                sort?: "relevance" | "newest" | "quickest" | "az";
             };
             header?: never;
             path?: never;

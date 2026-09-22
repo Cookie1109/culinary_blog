@@ -13,7 +13,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace(`/auth/login?returnTo=${encodeURIComponent(pathname)}`)
+      router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`)
     }
   }, [isLoading, pathname, router, user])
 

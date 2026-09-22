@@ -1,6 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { LayoutGrid, List } from 'lucide-react'
+import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
 import {
@@ -8,6 +10,7 @@ import {
   listPublishedRecipes,
   listPublishedRecipesByCategory,
 } from '@/lib/api/content-client'
+import { useUIStore } from '@/store/useUIStore'
 
 const PAGE_SIZE = 12
 
@@ -26,6 +29,12 @@ export function RecipesList() {
     },
   })
   const recipes = recipesQuery.data?.data ?? []
+  const viewMode = useUIStore((state) => state.viewMode)
+  const setViewMode = useUIStore((state) => state.setViewMode)
+
+  useEffect(() => {
+    void useUIStore.persist.rehydrate()
+  }, [])
 
   const selectCategory = (slug: string) => {
     const next = new URLSearchParams(searchParams)
@@ -68,6 +77,27 @@ export function RecipesList() {
         ))}
       </div>
 
+      <div className="mb-6 flex justify-end gap-2" aria-label="Kiểu hiển thị công thức">
+        <button
+          type="button"
+          onClick={() => setViewMode('grid')}
+          aria-label="Hiển thị dạng lưới"
+          aria-pressed={viewMode === 'grid'}
+          className={`border p-2 ${viewMode === 'grid' ? 'border-primary text-primary' : 'border-border text-muted-foreground'}`}
+        >
+          <LayoutGrid size={18} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode('list')}
+          aria-label="Hiển thị dạng danh sách"
+          aria-pressed={viewMode === 'list'}
+          className={`border p-2 ${viewMode === 'list' ? 'border-primary text-primary' : 'border-border text-muted-foreground'}`}
+        >
+          <List size={18} aria-hidden="true" />
+        </button>
+      </div>
+
       {recipesQuery.isPending ? (
         <p role="status" className="py-20 text-center text-muted-foreground">
           Đang tải công thức…
@@ -79,7 +109,7 @@ export function RecipesList() {
       ) : recipes.length === 0 ? (
         <p className="py-20 text-center text-muted-foreground">Không có công thức phù hợp.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
+        <div className={`grid grid-cols-1 gap-x-8 gap-y-16 ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'mx-auto max-w-2xl'}`}>
           {recipes.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}

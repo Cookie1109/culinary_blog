@@ -134,6 +134,27 @@ export function listPublishedRecipes(page = 1, pageSize = 12) {
   return apiRequest<PageEnvelope<Recipe>>(`/recipes?${query}`)
 }
 
+export function searchPublishedRecipes(filters: {
+  q: string
+  category: string
+  difficulty: string
+  maxTime: number
+  sort: string
+  page: number
+  pageSize: number
+}) {
+  const query = new URLSearchParams({
+    page: String(filters.page),
+    pageSize: String(filters.pageSize),
+    sort: filters.sort,
+  })
+  if (filters.q) query.set('q', filters.q)
+  if (filters.category) query.set('category', filters.category)
+  if (filters.difficulty) query.set('difficulty', filters.difficulty)
+  if (filters.maxTime > 0) query.set('maxTime', String(filters.maxTime))
+  return apiRequest<PageEnvelope<Recipe>>('/recipes/search?' + query)
+}
+
 export function listPublishedRecipesByCategory(slug: string, page = 1, pageSize = 12) {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
   return apiRequest<CategoryDetailEnvelope>(`/categories/${encodeURIComponent(slug)}?${query}`)
@@ -270,7 +291,7 @@ export function uploadRecipeImage(
   form.set('file', file)
   form.set('altText', altText)
   form.set('isPrimary', String(isPrimary))
-  return authenticatedUpload<MutationEnvelope<RecipeImage>>(`/recipes/${recipeId}/images`, form, onProgress)
+  return authenticatedUpload<MutationEnvelope<RecipeImage>>(`/recipes/${recipeId}/images`, form, onProgress, version)
 }
 
 export function updateRecipeImage(

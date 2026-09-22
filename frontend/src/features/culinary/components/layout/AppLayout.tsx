@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useNavigate, NavLink } from 'react-router'
 import { ChefHat, Search, Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useUIStore } from '@/store/useUIStore'
 
 export function AppLayout() {
   const { user, logout } = useAuth()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const mobileOpen = useUIStore((state) => state.sidebarOpen)
+  const setMobileOpen = useUIStore((state) => state.setSidebarOpen)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const navigate = useNavigate()
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -152,7 +154,7 @@ export function AppLayout() {
                 </div>
               ) : (
                 <Link
-                  to="/auth/login"
+                  to="/login"
                   className="flex items-center gap-2 text-sm font-medium tracking-wide uppercase hover:text-primary transition-colors"
                 >
                   <span className="hidden sm:inline">Đăng nhập</span>
@@ -254,7 +256,7 @@ export function AppLayout() {
                 </button>
               ) : (
                 <Link
-                  to="/auth/login"
+                  to="/login"
                   onClick={() => setMobileOpen(false)}
                   className="block w-full text-center bg-foreground text-background px-6 py-3 text-sm uppercase tracking-widest font-medium hover:bg-primary transition-colors"
                 >

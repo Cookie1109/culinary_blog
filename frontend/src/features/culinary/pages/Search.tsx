@@ -5,17 +5,9 @@ import { Search as SearchIcon, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
-import { listCategories, listPublishedRecipes } from '@/lib/api/content-client'
+import { listCategories, searchPublishedRecipes } from '@/lib/api/content-client'
 
 const PAGE_SIZE = 9
-
-function normalizeText(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .toLowerCase()
-}
 
 export function Search() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -23,14 +15,15 @@ export function Search() {
   const category = searchParams.get('category') ?? ''
   const difficulty = searchParams.get('difficulty') ?? ''
   const maxTime = Number.parseInt(searchParams.get('maxTime') ?? '0', 10)
-  const sort = searchParams.get('sort') ?? 'newest'
+  const sort = searchParams.get('sort') ?? 'relevance'
   const requestedPage = Number.parseInt(searchParams.get('page') ?? '1', 10)
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
   const [inputValue, setInputValue] = useState(q)
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
   const recipesQuery = useQuery({
-    queryKey: ['public-recipes', 'search-source'],
-    queryFn: () => listPublishedRecipes(1, 50),
+    queryKey: ['public-recipes', 'search', q, category, difficulty, maxTime, sort, page],
+    queryFn: () =>
+      searchPublishedRecipes({ q, category, difficulty, maxTime, sort, page, pageSize: PAGE_SIZE }),
   })
 
   useEffect(() => setInputValue(q), [q])
@@ -48,29 +41,8 @@ export function Search() {
     setFilter('q', inputValue.trim())
   }
 
-  const query = normalizeText(q)
-  const results = [...(recipesQuery.data?.data ?? [])]
-    .filter((recipe) => {
-      const searchable = normalizeText(
-        `${recipe.title} ${recipe.description} ${recipe.category.name} ${recipe.author.displayName}`,
-      )
-      return (
-        (!query || searchable.includes(query)) &&
-        (!category || recipe.category.slug === category) &&
-        (!difficulty || recipe.difficulty === difficulty) &&
-        (!maxTime || recipe.prepTime + recipe.cookTime <= maxTime)
-      )
-    })
-    .sort((left, right) => {
-      if (sort === 'quickest') return left.prepTime + left.cookTime - (right.prepTime + right.cookTime)
-      if (sort === 'az') return left.title.localeCompare(right.title, 'vi')
-      return (
-        new Date(right.publishedAt ?? right.createdAt).getTime() -
-        new Date(left.publishedAt ?? left.createdAt).getTime()
-      )
-    })
-  const totalPages = Math.ceil(results.length / PAGE_SIZE)
-  const paginated = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const results = recipesQuery.data?.data ?? []
+  const totalPages = recipesQuery.data?.meta.totalPages ?? 0
   const hasFilters = Boolean(q || category || difficulty || maxTime)
 
   return (
@@ -87,7 +59,7 @@ export function Search() {
             value={inputValue}
             onChange={(event) => setInputValue(event.target.value)}
             className="min-w-0 flex-1 border border-border bg-background px-4 py-3 focus:border-primary focus:outline-none"
-            placeholder="Tên món, mô tả, danh mục hoặc tác giả"
+            placeholder="Tên món hoặc mô tả"
           />
           <button
             type="submit"
@@ -135,6 +107,7 @@ export function Search() {
             onChange={(event) => setFilter('sort', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
           >
+            <option value="relevance">Liên quan nhất</option>
             <option value="newest">Mới nhất</option>
             <option value="quickest">Nấu nhanh nhất</option>
             <option value="az">Theo tên (A–Z)</option>
@@ -144,7 +117,7 @@ export function Search() {
 
       <div className="mb-6 flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{results.length}</span> công thức phù hợp
+          <span className="font-medium text-foreground">{recipesQuery.data?.meta.total ?? 0}</span> công thức phù hợp
         </p>
         {hasFilters && (
           <button
@@ -165,14 +138,14 @@ export function Search() {
         <p role="alert" className="py-20 text-center text-red-600">
           Không thể tải dữ liệu tìm kiếm.
         </p>
-      ) : paginated.length === 0 ? (
+      ) : results.length === 0 ? (
         <div className="py-24 text-center">
           <SearchIcon size={40} aria-hidden="true" className="mx-auto mb-4 text-muted-foreground" />
           <p className="font-serif text-xl">Không tìm thấy công thức phù hợp</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 xl:grid-cols-3">
-          {paginated.map((recipe) => (
+          {results.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
         </div>
