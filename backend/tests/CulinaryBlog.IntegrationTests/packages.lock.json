@@ -839,6 +839,7 @@
       "culinaryblog.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "Bogus": "[35.6.5, )",
           "CulinaryBlog.Application": "[1.0.0, )",
           "CulinaryBlog.Domain": "[1.0.0, )",
           "Google.Apis.Auth": "[1.76.0, )",
@@ -854,6 +855,12 @@
           "StackExchange.Redis": "[3.2.0, )",
           "System.IdentityModel.Tokens.Jwt": "[8.19.2, )"
         }
+      },
+      "Bogus": {
+        "type": "CentralTransitive",
+        "requested": "[35.6.5, )",
+        "resolved": "35.6.5",
+        "contentHash": "2FGZn+aAVHjmCgClgmGkTDBVZk0zkLvAKGaxEf5JL6b3i9JbHTE4wnuY4vHCuzlCmJdU6VZjgDfHwmYkQF8VAA=="
       },
       "FluentValidation.DependencyInjectionExtensions": {
         "type": "CentralTransitive",
