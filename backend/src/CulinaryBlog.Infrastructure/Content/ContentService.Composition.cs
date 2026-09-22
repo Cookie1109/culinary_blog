@@ -26,24 +26,26 @@ internal sealed partial class ContentService
         long expectedVersion,
         IngredientWriteRequest request,
         CancellationToken cancellationToken)
-    {\n        try\n        {    
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        recipe.MarkCompositionChanged();
-        var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
-            .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var targetIndex = Math.Min(request.OrderIndex, ingredients.Count);
-        var ingredient = RecipeIngredient.Create(
-            Guid.NewGuid(), recipeId, request.Name, request.Quantity, request.Unit, request.Notes, targetIndex);
-        ingredients.Insert(targetIndex, ingredient);
-        for (var index = 0; index < ingredients.Count; index++)
+    {
+        try
         {
-            ingredients[index].MoveTo(index);
+            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            EnsureVersion(recipe, expectedVersion);
+            recipe.MarkCompositionChanged();
+            var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
+                .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var targetIndex = Math.Min(request.OrderIndex, ingredients.Count);
+            var ingredient = RecipeIngredient.Create(
+                Guid.NewGuid(), recipeId, request.Name, request.Quantity, request.Unit, request.Notes, targetIndex);
+            ingredients.Insert(targetIndex, ingredient);
+            for (var index = 0; index < ingredients.Count; index++)
+            {
+                ingredients[index].MoveTo(index);
+            }
+            dbContext.RecipeIngredients.Add(ingredient);
+            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
         }
-        dbContext.RecipeIngredients.Add(ingredient);
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-        return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
-    \        }
         catch (ContentProblemException)
         {
             throw;
@@ -74,25 +76,27 @@ internal sealed partial class ContentService
         long expectedVersion,
         IngredientWriteRequest request,
         CancellationToken cancellationToken)
-    {\n        try\n        {    
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
-            .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var ingredient = ingredients.SingleOrDefault(item => item.Id == ingredientId)
-            ?? throw NotFound("INGREDIENT_NOT_FOUND", "Ingredient was not found.");
-        var targetIndex = Math.Min(request.OrderIndex, ingredients.Count - 1);
-        ingredient.Update(request.Name, request.Quantity, request.Unit, request.Notes, targetIndex);
-        ingredients.Remove(ingredient);
-        ingredients.Insert(targetIndex, ingredient);
-        for (var index = 0; index < ingredients.Count; index++)
+    {
+        try
         {
-            ingredients[index].MoveTo(index);
+            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            EnsureVersion(recipe, expectedVersion);
+            var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
+                .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var ingredient = ingredients.SingleOrDefault(item => item.Id == ingredientId)
+                ?? throw NotFound("INGREDIENT_NOT_FOUND", "Ingredient was not found.");
+            var targetIndex = Math.Min(request.OrderIndex, ingredients.Count - 1);
+            ingredient.Update(request.Name, request.Quantity, request.Unit, request.Notes, targetIndex);
+            ingredients.Remove(ingredient);
+            ingredients.Insert(targetIndex, ingredient);
+            for (var index = 0; index < ingredients.Count; index++)
+            {
+                ingredients[index].MoveTo(index);
+            }
+            recipe.MarkCompositionChanged();
+            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
         }
-        recipe.MarkCompositionChanged();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-        return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
-    \        }
         catch (ContentProblemException)
         {
             throw;
@@ -122,28 +126,30 @@ internal sealed partial class ContentService
         bool isAdmin,
         long expectedVersion,
         CancellationToken cancellationToken)
-    {\n        try\n        {    
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
-            .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var ingredient = ingredients.SingleOrDefault(item => item.Id == ingredientId)
-            ?? throw NotFound("INGREDIENT_NOT_FOUND", "Ingredient was not found.");
-        if (recipe.Status == RecipeStatus.Published && ingredients.Count <= 1)
+    {
+        try
         {
-            throw Conflict("RECIPE_STATE_CONFLICT", "A published recipe must keep at least one ingredient. Unpublish it first.");
-        }
+            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            EnsureVersion(recipe, expectedVersion);
+            var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
+                .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var ingredient = ingredients.SingleOrDefault(item => item.Id == ingredientId)
+                ?? throw NotFound("INGREDIENT_NOT_FOUND", "Ingredient was not found.");
+            if (recipe.Status == RecipeStatus.Published && ingredients.Count <= 1)
+            {
+                throw Conflict("RECIPE_STATE_CONFLICT", "A published recipe must keep at least one ingredient. Unpublish it first.");
+            }
 
-        ingredient.Delete();
-        var remaining = ingredients.Where(item => item.Id != ingredientId).ToList();
-        for (var index = 0; index < remaining.Count; index++)
-        {
-            remaining[index].MoveTo(index);
+            ingredient.Delete();
+            var remaining = ingredients.Where(item => item.Id != ingredientId).ToList();
+            for (var index = 0; index < remaining.Count; index++)
+            {
+                remaining[index].MoveTo(index);
+            }
+            recipe.MarkCompositionChanged();
+            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            return recipe.Version;
         }
-        recipe.MarkCompositionChanged();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-        return recipe.Version;
-    \        }
         catch (ContentProblemException)
         {
             throw;
@@ -173,16 +179,18 @@ internal sealed partial class ContentService
         long expectedVersion,
         StepWriteRequest request,
         CancellationToken cancellationToken)
-    {\n        try\n        {    
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        var number = await dbContext.RecipeSteps.CountAsync(item => item.RecipeId == recipeId, cancellationToken).ConfigureAwait(false) + 1;
-        var step = RecipeStep.Create(Guid.NewGuid(), recipeId, number, request.Title, request.Description, request.TimerMinutes, request.ImageUrl);
-        dbContext.RecipeSteps.Add(step);
-        recipe.MarkCompositionChanged();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-        return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
-    \        }
+    {
+        try
+        {
+            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            EnsureVersion(recipe, expectedVersion);
+            var number = await dbContext.RecipeSteps.CountAsync(item => item.RecipeId == recipeId, cancellationToken).ConfigureAwait(false) + 1;
+            var step = RecipeStep.Create(Guid.NewGuid(), recipeId, number, request.Title, request.Description, request.TimerMinutes, request.ImageUrl);
+            dbContext.RecipeSteps.Add(step);
+            recipe.MarkCompositionChanged();
+            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
+        }
         catch (ContentProblemException)
         {
             throw;
@@ -213,42 +221,44 @@ internal sealed partial class ContentService
         long expectedVersion,
         StepWriteRequest request,
         CancellationToken cancellationToken)
-    {\n        try\n        {    
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        var steps = await dbContext.RecipeSteps.Where(item => item.RecipeId == recipeId)
-            .OrderBy(item => item.StepNumber).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var step = steps.SingleOrDefault(item => item.Id == stepId)
-            ?? throw NotFound("STEP_NOT_FOUND", "Recipe step was not found.");
-        var targetNumber = request.StepNumber ?? step.StepNumber;
-        if (targetNumber > steps.Count)
+    {
+        try
         {
-            throw new ContentProblemException("VALIDATION_ERROR", "stepNumber must be within the current step range.", ContentProblemKind.BadRequest);
-        }
-
-        step.Update(step.StepNumber, request.Title, request.Description, request.TimerMinutes, request.ImageUrl);
-        if (targetNumber != step.StepNumber)
-        {
-            foreach (var item in steps)
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            EnsureVersion(recipe, expectedVersion);
+            var steps = await dbContext.RecipeSteps.Where(item => item.RecipeId == recipeId)
+                .OrderBy(item => item.StepNumber).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var step = steps.SingleOrDefault(item => item.Id == stepId)
+                ?? throw NotFound("STEP_NOT_FOUND", "Recipe step was not found.");
+            var targetNumber = request.StepNumber ?? step.StepNumber;
+            if (targetNumber > steps.Count)
             {
-                item.MoveTo(item.StepNumber + 100_000);
+                throw new ContentProblemException("VALIDATION_ERROR", "stepNumber must be within the current step range.", ContentProblemKind.BadRequest);
             }
 
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            steps.Remove(step);
-            steps.Insert(targetNumber - 1, step);
-            for (var index = 0; index < steps.Count; index++)
+            step.Update(step.StepNumber, request.Title, request.Description, request.TimerMinutes, request.ImageUrl);
+            if (targetNumber != step.StepNumber)
             {
-                steps[index].MoveTo(index + 1);
-            }
-        }
+                foreach (var item in steps)
+                {
+                    item.MoveTo(item.StepNumber + 100_000);
+                }
 
-        recipe.MarkCompositionChanged();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
-    \        }
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                steps.Remove(step);
+                steps.Insert(targetNumber - 1, step);
+                for (var index = 0; index < steps.Count; index++)
+                {
+                    steps[index].MoveTo(index + 1);
+                }
+            }
+
+            recipe.MarkCompositionChanged();
+            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
+        }
         catch (ContentProblemException)
         {
             throw;
@@ -278,38 +288,40 @@ internal sealed partial class ContentService
         bool isAdmin,
         long expectedVersion,
         CancellationToken cancellationToken)
-    {\n        try\n        {    
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
-        EnsureVersion(recipe, expectedVersion);
-        var steps = await dbContext.RecipeSteps.Where(item => item.RecipeId == recipeId)
-            .OrderBy(item => item.StepNumber).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var step = steps.SingleOrDefault(item => item.Id == stepId)
-            ?? throw NotFound("STEP_NOT_FOUND", "Recipe step was not found.");
-        if (recipe.Status == RecipeStatus.Published && steps.Count <= 1)
+    {
+        try
         {
-            throw Conflict("RECIPE_STATE_CONFLICT", "A published recipe must keep at least one step. Unpublish it first.");
-        }
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            EnsureVersion(recipe, expectedVersion);
+            var steps = await dbContext.RecipeSteps.Where(item => item.RecipeId == recipeId)
+                .OrderBy(item => item.StepNumber).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var step = steps.SingleOrDefault(item => item.Id == stepId)
+                ?? throw NotFound("STEP_NOT_FOUND", "Recipe step was not found.");
+            if (recipe.Status == RecipeStatus.Published && steps.Count <= 1)
+            {
+                throw Conflict("RECIPE_STATE_CONFLICT", "A published recipe must keep at least one step. Unpublish it first.");
+            }
 
-        step.Delete();
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var remaining = steps.Where(item => item.Id != stepId).ToList();
-        foreach (var item in remaining)
-        {
-            item.MoveTo(item.StepNumber + 100_000);
-        }
+            step.Delete();
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            var remaining = steps.Where(item => item.Id != stepId).ToList();
+            foreach (var item in remaining)
+            {
+                item.MoveTo(item.StepNumber + 100_000);
+            }
 
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        for (var index = 0; index < remaining.Count; index++)
-        {
-            remaining[index].MoveTo(index + 1);
-        }
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            for (var index = 0; index < remaining.Count; index++)
+            {
+                remaining[index].MoveTo(index + 1);
+            }
 
-        recipe.MarkCompositionChanged();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return recipe.Version;
-    \        }
+            recipe.MarkCompositionChanged();
+            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return recipe.Version;
+        }
         catch (ContentProblemException)
         {
             throw;
