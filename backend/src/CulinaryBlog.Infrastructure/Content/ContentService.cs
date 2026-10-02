@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -44,6 +45,12 @@ internal sealed partial class ContentService(
             LogLevel.Information,
             new EventId(4003, nameof(RecipeUnpublished)),
             "Audit event recipe.unpublished for recipe {RecipeId} by user {UserId}");
+
+    private static readonly Action<ILogger, string, double, Exception?> SlowDiscoveryQuery =
+        LoggerMessage.Define<string, double>(
+            LogLevel.Warning,
+            new EventId(4004, nameof(SlowDiscoveryQuery)),
+            "Discovery query {QueryName} completed in {ElapsedMilliseconds:F1} ms, exceeding the 100 ms budget");
 
     public async Task<IReadOnlyCollection<CategoryDto>> ListCategoriesAsync(CancellationToken cancellationToken)
     {
@@ -339,17 +346,90 @@ internal sealed partial class ContentService(
             pageSize,
             cancellationToken);
 
-    public async Task<PageEnvelope<RecipeDto>> SearchPublishedRecipesAsync(
-        string? search,
-        string? category,
+    async Task<PageEnvelope<RecipeDto>> IRecipeSearchRepository.ListPublishedRecipesAsync(
+        Guid? categoryId,
         RecipeDifficulty? difficulty,
-        int? maxTime,
+        int? maxCookTime,
+        int? minServings,
+        int? minPrepTime,
+        int? maxPrepTime,
         string? sort,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
     {
         ValidatePage(page, pageSize);
+        var stopwatch = Stopwatch.StartNew();
+        var query = dbContext.Recipes.AsNoTracking().Where(recipe => recipe.Status == RecipeStatus.Published);
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(recipe => recipe.CategoryId == categoryId.Value);
+        }
+
+        if (difficulty.HasValue)
+        {
+            query = query.Where(recipe => recipe.Difficulty == difficulty.Value);
+        }
+
+        if (maxCookTime.HasValue)
+        {
+            query = query.Where(recipe => recipe.CookTime <= maxCookTime.Value);
+        }
+
+        if (minServings.HasValue)
+        {
+            query = query.Where(recipe => recipe.Servings >= minServings.Value);
+        }
+
+        if (minPrepTime.HasValue)
+        {
+            query = query.Where(recipe => recipe.PrepTime >= minPrepTime.Value);
+        }
+
+        if (maxPrepTime.HasValue)
+        {
+            query = query.Where(recipe => recipe.PrepTime <= maxPrepTime.Value);
+        }
+
+        var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+        var ordered = sort switch
+        {
+            "createdAt" or "oldest" => query.OrderBy(recipe => recipe.CreatedAt).ThenBy(recipe => recipe.Id),
+            "title" or "az" => query.OrderBy(recipe => recipe.Title).ThenBy(recipe => recipe.Id),
+            "-title" or "za" => query.OrderByDescending(recipe => recipe.Title).ThenBy(recipe => recipe.Id),
+            "cookTime" => query.OrderBy(recipe => recipe.CookTime).ThenByDescending(recipe => recipe.PublishedAt),
+            "-cookTime" => query.OrderByDescending(recipe => recipe.CookTime).ThenByDescending(recipe => recipe.PublishedAt),
+            "prepTime" => query.OrderBy(recipe => recipe.PrepTime).ThenByDescending(recipe => recipe.PublishedAt),
+            "-prepTime" => query.OrderByDescending(recipe => recipe.PrepTime).ThenByDescending(recipe => recipe.PublishedAt),
+            "servings" => query.OrderBy(recipe => recipe.Servings).ThenByDescending(recipe => recipe.PublishedAt),
+            "-servings" => query.OrderByDescending(recipe => recipe.Servings).ThenByDescending(recipe => recipe.PublishedAt),
+            _ => query.OrderByDescending(recipe => recipe.CreatedAt).ThenByDescending(recipe => recipe.Id),
+        };
+        var recipes = await ordered.Skip((page - 1) * pageSize).Take(pageSize)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        var result = new PageEnvelope<RecipeDto>(
+            await MapRecipesAsync(recipes, cancellationToken).ConfigureAwait(false),
+            CreateMeta(page, pageSize, total));
+        LogSlowDiscoveryQuery(stopwatch, "list");
+        return result;
+    }
+
+    public async Task<PageEnvelope<RecipeDto>> SearchPublishedRecipesAsync(
+        string? search,
+        string? category,
+        RecipeDifficulty? difficulty,
+        int? maxCookTime,
+        int? minServings,
+        int? minPrepTime,
+        int? maxPrepTime,
+        string? sort,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        ValidatePage(page, pageSize);
+        var stopwatch = Stopwatch.StartNew();
         var query = dbContext.Recipes.AsNoTracking().Where(recipe => recipe.Status == RecipeStatus.Published);
         var terms = Regex.Matches(RemoveAccents(search ?? string.Empty), @"[\p{L}\p{N}]+")
             .Select(match => match.Value)
@@ -361,10 +441,14 @@ internal sealed partial class ContentService(
         }
 
         var tsQuery = string.Join(" & ", terms.Select(term => term + ":*"));
+        var normalizedSearch = string.Join(' ', terms);
         if (terms.Length > 0)
         {
-            query = query.Where(recipe => EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
-                .Matches(EF.Functions.ToTsQuery("simple", tsQuery)));
+            query = query.Where(recipe =>
+                EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                    .Matches(EF.Functions.ToTsQuery("simple", tsQuery)) ||
+                EF.Functions.TrigramsSimilarity(
+                    EF.Property<string>(recipe, "SearchTitle"), normalizedSearch) >= 0.3);
         }
 
         if (!string.IsNullOrWhiteSpace(category))
@@ -378,9 +462,24 @@ internal sealed partial class ContentService(
             query = query.Where(recipe => recipe.Difficulty == difficulty.Value);
         }
 
-        if (maxTime.HasValue)
+        if (maxCookTime.HasValue)
         {
-            query = query.Where(recipe => recipe.PrepTime + recipe.CookTime <= maxTime.Value);
+            query = query.Where(recipe => recipe.CookTime <= maxCookTime.Value);
+        }
+
+        if (minServings.HasValue)
+        {
+            query = query.Where(recipe => recipe.Servings >= minServings.Value);
+        }
+
+        if (minPrepTime.HasValue)
+        {
+            query = query.Where(recipe => recipe.PrepTime >= minPrepTime.Value);
+        }
+
+        if (maxPrepTime.HasValue)
+        {
+            query = query.Where(recipe => recipe.PrepTime <= maxPrepTime.Value);
         }
 
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
@@ -393,14 +492,27 @@ internal sealed partial class ContentService(
             _ when terms.Length > 0 => query.OrderByDescending(recipe =>
                     EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
                         .Rank(EF.Functions.ToTsQuery("simple", tsQuery)))
+                .ThenByDescending(recipe => EF.Functions.TrigramsSimilarity(
+                    EF.Property<string>(recipe, "SearchTitle"), normalizedSearch))
                 .ThenByDescending(recipe => recipe.PublishedAt),
             _ => query.OrderByDescending(recipe => recipe.PublishedAt),
         };
         var recipes = await ordered.Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        return new PageEnvelope<RecipeDto>(
+        var result = new PageEnvelope<RecipeDto>(
             await MapRecipesAsync(recipes, cancellationToken).ConfigureAwait(false),
             CreateMeta(page, pageSize, total));
+        LogSlowDiscoveryQuery(stopwatch, "search");
+        return result;
+    }
+
+    private void LogSlowDiscoveryQuery(Stopwatch stopwatch, string queryName)
+    {
+        stopwatch.Stop();
+        if (stopwatch.ElapsedMilliseconds > 100)
+        {
+            SlowDiscoveryQuery(logger, queryName, stopwatch.Elapsed.TotalMilliseconds, null);
+        }
     }
 
     private static string RemoveAccents(string value)
@@ -568,13 +680,112 @@ internal sealed partial class ContentService(
         List<Recipe> recipes,
         CancellationToken cancellationToken)
     {
-        var result = new List<RecipeDto>(recipes.Count);
-        foreach (var recipe in recipes)
+        if (recipes.Count == 0)
         {
-            result.Add(await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false));
+            return [];
         }
 
-        return result;
+        var recipeIds = recipes.Select(recipe => recipe.Id).ToArray();
+        var categoryIds = recipes.Select(recipe => recipe.CategoryId).Distinct().ToArray();
+        var authorIds = recipes.Select(recipe => recipe.AuthorId).Distinct().ToArray();
+        var categories = await dbContext.Categories.AsNoTracking()
+            .Where(category => categoryIds.Contains(category.Id))
+            .ToDictionaryAsync(category => category.Id, cancellationToken)
+            .ConfigureAwait(false);
+        var categoryCounts = await dbContext.Recipes.AsNoTracking()
+            .Where(recipe => recipe.Status == RecipeStatus.Published && categoryIds.Contains(recipe.CategoryId))
+            .GroupBy(recipe => recipe.CategoryId)
+            .Select(group => new { CategoryId = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(item => item.CategoryId, item => item.Count, cancellationToken)
+            .ConfigureAwait(false);
+        var authors = await dbContext.Users.AsNoTracking()
+            .Where(author => authorIds.Contains(author.Id))
+            .ToDictionaryAsync(author => author.Id, cancellationToken)
+            .ConfigureAwait(false);
+        var roleRows = await (
+                from userRole in dbContext.UserRoles.AsNoTracking()
+                join role in dbContext.Roles.AsNoTracking() on userRole.RoleId equals role.Id
+                where authorIds.Contains(userRole.UserId)
+                select new { userRole.UserId, role.Name })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var rolesByAuthor = roleRows
+            .ToLookup(item => item.UserId, item => item.Name ?? string.Empty);
+        var ingredientRows = await dbContext.RecipeIngredients.AsNoTracking()
+            .Where(item => recipeIds.Contains(item.RecipeId))
+            .OrderBy(item => item.OrderIndex)
+            .ThenBy(item => item.CreatedAt)
+            .Select(item => new
+            {
+                item.RecipeId,
+                Dto = new IngredientDto(item.Id, item.Name, item.Quantity, item.Unit, item.Notes, item.OrderIndex),
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var ingredientsByRecipe = ingredientRows.ToLookup(item => item.RecipeId, item => item.Dto);
+        var stepRows = await dbContext.RecipeSteps.AsNoTracking()
+            .Where(item => recipeIds.Contains(item.RecipeId))
+            .OrderBy(item => item.StepNumber)
+            .Select(item => new
+            {
+                item.RecipeId,
+                Dto = new StepDto(item.Id, item.StepNumber, item.Title, item.Description, item.TimerMinutes, item.ImageUrl),
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var stepsByRecipe = stepRows.ToLookup(item => item.RecipeId, item => item.Dto);
+        var imageRows = await dbContext.RecipeImages.AsNoTracking()
+            .Where(item => recipeIds.Contains(item.RecipeId))
+            .OrderBy(item => item.OrderIndex)
+            .ThenBy(item => item.CreatedAt)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var imagesByRecipe = imageRows.ToLookup(item => item.RecipeId, item => new RecipeImageDto(
+            item.Id,
+            MediaUrl(item.Id, "original"),
+            item.MediumObjectKey == null ? null : MediaUrl(item.Id, "medium"),
+            item.ThumbnailObjectKey == null ? null : MediaUrl(item.Id, "thumbnail"),
+            item.AltText,
+            item.IsPrimary,
+            item.OrderIndex,
+            item.ProcessingStatus.ToString().ToLowerInvariant()));
+
+        return recipes.Select(recipe =>
+        {
+            var category = categories[recipe.CategoryId];
+            var author = authors[recipe.AuthorId];
+            var images = imagesByRecipe[recipe.Id].ToArray();
+            return new RecipeDto(
+                recipe.Id,
+                recipe.Title,
+                recipe.Slug,
+                recipe.Description,
+                recipe.PrepTime,
+                recipe.CookTime,
+                recipe.Servings,
+                recipe.Difficulty.ToString().ToLowerInvariant(),
+                recipe.Status.ToString().ToLowerInvariant(),
+                images.FirstOrDefault(image => image.IsPrimary)?.ThumbnailUrl,
+                ToCategoryDto(category, categoryCounts.GetValueOrDefault(category.Id)),
+                new RecipeAuthorDto(
+                    author.Id.ToString(),
+                    author.Email ?? string.Empty,
+                    author.DisplayName,
+                    author.AvatarUrl,
+                    author.Bio,
+                    rolesByAuthor[author.Id].ToArray(),
+                    author.EmailConfirmed,
+                    author.IsActive,
+                    author.CreatedAt),
+                recipe.CreatedAt,
+                recipe.PublishedAt,
+                recipe.Version,
+                recipe.Instructions,
+                RecipeMappings.ToNutritionDto(recipe.Nutrition),
+                ingredientsByRecipe[recipe.Id].ToArray(),
+                stepsByRecipe[recipe.Id].ToArray(),
+                images);
+        }).ToArray();
     }
 
     private async Task<RecipeDto> MapRecipeAsync(Recipe recipe, CancellationToken cancellationToken)

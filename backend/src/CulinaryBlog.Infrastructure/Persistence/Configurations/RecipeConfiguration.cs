@@ -41,6 +41,9 @@ internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
         builder.Property<NpgsqlTsVector>("SearchVector")
             .HasColumnType("tsvector")
             .ValueGeneratedOnAddOrUpdate();
+        builder.Property<string>("SearchTitle")
+            .HasColumnType("text")
+            .ValueGeneratedOnAddOrUpdate();
         builder.OwnsOne(recipe => recipe.Nutrition, nutrition =>
         {
             nutrition.Property(value => value.Calories).HasPrecision(8, 2).HasColumnName("Nutrition_Calories");
@@ -55,11 +58,17 @@ internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(recipe => recipe.AuthorId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(recipe => recipe.Slug).IsUnique();
         builder.HasIndex("SearchVector").HasMethod("GIN");
+        builder.HasIndex("SearchTitle").HasMethod("GIN").HasOperators("gin_trgm_ops");
         builder.HasIndex(recipe => recipe.Status);
         builder.HasIndex(recipe => recipe.CategoryId);
         builder.HasIndex(recipe => recipe.AuthorId);
         builder.HasIndex(recipe => recipe.PublishedAt);
         builder.HasIndex(recipe => new { recipe.Status, recipe.PublishedAt });
+        builder.HasIndex(recipe => new { recipe.Status, recipe.CreatedAt });
+        builder.HasIndex(recipe => new { recipe.Status, recipe.CategoryId, recipe.Difficulty, recipe.PublishedAt });
+        builder.HasIndex(recipe => new { recipe.Status, recipe.CookTime });
+        builder.HasIndex(recipe => new { recipe.Status, recipe.Servings });
+        builder.HasIndex(recipe => new { recipe.Status, recipe.PrepTime });
         builder.HasQueryFilter(recipe => !recipe.IsDeleted);
     }
 }

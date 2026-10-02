@@ -19,7 +19,10 @@ public sealed class SearchPublishedRecipesQueryTests
             Search: "phở bò",
             Category: "mon-nuoc",
             Difficulty: RecipeDifficulty.Medium,
-            MaxTime: 45,
+            MaxCookTime: 45,
+            MinServings: 2,
+            MinPrepTime: 10,
+            MaxPrepTime: 60,
             Sort: "newest",
             Page: 1,
             PageSize: 10);
@@ -31,7 +34,10 @@ public sealed class SearchPublishedRecipesQueryTests
         Assert.Equal("phở bò", fakeRepo.LastSearch);
         Assert.Equal("mon-nuoc", fakeRepo.LastCategory);
         Assert.Equal(RecipeDifficulty.Medium, fakeRepo.LastDifficulty);
-        Assert.Equal(45, fakeRepo.LastMaxTime);
+        Assert.Equal(45, fakeRepo.LastMaxCookTime);
+        Assert.Equal(2, fakeRepo.LastMinServings);
+        Assert.Equal(10, fakeRepo.LastMinPrepTime);
+        Assert.Equal(60, fakeRepo.LastMaxPrepTime);
         Assert.Equal("newest", fakeRepo.LastSort);
         Assert.Equal(1, fakeRepo.LastPage);
         Assert.Equal(10, fakeRepo.LastPageSize);
@@ -47,7 +53,10 @@ public sealed class SearchPublishedRecipesQueryTests
             Search: "test",
             Category: null,
             Difficulty: null,
-            MaxTime: null,
+            MaxCookTime: null,
+            MinServings: null,
+            MinPrepTime: null,
+            MaxPrepTime: null,
             Sort: null,
             Page: 1,
             PageSize: 10);
@@ -66,7 +75,13 @@ public sealed class SearchPublishedRecipesQueryTests
 
         public RecipeDifficulty? LastDifficulty { get; private set; }
 
-        public int? LastMaxTime { get; private set; }
+        public int? LastMaxCookTime { get; private set; }
+
+        public int? LastMinServings { get; private set; }
+
+        public int? LastMinPrepTime { get; private set; }
+
+        public int? LastMaxPrepTime { get; private set; }
 
         public string? LastSort { get; private set; }
 
@@ -76,11 +91,27 @@ public sealed class SearchPublishedRecipesQueryTests
 
         public CancellationToken LastCancellationToken { get; private set; }
 
+        public Task<PageEnvelope<RecipeDto>> ListPublishedRecipesAsync(
+            Guid? categoryId,
+            RecipeDifficulty? difficulty,
+            int? maxCookTime,
+            int? minServings,
+            int? minPrepTime,
+            int? maxPrepTime,
+            string? sort,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(result);
+
         public Task<PageEnvelope<RecipeDto>> SearchPublishedRecipesAsync(
             string? search,
             string? category,
             RecipeDifficulty? difficulty,
-            int? maxTime,
+            int? maxCookTime,
+            int? minServings,
+            int? minPrepTime,
+            int? maxPrepTime,
             string? sort,
             int page,
             int pageSize,
@@ -89,7 +120,10 @@ public sealed class SearchPublishedRecipesQueryTests
             LastSearch = search;
             LastCategory = category;
             LastDifficulty = difficulty;
-            LastMaxTime = maxTime;
+            LastMaxCookTime = maxCookTime;
+            LastMinServings = minServings;
+            LastMinPrepTime = minPrepTime;
+            LastMaxPrepTime = maxPrepTime;
             LastSort = sort;
             LastPage = page;
             LastPageSize = pageSize;
@@ -100,11 +134,27 @@ public sealed class SearchPublishedRecipesQueryTests
 
     private sealed class ThrowingRecipeSearchRepository(Exception exception) : IRecipeSearchRepository
     {
+        public Task<PageEnvelope<RecipeDto>> ListPublishedRecipesAsync(
+            Guid? categoryId,
+            RecipeDifficulty? difficulty,
+            int? maxCookTime,
+            int? minServings,
+            int? minPrepTime,
+            int? maxPrepTime,
+            string? sort,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken) =>
+            Task.FromException<PageEnvelope<RecipeDto>>(exception);
+
         public Task<PageEnvelope<RecipeDto>> SearchPublishedRecipesAsync(
             string? search,
             string? category,
             RecipeDifficulty? difficulty,
-            int? maxTime,
+            int? maxCookTime,
+            int? minServings,
+            int? minPrepTime,
+            int? maxPrepTime,
             string? sort,
             int page,
             int pageSize,

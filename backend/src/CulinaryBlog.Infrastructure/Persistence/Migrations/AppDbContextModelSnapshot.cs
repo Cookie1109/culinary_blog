@@ -152,6 +152,10 @@ namespace CulinaryBlog.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("tsvector");
 
+                    b.Property<string>("SearchTitle")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text");
+
                     b.Property<int>("Servings")
                         .HasColumnType("integer");
 
@@ -191,12 +195,26 @@ namespace CulinaryBlog.Infrastructure.Persistence.Migrations
                     b.HasIndex("SearchVector")
                         .HasMethod("GIN");
 
+                    b.HasIndex("SearchTitle")
+                        .HasMethod("GIN")
+                        .HasOperators("gin_trgm_ops");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
                     b.HasIndex("Status");
 
                     b.HasIndex("Status", "PublishedAt");
+
+                    b.HasIndex("Status", "CategoryId", "Difficulty", "PublishedAt");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.HasIndex("Status", "CookTime");
+
+                    b.HasIndex("Status", "Servings");
+
+                    b.HasIndex("Status", "PrepTime");
 
                     b.ToTable("Recipes", null, t =>
                         {

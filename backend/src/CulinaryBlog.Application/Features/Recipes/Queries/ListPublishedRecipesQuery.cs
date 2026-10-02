@@ -6,9 +6,8 @@ using MediatR;
 
 namespace CulinaryBlog.Application.Features.Recipes.Queries;
 
-public sealed record SearchPublishedRecipesQuery(
-    string? Search,
-    string? Category,
+public sealed record ListPublishedRecipesQuery(
+    Guid? CategoryId,
     RecipeDifficulty? Difficulty,
     int? MaxCookTime,
     int? MinServings,
@@ -18,13 +17,18 @@ public sealed record SearchPublishedRecipesQuery(
     int Page,
     int PageSize) : IRequest<PageEnvelope<RecipeDto>>;
 
-internal sealed class SearchPublishedRecipesQueryValidator : AbstractValidator<SearchPublishedRecipesQuery>
+internal sealed class ListPublishedRecipesQueryValidator : AbstractValidator<ListPublishedRecipesQuery>
 {
-    public SearchPublishedRecipesQueryValidator()
+    private static readonly string[] AllowedSorts =
+    [
+        "-createdAt", "createdAt", "newest", "oldest",
+        "title", "-title", "az", "za",
+        "cookTime", "-cookTime", "prepTime", "-prepTime", "servings", "-servings",
+    ];
+
+    public ListPublishedRecipesQueryValidator()
     {
-        RuleFor(query => query.Search).MaximumLength(100)
-            .Must(value => string.IsNullOrWhiteSpace(value) || value.Trim().Length >= 2);
-        RuleFor(query => query.Category).MaximumLength(120);
+        RuleFor(query => query.CategoryId).NotEqual(Guid.Empty).When(query => query.CategoryId.HasValue);
         RuleFor(query => query.MaxCookTime).GreaterThanOrEqualTo(0).When(query => query.MaxCookTime.HasValue);
         RuleFor(query => query.MinServings).GreaterThan(0).When(query => query.MinServings.HasValue);
         RuleFor(query => query.MinPrepTime).GreaterThan(0).When(query => query.MinPrepTime.HasValue);
@@ -33,21 +37,20 @@ internal sealed class SearchPublishedRecipesQueryValidator : AbstractValidator<S
             .GreaterThanOrEqualTo(query => query.MinPrepTime)
             .When(query => query.MinPrepTime.HasValue && query.MaxPrepTime.HasValue);
         RuleFor(query => query.Sort)
-            .Must(value => value is null or "" or "relevance" or "newest" or "quickest" or "az");
+            .Must(value => string.IsNullOrEmpty(value) || AllowedSorts.Contains(value, StringComparer.Ordinal));
         RuleFor(query => query.Page).GreaterThan(0);
         RuleFor(query => query.PageSize).InclusiveBetween(1, 50);
     }
 }
 
-internal sealed class SearchPublishedRecipesQueryHandler(IRecipeSearchRepository repository)
-    : IRequestHandler<SearchPublishedRecipesQuery, PageEnvelope<RecipeDto>>
+internal sealed class ListPublishedRecipesQueryHandler(IRecipeSearchRepository repository)
+    : IRequestHandler<ListPublishedRecipesQuery, PageEnvelope<RecipeDto>>
 {
     public Task<PageEnvelope<RecipeDto>> Handle(
-        SearchPublishedRecipesQuery request,
+        ListPublishedRecipesQuery request,
         CancellationToken cancellationToken) =>
-        repository.SearchPublishedRecipesAsync(
-            request.Search,
-            request.Category,
+        repository.ListPublishedRecipesAsync(
+            request.CategoryId,
             request.Difficulty,
             request.MaxCookTime,
             request.MinServings,

@@ -66,7 +66,10 @@ internal static class ContentEndpoints
         string? q,
         string? category,
         string? difficulty,
-        int? maxTime,
+        int? maxCookTime,
+        int? minServings,
+        int? minPrepTime,
+        int? maxPrepTime,
         string? sort,
         int? page,
         int? pageSize,
@@ -85,7 +88,7 @@ internal static class ContentEndpoints
         }
 
         return Results.Ok(await sender.Send(new SearchPublishedRecipesQuery(
-            q, category, parsedDifficulty, maxTime, sort, page ?? 1, pageSize ?? 12), cancellationToken).ConfigureAwait(false));
+            q, category, parsedDifficulty, maxCookTime, minServings, minPrepTime, maxPrepTime, sort, page ?? 1, pageSize ?? 12), cancellationToken).ConfigureAwait(false));
     }
 
     private static async Task<IResult> GetCategoryAsync(
@@ -275,11 +278,41 @@ internal static class ContentEndpoints
     }
 
     private static async Task<IResult> ListPublishedRecipesAsync(
+        Guid? categoryId,
+        string? difficulty,
+        int? maxCookTime,
+        int? minServings,
+        int? minPrepTime,
+        int? maxPrepTime,
+        string? sort,
         int? page,
         int? pageSize,
-        IContentService contentService,
-        CancellationToken cancellationToken) =>
-        Results.Ok(await contentService.ListPublishedRecipesAsync(page ?? 1, pageSize ?? 12, cancellationToken).ConfigureAwait(false));
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        RecipeDifficulty? parsedDifficulty = null;
+        if (!string.IsNullOrWhiteSpace(difficulty))
+        {
+            if (!Enum.TryParse<RecipeDifficulty>(difficulty, true, out var parsed) || !Enum.IsDefined(parsed))
+            {
+                throw new ContentProblemException(
+                    "VALIDATION_ERROR", "difficulty is invalid.", ContentProblemKind.BadRequest);
+            }
+
+            parsedDifficulty = parsed;
+        }
+
+        return Results.Ok(await sender.Send(new ListPublishedRecipesQuery(
+            categoryId,
+            parsedDifficulty,
+            maxCookTime,
+            minServings,
+            minPrepTime,
+            maxPrepTime,
+            sort,
+            page ?? 1,
+            pageSize ?? 12), cancellationToken).ConfigureAwait(false));
+    }
 
     private static async Task<IResult> GetMyRecipeAsync(
         Guid id,
