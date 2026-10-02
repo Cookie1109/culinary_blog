@@ -25,6 +25,14 @@ internal sealed class RedisApplicationCache(
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            if (IsDisconnected())
+            {
+                CacheMetrics.Misses.Add(1);
+                CacheMetrics.OperationFailures.Add(1, new KeyValuePair<string, object?>("operation", "get"));
+                CacheUnavailable(logger, "get", null);
+                return default;
+            }
+
             var payload = await cache.GetStringAsync(key, cancellationToken).ConfigureAwait(false);
             if (payload is null)
             {
@@ -60,6 +68,13 @@ internal sealed class RedisApplicationCache(
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            if (IsDisconnected())
+            {
+                CacheMetrics.OperationFailures.Add(1, new KeyValuePair<string, object?>("operation", "set"));
+                CacheUnavailable(logger, "set", null);
+                return;
+            }
+
             var payload = JsonSerializer.Serialize(value, SerializerOptions);
             await cache.SetStringAsync(
                 key,
@@ -93,6 +108,13 @@ internal sealed class RedisApplicationCache(
     {
         try
         {
+            if (IsDisconnected())
+            {
+                CacheMetrics.InvalidationFailures.Add(1);
+                CacheUnavailable(logger, "remove", null);
+                return;
+            }
+
             await cache.RemoveAsync(key, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (IsRedisFailure(exception, cancellationToken))
@@ -106,6 +128,13 @@ internal sealed class RedisApplicationCache(
     {
         try
         {
+            if (IsDisconnected())
+            {
+                CacheMetrics.InvalidationFailures.Add(1);
+                CacheUnavailable(logger, "remove-by-tag", null);
+                return;
+            }
+
             var database = connection.GetDatabase();
             var tagKey = GetTagKey(tag);
             var members = await database.SetMembersAsync(tagKey).ConfigureAwait(false);
@@ -136,6 +165,8 @@ internal sealed class RedisApplicationCache(
     }
 
     private static string GetTagKey(string tag) => $"culinary:v1:tag:{tag}";
+
+    private bool IsDisconnected() => connection is not null && !connection.IsConnected;
 
     private static bool IsRedisFailure(Exception exception, CancellationToken cancellationToken) =>
         !cancellationToken.IsCancellationRequested && exception is RedisException or TimeoutException;

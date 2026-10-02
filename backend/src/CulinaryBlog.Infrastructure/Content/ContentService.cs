@@ -444,8 +444,8 @@ internal sealed partial class ContentService(
             query = query.Where(recipe =>
                 EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
                     .Matches(EF.Functions.ToTsQuery("simple", tsQuery)) ||
-                EF.Functions.TrigramsSimilarity(
-                    EF.Property<string>(recipe, "SearchTitle"), normalizedSearch) >= 0.3);
+                EF.Functions.TrigramsAreSimilar(
+                    EF.Property<string>(recipe, "SearchTitle"), normalizedSearch));
         }
 
         if (!string.IsNullOrWhiteSpace(category))

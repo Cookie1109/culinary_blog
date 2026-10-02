@@ -19,6 +19,8 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifet
         await Task.WhenAll(_postgresSql.StartAsync(), _redis.StartAsync());
     }
 
+    public Task StopRedisAsync() => _redis.StopAsync();
+
     async Task IAsyncLifetime.DisposeAsync()
     {
         await Task.WhenAll(_postgresSql.DisposeAsync().AsTask(), _redis.DisposeAsync().AsTask());

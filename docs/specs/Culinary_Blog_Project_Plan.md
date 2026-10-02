@@ -480,6 +480,11 @@ Cho phép Author hoàn thiện toàn bộ nội dung một công thức: nguyên
 
 ## 9. Phase 5 — Publishing, discovery và cache
 
+> Trạng thái 03/10/2026: **Accepted / Closed**. Publishing/discovery/cache/sitemap và bộ
+> QA/performance P5-25–P5-29 đã đạt Exit gate trên PostgreSQL 16 + Redis 7 bằng
+> Testcontainers. Bằng chứng, profile benchmark và lệnh tái kiểm tại
+> [Phase 5 verification](./phase-5/README.md).
+
 ### 9.1. Mục tiêu
 
 Hoàn thiện vòng đời nội dung và khả năng khám phá công thức công khai với search/filter/sort/pagination có hiệu năng và cache an toàn.

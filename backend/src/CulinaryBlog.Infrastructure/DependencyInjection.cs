@@ -121,7 +121,12 @@ public static class DependencyInjection
             options.Configuration = redisConnection;
             options.InstanceName = "culinary:v1:";
         });
-        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnection));
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var options = ConfigurationOptions.Parse(redisConnection);
+            options.AbortOnConnectFail = false;
+            return ConnectionMultiplexer.Connect(options);
+        });
         services.AddSingleton<IApplicationCache, RedisApplicationCache>();
 
         services.AddSingleton<IMinioClient>(serviceProvider =>

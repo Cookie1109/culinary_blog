@@ -156,6 +156,15 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
         Assert.Equal(published.Slug, updated.Slug);
 
+        var cachedList = await client.GetFromJsonAsync<RecipePage>("/api/v1/recipes?page=1&pageSize=50");
+        var cachedSearch = await client.GetFromJsonAsync<RecipePage>(
+            "/api/v1/recipes/search?q=Renamed&page=1&pageSize=50");
+        var cachedCategory = await client.GetFromJsonAsync<CategoryDetailEnvelopeResponse>(
+            $"/api/v1/categories/{category.Slug}?page=1&pageSize=50");
+        Assert.Contains(cachedList!.Data, item => item.Id == recipe.Id);
+        Assert.Contains(cachedSearch!.Data, item => item.Id == recipe.Id);
+        Assert.Contains(cachedCategory!.Data.Recipes, item => item.Id == recipe.Id);
+
         using var unpublishRequest = CreateLifecyclePatch(recipe.Id, "unpublish", 5);
         using var unpublishResponse = await client.SendAsync(unpublishRequest);
         var unpublished = (await unpublishResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
@@ -167,6 +176,15 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
 
         using var hiddenResponse = await client.GetAsync($"/api/v1/recipes/{published.Slug}");
         Assert.Equal(HttpStatusCode.NotFound, hiddenResponse.StatusCode);
+
+        var invalidatedList = await client.GetFromJsonAsync<RecipePage>("/api/v1/recipes?page=1&pageSize=50");
+        var invalidatedSearch = await client.GetFromJsonAsync<RecipePage>(
+            "/api/v1/recipes/search?q=Renamed&page=1&pageSize=50");
+        var invalidatedCategory = await client.GetFromJsonAsync<CategoryDetailEnvelopeResponse>(
+            $"/api/v1/categories/{category.Slug}?page=1&pageSize=50");
+        Assert.DoesNotContain(invalidatedList!.Data, item => item.Id == recipe.Id);
+        Assert.DoesNotContain(invalidatedSearch!.Data, item => item.Id == recipe.Id);
+        Assert.DoesNotContain(invalidatedCategory!.Data.Recipes, item => item.Id == recipe.Id);
 
         using var republishRequest = CreateLifecyclePatch(recipe.Id, "publish", 6);
         using var republishResponse = await client.SendAsync(republishRequest);
