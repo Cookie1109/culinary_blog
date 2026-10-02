@@ -66,10 +66,7 @@ internal static class ContentEndpoints
         string? q,
         string? category,
         string? difficulty,
-        int? maxCookTime,
-        int? minServings,
-        int? minPrepTime,
-        int? maxPrepTime,
+        int? maxTime,
         string? sort,
         int? page,
         int? pageSize,
@@ -88,7 +85,7 @@ internal static class ContentEndpoints
         }
 
         return Results.Ok(await sender.Send(new SearchPublishedRecipesQuery(
-            q, category, parsedDifficulty, maxCookTime, minServings, minPrepTime, maxPrepTime, sort, page ?? 1, pageSize ?? 12), cancellationToken).ConfigureAwait(false));
+            q, category, parsedDifficulty, maxTime, sort, page ?? 1, pageSize ?? 12), cancellationToken).ConfigureAwait(false));
     }
 
     private static async Task<IResult> GetCategoryAsync(

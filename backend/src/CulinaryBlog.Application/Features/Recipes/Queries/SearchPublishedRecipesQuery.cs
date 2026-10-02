@@ -10,10 +10,7 @@ public sealed record SearchPublishedRecipesQuery(
     string? Search,
     string? Category,
     RecipeDifficulty? Difficulty,
-    int? MaxCookTime,
-    int? MinServings,
-    int? MinPrepTime,
-    int? MaxPrepTime,
+    int? MaxTime,
     string? Sort,
     int Page,
     int PageSize) : IRequest<PageEnvelope<RecipeDto>>;
@@ -25,13 +22,7 @@ internal sealed class SearchPublishedRecipesQueryValidator : AbstractValidator<S
         RuleFor(query => query.Search).MaximumLength(100)
             .Must(value => string.IsNullOrWhiteSpace(value) || value.Trim().Length >= 2);
         RuleFor(query => query.Category).MaximumLength(120);
-        RuleFor(query => query.MaxCookTime).GreaterThanOrEqualTo(0).When(query => query.MaxCookTime.HasValue);
-        RuleFor(query => query.MinServings).GreaterThan(0).When(query => query.MinServings.HasValue);
-        RuleFor(query => query.MinPrepTime).GreaterThan(0).When(query => query.MinPrepTime.HasValue);
-        RuleFor(query => query.MaxPrepTime).GreaterThan(0).When(query => query.MaxPrepTime.HasValue);
-        RuleFor(query => query.MaxPrepTime)
-            .GreaterThanOrEqualTo(query => query.MinPrepTime)
-            .When(query => query.MinPrepTime.HasValue && query.MaxPrepTime.HasValue);
+        RuleFor(query => query.MaxTime).GreaterThan(0).When(query => query.MaxTime.HasValue);
         RuleFor(query => query.Sort)
             .Must(value => value is null or "" or "relevance" or "newest" or "quickest" or "az");
         RuleFor(query => query.Page).GreaterThan(0);
@@ -49,10 +40,7 @@ internal sealed class SearchPublishedRecipesQueryHandler(IRecipeSearchRepository
             request.Search,
             request.Category,
             request.Difficulty,
-            request.MaxCookTime,
-            request.MinServings,
-            request.MinPrepTime,
-            request.MaxPrepTime,
+            request.MaxTime,
             request.Sort,
             request.Page,
             request.PageSize,

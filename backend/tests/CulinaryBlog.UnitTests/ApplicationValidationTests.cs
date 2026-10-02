@@ -39,9 +39,9 @@ public sealed class ApplicationValidationTests
     {
         var validator = new SearchPublishedRecipesQueryValidator();
         Assert.True((await validator.ValidateAsync(
-            new SearchPublishedRecipesQuery("phở", null, RecipeDifficulty.Easy, null, null, null, null, "relevance", 1, 12))).IsValid);
+            new SearchPublishedRecipesQuery("phở", null, RecipeDifficulty.Easy, null, "relevance", 1, 12))).IsValid);
         Assert.False((await validator.ValidateAsync(
-            new SearchPublishedRecipesQuery("x", null, null, 0, 0, 0, 0, "random", 0, 51))).IsValid);
+            new SearchPublishedRecipesQuery("x", null, null, 0, "random", 0, 51))).IsValid);
     }
 
     [Fact]

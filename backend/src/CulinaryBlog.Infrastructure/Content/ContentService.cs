@@ -419,10 +419,7 @@ internal sealed partial class ContentService(
         string? search,
         string? category,
         RecipeDifficulty? difficulty,
-        int? maxCookTime,
-        int? minServings,
-        int? minPrepTime,
-        int? maxPrepTime,
+        int? maxTime,
         string? sort,
         int page,
         int pageSize,
@@ -462,24 +459,9 @@ internal sealed partial class ContentService(
             query = query.Where(recipe => recipe.Difficulty == difficulty.Value);
         }
 
-        if (maxCookTime.HasValue)
+        if (maxTime.HasValue)
         {
-            query = query.Where(recipe => recipe.CookTime <= maxCookTime.Value);
-        }
-
-        if (minServings.HasValue)
-        {
-            query = query.Where(recipe => recipe.Servings >= minServings.Value);
-        }
-
-        if (minPrepTime.HasValue)
-        {
-            query = query.Where(recipe => recipe.PrepTime >= minPrepTime.Value);
-        }
-
-        if (maxPrepTime.HasValue)
-        {
-            query = query.Where(recipe => recipe.PrepTime <= maxPrepTime.Value);
+            query = query.Where(recipe => recipe.PrepTime + recipe.CookTime <= maxTime.Value);
         }
 
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
