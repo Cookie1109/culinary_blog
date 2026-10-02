@@ -1,3 +1,4 @@
+using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Recipes;
@@ -15,7 +16,15 @@ public sealed record ListPublishedRecipesQuery(
     int? MaxPrepTime,
     string? Sort,
     int Page,
-    int PageSize) : IRequest<PageEnvelope<RecipeDto>>;
+    int PageSize) : ICacheableRequest<PageEnvelope<RecipeDto>>
+{
+    public string CacheKey => PublicCacheKeys.RecipeList(
+        CategoryId, Difficulty, MaxCookTime, MinServings, MinPrepTime, MaxPrepTime, Sort, Page, PageSize);
+
+    public TimeSpan CacheDuration => TimeSpan.FromMinutes(15);
+
+    public IReadOnlyCollection<string> CacheTags => PublicCacheKeys.RecipeTags;
+}
 
 internal sealed class ListPublishedRecipesQueryValidator : AbstractValidator<ListPublishedRecipesQuery>
 {

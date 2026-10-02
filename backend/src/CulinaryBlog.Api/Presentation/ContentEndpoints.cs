@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Features.Recipes.Commands;
 using CulinaryBlog.Application.Features.Recipes.Queries;
@@ -15,34 +16,53 @@ internal static class ContentEndpoints
         var categories = endpoints.MapGroup("/api/v1/categories");
         categories.MapGet("/", ListCategoriesAsync).AllowAnonymous();
         categories.MapGet("/{slug}", GetCategoryAsync).AllowAnonymous();
-        categories.MapPost("/", CreateCategoryAsync).RequireAuthorization("AdminPolicy");
-        categories.MapPut("/{id:guid}", UpdateCategoryAsync).RequireAuthorization("AdminPolicy");
-        categories.MapDelete("/{id:guid}", DeleteCategoryAsync).RequireAuthorization("AdminPolicy");
+        categories.MapPost("/", CreateCategoryAsync).RequireAuthorization("AdminPolicy")
+            .AddEndpointFilter<PublicCacheInvalidationFilter>();
+        categories.MapPut("/{id:guid}", UpdateCategoryAsync).RequireAuthorization("AdminPolicy")
+            .AddEndpointFilter<PublicCacheInvalidationFilter>();
+        categories.MapDelete("/{id:guid}", DeleteCategoryAsync).RequireAuthorization("AdminPolicy")
+            .AddEndpointFilter<PublicCacheInvalidationFilter>();
 
         var recipes = endpoints.MapGroup("/api/v1/recipes");
         recipes.MapGet("/", ListPublishedRecipesAsync).AllowAnonymous();
         recipes.MapGet("/search", SearchPublishedRecipesAsync).AllowAnonymous();
         recipes.MapGet("/{slug}", GetPublishedRecipeAsync).AllowAnonymous();
-        recipes.MapPost("/", CreateRecipeAsync).RequireAuthorization("AuthorPolicy");
-        recipes.MapPut("/{id:guid}", UpdateRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapPatch("/{id:guid}/publish", PublishRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapPatch("/{id:guid}/unpublish", UnpublishRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapPatch("/{id:guid}/archive", ArchiveRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapPatch("/{id:guid}/unarchive", UnarchiveRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapDelete("/{id:guid}", DeleteRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapPost("/{id:guid}/ingredients", CreateIngredientAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapPut("/{id:guid}/ingredients/{ingredientId:guid}", UpdateIngredientAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapDelete("/{id:guid}/ingredients/{ingredientId:guid}", DeleteIngredientAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapPost("/{id:guid}/steps", CreateStepAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapPut("/{id:guid}/steps/{stepId:guid}", UpdateStepAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapDelete("/{id:guid}/steps/{stepId:guid}", DeleteStepAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPost("/", CreateRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPut("/{id:guid}", UpdateRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPatch("/{id:guid}/publish", PublishRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPatch("/{id:guid}/unpublish", UnpublishRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPatch("/{id:guid}/archive", ArchiveRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPatch("/{id:guid}/unarchive", UnarchiveRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapDelete("/{id:guid}", DeleteRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPost("/{id:guid}/ingredients", CreateIngredientAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPut("/{id:guid}/ingredients/{ingredientId:guid}", UpdateIngredientAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapDelete("/{id:guid}/ingredients/{ingredientId:guid}", DeleteIngredientAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPost("/{id:guid}/steps", CreateStepAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapPut("/{id:guid}/steps/{stepId:guid}", UpdateStepAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapDelete("/{id:guid}/steps/{stepId:guid}", DeleteStepAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPost("/{id:guid}/images", UploadImageAsync)
             .RequireAuthorization("AuthorPolicy")
             .AddEndpointFilter<RecipeOwnershipFilter>()
+            .AddEndpointFilter<PublicCacheInvalidationFilter>()
             .RequireRateLimiting("upload")
             .DisableAntiforgery();
-        recipes.MapPatch("/{id:guid}/images/{imageId:guid}", UpdateImageAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
-        recipes.MapDelete("/{id:guid}/images/{imageId:guid}", DeleteImageAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPatch("/{id:guid}/images/{imageId:guid}", UpdateImageAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
+        recipes.MapDelete("/{id:guid}/images/{imageId:guid}", DeleteImageAsync).RequireAuthorization("AuthorPolicy")
+            .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
 
         endpoints.MapGet("/api/v1/media/{imageId:guid}/{variant}", OpenMediaAsync).AllowAnonymous();
 
@@ -59,8 +79,18 @@ internal static class ContentEndpoints
 
     private static async Task<IResult> ListCategoriesAsync(
         IContentService contentService,
-        CancellationToken cancellationToken) =>
-        Results.Ok(new { data = await contentService.ListCategoriesAsync(cancellationToken).ConfigureAwait(false) });
+        IApplicationCache cache,
+        CancellationToken cancellationToken)
+    {
+        var categories = await GetOrCreateCachedAsync(
+            cache,
+            PublicCacheKeys.Categories(),
+            TimeSpan.FromMinutes(30),
+            PublicCacheKeys.CategoryTags,
+            contentService.ListCategoriesAsync,
+            cancellationToken).ConfigureAwait(false);
+        return Results.Ok(new { data = categories });
+    }
 
     private static async Task<IResult> SearchPublishedRecipesAsync(
         string? q,
@@ -93,8 +123,20 @@ internal static class ContentEndpoints
         int? page,
         int? pageSize,
         IContentService contentService,
-        CancellationToken cancellationToken) =>
-        Results.Ok(await contentService.GetCategoryAsync(slug, page ?? 1, pageSize ?? 12, cancellationToken).ConfigureAwait(false));
+        IApplicationCache cache,
+        CancellationToken cancellationToken)
+    {
+        var normalizedPage = page ?? 1;
+        var normalizedPageSize = pageSize ?? 12;
+        var category = await GetOrCreateCachedAsync(
+            cache,
+            PublicCacheKeys.Category(slug, normalizedPage, normalizedPageSize),
+            TimeSpan.FromMinutes(30),
+            PublicCacheKeys.CategoryTags,
+            token => contentService.GetCategoryAsync(slug, normalizedPage, normalizedPageSize, token),
+            cancellationToken).ConfigureAwait(false);
+        return Results.Ok(category);
+    }
 
     private static async Task<IResult> CreateCategoryAsync(
         CategoryWriteRequest request,
@@ -266,10 +308,17 @@ internal static class ContentEndpoints
     private static async Task<IResult> GetPublishedRecipeAsync(
         string slug,
         IContentService contentService,
+        IApplicationCache cache,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var recipe = await contentService.GetPublishedRecipeAsync(slug, cancellationToken).ConfigureAwait(false);
+        var recipe = await GetOrCreateCachedAsync(
+            cache,
+            PublicCacheKeys.Recipe(slug),
+            TimeSpan.FromMinutes(5),
+            PublicCacheKeys.RecipeTags,
+            token => contentService.GetPublishedRecipeAsync(slug, token),
+            cancellationToken).ConfigureAwait(false);
         SetEtag(httpContext, recipe.Version);
         return Results.Ok(new { data = recipe });
     }
@@ -593,6 +642,26 @@ internal static class ContentEndpoints
                 ["correlationId"] = context.TraceIdentifier,
                 ["currentETag"] = etag,
             });
+    }
+
+    private static async Task<T> GetOrCreateCachedAsync<T>(
+        IApplicationCache cache,
+        string key,
+        TimeSpan duration,
+        IReadOnlyCollection<string> tags,
+        Func<CancellationToken, Task<T>> factory,
+        CancellationToken cancellationToken)
+        where T : class
+    {
+        var cached = await cache.GetAsync<T>(key, cancellationToken).ConfigureAwait(false);
+        if (cached is not null)
+        {
+            return cached;
+        }
+
+        var value = await factory(cancellationToken).ConfigureAwait(false);
+        await cache.SetAsync(key, value, duration, tags, cancellationToken).ConfigureAwait(false);
+        return value;
     }
 
     private enum RecipeLifecycleAction

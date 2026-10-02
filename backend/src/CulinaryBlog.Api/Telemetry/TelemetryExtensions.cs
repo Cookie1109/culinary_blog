@@ -1,3 +1,4 @@
+using CulinaryBlog.Infrastructure.Caching;
 using CulinaryBlog.Infrastructure.Content;
 using CulinaryBlog.Infrastructure.Jobs;
 using OpenTelemetry.Metrics;
@@ -35,6 +36,7 @@ internal static class TelemetryExtensions
             metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
+                .AddMeter(CacheMetrics.MeterName)
                 .AddMeter(MediaJobMetrics.MeterName)
                 .AddMeter(ContentMetrics.MeterName);
             if (Uri.TryCreate(otlpEndpoint, UriKind.Absolute, out var endpoint))

@@ -50,6 +50,7 @@ public sealed class ApplicationBehaviorTests
         Assert.Equal("fresh", second);
         Assert.Equal(1, calls);
         Assert.Equal(1, cache.SetCalls);
+        Assert.Equal(["test-tag"], cache.LastTags);
     }
 
     [Fact]
@@ -105,6 +106,8 @@ public sealed class ApplicationBehaviorTests
         public string CacheKey => "test";
 
         public TimeSpan CacheDuration => TimeSpan.FromMinutes(1);
+
+        public IReadOnlyCollection<string> CacheTags => ["test-tag"];
     }
 
     private sealed class TestRequestValidator : AbstractValidator<TestRequest>
@@ -121,6 +124,8 @@ public sealed class ApplicationBehaviorTests
 
         public int SetCalls { get; private set; }
 
+        public IReadOnlyCollection<string> LastTags { get; private set; } = [];
+
         public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) =>
             Task.FromResult((T?)Value);
 
@@ -128,14 +133,22 @@ public sealed class ApplicationBehaviorTests
             string key,
             T value,
             TimeSpan absoluteExpiration,
+            IReadOnlyCollection<string> tags,
             CancellationToken cancellationToken = default)
         {
             Value = value;
             SetCalls++;
+            LastTags = tags;
             return Task.CompletedTask;
         }
 
         public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+        {
+            Value = null;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveByTagAsync(string tag, CancellationToken cancellationToken = default)
         {
             Value = null;
             return Task.CompletedTask;

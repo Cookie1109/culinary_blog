@@ -28,6 +28,7 @@ internal sealed class CachingBehavior<TRequest, TResponse>(IApplicationCache cac
                 cacheable.CacheKey,
                 response,
                 cacheable.CacheDuration,
+                cacheable.CacheTags,
                 cancellationToken)
             .ConfigureAwait(false);
 

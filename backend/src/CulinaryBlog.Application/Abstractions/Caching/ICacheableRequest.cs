@@ -7,4 +7,6 @@ public interface ICacheableRequest<out TResponse> : IRequest<TResponse>
     string CacheKey { get; }
 
     TimeSpan CacheDuration { get; }
+
+    IReadOnlyCollection<string> CacheTags { get; }
 }

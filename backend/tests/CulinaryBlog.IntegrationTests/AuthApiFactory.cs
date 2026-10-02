@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Testcontainers.PostgreSql;
+using Testcontainers.Redis;
 
 namespace CulinaryBlog.IntegrationTests;
 
@@ -11,21 +12,23 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifet
         .WithUsername("culinary")
         .WithPassword("integration-test-only")
         .Build();
+    private readonly RedisContainer _redis = new RedisBuilder("redis:7.4.5-alpine").Build();
 
     public async Task InitializeAsync()
     {
-        await _postgresSql.StartAsync();
+        await Task.WhenAll(_postgresSql.StartAsync(), _redis.StartAsync());
     }
 
     async Task IAsyncLifetime.DisposeAsync()
     {
-        await _postgresSql.DisposeAsync().AsTask();
+        await Task.WhenAll(_postgresSql.DisposeAsync().AsTask(), _redis.DisposeAsync().AsTask());
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Database", _postgresSql.GetConnectionString());
+        builder.UseSetting("ConnectionStrings:Redis", _redis.GetConnectionString());
         builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
         builder.UseSetting("RateLimiting:AuthPermitLimit", "100");
         builder.UseSetting("Email:Enabled", "false");

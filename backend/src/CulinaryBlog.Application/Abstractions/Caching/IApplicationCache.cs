@@ -8,7 +8,10 @@ public interface IApplicationCache
         string key,
         T value,
         TimeSpan absoluteExpiration,
+        IReadOnlyCollection<string> tags,
         CancellationToken cancellationToken = default);
 
     Task RemoveAsync(string key, CancellationToken cancellationToken = default);
+
+    Task RemoveByTagAsync(string tag, CancellationToken cancellationToken = default);
 }

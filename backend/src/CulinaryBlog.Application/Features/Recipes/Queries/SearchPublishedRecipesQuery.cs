@@ -1,3 +1,4 @@
+using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Recipes;
@@ -13,7 +14,14 @@ public sealed record SearchPublishedRecipesQuery(
     int? MaxTime,
     string? Sort,
     int Page,
-    int PageSize) : IRequest<PageEnvelope<RecipeDto>>;
+    int PageSize) : ICacheableRequest<PageEnvelope<RecipeDto>>
+{
+    public string CacheKey => PublicCacheKeys.Search(Search, Category, Difficulty, MaxTime, Sort, Page, PageSize);
+
+    public TimeSpan CacheDuration => TimeSpan.FromMinutes(1);
+
+    public IReadOnlyCollection<string> CacheTags => PublicCacheKeys.RecipeTags;
+}
 
 internal sealed class SearchPublishedRecipesQueryValidator : AbstractValidator<SearchPublishedRecipesQuery>
 {

@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using CulinaryBlog.Application.Media;
+using CulinaryBlog.Infrastructure.Caching;
 using CulinaryBlog.Infrastructure.Content;
 using CulinaryBlog.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Hosting;
@@ -85,7 +86,7 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         using var meterListener = new MeterListener();
         meterListener.InstrumentPublished = (instrument, listener) =>
         {
-            if (instrument.Meter.Name == ContentMetrics.MeterName)
+            if (instrument.Meter.Name is ContentMetrics.MeterName or CacheMetrics.MeterName)
             {
                 listener.EnableMeasurementEvents(instrument);
             }
@@ -133,6 +134,8 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
 
         using var publicResponse = await client.GetAsync($"/api/v1/recipes/{published.Slug}");
         Assert.Equal(HttpStatusCode.OK, publicResponse.StatusCode);
+        using var cachedPublicResponse = await client.GetAsync($"/api/v1/recipes/{published.Slug}");
+        Assert.Equal(HttpStatusCode.OK, cachedPublicResponse.StatusCode);
 
         using var updateResponse = await SendJsonAsync(
             client,
@@ -210,6 +213,8 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         Assert.Equal(1, observedMetrics["recipe.created"]);
         Assert.Equal(2, observedMetrics["recipe.published"]);
         Assert.Equal(1, observedMetrics["recipe.unpublished"]);
+        Assert.True(observedMetrics["cache.hits"] >= 1);
+        Assert.True(observedMetrics["cache.misses"] >= 1);
     }
 
     [Fact]
