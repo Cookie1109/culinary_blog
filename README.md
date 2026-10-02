@@ -111,6 +111,10 @@ trong frontend/.env.local.
 đồng thời cấu hình Google:ClientId cùng client ID đó cho backend. Docker Compose lấy các
 giá trị này từ .env ở thư mục gốc.
 
+Sitemap dùng SITE_URL làm canonical origin và REVALIDATION_SECRET để bảo vệ callback nội bộ
+từ backend sang Next.js. Hai service phải dùng cùng một REVALIDATION_SECRET; Docker Compose
+đã nối sẵn callback và phục vụ sitemap công khai tại `/sitemap.xml`.
+
 ## Kiểm tra chất lượng
 
 Chạy toàn bộ quality gates:

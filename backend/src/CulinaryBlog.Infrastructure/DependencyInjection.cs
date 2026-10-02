@@ -51,6 +51,14 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(EmailOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.AddOptions<SitemapOptions>()
+            .Bind(configuration.GetSection(SitemapOptions.SectionName))
+            .ValidateDataAnnotations()
+            .Validate(
+                options => string.IsNullOrWhiteSpace(options.RevalidationEndpoint) ==
+                    string.IsNullOrWhiteSpace(options.RevalidationSecret),
+                "Sitemap revalidation endpoint and secret must be configured together.")
+            .ValidateOnStart();
 
         services.AddScoped<AuditSaveChangesInterceptor>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) => options
@@ -93,6 +101,9 @@ public static class DependencyInjection
         services.AddTransient<ImageProcessingJob>();
         services.AddTransient<ObjectDeletionJob>();
         services.AddTransient<ImageReconciliationJob>();
+        services.AddTransient<SitemapGenerationJob>();
+        services.AddTransient<PublicContentRefreshJob>();
+        services.AddTransient<PublicContentRefreshScheduler>();
 
         services.AddHangfire(configurationBuilder => configurationBuilder
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)

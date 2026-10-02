@@ -65,8 +65,8 @@ Dựa trên kiểm tra mã nguồn thực tế, dưới đây là trạng thái 
 - [x] **[FR-RCP-006]** Archive (Tính năng Archive/Unarchive Recipe)
 - [x] **[FR-SRCH]** Khám phá và Tìm kiếm (API Tìm kiếm, Lọc, Giao diện Public Web)
 - [x] **[NFR-PERF]** Hiệu năng và Cache (Redis Application Cache)
-- [ ] **[FR-JOB]** Background Jobs *(Đã xong xử lý ảnh Hangfire, nhưng thiếu Sitemap Job)*
-- [ ] **[NFR-SEO]** Tối ưu SEO và Web Vitals *(Chưa hoàn thiện Sitemap)*
+- [x] **[FR-JOB]** Background Jobs *(Hangfire xử lý ảnh và Sitemap Job)*
+- [ ] **[NFR-SEO]** Tối ưu SEO và Web Vitals *(Đã hoàn thiện Sitemap; còn metadata/Web Vitals Phase 6)*
 - [ ] **[FR-OBS]** Observability & Operations *(Chưa hoàn thiện Admin Dashboard)*
 - [ ] **[NFR-QA]** Hardening, Bảo mật, UAT và Phát hành
 
@@ -530,6 +530,10 @@ Hoàn thiện vòng đời nội dung và khả năng khám phá công thức c�
 - **[FR-JOB]** P5-22: Giữ sitemap gần nhất khi job thất bại; retry 2 lần.
 - **[FR-JOB]** P5-23: Thiết kế trigger/debounce revalidation frontend sau publish/update/unpublish.
 - **[FR-JOB]** P5-24: Xác minh cơ chế thông báo search engine còn được hỗ trợ trước khi tích hợp; không hardcode endpoint chưa được kiểm chứng.
+
+> Xác minh ngày 03/10/2026: Google đã ngừng sitemap ping endpoint và khuyến nghị khai báo
+> sitemap qua `robots.txt` hoặc Search Console. Vì vậy v1 không gọi endpoint ping; `/robots.txt`
+> quảng bá `/sitemap.xml`. Nguồn: [Google Search Central](https://developers.google.com/search/blog/2023/06/sitemaps-lastmod-ping).
 
 #### QA/Performance
 

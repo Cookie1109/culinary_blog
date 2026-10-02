@@ -19,8 +19,21 @@ tags:
   - name: Images
   - name: Steps
   - name: Ingredients
+  - name: Sitemap
   - name: Health
 paths:
+  /sitemap.xml:
+    get:
+      tags: [Sitemap]
+      operationId: getSitemap
+      security: []
+      responses:
+        '200':
+          description: XML sitemap gần nhất đã tạo thành công
+          content:
+            application/xml:
+              schema: {type: string}
+        '404': {description: Sitemap chưa được tạo}
   /auth/register:
     post:
       tags: [Auth]

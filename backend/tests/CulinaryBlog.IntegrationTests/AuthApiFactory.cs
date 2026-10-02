@@ -30,6 +30,7 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifet
         builder.UseSetting("ConnectionStrings:Database", _postgresSql.GetConnectionString());
         builder.UseSetting("ConnectionStrings:Redis", _redis.GetConnectionString());
         builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
+        builder.UseSetting("BackgroundJobs:Enabled", "false");
         builder.UseSetting("RateLimiting:AuthPermitLimit", "100");
         builder.UseSetting("Email:Enabled", "false");
     }

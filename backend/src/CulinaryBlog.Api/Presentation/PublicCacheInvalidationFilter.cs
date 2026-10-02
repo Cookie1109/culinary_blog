@@ -1,8 +1,11 @@
 using CulinaryBlog.Application.Abstractions.Caching;
+using CulinaryBlog.Infrastructure.Jobs;
 
 namespace CulinaryBlog.Api.Presentation;
 
-internal sealed class PublicCacheInvalidationFilter(IApplicationCache cache) : IEndpointFilter
+internal sealed class PublicCacheInvalidationFilter(
+    IApplicationCache cache,
+    PublicContentRefreshScheduler refreshScheduler) : IEndpointFilter
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
@@ -16,6 +19,7 @@ internal sealed class PublicCacheInvalidationFilter(IApplicationCache cache) : I
             .ConfigureAwait(false);
         await cache.RemoveByTagAsync(PublicCacheKeys.CategoriesTag, context.HttpContext.RequestAborted)
             .ConfigureAwait(false);
+        await refreshScheduler.ScheduleAsync(CancellationToken.None).ConfigureAwait(false);
         return result;
     }
 }

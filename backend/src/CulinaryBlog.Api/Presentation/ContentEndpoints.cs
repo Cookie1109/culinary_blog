@@ -3,9 +3,12 @@ using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Features.Recipes.Commands;
 using CulinaryBlog.Application.Features.Recipes.Queries;
+using CulinaryBlog.Application.Media;
 using CulinaryBlog.Domain.Recipes;
+using CulinaryBlog.Infrastructure.Configuration;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace CulinaryBlog.Api.Presentation;
 
@@ -22,6 +25,8 @@ internal static class ContentEndpoints
             .AddEndpointFilter<PublicCacheInvalidationFilter>();
         categories.MapDelete("/{id:guid}", DeleteCategoryAsync).RequireAuthorization("AdminPolicy")
             .AddEndpointFilter<PublicCacheInvalidationFilter>();
+
+        endpoints.MapGet("/api/v1/sitemap.xml", GetSitemapAsync).AllowAnonymous();
 
         var recipes = endpoints.MapGroup("/api/v1/recipes");
         recipes.MapGet("/", ListPublishedRecipesAsync).AllowAnonymous();
@@ -75,6 +80,21 @@ internal static class ContentEndpoints
         admin.MapGet("/{id:guid}", GetAdminRecipeAsync);
 
         return endpoints;
+    }
+
+    private static async Task<IResult> GetSitemapAsync(
+        IFileStorageService fileStorage,
+        IOptions<SitemapOptions> options,
+        CancellationToken cancellationToken)
+    {
+        var objectKey = options.Value.ObjectKey;
+        if (!await fileStorage.ExistsAsync(objectKey, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var content = await fileStorage.OpenReadAsync(objectKey, cancellationToken).ConfigureAwait(false);
+        return Results.Stream(content, "application/xml; charset=utf-8");
     }
 
     private static async Task<IResult> ListCategoriesAsync(

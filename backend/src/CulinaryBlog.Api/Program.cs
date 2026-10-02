@@ -95,6 +95,12 @@ try
             "media-reconciliation",
             job => job.RunAsync(CancellationToken.None),
             Cron.Daily);
+        RecurringJob.AddOrUpdate<SitemapGenerationJob>(
+            "sitemap-generation",
+            job => job.GenerateAsync(CancellationToken.None),
+            "0 2 * * *",
+            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        BackgroundJob.Enqueue<SitemapGenerationJob>(job => job.GenerateAsync(CancellationToken.None));
     }
 
     app.MapGet("/api/v1", () => Results.Ok(new
