@@ -11,6 +11,7 @@ using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -21,9 +22,28 @@ internal sealed partial class ContentService(
     IUnitOfWork unitOfWork,
     UserManager<ApplicationUser> userManager,
     IFileStorageService fileStorage,
-    TimeProvider timeProvider) : IContentService, IRecipeSearchRepository
+    TimeProvider timeProvider,
+    ILogger<ContentService> logger) : IContentService, IRecipeSearchRepository
 {
     private const int MaximumPageSize = 50;
+
+    private static readonly Action<ILogger, Guid, Guid, Exception?> RecipeCreated =
+        LoggerMessage.Define<Guid, Guid>(
+            LogLevel.Information,
+            new EventId(4001, nameof(RecipeCreated)),
+            "Audit event recipe.created for recipe {RecipeId} by user {UserId}");
+
+    private static readonly Action<ILogger, Guid, Guid, Exception?> RecipePublished =
+        LoggerMessage.Define<Guid, Guid>(
+            LogLevel.Information,
+            new EventId(4002, nameof(RecipePublished)),
+            "Audit event recipe.published for recipe {RecipeId} by user {UserId}");
+
+    private static readonly Action<ILogger, Guid, Guid, Exception?> RecipeUnpublished =
+        LoggerMessage.Define<Guid, Guid>(
+            LogLevel.Information,
+            new EventId(4003, nameof(RecipeUnpublished)),
+            "Audit event recipe.unpublished for recipe {RecipeId} by user {UserId}");
 
     public async Task<IReadOnlyCollection<CategoryDto>> ListCategoriesAsync(CancellationToken cancellationToken)
     {
@@ -184,6 +204,8 @@ internal sealed partial class ContentService(
             try
             {
                 await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                ContentMetrics.RecipeCreated.Add(1);
+                RecipeCreated(logger, recipe.Id, userId, null);
                 return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
             }
             catch (DbUpdateException exception) when (IsUniqueViolation(exception, "Slug"))
@@ -220,6 +242,78 @@ internal sealed partial class ContentService(
             request.Difficulty,
             request.Instructions,
             ToNutrition(request.Nutrition));
+        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<RecipeDto> PublishRecipeAsync(
+        Guid id,
+        Guid userId,
+        bool isAdmin,
+        long expectedVersion,
+        CancellationToken cancellationToken)
+    {
+        var recipe = await FindRecipeForMutationAsync(id, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+        EnsureVersion(recipe, expectedVersion);
+        var categoryExists = await dbContext.Categories
+            .AnyAsync(category => category.Id == recipe.CategoryId, cancellationToken)
+            .ConfigureAwait(false);
+        var ingredientCount = await dbContext.RecipeIngredients
+            .CountAsync(ingredient => ingredient.RecipeId == recipe.Id, cancellationToken)
+            .ConfigureAwait(false);
+        var stepNumbers = await dbContext.RecipeSteps
+            .Where(step => step.RecipeId == recipe.Id)
+            .Select(step => step.StepNumber)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        recipe.Publish(timeProvider.GetUtcNow(), categoryExists, ingredientCount, stepNumbers);
+        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        ContentMetrics.RecipePublished.Add(1);
+        RecipePublished(logger, recipe.Id, userId, null);
+        return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<RecipeDto> UnpublishRecipeAsync(
+        Guid id,
+        Guid userId,
+        bool isAdmin,
+        long expectedVersion,
+        CancellationToken cancellationToken)
+    {
+        var recipe = await FindRecipeForMutationAsync(id, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+        EnsureVersion(recipe, expectedVersion);
+        recipe.Unpublish();
+        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        ContentMetrics.RecipeUnpublished.Add(1);
+        RecipeUnpublished(logger, recipe.Id, userId, null);
+        return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<RecipeDto> ArchiveRecipeAsync(
+        Guid id,
+        Guid userId,
+        bool isAdmin,
+        long expectedVersion,
+        CancellationToken cancellationToken)
+    {
+        var recipe = await FindRecipeForMutationAsync(id, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+        EnsureVersion(recipe, expectedVersion);
+        recipe.Archive();
+        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<RecipeDto> UnarchiveRecipeAsync(
+        Guid id,
+        Guid userId,
+        bool isAdmin,
+        long expectedVersion,
+        CancellationToken cancellationToken)
+    {
+        var recipe = await FindRecipeForMutationAsync(id, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+        EnsureVersion(recipe, expectedVersion);
+        recipe.Unarchive();
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }

@@ -220,6 +220,42 @@ export function deleteRecipe(id: string, version: number) {
   })
 }
 
+export async function publishRecipe(id: string, version: number) {
+  return (
+    await authenticatedApiRequest<DataEnvelope<Recipe>>(`/recipes/${id}/publish`, {
+      method: 'PATCH',
+      headers: { 'If-Match': `"${version}"` },
+    })
+  ).data
+}
+
+export async function unpublishRecipe(id: string, version: number) {
+  return (
+    await authenticatedApiRequest<DataEnvelope<Recipe>>(`/recipes/${id}/unpublish`, {
+      method: 'PATCH',
+      headers: { 'If-Match': `"${version}"` },
+    })
+  ).data
+}
+
+export async function archiveRecipe(id: string, version: number) {
+  return (
+    await authenticatedApiRequest<DataEnvelope<Recipe>>(`/recipes/${id}/archive`, {
+      method: 'PATCH',
+      headers: { 'If-Match': `"${version}"` },
+    })
+  ).data
+}
+
+export async function unarchiveRecipe(id: string, version: number) {
+  return (
+    await authenticatedApiRequest<DataEnvelope<Recipe>>(`/recipes/${id}/unarchive`, {
+      method: 'PATCH',
+      headers: { 'If-Match': `"${version}"` },
+    })
+  ).data
+}
+
 const versionHeaders = (version: number) => ({
   'Content-Type': 'application/json',
   'If-Match': `"${version}"`,

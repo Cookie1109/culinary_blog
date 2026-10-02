@@ -151,6 +151,34 @@ public interface IContentService
         RecipeWriteRequest request,
         CancellationToken cancellationToken);
 
+    Task<RecipeDto> PublishRecipeAsync(
+        Guid id,
+        Guid userId,
+        bool isAdmin,
+        long expectedVersion,
+        CancellationToken cancellationToken);
+
+    Task<RecipeDto> UnpublishRecipeAsync(
+        Guid id,
+        Guid userId,
+        bool isAdmin,
+        long expectedVersion,
+        CancellationToken cancellationToken);
+
+    Task<RecipeDto> ArchiveRecipeAsync(
+        Guid id,
+        Guid userId,
+        bool isAdmin,
+        long expectedVersion,
+        CancellationToken cancellationToken);
+
+    Task<RecipeDto> UnarchiveRecipeAsync(
+        Guid id,
+        Guid userId,
+        bool isAdmin,
+        long expectedVersion,
+        CancellationToken cancellationToken);
+
     Task<RecipeDto> GetPublishedRecipeAsync(string slug, CancellationToken cancellationToken);
 
     Task<PageEnvelope<RecipeDto>> ListPublishedRecipesAsync(int page, int pageSize, CancellationToken cancellationToken);

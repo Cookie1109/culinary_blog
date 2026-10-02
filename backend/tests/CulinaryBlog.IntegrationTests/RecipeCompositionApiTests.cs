@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using CulinaryBlog.Application.Media;
+using CulinaryBlog.Infrastructure.Content;
 using CulinaryBlog.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -74,6 +76,140 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
             5,
             new { name = "Không được phép", orderIndex = 1 });
         Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+    }
+
+    [Fact]
+    public async Task OwnerCanManagePublishingLifecycleWithStableMetadataAndPublicIsolation()
+    {
+        var observedMetrics = new ConcurrentDictionary<string, long>(StringComparer.Ordinal);
+        using var meterListener = new MeterListener();
+        meterListener.InstrumentPublished = (instrument, listener) =>
+        {
+            if (instrument.Meter.Name == ContentMetrics.MeterName)
+            {
+                listener.EnableMeasurementEvents(instrument);
+            }
+        };
+        meterListener.SetMeasurementEventCallback<long>((instrument, measurement, _, _) =>
+            observedMetrics.AddOrUpdate(instrument.Name, measurement, (_, current) => current + measurement));
+        meterListener.Start();
+
+        using var client = factory.CreateClient();
+        var owner = await RegisterAsync(client, $"publish-{Guid.NewGuid():N}@example.com");
+        var category = await GetCategoryAsync(client);
+        var categoryId = category.Id;
+        SetToken(client, owner.AccessToken);
+        var recipe = await CreateRecipeAsync(client, categoryId, "Publish lifecycle recipe");
+
+        using var incompleteRequest = CreateLifecyclePatch(recipe.Id, "publish", 1);
+        using var incompleteResponse = await client.SendAsync(incompleteRequest);
+        var incompleteProblem = await incompleteResponse.Content.ReadFromJsonAsync<Problem>();
+        Assert.Equal(HttpStatusCode.BadRequest, incompleteResponse.StatusCode);
+        Assert.Equal("RECIPE_PUBLISH_INCOMPLETE", incompleteProblem?.Code);
+
+        using var ingredientResponse = await SendJsonAsync(
+            client,
+            HttpMethod.Post,
+            $"/api/v1/recipes/{recipe.Id}/ingredients",
+            1,
+            new { name = "Gạo", quantity = 200m, unit = "g", orderIndex = 0 });
+        Assert.Equal(HttpStatusCode.Created, ingredientResponse.StatusCode);
+
+        using var stepResponse = await SendJsonAsync(
+            client,
+            HttpMethod.Post,
+            $"/api/v1/recipes/{recipe.Id}/steps",
+            2,
+            new { title = "Nấu", description = "Nấu nguyên liệu đến khi chín", timerMinutes = 20 });
+        Assert.Equal(HttpStatusCode.Created, stepResponse.StatusCode);
+
+        using var publishRequest = CreateLifecyclePatch(recipe.Id, "publish", 3);
+        using var publishResponse = await client.SendAsync(publishRequest);
+        var published = (await publishResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        Assert.Equal(HttpStatusCode.OK, publishResponse.StatusCode);
+        Assert.Equal("\"4\"", publishResponse.Headers.ETag?.Tag);
+        Assert.Equal("published", published.Status);
+        Assert.NotNull(published.PublishedAt);
+
+        using var publicResponse = await client.GetAsync($"/api/v1/recipes/{published.Slug}");
+        Assert.Equal(HttpStatusCode.OK, publicResponse.StatusCode);
+
+        using var updateResponse = await SendJsonAsync(
+            client,
+            HttpMethod.Put,
+            $"/api/v1/recipes/{recipe.Id}",
+            4,
+            new
+            {
+                title = "Renamed after first publication",
+                description = "The slug and first publication time must stay stable.",
+                categoryId,
+                prepTime = 10,
+                cookTime = 15,
+                servings = 2,
+                difficulty = "easy",
+            });
+        var updated = (await updateResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        Assert.Equal(published.Slug, updated.Slug);
+
+        using var unpublishRequest = CreateLifecyclePatch(recipe.Id, "unpublish", 5);
+        using var unpublishResponse = await client.SendAsync(unpublishRequest);
+        var unpublished = (await unpublishResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        Assert.Equal(HttpStatusCode.OK, unpublishResponse.StatusCode);
+        Assert.Equal("\"6\"", unpublishResponse.Headers.ETag?.Tag);
+        Assert.Equal("draft", unpublished.Status);
+        Assert.NotNull(unpublished.PublishedAt);
+        Assert.InRange((unpublished.PublishedAt.Value - published.PublishedAt!.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+
+        using var hiddenResponse = await client.GetAsync($"/api/v1/recipes/{published.Slug}");
+        Assert.Equal(HttpStatusCode.NotFound, hiddenResponse.StatusCode);
+
+        using var republishRequest = CreateLifecyclePatch(recipe.Id, "publish", 6);
+        using var republishResponse = await client.SendAsync(republishRequest);
+        var republished = (await republishResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        Assert.Equal(HttpStatusCode.OK, republishResponse.StatusCode);
+        Assert.Equal("published", republished.Status);
+        Assert.Equal(published.Slug, republished.Slug);
+        Assert.NotNull(republished.PublishedAt);
+        Assert.InRange((republished.PublishedAt.Value - published.PublishedAt.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+
+        using var archiveRequest = CreateLifecyclePatch(recipe.Id, "archive", 7);
+        using var archiveResponse = await client.SendAsync(archiveRequest);
+        var archived = (await archiveResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        Assert.Equal(HttpStatusCode.OK, archiveResponse.StatusCode);
+        Assert.Equal("\"8\"", archiveResponse.Headers.ETag?.Tag);
+        Assert.Equal("archived", archived.Status);
+        Assert.Equal(published.Slug, archived.Slug);
+        Assert.NotNull(archived.PublishedAt);
+        Assert.InRange((archived.PublishedAt.Value - published.PublishedAt!.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+
+        using var archivedDetailResponse = await client.GetAsync($"/api/v1/recipes/{published.Slug}");
+        Assert.Equal(HttpStatusCode.NotFound, archivedDetailResponse.StatusCode);
+
+        var publicList = await client.GetFromJsonAsync<RecipePage>("/api/v1/recipes?page=1&pageSize=50");
+        Assert.DoesNotContain(publicList!.Data, item => item.Id == recipe.Id);
+
+        var publicSearch = await client.GetFromJsonAsync<RecipePage>("/api/v1/recipes/search?q=Publish&page=1&pageSize=50");
+        Assert.DoesNotContain(publicSearch!.Data, item => item.Id == recipe.Id);
+
+        var categoryDetail = await client.GetFromJsonAsync<CategoryDetailEnvelopeResponse>(
+            $"/api/v1/categories/{category.Slug}?page=1&pageSize=50");
+        Assert.DoesNotContain(categoryDetail!.Data.Recipes, item => item.Id == recipe.Id);
+
+        using var unarchiveRequest = CreateLifecyclePatch(recipe.Id, "unarchive", 8);
+        using var unarchiveResponse = await client.SendAsync(unarchiveRequest);
+        var unarchived = (await unarchiveResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        Assert.Equal(HttpStatusCode.OK, unarchiveResponse.StatusCode);
+        Assert.Equal("\"9\"", unarchiveResponse.Headers.ETag?.Tag);
+        Assert.Equal("draft", unarchived.Status);
+        Assert.Equal(published.Slug, unarchived.Slug);
+        Assert.NotNull(unarchived.PublishedAt);
+        Assert.InRange((unarchived.PublishedAt.Value - published.PublishedAt!.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+
+        Assert.Equal(1, observedMetrics["recipe.created"]);
+        Assert.Equal(2, observedMetrics["recipe.published"]);
+        Assert.Equal(1, observedMetrics["recipe.unpublished"]);
     }
 
     [Fact]
@@ -209,6 +345,13 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         return request;
     }
 
+    private static HttpRequestMessage CreateLifecyclePatch(Guid recipeId, string action, long version)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/recipes/{recipeId}/{action}");
+        request.Headers.IfMatch.Add(new EntityTagHeaderValue($"\"{version}\""));
+        return request;
+    }
+
     private static async Task<RecipeResponse> CreateRecipeAsync(HttpClient client, Guid categoryId, string title)
     {
         using var response = await client.PostAsJsonAsync("/api/v1/recipes", new
@@ -227,9 +370,14 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
 
     private static async Task<Guid> GetCategoryIdAsync(HttpClient client)
     {
+        return (await GetCategoryAsync(client)).Id;
+    }
+
+    private static async Task<CategoryResponse> GetCategoryAsync(HttpClient client)
+    {
         SetToken(client, null);
         var response = await client.GetFromJsonAsync<DataEnvelope<CategoryResponse[]>>("/api/v1/categories");
-        return response!.Data[0].Id;
+        return response!.Data[0];
     }
 
     private static async Task<AuthSession> RegisterAsync(HttpClient client, string email)
@@ -247,11 +395,19 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         : new AuthenticationHeaderValue("Bearer", token);
 
     private sealed record DataEnvelope<T>(T Data);
+    private sealed record RecipePage(IReadOnlyList<RecipeResponse> Data);
+    private sealed record CategoryDetailEnvelopeResponse(CategoryDetailDataResponse Data);
+    private sealed record CategoryDetailDataResponse(IReadOnlyList<RecipeResponse> Recipes);
     private sealed record MutationEnvelope<T>(T Data, MutationMeta Meta);
     private sealed record MutationMeta(long RecipeVersion);
     private sealed record AuthSession(string AccessToken);
-    private sealed record RecipeResponse(Guid Id);
-    private sealed record CategoryResponse(Guid Id);
+    private sealed record RecipeResponse(
+        Guid Id,
+        string Slug,
+        string Status,
+        DateTimeOffset? PublishedAt,
+        long Version);
+    private sealed record CategoryResponse(Guid Id, string Slug);
     private sealed record StepResponse(Guid Id, int StepNumber, string Title, string Description);
     private sealed record IngredientResponse(decimal? Quantity);
     private sealed record RecipeDetailResponse(IReadOnlyList<StepResponse> Steps, IReadOnlyList<IngredientResponse> Ingredients);

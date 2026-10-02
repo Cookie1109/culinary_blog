@@ -63,6 +63,70 @@ public sealed class RecipeCoreDomainTests
     }
 
     [Fact]
+    public void PublishRequiresCompleteAggregateAndGuardsTransitions()
+    {
+        var recipe = CreateRecipe();
+        var incomplete = Assert.Throws<DomainException>(() =>
+            recipe.Publish(DateTimeOffset.UtcNow, true, 0, [1]));
+
+        Assert.Equal("RECIPE_PUBLISH_INCOMPLETE", incomplete.Code);
+        Assert.Null(recipe.PublishedAt);
+        Assert.Throws<DomainException>(() => recipe.Unpublish());
+
+        var publishedAt = new DateTimeOffset(2026, 10, 2, 4, 0, 0, TimeSpan.Zero);
+        recipe.Publish(publishedAt, true, 1, [1]);
+
+        Assert.Equal(RecipeStatus.Published, recipe.Status);
+        Assert.Equal(publishedAt, recipe.PublishedAt);
+        Assert.Throws<DomainException>(() => recipe.Publish(publishedAt, true, 1, [1]));
+    }
+
+    [Fact]
+    public void FirstPublishLocksSlugAndRepublishKeepsPublishedAt()
+    {
+        var recipe = CreateRecipe();
+        var firstPublishedAt = new DateTimeOffset(2026, 10, 2, 4, 0, 0, TimeSpan.Zero);
+        recipe.Publish(firstPublishedAt, true, 1, [1]);
+        recipe.Unpublish();
+
+        recipe.Update(
+            "changed-slug",
+            "Changed recipe title",
+            "Changed description",
+            Guid.NewGuid(),
+            15,
+            5,
+            4,
+            RecipeDifficulty.Easy,
+            null,
+            null);
+        recipe.Publish(firstPublishedAt.AddDays(1), true, 1, [1]);
+
+        Assert.Equal("draft-recipe", recipe.Slug);
+        Assert.Equal(firstPublishedAt, recipe.PublishedAt);
+        Assert.Equal(RecipeStatus.Published, recipe.Status);
+    }
+
+    [Theory]
+    [InlineData(false, 1, new[] { 1 })]
+    [InlineData(true, 0, new[] { 1 })]
+    [InlineData(true, 1, new int[0])]
+    [InlineData(true, 1, new[] { 2 })]
+    public void PublishRejectsEveryIncompleteAggregate(
+        bool categoryExists,
+        int ingredientCount,
+        int[] stepNumbers)
+    {
+        var recipe = CreateRecipe();
+
+        var exception = Assert.Throws<DomainException>(() =>
+            recipe.Publish(DateTimeOffset.UtcNow, categoryExists, ingredientCount, stepNumbers));
+
+        Assert.Equal("RECIPE_PUBLISH_INCOMPLETE", exception.Code);
+        Assert.Equal(RecipeStatus.Draft, recipe.Status);
+    }
+
+    [Fact]
     public void NutritionRejectsNegativeValues()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => RecipeNutrition.Create(-1, null, null, null, null, null));

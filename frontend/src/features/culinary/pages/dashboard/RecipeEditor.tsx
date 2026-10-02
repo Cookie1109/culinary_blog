@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Save } from 'lucide-react'
+import { ChevronLeft, Eye, EyeOff, Globe, Save } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ApiProblem } from '@/lib/api/problem-details'
@@ -10,11 +10,26 @@ import {
   createRecipe,
   getMyRecipe,
   listCategories,
+  publishRecipe,
+  unpublishRecipe,
   updateRecipe,
   type Nutrition,
   type RecipeDifficulty,
+  type RecipeStatus,
   type RecipeWrite,
 } from '@/lib/api/content-client'
+
+const STATUS_LABELS: Record<RecipeStatus, string> = {
+  draft: 'Bản nháp',
+  published: 'Đã xuất bản',
+  archived: 'Đã lưu trữ',
+}
+
+const STATUS_BADGE: Record<RecipeStatus, string> = {
+  published: 'bg-green-50 text-green-700 border-green-200',
+  draft: 'bg-amber-50 text-amber-700 border-amber-200',
+  archived: 'bg-secondary text-muted-foreground border-border',
+}
 
 type NutritionField = keyof Nutrition
 type NutritionForm = Record<NutritionField, string>
@@ -93,6 +108,8 @@ export function RecipeEditor() {
   const [version, setVersion] = useState(1)
   const [saved, setSaved] = useState(false)
   const [clientError, setClientError] = useState<string | null>(null)
+  const [publishNotice, setPublishNotice] = useState<string | null>(null)
+  const [publishError, setPublishError] = useState<string | null>(null)
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
   const recipeQuery = useQuery({
     queryKey: ['my-recipe', id],
@@ -130,9 +147,57 @@ export function RecipeEditor() {
       setVersion(recipe.version)
       setSaved(true)
       setClientError(null)
+      setPublishNotice(null)
+      setPublishError(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', recipe.id] })
       if (!isEditing) navigate(`/dashboard/recipes/${recipe.id}/edit`)
+    },
+  })
+
+  const publishMutation = useMutation({
+    mutationFn: () => publishRecipe(id, version),
+    onSuccess: async (recipe) => {
+      setVersion(recipe.version)
+      setPublishNotice('Công thức đã được xuất bản thành công.')
+      setPublishError(null)
+      setSaved(false)
+      setClientError(null)
+      await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
+    },
+    onError: (error) => {
+      setPublishNotice(null)
+      if (error instanceof ApiProblem && error.problem.code === 'RECIPE_PUBLISH_INCOMPLETE') {
+        setPublishError('Công thức cần ít nhất 1 nguyên liệu và 1 bước thực hiện để xuất bản.')
+      } else {
+        setPublishError(
+          error instanceof ApiProblem
+            ? (error.problem.detail ?? error.problem.title)
+            : 'Không thể xuất bản công thức.',
+        )
+      }
+    },
+  })
+
+  const unpublishMutation = useMutation({
+    mutationFn: () => unpublishRecipe(id, version),
+    onSuccess: async (recipe) => {
+      setVersion(recipe.version)
+      setPublishNotice('Đã gỡ xuất bản công thức (chuyển về bản nháp).')
+      setPublishError(null)
+      setSaved(false)
+      setClientError(null)
+      await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
+    },
+    onError: (error) => {
+      setPublishNotice(null)
+      setPublishError(
+        error instanceof ApiProblem
+          ? (error.problem.detail ?? error.problem.title)
+          : 'Không thể gỡ xuất bản công thức.',
+      )
     },
   })
 
@@ -153,6 +218,8 @@ export function RecipeEditor() {
 
   const handleCompositionChanged = async (nextVersion: number) => {
     setVersion(nextVersion)
+    setPublishNotice(null)
+    setPublishError(null)
     await recipeQuery.refetch()
   }
 
@@ -182,7 +249,7 @@ export function RecipeEditor() {
   return (
     <div className="max-w-4xl">
       <form onSubmit={handleSubmit}>
-        <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <Link
               to="/dashboard/recipes"
@@ -190,17 +257,74 @@ export function RecipeEditor() {
             >
               <ChevronLeft size={14} /> Công thức của tôi
             </Link>
-            <h1 className="font-serif text-3xl lg:text-4xl">
-              {isEditing ? 'Chỉnh sửa bản nháp' : 'Tạo bản nháp mới'}
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-serif text-3xl lg:text-4xl">
+                {isEditing ? 'Chỉnh sửa công thức' : 'Tạo bản nháp mới'}
+              </h1>
+              {isEditing && recipeQuery.data && (
+                <span
+                  className={`border px-2.5 py-1 text-xs font-medium uppercase tracking-wider ${
+                    STATUS_BADGE[recipeQuery.data.status]
+                  }`}
+                >
+                  {STATUS_LABELS[recipeQuery.data.status]}
+                </span>
+              )}
+            </div>
+            {isEditing && recipeQuery.data?.status === 'published' && (
+              <div className="mt-2">
+                <Link
+                  to={`/recipes/${recipeQuery.data.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground underline hover:text-foreground"
+                >
+                  <Eye size={13} /> Xem bài viết công khai
+                </Link>
+              </div>
+            )}
           </div>
-          <button
-            type="submit"
-            disabled={save.isPending || categoriesQuery.isPending}
-            className="flex items-center gap-2 bg-primary px-5 py-2.5 text-sm uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-          >
-            <Save size={15} /> {save.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {isEditing && recipeQuery.data && (
+              <>
+                {recipeQuery.data.status === 'draft' && (
+                  <button
+                    type="button"
+                    disabled={publishMutation.isPending || save.isPending}
+                    onClick={() => {
+                      setPublishNotice(null)
+                      setPublishError(null)
+                      publishMutation.mutate()
+                    }}
+                    className="flex items-center gap-2 border border-green-600 bg-green-50 px-4 py-2.5 text-sm uppercase tracking-widest text-green-700 hover:bg-green-100 disabled:opacity-60"
+                  >
+                    <Globe size={15} /> {publishMutation.isPending ? 'Đang xuất bản…' : 'Xuất bản'}
+                  </button>
+                )}
+                {recipeQuery.data.status === 'published' && (
+                  <button
+                    type="button"
+                    disabled={unpublishMutation.isPending || save.isPending}
+                    onClick={() => {
+                      setPublishNotice(null)
+                      setPublishError(null)
+                      unpublishMutation.mutate()
+                    }}
+                    className="flex items-center gap-2 border border-amber-600 bg-amber-50 px-4 py-2.5 text-sm uppercase tracking-widest text-amber-700 hover:bg-amber-100 disabled:opacity-60"
+                  >
+                    <EyeOff size={15} /> {unpublishMutation.isPending ? 'Đang gỡ…' : 'Gỡ xuất bản'}
+                  </button>
+                )}
+              </>
+            )}
+            <button
+              type="submit"
+              disabled={save.isPending || categoriesQuery.isPending}
+              className="flex items-center gap-2 bg-primary px-5 py-2.5 text-sm uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              <Save size={15} /> {save.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}
+            </button>
+          </div>
         </div>
 
         {saved && (
@@ -209,6 +333,19 @@ export function RecipeEditor() {
             className="mb-6 border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
           >
             Đã lưu bản nháp thành công.
+          </p>
+        )}
+        {publishNotice && (
+          <p
+            role="status"
+            className="mb-6 border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+          >
+            {publishNotice}
+          </p>
+        )}
+        {publishError && (
+          <p role="alert" className="mb-6 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {publishError}
           </p>
         )}
         {(clientError || (save.isError && !conflict)) && (

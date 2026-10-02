@@ -1,7 +1,19 @@
 'use client'
 
 import { useMutation } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, ImagePlus, Plus, Save, Star, Trash2 } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
+  EyeOff,
+  Globe,
+  ImagePlus,
+  Plus,
+  Save,
+  Star,
+  Trash2,
+} from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { authenticatedBlobUrl } from '@/lib/api/auth-client'
 import {
@@ -10,6 +22,8 @@ import {
   deleteIngredient,
   deleteRecipeImage,
   deleteStep,
+  publishRecipe,
+  unpublishRecipe,
   updateIngredient,
   updateRecipeImage,
   updateStep,
@@ -115,6 +129,32 @@ export function RecipeCompositionWizard({ recipe, version, onChanged }: Props) {
       setImagePrimary(false)
       setUploadProgress(0)
       await onChanged(result.meta.recipeVersion)
+    },
+  })
+
+  const publishMutation = useMutation({
+    mutationFn: () => publishRecipe(recipe.id, version),
+    onSuccess: async (updated) => {
+      setClientError(null)
+      await onChanged(updated.version)
+    },
+    onError: (error) => {
+      if (error instanceof ApiProblem && error.problem.code === 'RECIPE_PUBLISH_INCOMPLETE') {
+        setClientError('Công thức cần ít nhất 1 nguyên liệu và 1 bước thực hiện để xuất bản.')
+      } else {
+        setClientError(errorMessage(error))
+      }
+    },
+  })
+
+  const unpublishMutation = useMutation({
+    mutationFn: () => unpublishRecipe(recipe.id, version),
+    onSuccess: async (updated) => {
+      setClientError(null)
+      await onChanged(updated.version)
+    },
+    onError: (error) => {
+      setClientError(errorMessage(error))
     },
   })
 
@@ -521,9 +561,72 @@ export function RecipeCompositionWizard({ recipe, version, onChanged }: Props) {
 
       {stage === 'preview' && (
         <article className="mt-6 border border-border p-6">
-          <p className="text-xs uppercase tracking-widest text-primary">Bản xem trước</p>
-          <h3 className="mt-2 font-serif text-3xl">{recipe.title}</h3>
-          <p className="mt-3 text-muted-foreground">{recipe.description}</p>
+          <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-widest text-primary">Bản xem trước</span>
+                <span
+                  className={`border px-2 py-0.5 text-xs font-medium ${
+                    recipe.status === 'published'
+                      ? 'border-green-200 bg-green-50 text-green-700'
+                      : 'border-amber-200 bg-amber-50 text-amber-700'
+                  }`}
+                >
+                  {recipe.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}
+                </span>
+              </div>
+              <h3 className="mt-2 font-serif text-3xl">{recipe.title}</h3>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {recipe.status === 'draft' ? (
+                <button
+                  type="button"
+                  disabled={
+                    publishMutation.isPending || recipe.ingredients.length === 0 || recipe.steps.length === 0
+                  }
+                  onClick={() => publishMutation.mutate()}
+                  className="flex items-center gap-2 bg-green-700 px-5 py-2.5 text-sm uppercase tracking-widest text-white transition-colors hover:bg-green-800 disabled:opacity-50"
+                >
+                  <Globe size={15} />
+                  {publishMutation.isPending ? 'Đang xuất bản…' : 'Xuất bản công thức'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={unpublishMutation.isPending}
+                  onClick={() => unpublishMutation.mutate()}
+                  className="flex items-center gap-2 border border-amber-600 bg-amber-50 px-5 py-2.5 text-sm uppercase tracking-widest text-amber-800 transition-colors hover:bg-amber-100 disabled:opacity-50"
+                >
+                  <EyeOff size={15} />
+                  {unpublishMutation.isPending ? 'Đang gỡ…' : 'Gỡ xuất bản'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {recipe.status === 'draft' && (
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Điều kiện xuất bản:</span>
+              <span
+                className={`flex items-center gap-1 ${
+                  recipe.ingredients.length > 0 ? 'text-green-700' : 'text-amber-700'
+                }`}
+              >
+                {recipe.ingredients.length > 0 ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+                Nguyên liệu ({recipe.ingredients.length}/1)
+              </span>
+              <span
+                className={`flex items-center gap-1 ${
+                  recipe.steps.length > 0 ? 'text-green-700' : 'text-amber-700'
+                }`}
+              >
+                {recipe.steps.length > 0 ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+                Các bước thực hiện ({recipe.steps.length}/1)
+              </span>
+            </div>
+          )}
+
+          <p className="mt-4 text-muted-foreground">{recipe.description}</p>
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div>
               <h4 className="font-medium">Nguyên liệu</h4>

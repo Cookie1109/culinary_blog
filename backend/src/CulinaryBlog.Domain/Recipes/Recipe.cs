@@ -119,6 +119,49 @@ public sealed class Recipe : BaseEntity
         }
     }
 
+    public void Publish(
+        DateTimeOffset publishedAt,
+        bool categoryExists,
+        int ingredientCount,
+        IReadOnlyCollection<int> stepNumbers)
+    {
+        if (Status != RecipeStatus.Draft)
+        {
+            throw new DomainException("RECIPE_INVALID_TRANSITION", "Only a draft recipe can be published.");
+        }
+
+        var hasContinuousSteps = stepNumbers.Count > 0 &&
+            stepNumbers.Order().SequenceEqual(Enumerable.Range(1, stepNumbers.Count));
+        if (!categoryExists ||
+            Title.Length is < 5 or > 200 ||
+            Description.Length is < 1 or > 2000 ||
+            CategoryId == Guid.Empty ||
+            PrepTime < 1 ||
+            CookTime < 0 ||
+            Servings < 1 ||
+            !Enum.IsDefined(Difficulty) ||
+            ingredientCount < 1 ||
+            !hasContinuousSteps)
+        {
+            throw new DomainException(
+                "RECIPE_PUBLISH_INCOMPLETE",
+                "Recipe requires valid core data, a category, at least one ingredient, and continuously numbered steps before publishing.");
+        }
+
+        Status = RecipeStatus.Published;
+        PublishedAt ??= publishedAt;
+    }
+
+    public void Unpublish()
+    {
+        if (Status != RecipeStatus.Published)
+        {
+            throw new DomainException("RECIPE_INVALID_TRANSITION", "Only a published recipe can be unpublished.");
+        }
+
+        Status = RecipeStatus.Draft;
+    }
+
     public void Archive()
     {
         if (Status == RecipeStatus.Archived)

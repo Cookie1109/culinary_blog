@@ -1,11 +1,17 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Eye, Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, Globe, Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { ApiProblem } from '@/lib/api/problem-details'
-import { deleteRecipe, listMyRecipes, type RecipeStatus } from '@/lib/api/content-client'
+import {
+  deleteRecipe,
+  listMyRecipes,
+  publishRecipe,
+  unpublishRecipe,
+  type RecipeStatus,
+} from '@/lib/api/content-client'
 
 const STATUS_FILTERS: { value: RecipeStatus | undefined; label: string }[] = [
   { value: undefined, label: 'Tất cả' },
@@ -31,15 +37,57 @@ export function MyRecipes() {
   const [status, setStatus] = useState<RecipeStatus | undefined>()
   const [search, setSearch] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [actionNotice, setActionNotice] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+
   const recipesQuery = useQuery({
     queryKey: ['my-recipes', status],
     queryFn: () => listMyRecipes(status),
   })
+
   const removeRecipe = useMutation({
     mutationFn: ({ id, version }: { id: string; version: number }) => deleteRecipe(id, version),
     onSuccess: async () => {
       setConfirmDelete(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+    },
+  })
+
+  const publishMutation = useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) => publishRecipe(id, version),
+    onSuccess: async () => {
+      setActionError(null)
+      setActionNotice('Công thức đã được xuất bản thành công.')
+      await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+    },
+    onError: (error) => {
+      setActionNotice(null)
+      if (error instanceof ApiProblem && error.problem.code === 'RECIPE_PUBLISH_INCOMPLETE') {
+        setActionError('Công thức cần ít nhất 1 nguyên liệu và 1 bước thực hiện để xuất bản.')
+      } else {
+        setActionError(
+          error instanceof ApiProblem
+            ? (error.problem.detail ?? error.problem.title)
+            : 'Không thể xuất bản công thức.',
+        )
+      }
+    },
+  })
+
+  const unpublishMutation = useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) => unpublishRecipe(id, version),
+    onSuccess: async () => {
+      setActionError(null)
+      setActionNotice('Đã gỡ xuất bản công thức (chuyển về bản nháp).')
+      await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+    },
+    onError: (error) => {
+      setActionNotice(null)
+      setActionError(
+        error instanceof ApiProblem
+          ? (error.problem.detail ?? error.problem.title)
+          : 'Không thể gỡ xuất bản công thức.',
+      )
     },
   })
 
@@ -116,6 +164,16 @@ export function MyRecipes() {
           Không thể xóa công thức. Hãy tải lại dữ liệu và thử lại.
         </p>
       )}
+      {actionNotice && (
+        <p className="mb-4 border border-green-200 bg-green-50 p-3 text-sm text-green-700" role="status">
+          {actionNotice}
+        </p>
+      )}
+      {actionError && (
+        <p className="mb-4 border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+          {actionError}
+        </p>
+      )}
 
       {recipesQuery.isSuccess && (
         <div className="overflow-hidden border border-border bg-background">
@@ -159,9 +217,47 @@ export function MyRecipes() {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           {recipe.status === 'published' && (
-                            <Link to={`/recipes/${recipe.slug}`} aria-label="Xem công thức">
+                            <Link
+                              to={`/recipes/${recipe.slug}`}
+                              aria-label="Xem công thức"
+                              title="Xem công thức công khai"
+                            >
                               <Eye size={15} />
                             </Link>
+                          )}
+                          {recipe.status === 'draft' && (
+                            <button
+                              onClick={() => {
+                                setActionError(null)
+                                setActionNotice(null)
+                                publishMutation.mutate({ id: recipe.id, version: recipe.version })
+                              }}
+                              disabled={
+                                publishMutation.isPending && publishMutation.variables?.id === recipe.id
+                              }
+                              aria-label="Xuất bản công thức"
+                              title="Xuất bản công thức"
+                              className="text-muted-foreground hover:text-green-600 disabled:opacity-50"
+                            >
+                              <Globe size={15} />
+                            </button>
+                          )}
+                          {recipe.status === 'published' && (
+                            <button
+                              onClick={() => {
+                                setActionError(null)
+                                setActionNotice(null)
+                                unpublishMutation.mutate({ id: recipe.id, version: recipe.version })
+                              }}
+                              disabled={
+                                unpublishMutation.isPending && unpublishMutation.variables?.id === recipe.id
+                              }
+                              aria-label="Gỡ xuất bản công thức"
+                              title="Gỡ xuất bản (chuyển về bản nháp)"
+                              className="text-muted-foreground hover:text-amber-600 disabled:opacity-50"
+                            >
+                              <EyeOff size={15} />
+                            </button>
                           )}
                           <Link to={`/dashboard/recipes/${recipe.id}/edit`} aria-label="Chỉnh sửa công thức">
                             <Pencil size={15} />

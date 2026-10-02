@@ -50,19 +50,41 @@ Nhóm làm theo sprint 2 tuần. Với nhóm trên, kế hoạch dự kiến kho
 
 Nếu Phase 0 thay đổi baseline, ADR và kế hoạch phải được cập nhật trước khi triển khai.
 
-## 3. Tổng quan các phase
+## 3. Tổng hợp các issues (Tiến độ hoàn thành)
 
-| Phase | Tên | Thời lượng tham chiếu | Kết quả chính |
+Dựa trên kiểm tra mã nguồn thực tế, dưới đây là trạng thái hoàn thành của toàn bộ các Issues (FRs/NFRs) trong dự án. Các Issue đã được code xong (backend & frontend) sẽ được đánh dấu tick (✅), các Issue chưa hoàn thành hoặc còn thiếu tính năng sẽ bị bỏ trống (⬜).
+
+- [x] **[NFR-ARCH]** Khóa đặc tả và kiến trúc
+- [x] **[NFR-ENV]** Khởi tạo nền tảng và môi trường (Docker, CI/CD, Core APIs)
+- [x] **[FR-AUTH]** Đăng ký, đăng nhập và quản lý phiên (Identity, JWT, Refresh Token, Profile)
+- [x] **[FR-CAT]** Quản lý Danh mục (Category CRUD, UI)
+- [x] **[FR-RCP-CORE]** Quản lý Recipe Core (Tạo Draft, Phân quyền Ownership, Concurrency)
+- [x] **[FR-RCP-COMP]** Thành phần công thức (Nguyên liệu, Các bước thực hiện, Dinh dưỡng)
+- [x] **[FR-FILE]** Quản lý File và Ảnh (Upload MinIO, Primary Image)
+- [x] **[FR-RCP-005]** Publishing (Tính năng Publish/Unpublish Recipe)
+- [x] **[FR-RCP-006]** Archive (Tính năng Archive/Unarchive Recipe)
+- [x] **[FR-SRCH]** Khám phá và Tìm kiếm (API Tìm kiếm, Lọc, Giao diện Public Web)
+- [x] **[NFR-PERF]** Hiệu năng và Cache (Redis Application Cache)
+- [ ] **[FR-JOB]** Background Jobs *(Đã xong xử lý ảnh Hangfire, nhưng thiếu Sitemap Job)*
+- [ ] **[NFR-SEO]** Tối ưu SEO và Web Vitals *(Chưa hoàn thiện Sitemap)*
+- [ ] **[FR-OBS]** Observability & Operations *(Chưa hoàn thiện Admin Dashboard)*
+- [ ] **[NFR-QA]** Hardening, Bảo mật, UAT và Phát hành
+
+---
+
+### 3.1. Phân bổ Issues theo Phase (Timeline)
+
+| Issue / Chức năng | Tên Phase (Timeline) | Thời lượng | Kết quả chính |
 |---|---|---:|---|
-| 0 | Khóa đặc tả và kiến trúc | 1 tuần | Decision log, ADR, OpenAPI skeleton, backlog và acceptance criteria được duyệt |
-| 1 | Khởi tạo nền tảng và môi trường | 1–2 tuần | Solution/app chạy qua Docker, CI và các cross-cutting concern cơ bản |
-| 2 | Identity và quản lý phiên | 2 tuần | Register/login/refresh/logout/profile hoạt động an toàn |
-| 3 | Category và Recipe Core | 2–3 tuần | Author tạo/quản lý Draft; Admin quản lý category; ownership và concurrency hoạt động |
-| 4 | Thành phần công thức, media và jobs | 2 tuần | Ingredient, step, nutrition, image và background processing hoàn chỉnh |
-| 5 | Publishing, discovery và cache | 2 tuần | Publish lifecycle, public listing, search/filter/sort và Redis cache |
-| 6 | Public Web, SEO và accessibility | 2 tuần | Trải nghiệm đọc/tìm công thức responsive, SEO-ready và accessible |
-| 7 | Dashboard Author/Admin và vận hành | 1–2 tuần | Authoring UX hoàn chỉnh, Admin UI và operational controls |
-| 8 | Hardening, UAT và phát hành | 1–2 tuần | Kiểm thử phi chức năng, staging sign-off và production release |
+| **[NFR-ARCH]** | Khóa đặc tả và kiến trúc (Phase 0) | 1 tuần | Decision log, ADR, OpenAPI skeleton, backlog |
+| **[NFR-ENV]** | Khởi tạo nền tảng và môi trường (Phase 1) | 1–2 tuần | Solution/app chạy qua Docker, CI |
+| **[FR-AUTH]** | Identity và quản lý phiên (Phase 2) | 2 tuần | Register/login/refresh/logout/profile hoạt động an toàn |
+| **[FR-CAT], [FR-RCP-CORE]** | Category và Recipe Core (Phase 3) | 2–3 tuần | Author tạo Draft; Admin quản lý category |
+| **[FR-RCP-COMP], [FR-FILE]** | Thành phần công thức, media, jobs (Phase 4) | 2 tuần | Ingredient, step, image và Hangfire jobs |
+| **[FR-RCP-005], [FR-SRCH]** | Publishing, discovery và cache (Phase 5) | 2 tuần | Publish lifecycle, search/filter, Redis cache |
+| **[FR-SRCH], [NFR-SEO]** | Public Web, SEO và accessibility (Phase 6) | 2 tuần | Web responsive, SEO-ready, accessible |
+| **[FR-OBS]** | Dashboard Author/Admin và vận hành (Phase 7) | 1–2 tuần | Dashboard hoàn chỉnh, metrics, runbook |
+| **[NFR-QA]** | Hardening, UAT và phát hành (Phase 8) | 1–2 tuần | Kiểm thử, staging sign-off, release |
 
 Các phase có thể gối đầu sau khi contract ổn định. Frontend có thể dùng mock server từ OpenAPI; QA có thể viết test case song song với development.
 
@@ -95,24 +117,24 @@ Loại bỏ các quyết định mơ hồ có thể làm thay đổi schema, API
 
 #### Product/Business
 
-- P0-01: Xác nhận 34 FR; số 27 trong phần mô tả là lỗi đếm.
-- P0-02: Giữ MoSCoW của PDF; chức năng không có FR đầy đủ chuyển Post-v1/Change Request.
-- P0-03: Publish invariant là category hợp lệ, ít nhất 1 ingredient và 1 step; ảnh không bắt buộc.
-- P0-04: Recipe/Category soft delete; không hard purge hoặc restore trong v1.
-- P0-05: Author tự publish recipe của mình; moderation nằm ngoài v1.
+- **[NFR-ARCH]** P0-01: Xác nhận 34 FR; số 27 trong phần mô tả là lỗi đếm.
+- **[NFR-ARCH]** P0-02: Giữ MoSCoW của PDF; chức năng không có FR đầy đủ chuyển Post-v1/Change Request.
+- **[NFR-ARCH]** P0-03: Publish invariant là category hợp lệ, ít nhất 1 ingredient và 1 step; ảnh không bắt buộc.
+- **[NFR-ARCH]** P0-04: Recipe/Category soft delete; không hard purge hoặc restore trong v1.
+- **[NFR-ARCH]** P0-05: Author tự publish recipe của mình; moderation nằm ngoài v1.
 
 #### Architecture/Backend
 
-- P0-06: ADR-001 — soft delete Recipe và Category; không purge trong v1.
-- P0-07: ADR-002 — validation dùng `400`; concurrency conflict dùng `409`.
-- P0-08: ADR-003 — PostgreSQL concurrency dùng `Version bigint` và ETag/If-Match.
-- P0-09: ADR-004 — refresh token storage, rotation, family ID và client storage.
-- P0-10: ADR-005 — Auth.js sở hữu OAuth callback; backend verify Google ID token.
-- P0-11: ADR-006 — public/private MinIO delivery.
-- P0-12: ADR-007 — Redis-backed cache, key namespace, TTL và invalidation.
-- P0-13: ADR-008 — FTS tiếng Việt dùng `simple + unaccent`, GIN và `pg_trgm` fallback.
-- P0-14: ADR-009 — Transactional Outbox và compensation cho DB/MinIO/Hangfire dual-write.
-- P0-15: Chuẩn hóa data dictionary:
+- **[NFR-ARCH]** P0-06: ADR-001 — soft delete Recipe và Category; không purge trong v1.
+- **[NFR-ARCH]** P0-07: ADR-002 — validation dùng `400`; concurrency conflict dùng `409`.
+- **[NFR-ARCH]** P0-08: ADR-003 — PostgreSQL concurrency dùng `Version bigint` và ETag/If-Match.
+- **[NFR-ARCH]** P0-09: ADR-004 — refresh token storage, rotation, family ID và client storage.
+- **[NFR-ARCH]** P0-10: ADR-005 — Auth.js sở hữu OAuth callback; backend verify Google ID token.
+- **[NFR-ARCH]** P0-11: ADR-006 — public/private MinIO delivery.
+- **[NFR-ARCH]** P0-12: ADR-007 — Redis-backed cache, key namespace, TTL và invalidation.
+- **[NFR-ARCH]** P0-13: ADR-008 — FTS tiếng Việt dùng `simple + unaccent`, GIN và `pg_trgm` fallback.
+- **[NFR-ARCH]** P0-14: ADR-009 — Transactional Outbox và compensation cho DB/MinIO/Hangfire dual-write.
+- **[NFR-ARCH]** P0-15: Chuẩn hóa data dictionary:
   - `displayName` thay cho `fullName`;
   - `orderIndex` thay cho `sortOrder`;
   - `timerMinutes` thay cho `durationMinutes`;
@@ -121,14 +143,14 @@ Loại bỏ các quyết định mơ hồ có thể làm thay đổi schema, API
 
 #### API/Frontend/QA
 
-- P0-16: Viết OpenAPI skeleton cho toàn bộ endpoint v1.
-- P0-17: Chốt response envelope `data/meta` và RFC 7807 error schema.
-- P0-18: Chốt application error code catalog.
-- P0-19: Tách endpoint public Published khỏi private dashboard, tối thiểu có `GET /me/recipes`.
-- P0-20: Lập sitemap route và wireframe mức luồng cho public web, auth, author dashboard và Admin category.
-- P0-21: Lập traceability matrix `FR → business rule → endpoint → screen → test`.
-- P0-22: Viết acceptance criteria cho năm critical journeys.
-- P0-23: Threat modeling cho authentication, upload, object visibility, cache và authorization.
+- **[NFR-ARCH]** P0-16: Viết OpenAPI skeleton cho toàn bộ endpoint v1.
+- **[NFR-ARCH]** P0-17: Chốt response envelope `data/meta` và RFC 7807 error schema.
+- **[NFR-ARCH]** P0-18: Chốt application error code catalog.
+- **[NFR-ARCH]** P0-19: Tách endpoint public Published khỏi private dashboard, tối thiểu có `GET /me/recipes`.
+- **[NFR-ARCH]** P0-20: Lập sitemap route và wireframe mức luồng cho public web, auth, author dashboard và Admin category.
+- **[NFR-ARCH]** P0-21: Lập traceability matrix `FR → business rule → endpoint → screen → test`.
+- **[NFR-ARCH]** P0-22: Viết acceptance criteria cho năm critical journeys.
+- **[NFR-ARCH]** P0-23: Threat modeling cho authentication, upload, object visibility, cache và authorization.
 
 ### 4.4. Đầu ra bàn giao
 
@@ -150,7 +172,7 @@ Loại bỏ các quyết định mơ hồ có thể làm thay đổi schema, API
 
 ## 5. Phase 1 — Khởi tạo nền tảng và môi trường
 
-> Trạng thái 12/09/2026: **Implementation Complete / Local Accepted**. Bằng chứng tại [Phase 1 verification](./phase-1/README.md); còn chờ chạy workflow trên clean CI runner và kiểm tra onboarding độc lập trước khi `Accepted / Closed`.
+> Trạng thái 12/09/2026: **Implementation Complete / Local Accepted**. Bằng chứng tại [Foundation verification](./phase-1/README.md); còn chờ chạy workflow trên clean CI runner và kiểm tra onboarding độc lập trước khi `Accepted / Closed`.
 
 ### 5.1. Mục tiêu
 
@@ -165,48 +187,48 @@ Tạo nền tảng có thể build, chạy, kiểm thử và quan sát được.
 
 #### Repository và backend
 
-- P1-01: Tạo solution/project:
+- **[NFR-ENV]** P1-01: Tạo solution/project:
   - `CulinaryBlog.Domain`;
   - `CulinaryBlog.Application`;
   - `CulinaryBlog.Infrastructure`;
   - `CulinaryBlog.Api`;
   - unit, integration và architecture test projects.
-- P1-02: Thiết lập dependency direction và architecture tests.
-- P1-03: Thiết lập central package management, nullable, analyzers, warnings-as-errors và `.editorconfig`.
-- P1-04: Tạo composition root và extension methods `AddApplication`, `AddInfrastructure`, `AddPresentation`.
-- P1-05: Tạo CQRS/MediatR pipeline: logging, Application-layer FluentValidation, cache và performance warning khi request/handler vượt 500ms.
-- P1-06: Tạo Problem Details/global exception handling và mapping error code.
-- P1-07: Tạo Correlation ID middleware; propagate qua response/log/trace.
-- P1-08: Cấu hình Serilog structured JSON với CorrelationId, RequestPath, method/status/elapsed và UserId; rolling file theo ngày, Seq development và lọc dữ liệu nhạy cảm.
-- P1-09: Cấu hình OpenTelemetry cho ASP.NET Core, HttpClient và EF Core.
-- P1-10: Tạo `/health/live` cho process, `/health/ready` cho PostgreSQL+Redis và `/health` cho PostgreSQL+Redis+MinIO; public chỉ trả aggregate status, detail chỉ mở internal/ops.
-- P1-10a: Cấu hình rate limit API chung 100 request/phút/IP; auth và upload được override ở phase tương ứng.
+- **[NFR-ENV]** P1-02: Thiết lập dependency direction và architecture tests.
+- **[NFR-ENV]** P1-03: Thiết lập central package management, nullable, analyzers, warnings-as-errors và `.editorconfig`.
+- **[NFR-ENV]** P1-04: Tạo composition root và extension methods `AddApplication`, `AddInfrastructure`, `AddPresentation`.
+- **[NFR-ENV]** P1-05: Tạo CQRS/MediatR pipeline: logging, Application-layer FluentValidation, cache và performance warning khi request/handler vượt 500ms.
+- **[NFR-ENV]** P1-06: Tạo Problem Details/global exception handling và mapping error code.
+- **[NFR-ENV]** P1-07: Tạo Correlation ID middleware; propagate qua response/log/trace.
+- **[NFR-ENV]** P1-08: Cấu hình Serilog structured JSON với CorrelationId, RequestPath, method/status/elapsed và UserId; rolling file theo ngày, Seq development và lọc dữ liệu nhạy cảm.
+- **[NFR-ENV]** P1-09: Cấu hình OpenTelemetry cho ASP.NET Core, HttpClient và EF Core.
+- **[NFR-ENV]** P1-10: Tạo `/health/live` cho process, `/health/ready` cho PostgreSQL+Redis và `/health` cho PostgreSQL+Redis+MinIO; public chỉ trả aggregate status, detail chỉ mở internal/ops.
+- **[NFR-ENV]** P1-10a: Cấu hình rate limit API chung 100 request/phút/IP; auth và upload được override ở phase tương ứng.
 
 #### Frontend
 
-- P1-11: Tạo Next.js App Router app với TypeScript strict mode.
-- P1-12: Cấu hình Tailwind, ESLint, Prettier, import alias và environment schema validation.
-- P1-13: Tạo route groups cho public, auth và dashboard.
-- P1-14: Tạo layout, theme tokens, typography, base form/button/modal/toast/skeleton components.
-- P1-15: Tạo API client typed từ OpenAPI hoặc shared generated types.
-- P1-16: Cấu hình TanStack Query provider, global error boundary và Problem Details parser.
+- **[NFR-ENV]** P1-11: Tạo Next.js App Router app với TypeScript strict mode.
+- **[NFR-ENV]** P1-12: Cấu hình Tailwind, ESLint, Prettier, import alias và environment schema validation.
+- **[NFR-ENV]** P1-13: Tạo route groups cho public, auth và dashboard.
+- **[NFR-ENV]** P1-14: Tạo layout, theme tokens, typography, base form/button/modal/toast/skeleton components.
+- **[NFR-ENV]** P1-15: Tạo API client typed từ OpenAPI hoặc shared generated types.
+- **[NFR-ENV]** P1-16: Cấu hình TanStack Query provider, global error boundary và Problem Details parser.
 
 #### Data/Infrastructure
 
-- P1-17: Docker Compose development gồm PostgreSQL, Redis, MinIO, MailHog và Seq.
-- P1-18: Thêm named volumes, healthcheck và dependency readiness; không lưu secret thật trong compose.
-- P1-19: Tạo `.env.example`/configuration documentation, user-secrets instructions và fail-fast config validation.
-- P1-20: Dockerfile multi-stage cho API và frontend; pin base image version.
-- P1-21: Cấu hình Nginx local/staging cơ bản và route `/api`, frontend, health.
-- P1-22: Chuẩn bị MinIO bootstrap để tạo bucket/policy idempotent.
+- **[NFR-ENV]** P1-17: Docker Compose development gồm PostgreSQL, Redis, MinIO, MailHog và Seq.
+- **[NFR-ENV]** P1-18: Thêm named volumes, healthcheck và dependency readiness; không lưu secret thật trong compose.
+- **[NFR-ENV]** P1-19: Tạo `.env.example`/configuration documentation, user-secrets instructions và fail-fast config validation.
+- **[NFR-ENV]** P1-20: Dockerfile multi-stage cho API và frontend; pin base image version.
+- **[NFR-ENV]** P1-21: Cấu hình Nginx local/staging cơ bản và route `/api`, frontend, health.
+- **[NFR-ENV]** P1-22: Chuẩn bị MinIO bootstrap để tạo bucket/policy idempotent.
 
 #### CI/QA
 
-- P1-23: Pipeline restore/build/lint/unit test/architecture test.
-- P1-24: Thêm dependency, container và secret scan.
-- P1-25: Tạo test fixtures/Testcontainers foundation cho PostgreSQL, Redis và MinIO.
-- P1-26: Tạo smoke test khởi động stack và gọi health endpoints.
-- P1-27: Viết README setup, run, test, migration và troubleshooting.
+- **[NFR-ENV]** P1-23: Pipeline restore/build/lint/unit test/architecture test.
+- **[NFR-ENV]** P1-24: Thêm dependency, container và secret scan.
+- **[NFR-ENV]** P1-25: Tạo test fixtures/Testcontainers foundation cho PostgreSQL, Redis và MinIO.
+- **[NFR-ENV]** P1-26: Tạo smoke test khởi động stack và gọi health endpoints.
+- **[NFR-ENV]** P1-27: Viết README setup, run, test, migration và troubleshooting.
 
 ### 5.4. Đầu ra bàn giao
 
@@ -227,7 +249,7 @@ Tạo nền tảng có thể build, chạy, kiểm thử và quan sát được.
 
 ## 6. Phase 2 — Identity và quản lý phiên
 
-> Trạng thái 13/09/2026: **Core Implementation Complete / Docker Acceptance Pending**. Local auth, JWT/refresh rotation, profile, policy, rate limit, migration, UI và transactional welcome-email outbox đã được triển khai. Bằng chứng tại [Phase 2 verification](./phase-2/README.md). Google OAuth (Should-have) và chuyển worker email sang Hangfire còn được hoãn; integration journey PostgreSQL đã có test nhưng chưa chạy cục bộ do Docker engine không khả dụng.
+> Trạng thái 13/09/2026: **Core Implementation Complete / Docker Acceptance Pending**. Local auth, JWT/refresh rotation, profile, policy, rate limit, migration, UI và transactional welcome-email outbox đã được triển khai. Bằng chứng tại [FR-AUTH verification](./phase-2/README.md). Google OAuth (Should-have) và chuyển worker email sang Hangfire còn được hoãn; integration journey PostgreSQL đã có test nhưng chưa chạy cục bộ do Docker engine không khả dụng.
 
 ### 6.1. Mục tiêu
 
@@ -243,46 +265,46 @@ Hoàn thành luồng tài khoản và phiên an toàn để các phase nghiệp 
 
 #### Data và backend
 
-- P2-01: Cấu hình ASP.NET Core Identity và `ApplicationUser`.
-- P2-01a: Cấu hình password hashing PBKDF2-HMACSHA512 với iteration count ít nhất 100.000 và kiểm thử không lưu plaintext.
-- P2-02: Tạo Role `Author`, `Admin`; seed Admin bằng secret/config an toàn, idempotent.
-- P2-03: Tạo `RefreshToken` với `TokenHash`, `FamilyId`, expiry, revoke metadata và indexes.
-- P2-04: Migration Identity/RefreshToken đầu tiên và integration test migration.
-- P2-05: `POST /auth/register`:
+- **[FR-AUTH]** P2-01: Cấu hình ASP.NET Core Identity và `ApplicationUser`.
+- **[FR-AUTH]** P2-01a: Cấu hình password hashing PBKDF2-HMACSHA512 với iteration count ít nhất 100.000 và kiểm thử không lưu plaintext.
+- **[FR-AUTH]** P2-02: Tạo Role `Author`, `Admin`; seed Admin bằng secret/config an toàn, idempotent.
+- **[FR-AUTH]** P2-03: Tạo `RefreshToken` với `TokenHash`, `FamilyId`, expiry, revoke metadata và indexes.
+- **[FR-AUTH]** P2-04: Migration Identity/RefreshToken đầu tiên và integration test migration.
+- **[FR-AUTH]** P2-05: `POST /auth/register`:
   - normalize/unique email;
   - password policy;
   - role Author;
   - auto-login;
   - enqueue welcome email sau commit.
-- P2-06: `POST /auth/login` với lỗi generic, access-failed count, 5 lần sai và lockout 15 phút.
-- P2-07: JWT access token 15 phút có `sub`, email, roles, `jti`, issuer/audience.
-- P2-08: Refresh token ngẫu nhiên 512-bit, TTL 7 ngày, SHA-256 DB hash, body transport, rotation atomic và family reuse detection.
-- P2-09: `POST /auth/refresh` và concurrent refresh protection ở database.
-- P2-10: `POST /auth/logout` nhận refresh token trong body, idempotent, hoạt động khi access token hết hạn; không log token.
-- P2-11: `GET/PATCH /auth/me` cho `displayName`, `avatarUrl`, `bio`.
-- P2-12: Policies `AuthorPolicy`, `AdminPolicy`; kiểm tra `IsActive` trên phiên hiện tại.
-- P2-13: Rate limit auth 10 request/phút/IP và header `Retry-After`.
-- P2-14: Google sign-in theo ADR; xác minh issuer, audience, expiry, nonce/state và verified email.
-- P2-15: Welcome-email job retry tại 1, 5 và 30 phút; lỗi email không rollback user.
+- **[FR-AUTH]** P2-06: `POST /auth/login` với lỗi generic, access-failed count, 5 lần sai và lockout 15 phút.
+- **[FR-AUTH]** P2-07: JWT access token 15 phút có `sub`, email, roles, `jti`, issuer/audience.
+- **[FR-AUTH]** P2-08: Refresh token ngẫu nhiên 512-bit, TTL 7 ngày, SHA-256 DB hash, body transport, rotation atomic và family reuse detection.
+- **[FR-AUTH]** P2-09: `POST /auth/refresh` và concurrent refresh protection ở database.
+- **[FR-AUTH]** P2-10: `POST /auth/logout` nhận refresh token trong body, idempotent, hoạt động khi access token hết hạn; không log token.
+- **[FR-AUTH]** P2-11: `GET/PATCH /auth/me` cho `displayName`, `avatarUrl`, `bio`.
+- **[FR-AUTH]** P2-12: Policies `AuthorPolicy`, `AdminPolicy`; kiểm tra `IsActive` trên phiên hiện tại.
+- **[FR-AUTH]** P2-13: Rate limit auth 10 request/phút/IP và header `Retry-After`.
+- **[FR-AUTH]** P2-14: Google sign-in theo ADR; xác minh issuer, audience, expiry, nonce/state và verified email.
+- **[FR-AUTH]** P2-15: Welcome-email job retry tại 1, 5 và 30 phút; lỗi email không rollback user.
 
 #### Frontend
 
-- P2-16: Trang register với client validation khớp server.
-- P2-17: Trang login, Google button và error state không lộ account enumeration.
-- P2-18: Auth state/provider, protected route UX và redirect sau login.
-- P2-19: Single-flight refresh: chỉ một refresh request chạy khi nhiều API request cùng nhận 401.
-- P2-20: Logout, clear client state và invalidate private query cache.
-- P2-21: Trang profile xem/sửa thông tin.
-- P2-22: Loading, inline errors, toast và keyboard navigation.
+- **[FR-AUTH]** P2-16: Trang register với client validation khớp server.
+- **[FR-AUTH]** P2-17: Trang login, Google button và error state không lộ account enumeration.
+- **[FR-AUTH]** P2-18: Auth state/provider, protected route UX và redirect sau login.
+- **[FR-AUTH]** P2-19: Single-flight refresh: chỉ một refresh request chạy khi nhiều API request cùng nhận 401.
+- **[FR-AUTH]** P2-20: Logout, clear client state và invalidate private query cache.
+- **[FR-AUTH]** P2-21: Trang profile xem/sửa thông tin.
+- **[FR-AUTH]** P2-22: Loading, inline errors, toast và keyboard navigation.
 
 #### QA/Security
 
-- P2-23: Unit test token service, validators và authorization policies.
-- P2-24: Integration test register/login/profile/logout.
-- P2-25: Test rotation, replay token cũ, concurrent refresh và revoke family.
-- P2-26: Test inactive user, lockout, rate limit, expired/tampered token và authorization matrix.
-- P2-27: Test Google happy/error/link-existing-account nếu Google thuộc v1.
-- P2-28: Kiểm tra logs/Problem Details không chứa password, raw JWT hoặc refresh token.
+- **[FR-AUTH]** P2-23: Unit test token service, validators và authorization policies.
+- **[FR-AUTH]** P2-24: Integration test register/login/profile/logout.
+- **[FR-AUTH]** P2-25: Test rotation, replay token cũ, concurrent refresh và revoke family.
+- **[FR-AUTH]** P2-26: Test inactive user, lockout, rate limit, expired/tampered token và authorization matrix.
+- **[FR-AUTH]** P2-27: Test Google happy/error/link-existing-account nếu Google thuộc v1.
+- **[FR-AUTH]** P2-28: Kiểm tra logs/Problem Details không chứa password, raw JWT hoặc refresh token.
 
 ### 6.4. Đầu ra bàn giao
 
@@ -304,7 +326,7 @@ Hoàn thành luồng tài khoản và phiên an toàn để các phase nghiệp 
 
 ## 7. Phase 3 — Category và Recipe Core
 
-> Trạng thái 14/09/2026: **Implementation Complete / Local Accepted**. Backend, PostgreSQL integration tests và frontend production build đã pass; bằng chứng tại [Phase 3 verification](./phase-3/README.md). Cần chạy lại cùng gates trên clean CI runner trước khi chuyển `Accepted / Closed`.
+> Trạng thái 14/09/2026: **Implementation Complete / Local Accepted**. Backend, PostgreSQL integration tests và frontend production build đã pass; bằng chứng tại [FR-RCP-CORE verification](./phase-3/README.md). Cần chạy lại cùng gates trên clean CI runner trước khi chuyển `Accepted / Closed`.
 
 ### 7.1. Mục tiêu
 
@@ -319,48 +341,48 @@ Xây dựng aggregate Recipe, Category và khả năng lưu nháp có ownership/
 
 #### Domain và data
 
-- P3-01: Tạo `BaseEntity`, audit fields, soft-delete rule và `Version bigint`.
-- P3-02: Tạo `Category`, `Recipe`, `RecipeNutrition`, enums `RecipeStatus`, `RecipeDifficulty`.
-- P3-03: Domain methods tạo/cập nhật/archive/unarchive/soft-delete; chưa mở publish khi composition chưa hoàn thành.
-- P3-04: EF configurations, check constraints và indexes cho slug, status, category, author, published time.
-- P3-05: Unique slug/name toàn bảng, kể cả record soft-deleted, để không tái sử dụng URL cũ.
-- P3-06: Audit interceptor; global query filters; explicit query API cho Admin/restore.
-- P3-07: Migration và seed category/test users/test recipe có tính tái lập.
+- **[FR-RCP-CORE]** P3-01: Tạo `BaseEntity`, audit fields, soft-delete rule và `Version bigint`.
+- **[FR-RCP-CORE]** P3-02: Tạo `Category`, `Recipe`, `RecipeNutrition`, enums `RecipeStatus`, `RecipeDifficulty`.
+- **[FR-RCP-CORE]** P3-03: Domain methods tạo/cập nhật/archive/unarchive/soft-delete; chưa mở publish khi composition chưa hoàn thành.
+- **[FR-RCP-CORE]** P3-04: EF configurations, check constraints và indexes cho slug, status, category, author, published time.
+- **[FR-RCP-CORE]** P3-05: Unique slug/name toàn bảng, kể cả record soft-deleted, để không tái sử dụng URL cũ.
+- **[FR-RCP-CORE]** P3-06: Audit interceptor; global query filters; explicit query API cho Admin/restore.
+- **[FR-RCP-CORE]** P3-07: Migration và seed category/test users/test recipe có tính tái lập.
 
 #### Category backend
 
-- P3-08: Public `GET /categories` và `GET /categories/{slug}` chỉ trả Published recipe.
-- P3-09: Admin `POST/PUT /categories`; `DELETE` được triển khai nếu FR-CAT-005 Should nằm trong release.
-- P3-10: Chặn xóa category còn recipe theo retention rule.
-- P3-11: Slug unique/ổn định và xử lý race bằng DB constraint.
+- **[FR-CAT]** P3-08: Public `GET /categories` và `GET /categories/{slug}` chỉ trả Published recipe.
+- **[FR-CAT]** P3-09: Admin `POST/PUT /categories`; `DELETE` được triển khai nếu FR-CAT-005 Should nằm trong release.
+- **[FR-CAT]** P3-10: Chặn xóa category còn recipe theo retention rule.
+- **[FR-CAT]** P3-11: Slug unique/ổn định và xử lý race bằng DB constraint.
 
 #### Recipe backend
 
-- P3-12: `POST /recipes` tạo Draft thuộc current user.
-- P3-13: `PUT /recipes/{id}` với resource authorization và `If-Match`.
-- P3-14: `GET /recipes/{slug}` public chỉ cho Published; owner/Admin có private query riêng hoặc preview rõ ràng.
-- P3-15: `GET /me/recipes` cho Draft/Published/Archived của current user.
-- P3-16: `DELETE /recipes/{id}` theo soft-delete ADR.
-- P3-17: `GET /admin/recipes` và `GET /admin/recipes/{id}` để Admin xem mọi trạng thái và mọi owner.
-- P3-18: Slug sinh từ title, collision thêm suffix `-2/-3`; bất biến sau publish đầu tiên; 409 chỉ khi race chưa resolve.
-- P3-19: Cache interface chưa cần tối ưu nhưng handler phải thiết kế để Phase 5 thêm caching không đổi contract.
+- **[FR-RCP-CORE]** P3-12: `POST /recipes` tạo Draft thuộc current user.
+- **[FR-RCP-CORE]** P3-13: `PUT /recipes/{id}` với resource authorization và `If-Match`.
+- **[FR-RCP-CORE]** P3-14: `GET /recipes/{slug}` public chỉ cho Published; owner/Admin có private query riêng hoặc preview rõ ràng.
+- **[FR-RCP-CORE]** P3-15: `GET /me/recipes` cho Draft/Published/Archived của current user.
+- **[FR-RCP-CORE]** P3-16: `DELETE /recipes/{id}` theo soft-delete ADR.
+- **[FR-RCP-CORE]** P3-17: `GET /admin/recipes` và `GET /admin/recipes/{id}` để Admin xem mọi trạng thái và mọi owner.
+- **[FR-RCP-CORE]** P3-18: Slug sinh từ title, collision thêm suffix `-2/-3`; bất biến sau publish đầu tiên; 409 chỉ khi race chưa resolve.
+- **[FR-RCP-CORE]** P3-19: Cache interface chưa cần tối ưu nhưng handler phải thiết kế để Phase 5 thêm caching không đổi contract.
 
 #### Frontend
 
-- P3-20: Dashboard recipe listing theo status và empty/loading/error state.
-- P3-21: Form tạo/sửa thông tin cơ bản và nutrition.
-- P3-22: Draft autosave hoặc explicit save theo UX đã duyệt.
-- P3-23: Hiển thị concurrency conflict với hành động reload; không overwrite âm thầm.
-- P3-24: Admin category list/create/edit/delete UI.
-- P3-25: Ẩn/disable action theo role để cải thiện UX, không thay thế backend authorization.
+- **[FR-RCP-CORE]** P3-20: Dashboard recipe listing theo status và empty/loading/error state.
+- **[FR-RCP-CORE]** P3-21: Form tạo/sửa thông tin cơ bản và nutrition.
+- **[FR-RCP-CORE]** P3-22: Draft autosave hoặc explicit save theo UX đã duyệt.
+- **[FR-RCP-CORE]** P3-23: Hiển thị concurrency conflict với hành động reload; không overwrite âm thầm.
+- **[FR-CAT]** P3-24: Admin category list/create/edit/delete UI.
+- **[FR-RCP-CORE]** P3-25: Ẩn/disable action theo role để cải thiện UX, không thay thế backend authorization.
 
 #### QA
 
-- P3-26: Domain tests state, slug, soft-delete và category constraints.
-- P3-27: Authorization matrix Guest/owner/other Author/Admin.
-- P3-28: Concurrent update test với stale ETag.
-- P3-29: Test global filters và đảm bảo public endpoint không trả Draft/Archived/deleted.
-- P3-30: Test category delete conflict và unique races.
+- **[FR-RCP-CORE]** P3-26: Domain tests state, slug, soft-delete và category constraints.
+- **[FR-RCP-CORE]** P3-27: Authorization matrix Guest/owner/other Author/Admin.
+- **[FR-RCP-CORE]** P3-28: Concurrent update test với stale ETag.
+- **[FR-RCP-CORE]** P3-29: Test global filters và đảm bảo public endpoint không trả Draft/Archived/deleted.
+- **[FR-RCP-CORE]** P3-30: Test category delete conflict và unique races.
 
 ### 7.4. Đầu ra bàn giao
 
@@ -380,7 +402,7 @@ Xây dựng aggregate Recipe, Category và khả năng lưu nháp có ownership/
 
 ## 8. Phase 4 — Thành phần công thức, media và background jobs
 
-> Trạng thái 15/09/2026: **Implementation Complete / Docker Acceptance Pending**. Ingredient, step, nutrition, secure image pipeline, Hangfire PostgreSQL jobs, transactional media outbox và authoring wizard đã được triển khai. Backend/frontend local gates đã pass; bằng chứng tại [Phase 4 verification](./phase-4/README.md). Integration suite PostgreSQL/MinIO đã được thêm nhưng chưa thể chạy cục bộ vì Docker Engine không khả dụng.
+> Trạng thái 15/09/2026: **Implementation Complete / Docker Acceptance Pending**. Ingredient, step, nutrition, secure image pipeline, Hangfire PostgreSQL jobs, transactional media outbox và authoring wizard đã được triển khai. Backend/frontend local gates đã pass; bằng chứng tại [FR-RCP-COMP verification](./phase-4/README.md). Integration suite PostgreSQL/MinIO đã được thêm nhưng chưa thể chạy cục bộ vì Docker Engine không khả dụng.
 
 ### 8.1. Mục tiêu
 
@@ -395,50 +417,50 @@ Cho phép Author hoàn thiện toàn bộ nội dung một công thức: nguyên
 
 #### Ingredient, step và nutrition
 
-- P4-01: Entity/configuration `RecipeIngredient`, `RecipeStep`, indexes và cascade/soft-delete semantics.
-- P4-02: CRUD ingredient với `orderIndex`; hỗ trợ quantity/unit nullable cho “vừa đủ” theo baseline.
-- P4-03: CRUD step với title, description, timerMinutes, imageUrl.
-- P4-04: StepNumber liên tục; thêm cuối; xóa/reorder trong transaction không vi phạm unique constraint.
-- P4-05: Update RecipeNutrition trong aggregate.
-- P4-06: Chặn mutation làm Published recipe thiếu ingredient/step; trả `409 RECIPE_STATE_CONFLICT` và yêu cầu unpublish trước.
-- P4-07: Cân nhắc bulk reorder endpoints để tránh nhiều request/conflict.
+- **[FR-RCP-COMP]** P4-01: Entity/configuration `RecipeIngredient`, `RecipeStep`, indexes và cascade/soft-delete semantics.
+- **[FR-RCP-COMP]** P4-02: CRUD ingredient với `orderIndex`; hỗ trợ quantity/unit nullable cho “vừa đủ” theo baseline.
+- **[FR-RCP-COMP]** P4-03: CRUD step với title, description, timerMinutes, imageUrl.
+- **[FR-RCP-COMP]** P4-04: StepNumber liên tục; thêm cuối; xóa/reorder trong transaction không vi phạm unique constraint.
+- **[FR-RCP-COMP]** P4-05: Update RecipeNutrition trong aggregate.
+- **[FR-RCP-COMP]** P4-06: Chặn mutation làm Published recipe thiếu ingredient/step; trả `409 RECIPE_STATE_CONFLICT` và yêu cầu unpublish trước.
+- **[FR-RCP-COMP]** P4-07: Cân nhắc bulk reorder endpoints để tránh nhiều request/conflict.
 
 #### File storage và image
 
-- P4-08: `IFileStorageService` và MinIO/S3 implementation.
-- P4-09: Upload streaming, giới hạn 5 MB trước khi buffer toàn bộ.
-- P4-10: MIME allowlist, magic-byte/decode validation và GUID object key.
-- P4-10a: Cấu hình rate limit upload 5 request/phút/IP và trả 429 kèm `Retry-After`.
-- P4-11: `POST /recipes/{id}/images` sau ownership check.
-- P4-12: PATCH image metadata: `altText`, `isPrimary`, `orderIndex`; primary switch atomic.
-- P4-13: DELETE image idempotent; tự chọn primary mới nếu cần.
-- P4-14: Bucket private; private object access và Published delivery theo ADR-006.
-- P4-15: Cleanup object mồ côi khi upload thành công nhưng DB commit thất bại.
+- **[FR-FILE]** P4-08: `IFileStorageService` và MinIO/S3 implementation.
+- **[FR-FILE]** P4-09: Upload streaming, giới hạn 5 MB trước khi buffer toàn bộ.
+- **[FR-FILE]** P4-10: MIME allowlist, magic-byte/decode validation và GUID object key.
+- **[FR-FILE]** P4-10a: Cấu hình rate limit upload 5 request/phút/IP và trả 429 kèm `Retry-After`.
+- **[FR-FILE]** P4-11: `POST /recipes/{id}/images` sau ownership check.
+- **[FR-FILE]** P4-12: PATCH image metadata: `altText`, `isPrimary`, `orderIndex`; primary switch atomic.
+- **[FR-FILE]** P4-13: DELETE image idempotent; tự chọn primary mới nếu cần.
+- **[FR-FILE]** P4-14: Bucket private; private object access và Published delivery theo ADR-006.
+- **[FR-FILE]** P4-15: Cleanup object mồ côi khi upload thành công nhưng DB commit thất bại.
 
 #### Background jobs
 
-- P4-16: Hangfire PostgreSQL storage, worker configuration và Admin-only dashboard.
-- P4-17: Image resize job tạo medium 800×600 và thumbnail 300×300.
-- P4-18: Object deletion job idempotent, retry 3 lần.
-- P4-19: Outbox dispatcher hoặc compensation mechanism đã chọn.
-- P4-20: Job correlation, structured logs, retry/dead-letter visibility và metrics.
-- P4-21: Reconciliation job tối thiểu tìm object/record mồ côi và emit metric/log; dashboard replay nâng cao để Post-v1.
+- **[FR-JOB]** P4-16: Hangfire PostgreSQL storage, worker configuration và Admin-only dashboard.
+- **[FR-JOB]** P4-17: Image resize job tạo medium 800×600 và thumbnail 300×300.
+- **[FR-JOB]** P4-18: Object deletion job idempotent, retry 3 lần.
+- **[FR-JOB]** P4-19: Outbox dispatcher hoặc compensation mechanism đã chọn.
+- **[FR-JOB]** P4-20: Job correlation, structured logs, retry/dead-letter visibility và metrics.
+- **[FR-JOB]** P4-21: Reconciliation job tối thiểu tìm object/record mồ côi và emit metric/log; dashboard replay nâng cao để Post-v1.
 
 #### Frontend
 
-- P4-22: Wizard các bước: basic/nutrition → ingredients → steps → images → preview.
-- P4-23: Add/edit/delete/reorder ingredient và step.
-- P4-24: Upload progress, format/size validation phía client và server error mapping.
-- P4-25: Gallery, primary image, alt text và retry upload.
-- P4-26: Giữ Draft đã save khi một bước wizard lỗi hoặc reload trang.
+- **[FR-RCP-COMP]** P4-22: Wizard các bước: basic/nutrition → ingredients → steps → images → preview.
+- **[FR-RCP-COMP]** P4-23: Add/edit/delete/reorder ingredient và step.
+- **[FR-RCP-COMP]** P4-24: Upload progress, format/size validation phía client và server error mapping.
+- **[FR-RCP-COMP]** P4-25: Gallery, primary image, alt text và retry upload.
+- **[FR-RCP-COMP]** P4-26: Giữ Draft đã save khi một bước wizard lỗi hoặc reload trang.
 
 #### QA/Security
 
-- P4-27: Test spoofed MIME, bad magic bytes, oversized/chunked upload và path traversal filename.
-- P4-28: Test owner/other Author/Admin trên mọi child endpoint.
-- P4-29: Test unique primary image và concurrent primary switch.
-- P4-30: Test step renumber/reorder và transaction rollback.
-- P4-31: Test job retry, idempotency, worker restart, MinIO unavailable và orphan cleanup.
+- **[FR-RCP-COMP]** P4-27: Test spoofed MIME, bad magic bytes, oversized/chunked upload và path traversal filename.
+- **[FR-RCP-COMP]** P4-28: Test owner/other Author/Admin trên mọi child endpoint.
+- **[FR-RCP-COMP]** P4-29: Test unique primary image và concurrent primary switch.
+- **[FR-RCP-COMP]** P4-30: Test step renumber/reorder và transaction rollback.
+- **[FR-RCP-COMP]** P4-31: Test job retry, idempotency, worker restart, MinIO unavailable và orphan cleanup.
 
 ### 8.4. Đầu ra bàn giao
 
@@ -471,51 +493,51 @@ Hoàn thiện vòng đời nội dung và khả năng khám phá công thức c�
 
 #### Publishing lifecycle
 
-- P5-01: `PATCH /recipes/{id}/publish` và validate toàn aggregate.
-- P5-02: Ghi `PublishedAt` lần đầu; không thay đổi slug sau lần publish đầu.
-- P5-03: `PATCH /recipes/{id}/unpublish` về Draft.
-- P5-04: `PATCH /recipes/{id}/archive` và `/unarchive` nếu thuộc v1.
-- P5-05: Bảo đảm Published-only trong public listing/search/category/sitemap.
-- P5-06: Audit events/metrics `recipe.created`, `recipe.published`, `recipe.unpublished`.
+- **[FR-RCP-005/006]** P5-01: `PATCH /recipes/{id}/publish` và validate toàn aggregate.
+- **[FR-RCP-005/006]** P5-02: Ghi `PublishedAt` lần đầu; không thay đổi slug sau lần publish đầu.
+- **[FR-RCP-005/006]** P5-03: `PATCH /recipes/{id}/unpublish` về Draft.
+- **[FR-RCP-005/006]** P5-04: `PATCH /recipes/{id}/archive` và `/unarchive` nếu thuộc v1.
+- **[FR-RCP-005/006]** P5-05: Bảo đảm Published-only trong public listing/search/category/sitemap.
+- **[FR-RCP-005/006]** P5-06: Audit events/metrics `recipe.created`, `recipe.published`, `recipe.unpublished`.
 
 #### Discovery backend
 
-- P5-07: Migration bật `unaccent`, `pg_trgm` và search vector/trigger theo ADR.
-- P5-08: Technical verification bằng dữ liệu có dấu/không dấu trước khi hoàn thiện query.
-- P5-09: `GET /recipes` public Published-only.
-- P5-10: `GET /recipes/search?q=...` với normalization, prefix matching/ranking.
-- P5-11: Filter category, difficulty, maxCookTime, minServings, minPrepTime và maxPrepTime theo AND.
-- P5-12: Sort allowlist; mặc định newest; chống injection qua field sort.
-- P5-13: Offset pagination page ≥1, default size 12, max 50, `data/meta` thống nhất.
-- P5-14: Query projection và indexes; không N+1; cảnh báo query trên 100ms; review EXPLAIN ANALYZE cho query chính trước merge.
+- **[FR-SRCH]** P5-07: Migration bật `unaccent`, `pg_trgm` và search vector/trigger theo ADR.
+- **[FR-SRCH]** P5-08: Technical verification bằng dữ liệu có dấu/không dấu trước khi hoàn thiện query.
+- **[FR-SRCH]** P5-09: `GET /recipes` public Published-only.
+- **[FR-SRCH]** P5-10: `GET /recipes/search?q=...` với normalization, prefix matching/ranking.
+- **[FR-SRCH]** P5-11: Filter category, difficulty, maxCookTime, minServings, minPrepTime và maxPrepTime theo AND.
+- **[FR-SRCH]** P5-12: Sort allowlist; mặc định newest; chống injection qua field sort.
+- **[FR-SRCH]** P5-13: Offset pagination page ≥1, default size 12, max 50, `data/meta` thống nhất.
+- **[FR-SRCH]** P5-14: Query projection và indexes; không N+1; cảnh báo query trên 100ms; review EXPLAIN ANALYZE cho query chính trước merge.
 
 #### Redis/cache/consistency
 
-- P5-15: Redis-backed cache cho public data:
+- **[NFR-PERF]** P5-15: Redis-backed cache cho public data:
   - category list 30 phút;
   - recipe detail 5 phút;
   - recipe list 15 phút;
   - search 1 phút hoặc không cache truy vấn ít lặp.
-- P5-16: Cache key chứa version, locale nếu có và toàn bộ query parameters đã normalize.
-- P5-17: Tuyệt đối không dùng shared public key cho private data.
-- P5-18: Tag/key invalidation sau create/update/delete/publish/unpublish/archive/image/step/ingredient.
-- P5-19: Graceful degradation về DB khi Redis unavailable.
-- P5-20: Metrics hit/miss/latency/invalidation failure.
+- **[NFR-PERF]** P5-16: Cache key chứa version, locale nếu có và toàn bộ query parameters đã normalize.
+- **[NFR-PERF]** P5-17: Tuyệt đối không dùng shared public key cho private data.
+- **[NFR-PERF]** P5-18: Tag/key invalidation sau create/update/delete/publish/unpublish/archive/image/step/ingredient.
+- **[NFR-PERF]** P5-19: Graceful degradation về DB khi Redis unavailable.
+- **[NFR-PERF]** P5-20: Metrics hit/miss/latency/invalidation failure.
 
 #### Sitemap/revalidation
 
-- P5-21: Recurring sitemap job 02:00 UTC, chỉ gồm Published recipe/category/static pages.
-- P5-22: Giữ sitemap gần nhất khi job thất bại; retry 2 lần.
-- P5-23: Thiết kế trigger/debounce revalidation frontend sau publish/update/unpublish.
-- P5-24: Xác minh cơ chế thông báo search engine còn được hỗ trợ trước khi tích hợp; không hardcode endpoint chưa được kiểm chứng.
+- **[FR-JOB]** P5-21: Recurring sitemap job 02:00 UTC, chỉ gồm Published recipe/category/static pages.
+- **[FR-JOB]** P5-22: Giữ sitemap gần nhất khi job thất bại; retry 2 lần.
+- **[FR-JOB]** P5-23: Thiết kế trigger/debounce revalidation frontend sau publish/update/unpublish.
+- **[FR-JOB]** P5-24: Xác minh cơ chế thông báo search engine còn được hỗ trợ trước khi tích hợp; không hardcode endpoint chưa được kiểm chứng.
 
 #### QA/Performance
 
-- P5-25: Search tests tiếng Việt có dấu/không dấu, ký tự đặc biệt, empty result.
-- P5-26: Filter/sort/pagination contract tests.
-- P5-27: Cache isolation tests với Guest/Author/Admin.
-- P5-28: Cache hit/miss/invalidation và Redis outage tests.
-- P5-29: Benchmark query/index trên seed dataset và báo cáo execution plan.
+- **[NFR-PERF]** P5-25: Search tests tiếng Việt có dấu/không dấu, ký tự đặc biệt, empty result.
+- **[NFR-PERF]** P5-26: Filter/sort/pagination contract tests.
+- **[NFR-PERF]** P5-27: Cache isolation tests với Guest/Author/Admin.
+- **[NFR-PERF]** P5-28: Cache hit/miss/invalidation và Redis outage tests.
+- **[NFR-PERF]** P5-29: Benchmark query/index trên seed dataset và báo cáo execution plan.
 
 ### 9.4. Đầu ra bàn giao
 
@@ -548,43 +570,43 @@ Tạo trải nghiệm công khai hoàn chỉnh cho Guest, tối ưu rendering, S
 
 #### Public pages
 
-- P6-01: Trang chủ `/` với featured recipes và categories.
-- P6-02: `/recipes` với filter, sort, pagination và URL state.
-- P6-03: `/recipes/[slug]` với image gallery, author, nutrition, ingredient và ordered steps.
-- P6-04: `/categories` và `/categories/[slug]`.
-- P6-05: `/search` với debounced input phù hợp, loading/empty/error và query trong URL.
-- P6-06: 404/not-found, error boundary và offline/network error UX.
+- **[FR-SRCH]** P6-01: Trang chủ `/` với featured recipes và categories.
+- **[FR-SRCH]** P6-02: `/recipes` với filter, sort, pagination và URL state.
+- **[FR-SRCH]** P6-03: `/recipes/[slug]` với image gallery, author, nutrition, ingredient và ordered steps.
+- **[FR-SRCH]** P6-04: `/categories` và `/categories/[slug]`.
+- **[FR-SRCH]** P6-05: `/search` với debounced input phù hợp, loading/empty/error và query trong URL.
+- **[FR-SRCH]** P6-06: 404/not-found, error boundary và offline/network error UX.
 
 #### Rendering và cache frontend
 
-- P6-07: ISR cho homepage/category/Published detail theo TTL đã chốt.
-- P6-08: SSR cho dynamic listing/search khi cần query state.
-- P6-09: Draft/Archived preview qua private dynamic route; không dùng Published ISR key.
-- P6-10: Revalidate path/tag sau content mutation.
-- P6-11: `next/image`, responsive sizes, blur/placeholder phù hợp và tránh layout shift.
+- **[NFR-PERF]** P6-07: ISR cho homepage/category/Published detail theo TTL đã chốt.
+- **[NFR-PERF]** P6-08: SSR cho dynamic listing/search khi cần query state.
+- **[NFR-PERF]** P6-09: Draft/Archived preview qua private dynamic route; không dùng Published ISR key.
+- **[NFR-PERF]** P6-10: Revalidate path/tag sau content mutation.
+- **[NFR-PERF]** P6-11: `next/image`, responsive sizes, blur/placeholder phù hợp và tránh layout shift.
 
 #### SEO
 
-- P6-12: Dynamic title/description/canonical/Open Graph/Twitter card.
-- P6-13: JSON-LD Schema.org Recipe với ingredient, instruction, author, time, yield, nutrition.
-- P6-14: Published dùng `index,follow`; private Draft/Archived dùng `noindex` và không xuất hiện sitemap.
-- P6-15: `robots.txt`, sitemap URL và metadata tests.
-- P6-16: Kiểm tra rich result bằng công cụ/validator phù hợp trước release.
+- **[NFR-SEO]** P6-12: Dynamic title/description/canonical/Open Graph/Twitter card.
+- **[NFR-SEO]** P6-13: JSON-LD Schema.org Recipe với ingredient, instruction, author, time, yield, nutrition.
+- **[NFR-SEO]** P6-14: Published dùng `index,follow`; private Draft/Archived dùng `noindex` và không xuất hiện sitemap.
+- **[NFR-SEO]** P6-15: `robots.txt`, sitemap URL và metadata tests.
+- **[NFR-SEO]** P6-16: Kiểm tra rich result bằng công cụ/validator phù hợp trước release.
 
 #### Responsive và accessibility
 
-- P6-17: Mobile 320–767, tablet 768–1199, desktop ≥1200.
-- P6-18: Semantic HTML, heading order, landmarks và accessible names.
-- P6-19: Keyboard navigation, visible focus, Escape behavior và focus trap cho modal.
-- P6-20: Contrast AA, alt text strategy và screen-reader announcements cho async state.
-- P6-21: Axe automated tests và manual NVDA/VoiceOver smoke test.
+- **[NFR-USE]** P6-17: Mobile 320–767, tablet 768–1199, desktop ≥1200.
+- **[NFR-USE]** P6-18: Semantic HTML, heading order, landmarks và accessible names.
+- **[NFR-USE]** P6-19: Keyboard navigation, visible focus, Escape behavior và focus trap cho modal.
+- **[NFR-USE]** P6-20: Contrast AA, alt text strategy và screen-reader announcements cho async state.
+- **[NFR-USE]** P6-21: Axe automated tests và manual NVDA/VoiceOver smoke test.
 
 #### Performance/QA
 
-- P6-22: Lighthouse CI budget: LCP ≤2.5 s, CLS ≤0.1, INP ≤200 ms, first-load JS gzip ≤200 KB.
-- P6-23: Bundle analysis và code splitting.
-- P6-24: Visual/responsive regression cho route chính.
-- P6-25: SEO metadata/JSON-LD snapshot hoặc schema tests.
+- **[NFR-QA]** P6-22: Lighthouse CI budget: LCP ≤2.5 s, CLS ≤0.1, INP ≤200 ms, first-load JS gzip ≤200 KB.
+- **[NFR-QA]** P6-23: Bundle analysis và code splitting.
+- **[NFR-QA]** P6-24: Visual/responsive regression cho route chính.
+- **[NFR-QA]** P6-25: SEO metadata/JSON-LD snapshot hoặc schema tests.
 
 ### 10.4. Đầu ra bàn giao
 
@@ -616,34 +638,34 @@ Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận 
 
 #### Author dashboard
 
-- P7-01: Dashboard summary: số Draft/Published/Archived và recent recipes.
-- P7-02: Recipe table/card với filter status, pagination và actions hợp lệ.
-- P7-03: Hoàn thiện create/edit wizard, preview, save state và navigation guard khi có thay đổi chưa lưu.
-- P7-04: Publish/unpublish/soft-delete confirmation UX; archive/unarchive khi FR-RCP-006 Should được đưa vào release.
-- P7-05: Hiển thị validation tổng hợp và deep link đến wizard step bị lỗi.
-- P7-06: Conflict UX cho stale version: reload, xem thay đổi mới hoặc hủy local edits.
+- **[FR-RCP-CORE]** P7-01: Dashboard summary: số Draft/Published/Archived và recent recipes.
+- **[FR-RCP-CORE]** P7-02: Recipe table/card với filter status, pagination và actions hợp lệ.
+- **[FR-RCP-CORE]** P7-03: Hoàn thiện create/edit wizard, preview, save state và navigation guard khi có thay đổi chưa lưu.
+- **[FR-RCP-005/006]** P7-04: Publish/unpublish/soft-delete confirmation UX; archive/unarchive khi FR-RCP-006 Should được đưa vào release.
+- **[FR-RCP-CORE]** P7-05: Hiển thị validation tổng hợp và deep link đến wizard step bị lỗi.
+- **[FR-RCP-CORE]** P7-06: Conflict UX cho stale version: reload, xem thay đổi mới hoặc hủy local edits.
 
 #### Admin
 
-- P7-07: Category CRUD hoàn chỉnh, order, delete conflict và confirm dialog.
-- P7-08: Admin recipe listing/action dùng `/admin/recipes`; mọi mutation vẫn qua resource policy và audit.
-- P7-10: Hangfire dashboard bảo vệ bằng Admin policy và network restriction phù hợp.
-- P7-11: Admin có application audit/log view đúng SRS; raw Seq/OTLP telemetry yêu cầu thêm operational authentication/network control.
+- **[FR-CAT]** P7-07: Category CRUD hoàn chỉnh, order, delete conflict và confirm dialog.
+- **[FR-CAT]** P7-08: Admin recipe listing/action dùng `/admin/recipes`; mọi mutation vẫn qua resource policy và audit.
+- **[FR-JOB]** P7-10: Hangfire dashboard bảo vệ bằng Admin policy và network restriction phù hợp.
+- **[FR-RCP-CORE]** P7-11: Admin có application audit/log view đúng SRS; raw Seq/OTLP telemetry yêu cầu thêm operational authentication/network control.
 
 #### Observability và operations
 
-- P7-12: Dashboard metrics request count, latency, error rate, cache hit rate, job failures và business events.
-- P7-13: Alert cho readiness down, 5xx spike, job failed, DB/Redis/MinIO unavailable.
-- P7-14: Structured audit log cho create/update/publish/delete với user/time/correlation.
-- P7-15: Runbook xử lý failed jobs, object orphan, cache flush, migration và rollback.
-- P7-16: Kiểm tra health detail không lộ topology/secrets ra public.
+- **[FR-OBS]** P7-12: Dashboard metrics request count, latency, error rate, cache hit rate, job failures và business events.
+- **[FR-OBS]** P7-13: Alert cho readiness down, 5xx spike, job failed, DB/Redis/MinIO unavailable.
+- **[FR-OBS]** P7-14: Structured audit log cho create/update/publish/delete với user/time/correlation.
+- **[FR-OBS]** P7-15: Runbook xử lý failed jobs, object orphan, cache flush, migration và rollback.
+- **[FR-OBS]** P7-16: Kiểm tra health detail không lộ topology/secrets ra public.
 
 #### QA
 
-- P7-17: E2E Author complete journey.
-- P7-18: E2E Author khác bị chặn và Admin được phép.
-- P7-19: Role escalation/direct URL tests.
-- P7-20: Test dashboard loading/empty/error/permission-denied states.
+- **[FR-RCP-CORE]** P7-17: E2E Author complete journey.
+- **[FR-RCP-CORE]** P7-18: E2E Author khác bị chặn và Admin được phép.
+- **[FR-RCP-CORE]** P7-19: Role escalation/direct URL tests.
+- **[FR-RCP-CORE]** P7-20: Test dashboard loading/empty/error/permission-denied states.
 
 ### 11.4. Đầu ra bàn giao
 
@@ -674,48 +696,48 @@ Chứng minh hệ thống đáp ứng yêu cầu chức năng và phi chức nă
 
 #### Functional regression
 
-- P8-01: Chạy traceability matrix toàn bộ FR/API/screen/test.
-- P8-02: Regression Guest/Author/Admin và critical journeys.
-- P8-03: Migration test từ database version trước lên release candidate.
-- P8-04: Seed 50 recipes, 5 authors và categories; đảm bảo không chứa secrets/PII thật.
+- **[NFR-QA]** P8-01: Chạy traceability matrix toàn bộ FR/API/screen/test.
+- **[NFR-QA]** P8-02: Regression Guest/Author/Admin và critical journeys.
+- **[NFR-QA]** P8-03: Migration test từ database version trước lên release candidate.
+- **[NFR-QA]** P8-04: Seed 50 recipes, 5 authors và categories; đảm bảo không chứa secrets/PII thật.
 
 #### Performance
 
-- P8-05: K6 smoke, load và stress profile với 100 concurrent users.
-- P8-06: Đo API p50/p95/p99 với cache warm và cold; ghi rõ hardware/dataset/network.
-- P8-07: Xác minh cache hit rate steady-state ≥80% theo workload chuẩn.
-- P8-08: Lighthouse CI và bundle budget trên release build.
-- P8-09: Tối ưu query/index/cache chỉ dựa trên measurement.
+- **[NFR-QA]** P8-05: K6 smoke, load và stress profile với 100 concurrent users.
+- **[NFR-QA]** P8-06: Đo API p50/p95/p99 với cache warm và cold; ghi rõ hardware/dataset/network.
+- **[NFR-QA]** P8-07: Xác minh cache hit rate steady-state ≥80% theo workload chuẩn.
+- **[NFR-QA]** P8-08: Lighthouse CI và bundle budget trên release build.
+- **[NFR-QA]** P8-09: Tối ưu query/index/cache chỉ dựa trên measurement.
 
 #### Security
 
-- P8-10: OWASP review cho broken access control, auth, injection, upload, SSRF, security misconfiguration.
-- P8-11: Dependency/container/secret/license scans.
-- P8-12: CORS allowlist, CSP, HSTS, TLS 1.2+, secure headers và production token body/sessionStorage settings; cookie chỉ dùng cho Auth.js state/session nếu không chứa Culinary refresh token.
-- P8-13: Rate-limit test auth/general/upload.
-- P8-13a: Xác minh cấu hình 10 request/phút/IP cho auth, 100 request/phút/IP cho API chung và 5 request/phút/IP cho upload.
-- P8-14: ZAP hoặc dynamic scan phù hợp; manual verification cho false positives.
-- P8-15: Không release nếu còn Critical/High chưa được remediation hoặc risk acceptance chính thức.
+- **[NFR-QA]** P8-10: OWASP review cho broken access control, auth, injection, upload, SSRF, security misconfiguration.
+- **[NFR-QA]** P8-11: Dependency/container/secret/license scans.
+- **[NFR-QA]** P8-12: CORS allowlist, CSP, HSTS, TLS 1.2+, secure headers và production token body/sessionStorage settings; cookie chỉ dùng cho Auth.js state/session nếu không chứa Culinary refresh token.
+- **[NFR-QA]** P8-13: Rate-limit test auth/general/upload.
+- **[NFR-QA]** P8-13a: Xác minh cấu hình 10 request/phút/IP cho auth, 100 request/phút/IP cho API chung và 5 request/phút/IP cho upload.
+- **[NFR-QA]** P8-14: ZAP hoặc dynamic scan phù hợp; manual verification cho false positives.
+- **[NFR-QA]** P8-15: Không release nếu còn Critical/High chưa được remediation hoặc risk acceptance chính thức.
 
 #### Reliability và operations
 
-- P8-16: Backup PostgreSQL hàng ngày, retention 30 ngày.
-- P8-17: Backup/versioning object storage theo hạ tầng đã chọn.
-- P8-18: Restore drill sang môi trường sạch và đo RTO/RPO thực tế.
-- P8-19: Failure drills: restart API/worker, Redis down, MinIO down, SMTP down và DB unavailable.
-- P8-20: Xác minh restart policy, persistent volumes, resource limits và log retention.
-- P8-21: Uptime monitor và alert routing.
-- P8-21a: Probe readiness mỗi 10 giây; alert khi down quá 1 phút; maintenance banner được công bố trước 48 giờ để đáp ứng NFR-REL-001.
+- **[NFR-QA]** P8-16: Backup PostgreSQL hàng ngày, retention 30 ngày.
+- **[NFR-QA]** P8-17: Backup/versioning object storage theo hạ tầng đã chọn.
+- **[NFR-QA]** P8-18: Restore drill sang môi trường sạch và đo RTO/RPO thực tế.
+- **[NFR-QA]** P8-19: Failure drills: restart API/worker, Redis down, MinIO down, SMTP down và DB unavailable.
+- **[NFR-QA]** P8-20: Xác minh restart policy, persistent volumes, resource limits và log retention.
+- **[NFR-QA]** P8-21: Uptime monitor và alert routing.
+- **[NFR-QA]** P8-21a: Probe readiness mỗi 10 giây; alert khi down quá 1 phút; maintenance banner được công bố trước 48 giờ để đáp ứng NFR-REL-001.
 
 #### Release engineering
 
-- P8-22: Production Docker Compose/Nginx configuration với pinned images.
-- P8-23: Environment/secrets checklist và rotation ownership.
-- P8-24: Staging deployment từ đúng artifact sẽ phát hành production.
-- P8-25: UAT với Product Owner; ghi defect và sign-off.
-- P8-26: Release notes, CHANGELOG, OpenAPI, README, ADR và operations runbook.
-- P8-27: Go/no-go meeting và rollback plan.
-- P8-28: Production deployment, smoke test và monitoring tăng cường 24–48 giờ đầu.
+- **[NFR-QA]** P8-22: Production Docker Compose/Nginx configuration với pinned images.
+- **[NFR-QA]** P8-23: Environment/secrets checklist và rotation ownership.
+- **[NFR-QA]** P8-24: Staging deployment từ đúng artifact sẽ phát hành production.
+- **[NFR-QA]** P8-25: UAT với Product Owner; ghi defect và sign-off.
+- **[NFR-QA]** P8-26: Release notes, CHANGELOG, OpenAPI, README, ADR và operations runbook.
+- **[NFR-QA]** P8-27: Go/no-go meeting và rollback plan.
+- **[NFR-QA]** P8-28: Production deployment, smoke test và monitoring tăng cường 24–48 giờ đầu.
 
 ### 12.4. Đầu ra bàn giao
 

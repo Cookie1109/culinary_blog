@@ -25,6 +25,10 @@ internal static class ContentEndpoints
         recipes.MapGet("/{slug}", GetPublishedRecipeAsync).AllowAnonymous();
         recipes.MapPost("/", CreateRecipeAsync).RequireAuthorization("AuthorPolicy");
         recipes.MapPut("/{id:guid}", UpdateRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPatch("/{id:guid}/publish", PublishRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPatch("/{id:guid}/unpublish", UnpublishRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPatch("/{id:guid}/archive", ArchiveRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
+        recipes.MapPatch("/{id:guid}/unarchive", UnarchiveRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
         recipes.MapDelete("/{id:guid}", DeleteRecipeAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
         recipes.MapPost("/{id:guid}/ingredients", CreateIngredientAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
         recipes.MapPut("/{id:guid}/ingredients/{ingredientId:guid}", UpdateIngredientAsync).RequireAuthorization("AuthorPolicy").AddEndpointFilter<RecipeOwnershipFilter>();
@@ -183,6 +187,74 @@ internal static class ContentEndpoints
                 id, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext)),
                 cancellationToken).ConfigureAwait(false);
             return Results.NoContent();
+        }
+        catch (ContentProblemException exception)
+            when (exception.Code == "RECIPE_CONCURRENCY_CONFLICT" && exception.CurrentVersion is not null)
+        {
+            return ConcurrencyProblem(httpContext, exception);
+        }
+    }
+
+    private static Task<IResult> PublishRecipeAsync(
+        Guid id,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken) =>
+        ChangeRecipeLifecycleAsync(id, RecipeLifecycleAction.Publish, principal, contentService, httpContext, cancellationToken);
+
+    private static Task<IResult> UnpublishRecipeAsync(
+        Guid id,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken) =>
+        ChangeRecipeLifecycleAsync(id, RecipeLifecycleAction.Unpublish, principal, contentService, httpContext, cancellationToken);
+
+    private static Task<IResult> ArchiveRecipeAsync(
+        Guid id,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken) =>
+        ChangeRecipeLifecycleAsync(id, RecipeLifecycleAction.Archive, principal, contentService, httpContext, cancellationToken);
+
+    private static Task<IResult> UnarchiveRecipeAsync(
+        Guid id,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken) =>
+        ChangeRecipeLifecycleAsync(id, RecipeLifecycleAction.Unarchive, principal, contentService, httpContext, cancellationToken);
+
+    private static async Task<IResult> ChangeRecipeLifecycleAsync(
+        Guid id,
+        RecipeLifecycleAction action,
+        ClaimsPrincipal principal,
+        IContentService contentService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var recipe = action switch
+            {
+                RecipeLifecycleAction.Publish => await contentService.PublishRecipeAsync(
+                    id, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), cancellationToken)
+                    .ConfigureAwait(false),
+                RecipeLifecycleAction.Unpublish => await contentService.UnpublishRecipeAsync(
+                    id, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), cancellationToken)
+                    .ConfigureAwait(false),
+                RecipeLifecycleAction.Archive => await contentService.ArchiveRecipeAsync(
+                    id, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), cancellationToken)
+                    .ConfigureAwait(false),
+                RecipeLifecycleAction.Unarchive => await contentService.UnarchiveRecipeAsync(
+                    id, GetUserId(principal), principal.IsInRole("Admin"), ReadEtag(httpContext), cancellationToken)
+                    .ConfigureAwait(false),
+                _ => throw new ArgumentOutOfRangeException(nameof(action)),
+            };
+            SetEtag(httpContext, recipe.Version);
+            return Results.Ok(new { data = recipe });
         }
         catch (ContentProblemException exception)
             when (exception.Code == "RECIPE_CONCURRENCY_CONFLICT" && exception.CurrentVersion is not null)
@@ -491,5 +563,13 @@ internal static class ContentEndpoints
                 ["correlationId"] = context.TraceIdentifier,
                 ["currentETag"] = etag,
             });
+    }
+
+    private enum RecipeLifecycleAction
+    {
+        Publish,
+        Unpublish,
+        Archive,
+        Unarchive,
     }
 }
