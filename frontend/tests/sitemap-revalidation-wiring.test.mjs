@@ -24,5 +24,5 @@ test('revalidation callback is secret-protected and invalidates public content p
 test('robots advertises the canonical sitemap URL', async () => {
   const source = await readFile(new URL('../src/app/robots.ts', import.meta.url), 'utf8')
 
-  assert.match(source, /sitemap: `\$\{siteUrl\}\/sitemap\.xml`/)
+  assert.match(source, /sitemap: absoluteUrl\('\/sitemap\.xml'\)/)
 })

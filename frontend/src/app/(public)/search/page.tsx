@@ -1,7 +1,9 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { Search } from '@/features/culinary/pages/Search'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPublicCategories, searchPublishedRecipesOnServer } from '@/lib/api/public-content-server'
+import { createPageMetadata, summarize } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +16,22 @@ function first(value: string | string[] | undefined) {
 function nonNegativeInteger(value: string, fallback: number) {
   const parsed = Number.parseInt(value, 10)
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback
+}
+
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const query = await searchParams
+  const term = first(query.q).trim()
+  const title = term ? `Kết quả tìm kiếm cho “${summarize(term, 60)}”` : 'Tìm kiếm công thức'
+
+  return createPageMetadata({
+    title,
+    description: term
+      ? `Tìm công thức phù hợp với từ khóa “${summarize(term, 100)}”.`
+      : 'Tìm kiếm công thức theo từ khóa, danh mục, độ khó và thời gian chế biến.',
+    path: term ? `/search?q=${encodeURIComponent(term)}` : '/search',
+    index: false,
+    follow: true,
+  })
 }
 
 async function SearchResults({ searchParams }: { searchParams: SearchParams }) {

@@ -48,7 +48,7 @@ public sealed class SitemapGenerationJob(
             new("/categories"),
         };
         entries.AddRange(categories.Select(category => new SitemapEntry(
-            $"/recipes?category={Uri.EscapeDataString(category.Slug)}",
+            $"/categories/{Uri.EscapeDataString(category.Slug)}",
             category.UpdatedAt ?? category.CreatedAt)));
         entries.AddRange(recipes.Select(recipe => new SitemapEntry(
             $"/recipes/{Uri.EscapeDataString(recipe.Slug)}",

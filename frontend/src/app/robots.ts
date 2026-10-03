@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next'
+import { absoluteUrl } from '@/lib/seo'
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = (process.env.SITE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
-
   return {
     rules: [
       {
@@ -11,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/dashboard/', '/profile', '/login', '/register'],
       },
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: absoluteUrl('/sitemap.xml'),
   }
 }

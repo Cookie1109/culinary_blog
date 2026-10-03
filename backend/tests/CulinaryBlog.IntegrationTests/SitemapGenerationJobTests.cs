@@ -59,7 +59,7 @@ public sealed class SitemapGenerationJobTests(AuthApiFactory factory) : IClassFi
         var xml = Encoding.UTF8.GetString(Assert.IsType<byte[]>(storage.Content));
         Assert.Equal("system/sitemap.xml", storage.ObjectKey);
         Assert.Contains("https://food.example/recipes", xml, StringComparison.Ordinal);
-        Assert.Contains($"https://food.example/recipes?category=danh-muc-{suffix}", xml, StringComparison.Ordinal);
+        Assert.Contains($"https://food.example/categories/danh-muc-{suffix}", xml, StringComparison.Ordinal);
         Assert.Contains($"https://food.example/recipes/published-{suffix}", xml, StringComparison.Ordinal);
         Assert.DoesNotContain($"draft-{suffix}", xml, StringComparison.Ordinal);
 

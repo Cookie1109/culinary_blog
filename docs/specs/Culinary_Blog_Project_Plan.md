@@ -66,7 +66,7 @@ Dựa trên kiểm tra mã nguồn thực tế, dưới đây là trạng thái 
 - [x] **[FR-SRCH]** Khám phá và Tìm kiếm (API Tìm kiếm, Lọc, Giao diện Public Web)
 - [x] **[NFR-PERF]** Hiệu năng và Cache (Redis Application Cache)
 - [x] **[FR-JOB]** Background Jobs *(Hangfire xử lý ảnh và Sitemap Job)*
-- [ ] **[NFR-SEO]** Tối ưu SEO và Web Vitals *(Đã hoàn thiện Sitemap; còn metadata/Web Vitals Phase 6)*
+- [x] **[NFR-SEO]** Tối ưu SEO *(Metadata, canonical, social cards, Recipe JSON-LD và robots/sitemap đã hoàn thiện; kiểm tra Rich Results lại trên staging trước release)*
 - [ ] **[FR-OBS]** Observability & Operations *(Chưa hoàn thiện Admin Dashboard)*
 - [ ] **[NFR-QA]** Hardening, Bảo mật, UAT và Phát hành
 
