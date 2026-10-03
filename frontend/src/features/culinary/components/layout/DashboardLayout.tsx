@@ -45,7 +45,12 @@ export function DashboardLayout() {
       ? [
           ...NAV_ITEMS,
           { to: '/dashboard/categories', label: 'Quản lý danh mục', icon: Tag, end: true },
-          { to: '/dashboard/recipes?scope=all', label: 'Tất cả công thức (Admin)', icon: BookOpen, end: false },
+          {
+            to: '/dashboard/recipes?scope=all',
+            label: 'Tất cả công thức (Admin)',
+            icon: BookOpen,
+            end: false,
+          },
           { to: '/dashboard/audit', label: 'Nhật ký kiểm toán', icon: ClipboardList, end: true },
         ]
       : NAV_ITEMS

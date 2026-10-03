@@ -14,10 +14,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/features/culinary/contexts/AuthContext'
-import {
-  listAuditLogs,
-  type AuditLogEntry,
-} from '@/lib/api/content-client'
+import { listAuditLogs, type AuditLogEntry } from '@/lib/api/content-client'
 
 const LEVEL_FILTERS = [
   { value: 'all', label: 'Tất cả' },
@@ -89,7 +86,8 @@ export function AuditLogAdmin() {
         <div>
           <h1 className="font-serif text-3xl text-foreground lg:text-4xl">Nhật ký kiểm toán hệ thống</h1>
           <p className="mt-1 text-muted-foreground">
-            Theo dõi toàn bộ các sự kiện thay đổi dữ liệu, hoạt động xuất bản và truy vết tác nhân theo SRS FR-RCP-CORE.
+            Theo dõi toàn bộ các sự kiện thay đổi dữ liệu, hoạt động xuất bản và truy vết tác nhân theo SRS
+            FR-RCP-CORE.
           </p>
         </div>
         <button
@@ -122,9 +120,9 @@ export function AuditLogAdmin() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Theo quy định vận hành bảo mật: Raw Seq và OTLP telemetry chỉ được truy cập thông qua kênh bảo mật nội bộ
-              (VPN hoặc operational authentication/network control). Giao diện quản trị này hiển thị dữ liệu Application Audit Log
-              đã được phân quyền an toàn cho Admin.
+              Theo quy định vận hành bảo mật: Raw Seq và OTLP telemetry chỉ được truy cập thông qua kênh bảo
+              mật nội bộ (VPN hoặc operational authentication/network control). Giao diện quản trị này hiển
+              thị dữ liệu Application Audit Log đã được phân quyền an toàn cho Admin.
             </p>
           </div>
         </div>
@@ -169,7 +167,10 @@ export function AuditLogAdmin() {
 
       {/* Logs Table */}
       {logsQuery.isPending && (
-        <div role="status" className="border border-border p-12 text-center text-muted-foreground bg-background">
+        <div
+          role="status"
+          className="border border-border p-12 text-center text-muted-foreground bg-background"
+        >
           Đang tải nhật ký kiểm toán…
         </div>
       )}
@@ -215,7 +216,8 @@ export function AuditLogAdmin() {
                         <td className="px-5 py-3">
                           <span
                             className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
-                              LEVEL_BADGE[entry.level] ?? 'bg-secondary text-muted-foreground border border-border'
+                              LEVEL_BADGE[entry.level] ??
+                              'bg-secondary text-muted-foreground border border-border'
                             }`}
                           >
                             {entry.level}
@@ -226,7 +228,10 @@ export function AuditLogAdmin() {
                             {entry.eventName}
                           </span>
                         </td>
-                        <td className="px-5 py-3 max-w-xs truncate text-foreground font-medium" title={entry.message}>
+                        <td
+                          className="px-5 py-3 max-w-xs truncate text-foreground font-medium"
+                          title={entry.message}
+                        >
                           {entry.message}
                         </td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
@@ -320,9 +325,7 @@ export function AuditLogAdmin() {
                   <h3 id="audit-detail-title" className="font-serif text-lg font-medium text-foreground">
                     Chi tiết sự kiện kiểm toán
                   </h3>
-                  <p className="text-xs text-muted-foreground font-mono">
-                    ID: {selectedEntry.id}
-                  </p>
+                  <p className="text-xs text-muted-foreground font-mono">ID: {selectedEntry.id}</p>
                 </div>
               </div>
               <button
@@ -346,24 +349,32 @@ export function AuditLogAdmin() {
                   <p className="font-medium">{selectedEntry.level}</p>
                 </div>
                 <div>
-                  <span className="text-xs uppercase tracking-widest text-muted-foreground">Thời gian (UTC):</span>
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Thời gian (UTC):
+                  </span>
                   <p className="font-mono text-xs">{selectedEntry.timestamp}</p>
                 </div>
                 <div>
-                  <span className="text-xs uppercase tracking-widest text-muted-foreground">Người thực hiện (User ID):</span>
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Người thực hiện (User ID):
+                  </span>
                   <p className="font-mono text-xs truncate" title={selectedEntry.userId ?? 'Hệ thống'}>
                     {selectedEntry.userId ?? 'Hệ thống / Anonymous'}
                   </p>
                 </div>
                 {selectedEntry.correlationId && (
                   <div className="col-span-2">
-                    <span className="text-xs uppercase tracking-widest text-muted-foreground">Correlation ID:</span>
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                      Correlation ID:
+                    </span>
                     <p className="font-mono text-xs text-primary">{selectedEntry.correlationId}</p>
                   </div>
                 )}
                 {selectedEntry.requestPath && (
                   <div className="col-span-2">
-                    <span className="text-xs uppercase tracking-widest text-muted-foreground">Yêu cầu HTTP:</span>
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                      Yêu cầu HTTP:
+                    </span>
                     <p className="font-mono text-xs">
                       {selectedEntry.requestMethod ?? 'GET'} {selectedEntry.requestPath}{' '}
                       {selectedEntry.statusCode && `(Mã: ${selectedEntry.statusCode})`}
@@ -373,7 +384,9 @@ export function AuditLogAdmin() {
               </div>
 
               <div>
-                <span className="text-xs uppercase tracking-widest text-muted-foreground">Nội dung thông điệp:</span>
+                <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Nội dung thông điệp:
+                </span>
                 <p className="mt-1 border border-border bg-background p-3 font-mono text-xs text-foreground leading-relaxed whitespace-pre-wrap">
                   {selectedEntry.message}
                 </p>
@@ -381,7 +394,9 @@ export function AuditLogAdmin() {
 
               {selectedEntry.properties && Object.keys(selectedEntry.properties).length > 0 && (
                 <div>
-                  <span className="text-xs uppercase tracking-widest text-muted-foreground">Thuộc tính bổ sung (Properties):</span>
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Thuộc tính bổ sung (Properties):
+                  </span>
                   <pre className="mt-1 max-h-48 overflow-y-auto border border-border bg-secondary/30 p-3 font-mono text-xs leading-relaxed">
                     {JSON.stringify(selectedEntry.properties, null, 2)}
                   </pre>

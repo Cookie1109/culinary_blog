@@ -267,7 +267,11 @@ export function MyRecipes() {
     <div>
       {/* Admin Scope Toggle Tabs */}
       {isAdmin && (
-        <div className="mb-6 flex border-b border-border" role="tablist" aria-label="Phạm vi quản lý công thức">
+        <div
+          className="mb-6 flex border-b border-border"
+          role="tablist"
+          aria-label="Phạm vi quản lý công thức"
+        >
           <button
             type="button"
             role="tab"
@@ -570,7 +574,10 @@ export function MyRecipes() {
                     <div className="text-xs text-muted-foreground space-y-1">
                       {scope === 'all' && (
                         <div>
-                          Tác giả: <span className="font-medium text-foreground">{recipe.author?.displayName ?? 'Ẩn danh'}</span>
+                          Tác giả:{' '}
+                          <span className="font-medium text-foreground">
+                            {recipe.author?.displayName ?? 'Ẩn danh'}
+                          </span>
                         </div>
                       )}
                       <div>

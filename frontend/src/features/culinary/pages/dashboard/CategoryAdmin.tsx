@@ -280,7 +280,10 @@ export function CategoryAdmin() {
                 </tr>
               ) : (
                 sortedCategories.map((category) => (
-                  <tr key={category.id} className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors">
+                  <tr
+                    key={category.id}
+                    className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors"
+                  >
                     <td className="px-5 py-4 font-mono font-medium text-muted-foreground">
                       #{category.orderIndex}
                     </td>
@@ -292,9 +295,7 @@ export function CategoryAdmin() {
                         </div>
                       )}
                     </td>
-                    <td className="px-5 py-4 font-mono text-xs text-muted-foreground">
-                      {category.slug}
-                    </td>
+                    <td className="px-5 py-4 font-mono text-xs text-muted-foreground">{category.slug}</td>
                     <td className="px-5 py-4 text-right">
                       {category.recipeCount > 0 ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
@@ -351,16 +352,10 @@ export function CategoryAdmin() {
               <div className="flex items-center gap-3">
                 <div
                   className={`grid h-10 w-10 place-items-center rounded-full ${
-                    deleteTarget.recipeCount > 0
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-red-100 text-red-700'
+                    deleteTarget.recipeCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                   }`}
                 >
-                  {deleteTarget.recipeCount > 0 ? (
-                    <AlertTriangle size={20} />
-                  ) : (
-                    <Trash2 size={20} />
-                  )}
+                  {deleteTarget.recipeCount > 0 ? <AlertTriangle size={20} /> : <Trash2 size={20} />}
                 </div>
                 <h3 id="confirm-delete-title" className="font-serif text-lg font-medium text-foreground">
                   {deleteTarget.recipeCount > 0 ? 'Xung đột xóa danh mục' : 'Xác nhận xóa danh mục'}
@@ -379,18 +374,18 @@ export function CategoryAdmin() {
             <div id="confirm-delete-desc" className="mt-4 text-sm">
               {deleteTarget.recipeCount > 0 ? (
                 <div className="border border-amber-200 bg-amber-50 p-4 text-amber-900">
-                  <p className="font-medium">
-                    Không thể xóa danh mục &ldquo;{deleteTarget.name}&rdquo;!
-                  </p>
+                  <p className="font-medium">Không thể xóa danh mục &ldquo;{deleteTarget.name}&rdquo;!</p>
                   <p className="mt-1 text-xs text-amber-800 leading-relaxed">
                     Danh mục này hiện đang có <strong>{deleteTarget.recipeCount} công thức liên kết</strong>.
-                    Để đảm bảo tính toàn vẹn dữ liệu, bạn cần chuyển các công thức sang danh mục khác hoặc xóa chúng trước khi xóa danh mục này.
+                    Để đảm bảo tính toàn vẹn dữ liệu, bạn cần chuyển các công thức sang danh mục khác hoặc xóa
+                    chúng trước khi xóa danh mục này.
                   </p>
                 </div>
               ) : (
                 <div className="text-muted-foreground leading-relaxed">
                   <p>
-                    Bạn có chắc chắn muốn xóa danh mục <strong className="text-foreground">&ldquo;{deleteTarget.name}&rdquo;</strong>?
+                    Bạn có chắc chắn muốn xóa danh mục{' '}
+                    <strong className="text-foreground">&ldquo;{deleteTarget.name}&rdquo;</strong>?
                   </p>
                   <p className="mt-2 text-xs text-muted-foreground">
                     Thao tác này sẽ đánh dấu xóa mềm danh mục và ẩn khỏi hệ thống công khai.
