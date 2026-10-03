@@ -47,22 +47,37 @@ export function RecipeDetail({
     <article className="pb-24">
       <header className="mx-auto max-w-4xl px-4 pb-12 pt-12 text-center sm:px-6 lg:px-8">
         <nav aria-label="Đường dẫn" className="mb-8 text-sm text-muted-foreground">
-          <Link to="/recipes" className="hover:text-primary">
-            Công thức
-          </Link>
-          <span className="px-2" aria-hidden="true">
-            /
-          </span>
-          <Link to={`/categories/${recipe.category.slug}`} className="hover:text-primary">
-            {recipe.category.name}
-          </Link>
+          <ol className="flex flex-wrap items-center justify-center gap-2">
+            <li>
+              <Link to="/recipes" className="hover:text-primary">
+                Công thức
+              </Link>
+            </li>
+            <li aria-hidden="true" className="text-muted-foreground/60">
+              /
+            </li>
+            <li>
+              <Link to={`/categories/${recipe.category.slug}`} className="hover:text-primary">
+                {recipe.category.name}
+              </Link>
+            </li>
+            <li aria-hidden="true" className="text-muted-foreground/60">
+              /
+            </li>
+            <li
+              aria-current="page"
+              className="font-medium text-foreground truncate max-w-[200px] sm:max-w-none"
+            >
+              {recipe.title}
+            </li>
+          </ol>
         </nav>
         <div className="mb-6 flex items-center justify-center gap-2 text-sm uppercase tracking-widest text-primary">
           <span>{recipe.category.name}</span>
           <span aria-hidden="true">&bull;</span>
           <span>{DIFFICULTY_LABELS[recipe.difficulty]}</span>
         </div>
-        <h1 className="mb-6 font-serif text-4xl leading-[1.1] text-foreground sm:text-5xl lg:text-6xl">
+        <h1 className="mb-6 font-serif text-3xl sm:text-5xl lg:text-6xl leading-[1.1] text-foreground break-words">
           {recipe.title}
         </h1>
         <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
@@ -101,27 +116,27 @@ export function RecipeDetail({
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <dl className="mb-16 grid grid-cols-2 border border-border bg-secondary sm:grid-cols-4">
-          <div className="border-b border-r border-border p-5 sm:border-b-0">
+          <div className="border-b border-r border-border p-3 sm:p-5 sm:border-b-0">
             <dt className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
               <Clock size={15} aria-hidden="true" /> Chuẩn bị
             </dt>
-            <dd className="font-serif text-xl">{recipe.prepTime} phút</dd>
+            <dd className="font-serif text-lg sm:text-xl">{recipe.prepTime} phút</dd>
           </div>
-          <div className="border-b border-border p-5 sm:border-b-0 sm:border-r">
+          <div className="border-b border-border p-3 sm:p-5 sm:border-b-0 sm:border-r">
             <dt className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
               <ChefHat size={15} aria-hidden="true" /> Nấu
             </dt>
-            <dd className="font-serif text-xl">{recipe.cookTime} phút</dd>
+            <dd className="font-serif text-lg sm:text-xl">{recipe.cookTime} phút</dd>
           </div>
-          <div className="border-r border-border p-5">
+          <div className="border-r border-border p-3 sm:p-5">
             <dt className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
               <Users size={15} aria-hidden="true" /> Khẩu phần
             </dt>
-            <dd className="font-serif text-xl">{recipe.servings}</dd>
+            <dd className="font-serif text-lg sm:text-xl">{recipe.servings}</dd>
           </div>
-          <div className="p-5">
+          <div className="p-3 sm:p-5">
             <dt className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Độ khó</dt>
-            <dd className="font-serif text-xl">{DIFFICULTY_LABELS[recipe.difficulty]}</dd>
+            <dd className="font-serif text-lg sm:text-xl">{DIFFICULTY_LABELS[recipe.difficulty]}</dd>
           </div>
         </dl>
 
@@ -237,11 +252,11 @@ export function RecipeDetail({
               Thư viện ảnh
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {images.map((image) => (
+              {images.map((image, index) => (
                 <div key={image.id} className="relative aspect-square overflow-hidden bg-muted">
                   <Image
                     src={imageSource(image.mediumUrl ?? image.originalUrl)}
-                    alt={image.altText ?? `${recipe.title} — ảnh món ăn`}
+                    alt={image.altText ?? `${recipe.title} — ảnh món ăn ${index + 1}`}
                     fill
                     sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
                     placeholder="blur"

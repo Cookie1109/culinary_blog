@@ -14,16 +14,17 @@ export function Home({ recipes, categories }: { recipes: Recipe[]; categories: C
             <span className="mb-4 block text-sm font-medium uppercase tracking-widest text-primary">
               Công thức mới nhất
             </span>
-            <h1 className="mb-6 font-serif text-5xl leading-[1.1] text-foreground lg:text-7xl">
+            <h1 className="mb-6 font-serif text-3xl sm:text-5xl leading-[1.1] text-foreground lg:text-7xl break-words">
               {featured?.title ?? 'Góc bếp Culinary Blog'}
             </h1>
-            <p className="mb-10 max-w-2xl text-xl leading-relaxed text-muted-foreground">
+            <p className="mb-10 max-w-2xl text-lg sm:text-xl leading-relaxed text-muted-foreground">
               {featured?.description ??
                 'Các công thức đã xuất bản sẽ xuất hiện tại đây. Hãy quay lại khi cộng đồng chia sẻ món mới.'}
             </p>
             {featured && (
               <Link
                 to={`/recipes/${featured.slug}`}
+                aria-label={`Khám phá công thức: ${featured.title}`}
                 className="inline-flex items-center gap-2 bg-primary px-8 py-4 text-sm font-medium uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 Khám phá công thức
@@ -36,11 +37,12 @@ export function Home({ recipes, categories }: { recipes: Recipe[]; categories: C
 
       <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-6 lg:px-8" aria-labelledby="featured-title">
         <div className="mb-12 flex items-end justify-between border-b border-border pb-6">
-          <h2 id="featured-title" className="font-serif text-3xl text-foreground">
+          <h2 id="featured-title" className="font-serif text-2xl sm:text-3xl text-foreground">
             Bộ sưu tập nổi bật
           </h2>
           <Link
             to="/recipes"
+            aria-label="Xem tất cả công thức nổi bật"
             className="text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:text-foreground"
           >
             Xem tất cả
@@ -52,7 +54,7 @@ export function Home({ recipes, categories }: { recipes: Recipe[]; categories: C
         ) : (
           <div className="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3">
             {recipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
+              <RecipeCard key={recipe.id} recipe={recipe} headingLevel="h3" />
             ))}
           </div>
         )}
@@ -62,12 +64,13 @@ export function Home({ recipes, categories }: { recipes: Recipe[]; categories: C
         <div className="mb-10 flex items-end justify-between border-b border-border pb-6">
           <div>
             <p className="mb-2 text-sm uppercase tracking-widest text-primary">Khám phá theo chủ đề</p>
-            <h2 id="categories-title" className="font-serif text-3xl text-foreground">
+            <h2 id="categories-title" className="font-serif text-2xl sm:text-3xl text-foreground">
               Danh mục nổi bật
             </h2>
           </div>
           <Link
             to="/categories"
+            aria-label="Xem tất cả danh mục nổi bật"
             className="text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:text-foreground"
           >
             Xem tất cả
@@ -82,6 +85,7 @@ export function Home({ recipes, categories }: { recipes: Recipe[]; categories: C
               <Link
                 key={category.id}
                 to={`/categories/${category.slug}`}
+                aria-label={`Danh mục ${category.name}, ${category.recipeCount} công thức`}
                 className="group border border-border bg-card p-6 transition-colors hover:border-primary"
               >
                 <BookOpen className="mb-8 text-primary" size={24} aria-hidden="true" />

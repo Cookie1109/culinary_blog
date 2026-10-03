@@ -51,9 +51,10 @@ export function RecipesList({
         className="mb-10 grid gap-4 border-y border-border py-6 sm:grid-cols-2 lg:grid-cols-4"
         aria-label="Bộ lọc công thức"
       >
-        <label className="text-sm">
+        <label className="text-sm" htmlFor="recipes-category-select">
           <span className="mb-2 block text-muted-foreground">Danh mục</span>
           <select
+            id="recipes-category-select"
             value={category}
             onChange={(event) => setFilter('category', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
@@ -66,9 +67,10 @@ export function RecipesList({
             ))}
           </select>
         </label>
-        <label className="text-sm">
+        <label className="text-sm" htmlFor="recipes-difficulty-select">
           <span className="mb-2 block text-muted-foreground">Độ khó</span>
           <select
+            id="recipes-difficulty-select"
             value={difficulty}
             onChange={(event) => setFilter('difficulty', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
@@ -80,9 +82,10 @@ export function RecipesList({
             <option value="expert">Chuyên gia</option>
           </select>
         </label>
-        <label className="text-sm">
+        <label className="text-sm" htmlFor="recipes-maxtime-select">
           <span className="mb-2 block text-muted-foreground">Tổng thời gian</span>
           <select
+            id="recipes-maxtime-select"
             value={maxTime || ''}
             onChange={(event) => setFilter('maxTime', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
@@ -93,9 +96,10 @@ export function RecipesList({
             <option value="120">Tối đa 120 phút</option>
           </select>
         </label>
-        <label className="text-sm">
+        <label className="text-sm" htmlFor="recipes-sort-select">
           <span className="mb-2 block text-muted-foreground">Sắp xếp</span>
           <select
+            id="recipes-sort-select"
             value={sort}
             onChange={(event) => setFilter('sort', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
@@ -107,7 +111,11 @@ export function RecipesList({
         </label>
       </section>
 
-      <div className="mb-6 flex justify-end gap-2" aria-label="Kiểu hiển thị công thức">
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {`Hiển thị ${recipes.length} trên tổng số ${result.meta.total} công thức, trang ${result.meta.page} trên ${result.meta.totalPages}`}
+      </div>
+
+      <div className="mb-6 flex justify-end gap-2" role="group" aria-label="Kiểu hiển thị công thức">
         <button
           type="button"
           onClick={() => setViewMode('grid')}
@@ -141,11 +149,12 @@ export function RecipesList({
       )}
 
       {result.meta.totalPages > 1 && (
-        <nav className="mt-20 flex justify-center gap-2" aria-label="Phân trang công thức">
+        <nav className="mt-20 flex flex-wrap justify-center gap-2" aria-label="Phân trang công thức">
           {Array.from({ length: result.meta.totalPages }, (_, index) => index + 1).map((pageNumber) => (
             <button
               key={pageNumber}
               type="button"
+              aria-label={`Trang ${pageNumber}`}
               aria-current={pageNumber === page ? 'page' : undefined}
               onClick={() => {
                 const next = new URLSearchParams(searchParams)

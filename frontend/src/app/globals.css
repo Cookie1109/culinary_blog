@@ -9,15 +9,15 @@
   --color-foreground: #2c2a28;
   --color-card: #ffffff;
   --color-card-foreground: #2c2a28;
-  --color-primary: #c55333;
+  --color-primary: #be4b2c;
   --color-primary-foreground: #ffffff;
   --color-secondary: #ebe5dd;
-  --color-secondary-foreground: #4a4641;
+  --color-secondary-foreground: #383430;
   --color-muted: #f2efea;
-  --color-muted-foreground: #7e7870;
-  --color-accent: #e5a93d;
+  --color-muted-foreground: #6b655d;
+  --color-accent: #b87910;
   --color-accent-foreground: #2c2a28;
-  --color-border: #e0dcd6;
+  --color-border: #d4cec5;
   --radius-sm: 0;
   --radius-md: 0.125rem;
   --radius-lg: 0.25rem;
@@ -54,5 +54,16 @@
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

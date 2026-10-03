@@ -67,6 +67,7 @@ Dựa trên kiểm tra mã nguồn thực tế, dưới đây là trạng thái 
 - [x] **[NFR-PERF]** Hiệu năng và Cache (Redis Application Cache)
 - [x] **[FR-JOB]** Background Jobs *(Hangfire xử lý ảnh và Sitemap Job)*
 - [x] **[NFR-SEO]** Tối ưu SEO *(Metadata, canonical, social cards, Recipe JSON-LD và robots/sitemap đã hoàn thiện; kiểm tra Rich Results lại trên staging trước release)*
+- [x] **[NFR-USE]** Responsive và Accessibility *(Breakpoints 320–767/768–1199/≥1200, semantic landmarks, keyboard nav, focus trap modal/mobile, contrast WCAG AA, axe automated test 0 violations)*
 - [ ] **[FR-OBS]** Observability & Operations *(Chưa hoàn thiện Admin Dashboard)*
 - [ ] **[NFR-QA]** Hardening, Bảo mật, UAT và Phát hành
 
@@ -612,17 +613,18 @@ Tạo trải nghiệm công khai hoàn chỉnh cho Guest, tối ưu rendering, S
 
 #### Performance/QA
 
-- **[NFR-QA]** P6-22: Lighthouse CI budget: LCP ≤2.5 s, CLS ≤0.1, INP ≤200 ms, first-load JS gzip ≤200 KB.
-- **[NFR-QA]** P6-23: Bundle analysis và code splitting.
-- **[NFR-QA]** P6-24: Visual/responsive regression cho route chính.
-- **[NFR-QA]** P6-25: SEO metadata/JSON-LD snapshot hoặc schema tests.
+- [x] **[NFR-QA]** P6-22: Lighthouse CI budget: LCP ≤2.5 s, CLS ≤0.1, INP ≤200 ms, first-load JS gzip ≤200 KB.
+- [x] **[NFR-QA]** P6-23: Bundle analysis và code splitting.
+- [x] **[NFR-QA]** P6-24: Visual/responsive regression cho route chính.
+- [x] **[NFR-QA]** P6-25: SEO metadata/JSON-LD snapshot hoặc schema tests.
 
 ### 10.4. Đầu ra bàn giao
 
 - Toàn bộ public routes và discovery UX.
 - Rendering/caching strategy đúng theo public/private boundary.
 - SEO metadata, JSON-LD, sitemap và robots.
-- Responsive/a11y test report.
+- Responsive/a11y test report (`docs/reports/phase-6-responsive-accessibility-report.md`).
+- Performance/QA test report (`docs/reports/phase-6-performance-qa-report.md`).
 
 ### 10.5. Exit gate
 

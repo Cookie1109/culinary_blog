@@ -55,7 +55,12 @@ export function Search({ categories, result }: { categories: Category[]; result:
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <header className="mb-10">
         <h1 className="mb-6 font-serif text-4xl text-foreground md:text-5xl">Tìm kiếm công thức</h1>
-        <form onSubmit={submitSearch} className="flex max-w-2xl gap-3" role="search">
+        <form
+          onSubmit={submitSearch}
+          className="flex flex-col sm:flex-row max-w-2xl gap-3"
+          role="search"
+          aria-label="Tìm kiếm công thức"
+        >
           <label htmlFor="recipe-search" className="sr-only">
             Từ khóa tìm kiếm
           </label>
@@ -69,7 +74,7 @@ export function Search({ categories, result }: { categories: Category[]; result:
           />
           <button
             type="submit"
-            className="inline-flex items-center gap-2 bg-primary px-6 py-3 text-primary-foreground"
+            className="inline-flex items-center justify-center gap-2 bg-primary px-6 py-3 text-primary-foreground font-medium transition-colors hover:bg-primary/90"
           >
             <SearchIcon size={17} aria-hidden="true" /> Tìm
           </button>
@@ -80,9 +85,10 @@ export function Search({ categories, result }: { categories: Category[]; result:
         className="mb-10 grid gap-4 border-y border-border py-6 sm:grid-cols-2 lg:grid-cols-4"
         aria-label="Bộ lọc"
       >
-        <label className="text-sm">
+        <label className="text-sm" htmlFor="search-category-select">
           <span className="mb-2 block text-muted-foreground">Danh mục</span>
           <select
+            id="search-category-select"
             value={category}
             onChange={(event) => setFilter('category', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
@@ -95,9 +101,10 @@ export function Search({ categories, result }: { categories: Category[]; result:
             ))}
           </select>
         </label>
-        <label className="text-sm">
+        <label className="text-sm" htmlFor="search-difficulty-select">
           <span className="mb-2 block text-muted-foreground">Độ khó</span>
           <select
+            id="search-difficulty-select"
             value={difficulty}
             onChange={(event) => setFilter('difficulty', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
@@ -109,9 +116,10 @@ export function Search({ categories, result }: { categories: Category[]; result:
             <option value="expert">Chuyên gia</option>
           </select>
         </label>
-        <label className="text-sm">
+        <label className="text-sm" htmlFor="search-maxtime-select">
           <span className="mb-2 block text-muted-foreground">Tổng thời gian</span>
           <select
+            id="search-maxtime-select"
             value={maxTime || ''}
             onChange={(event) => setFilter('maxTime', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
@@ -122,9 +130,10 @@ export function Search({ categories, result }: { categories: Category[]; result:
             <option value="120">Tối đa 120 phút</option>
           </select>
         </label>
-        <label className="text-sm">
+        <label className="text-sm" htmlFor="search-sort-select">
           <span className="mb-2 block text-muted-foreground">Sắp xếp</span>
           <select
+            id="search-sort-select"
             value={sort}
             onChange={(event) => setFilter('sort', event.target.value)}
             className="w-full border border-border bg-background px-3 py-2"
@@ -137,6 +146,12 @@ export function Search({ categories, result }: { categories: Category[]; result:
         </label>
       </section>
 
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {q
+          ? `Tìm thấy ${result.meta.total} công thức cho từ khóa ${q}, trang ${page} trên ${totalPages || 1}`
+          : `Hiển thị ${result.meta.total} công thức, trang ${page} trên ${totalPages || 1}`}
+      </div>
+
       <div className="mb-6 flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground" aria-live="polite">
           <span className="font-medium text-foreground">{result.meta.total}</span> công thức phù hợp
@@ -145,7 +160,8 @@ export function Search({ categories, result }: { categories: Category[]; result:
           <button
             type="button"
             onClick={() => setSearchParams({})}
-            className="flex items-center gap-1.5 text-sm text-primary"
+            aria-label="Xóa tất cả bộ lọc"
+            className="flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
             <X size={14} aria-hidden="true" /> Xóa bộ lọc
           </button>
@@ -166,14 +182,15 @@ export function Search({ categories, result }: { categories: Category[]; result:
       )}
 
       {totalPages > 1 && (
-        <nav className="mt-16 flex justify-center gap-2" aria-label="Phân trang kết quả tìm kiếm">
+        <nav className="mt-16 flex flex-wrap justify-center gap-2" aria-label="Phân trang kết quả tìm kiếm">
           {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
             <button
               key={pageNumber}
               type="button"
+              aria-label={`Trang ${pageNumber}`}
               aria-current={pageNumber === page ? 'page' : undefined}
               onClick={() => setFilter('page', String(pageNumber))}
-              className={`h-10 w-10 border ${pageNumber === page ? 'bg-foreground text-background' : ''}`}
+              className={`h-10 w-10 border ${pageNumber === page ? 'bg-foreground text-background' : 'hover:border-foreground'}`}
             >
               {pageNumber}
             </button>

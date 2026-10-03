@@ -7,11 +7,15 @@ import { publicMediaUrl } from '@/lib/media-url'
 const IMAGE_PLACEHOLDER =
   'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="16" height="16"%3E%3Crect width="16" height="16" fill="%23eee9e2"/%3E%3C/svg%3E'
 
-export function RecipeCard({ recipe }: { recipe: Recipe }) {
+export function RecipeCard({ recipe, headingLevel = 'h2' }: { recipe: Recipe; headingLevel?: 'h2' | 'h3' }) {
+  const Heading = headingLevel
+
   return (
     <article className="group">
       <Link
         to={`/recipes/${recipe.slug}`}
+        aria-hidden="true"
+        tabIndex={-1}
         className="relative mb-4 block aspect-square overflow-hidden bg-secondary"
       >
         {recipe.primaryImageUrl ? (
@@ -39,9 +43,9 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           {recipe.prepTime + recipe.cookTime} phút
         </span>
       </div>
-      <h2 className="font-serif text-2xl transition-colors group-hover:text-primary">
+      <Heading className="font-serif text-2xl transition-colors group-hover:text-primary">
         <Link to={`/recipes/${recipe.slug}`}>{recipe.title}</Link>
-      </h2>
+      </Heading>
       <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{recipe.description}</p>
     </article>
   )

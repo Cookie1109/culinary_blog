@@ -1,11 +1,19 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import withBundleAnalyzer from '@next/bundle-analyzer'
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
+
+const bundleAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   async headers() {
     return [
       {
@@ -49,4 +57,4 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default bundleAnalyzer(nextConfig)

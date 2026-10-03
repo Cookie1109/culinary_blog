@@ -11,6 +11,7 @@ export function CategoryDetail({ result }: { result: CategoryDetailEnvelope }) {
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <Link
         to="/categories"
+        aria-label="Quay lại tất cả danh mục"
         className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
       >
         <ArrowLeft size={16} aria-hidden="true" /> Tất cả danh mục
@@ -18,7 +19,9 @@ export function CategoryDetail({ result }: { result: CategoryDetailEnvelope }) {
 
       <header className="mb-14 border-b border-border pb-10">
         <p className="mb-3 text-sm uppercase tracking-widest text-primary">Danh mục</p>
-        <h1 className="mb-4 font-serif text-4xl text-foreground md:text-5xl">{category.name}</h1>
+        <h1 className="mb-4 font-serif text-3xl sm:text-4xl md:text-5xl text-foreground break-words">
+          {category.name}
+        </h1>
         <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
           {category.description ?? 'Khám phá các công thức đã xuất bản trong danh mục này.'}
         </p>
@@ -48,6 +51,7 @@ export function CategoryDetail({ result }: { result: CategoryDetailEnvelope }) {
                   ? `/categories/${category.slug}`
                   : `/categories/${category.slug}?page=${pageNumber}`
               }
+              aria-label={`Trang ${pageNumber}`}
               aria-current={pageNumber === page ? 'page' : undefined}
               className={`grid h-10 w-10 place-items-center border font-serif text-lg ${
                 pageNumber === page
