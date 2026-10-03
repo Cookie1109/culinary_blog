@@ -5,7 +5,8 @@ import test from 'node:test'
 const source = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 
 test('public routes expose canonical, Open Graph, Twitter, and index directives', async () => {
-  const [seo, recipe, category, search] = await Promise.all([
+  const [config, seo, recipe, category, search] = await Promise.all([
+    source('next.config.mjs'),
     source('src/lib/seo.ts'),
     source('src/app/(public)/recipes/[slug]/page.tsx'),
     source('src/app/(public)/categories/[slug]/page.tsx'),
@@ -20,6 +21,7 @@ test('public routes expose canonical, Open Graph, Twitter, and index directives'
   assert.match(category, /export async function generateMetadata/)
   assert.match(search, /index: false/)
   assert.match(search, /follow: true/)
+  assert.match(config, /htmlLimitedBots:\s*\/\.\*\//)
 })
 
 test('published recipe emits complete and safely serialized Recipe JSON-LD', async () => {

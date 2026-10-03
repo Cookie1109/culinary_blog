@@ -1,6 +1,6 @@
-# Phase 8 — Functional regression
+# Phase 8 — Hardening, UAT và phát hành
 
-> Trạng thái ngày 03/10/2026: **Implementation Complete / Local Accepted** cho P8-01 đến P8-04. Việc chạy browser E2E trên staging với PostgreSQL, Redis, MinIO và Hangfire thật vẫn thuộc staging/UAT gate P8-24/P8-25, chưa được tài liệu này tuyên bố hoàn tất.
+> Trạng thái ngày 04/10/2026: **Implementation Complete / Local Accepted** cho P8-01 đến P8-09. Functional regression và performance đã đạt trên release build local; staging browser E2E/UAT, security, reliability và release gate chưa được tài liệu này tuyên bố hoàn tất.
 
 ## Phạm vi
 
@@ -80,8 +80,36 @@ Role matrix được kiểm tra ở API và UI wiring: Guest chỉ thấy Publis
 
 Chạy lại bộ regression bằng `./scripts/functional-regression.ps1`. Test performance được loại khỏi script này vì thuộc P8-05 đến P8-09.
 
+## Performance P8-05 đến P8-09
+
+| Task | Bằng chứng triển khai | Điều kiện đạt |
+|---|---|---|
+| P8-05 | `performance/k6/public-api.js` có profile smoke, load và stress; load/stress đạt 100 VU | k6 không có quá 1% request lỗi |
+| P8-06 | Custom trends tách cache warm/cold; summary ghi avg/min/p50/p95/p99/max | warm p50 ≤150 ms; mọi API p95 ≤500 ms, p99 ≤1 s |
+| P8-07 | k6 lấy delta `cache_hits_total`/`cache_misses_total` từ Prometheus sau khi chờ OTEL export | hit rate steady-state ≥80% |
+| P8-08 | Release build, bundle budget và Lighthouse CI 3 lượt/route; report lưu local thay vì upload public | LCP ≤2.5 s, CLS ≤0.1, TBT ≤200 ms, JS gzip ≤200 KB và `meta-description = 1` |
+| P8-09 | Chỉ mở tối ưu query/index/cache khi một gate đo lường thất bại | Không có bottleneck vượt budget; không tạo thay đổi speculative |
+
+Stack benchmark dùng `performance/compose.performance.yaml`: API 2 CPU/4 GiB, PostgreSQL 2 CPU/4 GiB, Redis 1 CPU/1 GiB. Global API rate limit được nới riêng trong profile này để một load generator không đo nhầm P8-13; cấu hình mặc định và production không đổi. Dataset là seed synthetic Phase 8 (50 recipe, 5 author, 20 category). Network mặc định là localhost qua Nginx, không giả lập WAN.
+
+Chạy stack và toàn bộ gate:
+
+```powershell
+docker compose -p culinary-blog-performance -f compose.yaml -f performance/compose.performance.yaml up --detach --build --wait
+./scripts/performance.ps1 -Profile all
+```
+
+Chạy nhanh smoke API/cache, bỏ Lighthouse:
+
+```powershell
+./scripts/performance.ps1 -Profile smoke -SkipLighthouse
+```
+
+Mỗi lần chạy tạo `artifacts/performance/<timestamp>/environment.json`, summary JSON của từng profile k6 và Lighthouse reports. Kết quả local ngày 04/10/2026 được tổng hợp tại [báo cáo performance Phase 8](../../reports/phase-8-performance-report.md); tài liệu không dùng số đo giả hoặc số đo từ development server.
+
 ## Gate còn lại
 
+- Chạy lại `./scripts/performance.ps1 -Profile all` trên immutable artifact của staging trước go/no-go; kết quả local hiện tại không thay thế staging sign-off.
 - Chạy CJ-01 đến CJ-05 bằng browser trên staging với đúng immutable release artifact và PostgreSQL/Redis/MinIO/Hangfire thật.
 - Ghi staging run ID, artifact digest và Product Owner sign-off ở P8-24/P8-25.
 - Google OAuth chỉ được đưa vào RC khi có Change Request/credential và bổ sung issuer/audience/expiry/link integration test; hiện là Should-have deferred đã công bố từ Phase 2.

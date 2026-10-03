@@ -18,6 +18,8 @@ logs/
 .dotnet/
 .next/
 **/.next/
+.lighthouseci/
+**/.lighthouseci/
 **/bin/
 **/obj/
 TestResults/

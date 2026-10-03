@@ -147,6 +147,10 @@ Bộ kiểm thử `frontend/tests/seo-schema-snapshots.test.mjs` đã thẩm đ�
 4. **Kiểm định Sitemap & Robots**:
    - `robots.ts` ngăn chặn lập chỉ mục các tuyến đường nội bộ (`/dashboard/`, `/profile`, `/login`, `/register`).
    - `SitemapGenerationJob.cs` chỉ đưa các bài viết có trạng thái `RecipeStatus.Published` vào sitemap XML; hoàn toàn loại bỏ `Draft` và `Archived`.
+5. **Kiểm định `meta-description` trên release runtime**:
+   - Next.js được cấu hình để metadata không bị stream xuống `<body>`; thẻ description luôn nằm trong `<head>` cho browser và Lighthouse.
+   - Lighthouse chạy 3 lượt trên mỗi route công khai chính (18 report) và đạt `meta-description = 1` ở toàn bộ lượt chạy.
+   - Release Lighthouse gate coi thiếu `meta-description` là lỗi bắt buộc, không chỉ là cảnh báo điểm SEO tổng.
 
 ---
 
@@ -189,6 +193,7 @@ Hệ thống đã chạy thành công toàn bộ các bộ kiểm thử từ Fro
 | **Lighthouse CI Budget** | Đạt ngân sách CWV (LCP ≤ 2.5s, CLS ≤ 0.1, INP ≤ 200ms, First-load JS gzip ≤ 200 KB) | **ĐẠT** |
 | **Axe Accessibility** | 0 vi phạm axe mức Critical/Serious trên toàn bộ views công khai | **ĐẠT** |
 | **Structured Data** | Published recipe vượt qua kiểm tra Schema.org Recipe và Rich Results | **ĐẠT** |
+| **Meta Description** | Mọi public route có description trong `<head>` và Lighthouse `meta-description = 1` | **ĐẠT** |
 | **Cache/SEO Isolation** | Draft/Archived không nằm trong HTML public cache, sitemap hoặc search index | **ĐẠT** |
 
 **Kết luận**: Toàn bộ các hạng mục công việc chi tiết từ **P6-01 đến P6-25** của **Phase 6 — Public Web, SEO và accessibility** đã hoàn thành xuất sắc, sẵn sàng 100% để bước sang **Phase 7 — Dashboard Author/Admin và vận hành**.

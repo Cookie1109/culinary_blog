@@ -2,7 +2,7 @@
 
 Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây dựng theo đặc tả SRS v1.0.0. Repository sử dụng mô hình monorepo với hai ứng dụng độc lập: frontend Next.js và backend ASP.NET Core; tài liệu, hạ tầng, Docker Compose và CI được quản lý tập trung tại thư mục gốc.
 
-> **Trạng thái:** Phase 0–7 đã được triển khai; functional regression P8-01 đến P8-04 đã Local Accepted tại [báo cáo Phase 8](docs/specs/phase-8/README.md). Các performance/security/reliability, staging UAT và production release gate còn lại thuộc Phase 8.
+> **Trạng thái:** Phase 0–7 đã được triển khai; functional regression và performance P8-01 đến P8-09 đã Local Accepted tại [báo cáo Phase 8](docs/specs/phase-8/README.md). Các security/reliability, staging UAT và production release gate còn lại thuộc Phase 8.
 
 ## Công nghệ chính
 
@@ -143,6 +143,17 @@ docker compose config --quiet
 ```
 
 Pipeline tại `.github/workflows/ci.yml` tự động kiểm tra backend, frontend, cấu hình Compose, dependency, container và secrets khi có thay đổi trên repository.
+
+### Performance Phase 8
+
+Khởi động stack có resource profile rồi chạy smoke/load/stress k6, cache hit-rate, release bundle budget và Lighthouse CI:
+
+```powershell
+docker compose -p culinary-blog-performance -f compose.yaml -f performance/compose.performance.yaml up --detach --build --wait
+./scripts/performance.ps1 -Profile all
+```
+
+Kết quả và mô tả hardware/dataset/network được lưu dưới `artifacts/performance/`. Xem budget và cách chạy rút gọn tại [báo cáo Phase 8](docs/specs/phase-8/README.md).
 
 ## Cấu hình và bảo mật
 

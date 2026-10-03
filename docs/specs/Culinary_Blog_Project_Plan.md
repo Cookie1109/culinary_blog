@@ -597,7 +597,7 @@ Tạo trải nghiệm công khai hoàn chỉnh cho Guest, tối ưu rendering, S
 
 #### SEO
 
-- **[NFR-SEO]** P6-12: Dynamic title/description/canonical/Open Graph/Twitter card.
+- **[NFR-SEO]** P6-12: Dynamic title/description/canonical/Open Graph/Twitter card; `meta-description` phải nằm trong `<head>` và đạt Lighthouse audit `meta-description = 1` (Must Have).
 - **[NFR-SEO]** P6-13: JSON-LD Schema.org Recipe với ingredient, instruction, author, time, yield, nutrition.
 - **[NFR-SEO]** P6-14: Published dùng `index,follow`; private Draft/Archived dùng `noindex` và không xuất hiện sitemap.
 - **[NFR-SEO]** P6-15: `robots.txt`, sitemap URL và metadata tests.
@@ -630,6 +630,7 @@ Tạo trải nghiệm công khai hoàn chỉnh cho Guest, tối ưu rendering, S
 
 - Guest hoàn thành flow `home → filter/search → recipe detail` trên mobile và desktop.
 - Lighthouse CI đạt budget trên môi trường/cấu hình đã ghi nhận.
+- Mọi public route có `meta-description` trong `<head>` và đạt Lighthouse audit `meta-description = 1`.
 - Không có axe violation mức Critical/Serious chưa xử lý.
 - Published recipe pass structured-data validation.
 - Draft/Archived không nằm trong HTML public cache, sitemap hoặc search index.
@@ -696,7 +697,7 @@ Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận 
 
 ## 12. Phase 8 — Hardening, UAT và phát hành
 
-> Trạng thái 03/10/2026: **Functional Regression Complete / Local Accepted** cho P8-01 đến P8-04. Bằng chứng tại [Phase 8 functional regression](./phase-8/README.md); staging browser E2E/UAT và các performance, security, reliability, release gate còn chờ thực hiện.
+> Trạng thái 04/10/2026: **Functional Regression & Performance Complete / Local Accepted** cho P8-01 đến P8-09. Bằng chứng tại [Phase 8 hardening](./phase-8/README.md); staging browser E2E/UAT, security, reliability và release gate còn chờ thực hiện.
 
 ### 12.1. Mục tiêu
 
@@ -718,11 +719,11 @@ Chứng minh hệ thống đáp ứng yêu cầu chức năng và phi chức nă
 
 #### Performance
 
-- **[NFR-QA]** P8-05: K6 smoke, load và stress profile với 100 concurrent users.
-- **[NFR-QA]** P8-06: Đo API p50/p95/p99 với cache warm và cold; ghi rõ hardware/dataset/network.
-- **[NFR-QA]** P8-07: Xác minh cache hit rate steady-state ≥80% theo workload chuẩn.
-- **[NFR-QA]** P8-08: Lighthouse CI và bundle budget trên release build.
-- **[NFR-QA]** P8-09: Tối ưu query/index/cache chỉ dựa trên measurement.
+- [x] **[NFR-QA]** P8-05: K6 smoke, load và stress profile với 100 concurrent users.
+- [x] **[NFR-QA]** P8-06: Đo API p50/p95/p99 với cache warm và cold; ghi rõ hardware/dataset/network.
+- [x] **[NFR-QA]** P8-07: Xác minh cache hit rate steady-state ≥80% theo workload chuẩn.
+- [x] **[NFR-QA]** P8-08: Lighthouse CI, bundle budget và audit bắt buộc `meta-description = 1` trên release build.
+- [x] **[NFR-QA]** P8-09: Tối ưu query/index/cache chỉ dựa trên measurement.
 
 #### Security
 
@@ -766,6 +767,7 @@ Chứng minh hệ thống đáp ứng yêu cầu chức năng và phi chức nă
 - Tất cả Must-have acceptance criteria pass.
 - Không còn defect Critical/High mở; Medium có owner và kế hoạch rõ.
 - API/frontend performance đạt NFR hoặc có risk acceptance chính thức.
+- Mọi public route đạt Lighthouse audit `meta-description = 1`; thiếu thẻ là lỗi chặn release.
 - Restore drill thành công; RTO/RPO được ghi nhận.
 - Product Owner duyệt UAT.
 - Production smoke test pass và dashboards/alerts nhận dữ liệu.

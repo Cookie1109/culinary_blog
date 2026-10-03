@@ -11,6 +11,8 @@ const bundleAnalyzer = withBundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  // Keep SEO metadata in <head> so browsers and Lighthouse can discover it.
+  htmlLimitedBots: /.*/,
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },

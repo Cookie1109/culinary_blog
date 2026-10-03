@@ -13,6 +13,7 @@
     "format:write": "prettier --write .",
     "analyze": "node scripts/analyze-bundle.mjs",
     "budget:check": "node scripts/check-bundle-budget.mjs",
+    "lighthouse:release": "lhci autorun --config=lighthouserc.release.cjs",
     "generate:api": "openapi-typescript ../docs/specs/phase-0/openapi.v1.yaml --output src/lib/api/schema.d.ts"
   },
   "engines": {
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
+    "@lhci/cli": "^0.15.1",
     "@next/bundle-analyzer": "^16.3.8",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "20.19.43",

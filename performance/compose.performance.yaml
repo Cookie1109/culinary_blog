@@ -1,0 +1,16 @@
+services:
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      RateLimiting__GlobalPermitLimit: "1000000"
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
+    cpus: 2
+    mem_limit: 4g
+
+  postgres:
+    cpus: 2
+    mem_limit: 4g
+
+  redis:
+    cpus: 1
+    mem_limit: 1g
