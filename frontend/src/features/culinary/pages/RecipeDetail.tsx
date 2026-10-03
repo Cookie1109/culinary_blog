@@ -1,6 +1,11 @@
 import { ChefHat, Clock, Timer, Users } from 'lucide-react'
+import Image from 'next/image'
 import { Link } from 'react-router'
 import type { Nutrition, Recipe } from '@/lib/api/content-client'
+import { privateMediaUrl, publicMediaUrl } from '@/lib/media-url'
+
+const IMAGE_PLACEHOLDER =
+  'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="16" height="9"%3E%3Crect width="16" height="9" fill="%23eee9e2"/%3E%3C/svg%3E'
 
 const DIFFICULTY_LABELS: Record<Recipe['difficulty'], string> = {
   easy: 'Dễ',
@@ -18,7 +23,13 @@ const NUTRITION_LABELS: Array<[keyof Nutrition, string, string]> = [
   ['sodium', 'Natri', 'mg'],
 ]
 
-export function RecipeDetail({ recipe }: { recipe: Recipe }) {
+export function RecipeDetail({
+  recipe,
+  privatePreview = false,
+}: {
+  recipe: Recipe
+  privatePreview?: boolean
+}) {
   const ingredients = [...recipe.ingredients].sort((left, right) => left.orderIndex - right.orderIndex)
   const steps = [...recipe.steps].sort((left, right) => left.stepNumber - right.stepNumber)
   const images = recipe.images
@@ -27,6 +38,7 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
       (left, right) => Number(right.isPrimary) - Number(left.isPrimary) || left.orderIndex - right.orderIndex,
     )
   const heroImage = recipe.primaryImageUrl ?? images[0]?.mediumUrl ?? images[0]?.originalUrl
+  const imageSource = privatePreview ? privateMediaUrl : publicMediaUrl
   const nutrition = recipe.nutrition
     ? NUTRITION_LABELS.filter(([key]) => recipe.nutrition?.[key] != null)
     : []
@@ -66,9 +78,19 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
       </header>
 
       <div className="mx-auto mb-16 max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="aspect-video w-full overflow-hidden bg-muted">
+        <div className="relative aspect-video w-full overflow-hidden bg-muted">
           {heroImage ? (
-            <img src={heroImage} alt={recipe.title} className="h-full w-full object-cover" />
+            <Image
+              src={imageSource(heroImage)}
+              alt={recipe.title}
+              fill
+              priority
+              sizes="(max-width: 1280px) 100vw, 1280px"
+              placeholder="blur"
+              blurDataURL={IMAGE_PLACEHOLDER}
+              unoptimized={privatePreview}
+              className="object-cover"
+            />
           ) : (
             <div className="grid h-full place-items-center px-6 text-center font-serif text-3xl text-muted-foreground">
               {recipe.title}
@@ -189,11 +211,18 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
                       {step.description}
                     </p>
                     {step.imageUrl && (
-                      <img
-                        src={step.imageUrl}
-                        alt={`Bước ${step.stepNumber}: ${step.title}`}
-                        className="mt-5 aspect-video w-full object-cover"
-                      />
+                      <div className="relative mt-5 aspect-video w-full overflow-hidden bg-muted">
+                        <Image
+                          src={imageSource(step.imageUrl)}
+                          alt={`Bước ${step.stepNumber}: ${step.title}`}
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 768px"
+                          placeholder="blur"
+                          blurDataURL={IMAGE_PLACEHOLDER}
+                          unoptimized={privatePreview}
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                   </div>
                 </li>
@@ -209,12 +238,18 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {images.map((image) => (
-                <img
-                  key={image.id}
-                  src={image.mediumUrl ?? image.originalUrl}
-                  alt={image.altText ?? `${recipe.title} — ảnh món ăn`}
-                  className="aspect-square w-full object-cover"
-                />
+                <div key={image.id} className="relative aspect-square overflow-hidden bg-muted">
+                  <Image
+                    src={imageSource(image.mediumUrl ?? image.originalUrl)}
+                    alt={image.altText ?? `${recipe.title} — ảnh món ăn`}
+                    fill
+                    sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+                    placeholder="blur"
+                    blurDataURL={IMAGE_PLACEHOLDER}
+                    unoptimized={privatePreview}
+                    className="object-cover"
+                  />
+                </div>
               ))}
             </div>
           </section>

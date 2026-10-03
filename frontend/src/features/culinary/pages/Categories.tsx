@@ -1,14 +1,8 @@
-'use client'
-
-import { useQuery } from '@tanstack/react-query'
 import { BookOpen } from 'lucide-react'
 import { Link } from 'react-router'
-import { PublicQueryError } from '@/features/culinary/components/PublicQueryError'
-import { listCategories } from '@/lib/api/content-client'
+import type { Category } from '@/lib/api/content-client'
 
-export function Categories() {
-  const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
-
+export function Categories({ categories }: { categories: Category[] }) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <header className="mb-12 border-b border-border pb-8">
@@ -16,20 +10,11 @@ export function Categories() {
         <p className="text-muted-foreground">Khám phá các công thức theo chủ đề ẩm thực.</p>
       </header>
 
-      {categoriesQuery.isPending ? (
-        <p role="status" className="py-20 text-center text-muted-foreground">
-          Đang tải danh mục…
-        </p>
-      ) : categoriesQuery.isError ? (
-        <PublicQueryError
-          message="Không thể tải danh mục. Vui lòng kiểm tra kết nối mạng."
-          onRetry={() => void categoriesQuery.refetch()}
-        />
-      ) : categoriesQuery.data.length === 0 ? (
+      {categories.length === 0 ? (
         <p className="py-20 text-center text-muted-foreground">Chưa có danh mục nào.</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {categoriesQuery.data.map((category) => (
+          {categories.map((category) => (
             <article key={category.id} className="group flex flex-col border border-border p-6">
               <h2 className="mb-2 font-serif text-xl text-foreground transition-colors group-hover:text-primary">
                 <Link to={`/categories/${category.slug}`}>{category.name}</Link>

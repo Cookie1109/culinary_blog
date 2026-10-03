@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { PUBLIC_CONTENT_TAG } from '@/lib/api/public-content-server'
 
 const paths = ['/', '/recipes', '/categories', '/sitemap.xml'] as const
 
@@ -22,6 +23,8 @@ export async function POST(request: Request) {
 
   for (const path of paths) revalidatePath(path)
   revalidatePath('/recipes/[slug]', 'page')
+  revalidatePath('/categories/[slug]', 'page')
+  revalidateTag(PUBLIC_CONTENT_TAG)
 
   return Response.json({ revalidated: true })
 }

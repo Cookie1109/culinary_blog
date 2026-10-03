@@ -1,16 +1,12 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
 import { Search as SearchIcon, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
-import { PublicQueryError } from '@/features/culinary/components/PublicQueryError'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
-import { listCategories, searchPublishedRecipes } from '@/lib/api/content-client'
+import type { Category, PageEnvelope, Recipe } from '@/lib/api/content-client'
 
-const PAGE_SIZE = 9
-
-export function Search() {
+export function Search({ categories, result }: { categories: Category[]; result: PageEnvelope<Recipe> }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const q = searchParams.get('q') ?? ''
   const category = searchParams.get('category') ?? ''
@@ -20,12 +16,6 @@ export function Search() {
   const requestedPage = Number.parseInt(searchParams.get('page') ?? '1', 10)
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
   const [inputValue, setInputValue] = useState(q)
-  const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
-  const recipesQuery = useQuery({
-    queryKey: ['public-recipes', 'search', q, category, difficulty, maxTime, sort, page],
-    queryFn: () =>
-      searchPublishedRecipes({ q, category, difficulty, maxTime, sort, page, pageSize: PAGE_SIZE }),
-  })
 
   useEffect(() => setInputValue(q), [q])
 
@@ -57,8 +47,8 @@ export function Search() {
     setFilter('q', inputValue.trim())
   }
 
-  const results = recipesQuery.data?.data ?? []
-  const totalPages = recipesQuery.data?.meta.totalPages ?? 0
+  const results = result.data
+  const totalPages = result.meta.totalPages
   const hasFilters = Boolean(q || category || difficulty || maxTime)
 
   return (
@@ -98,7 +88,7 @@ export function Search() {
             className="w-full border border-border bg-background px-3 py-2"
           >
             <option value="">Tất cả</option>
-            {(categoriesQuery.data ?? []).map((item) => (
+            {categories.map((item) => (
               <option key={item.id} value={item.slug}>
                 {item.name}
               </option>
@@ -149,8 +139,7 @@ export function Search() {
 
       <div className="mb-6 flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground" aria-live="polite">
-          <span className="font-medium text-foreground">{recipesQuery.data?.meta.total ?? 0}</span> công thức
-          phù hợp
+          <span className="font-medium text-foreground">{result.meta.total}</span> công thức phù hợp
         </p>
         {hasFilters && (
           <button
@@ -163,16 +152,7 @@ export function Search() {
         )}
       </div>
 
-      {recipesQuery.isPending ? (
-        <p role="status" className="py-20 text-center text-muted-foreground">
-          Đang tìm công thức…
-        </p>
-      ) : recipesQuery.isError ? (
-        <PublicQueryError
-          message="Không thể tải dữ liệu tìm kiếm. Vui lòng kiểm tra kết nối mạng."
-          onRetry={() => void recipesQuery.refetch()}
-        />
-      ) : results.length === 0 ? (
+      {results.length === 0 ? (
         <div className="py-24 text-center">
           <SearchIcon size={40} aria-hidden="true" className="mx-auto mb-4 text-muted-foreground" />
           <p className="font-serif text-xl">Không tìm thấy công thức phù hợp</p>

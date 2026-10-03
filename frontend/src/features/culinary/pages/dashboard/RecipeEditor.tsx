@@ -271,16 +271,26 @@ export function RecipeEditor() {
                 </span>
               )}
             </div>
-            {isEditing && recipeQuery.data?.status === 'published' && (
-              <div className="mt-2">
+            {isEditing && recipeQuery.data && (
+              <div className="mt-2 flex flex-wrap gap-4">
                 <Link
-                  to={`/recipes/${recipeQuery.data.slug}`}
+                  to={`/dashboard/recipes/${recipeQuery.data.id}/preview`}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs text-muted-foreground underline hover:text-foreground"
                 >
-                  <Eye size={13} /> Xem bài viết công khai
+                  <Eye size={13} /> Xem trước riêng tư
                 </Link>
+                {recipeQuery.data.status === 'published' && (
+                  <Link
+                    to={`/recipes/${recipeQuery.data.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground underline hover:text-foreground"
+                  >
+                    <Eye size={13} /> Xem bài viết công khai
+                  </Link>
+                )}
               </div>
             )}
           </div>

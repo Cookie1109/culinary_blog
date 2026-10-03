@@ -3,10 +3,10 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 const publicPages = [
-  ['src/features/culinary/pages/Home.tsx', 'listPublishedRecipes'],
-  ['src/features/culinary/pages/RecipesList.tsx', 'searchPublishedRecipes'],
-  ['src/features/culinary/pages/Search.tsx', 'searchPublishedRecipes'],
-  ['src/features/culinary/pages/Categories.tsx', 'listCategories'],
+  ['src/app/(public)/page.tsx', 'getPublishedRecipes'],
+  ['src/app/(public)/recipes/page.tsx', 'searchPublishedRecipesOnServer'],
+  ['src/app/(public)/search/page.tsx', 'searchPublishedRecipesOnServer'],
+  ['src/app/(public)/categories/page.tsx', 'getPublicCategories'],
 ]
 
 test('public pages use API data instead of bundled recipe fixtures', async () => {
@@ -32,7 +32,7 @@ test('home, listing, and detail expose the required public discovery content', a
     'utf8',
   )
 
-  assert.match(home, /listCategories/)
+  assert.match(home, /categories/)
   for (const urlState of ['category', 'difficulty', 'maxTime', 'sort', 'page']) {
     assert.match(listing, new RegExp(`searchParams\\.get\\('${urlState}'\\)`))
   }
@@ -50,19 +50,21 @@ test('category detail route uses the public category endpoint and maps API 404 t
     new URL('../src/features/culinary/pages/Categories.tsx', import.meta.url),
     'utf8',
   )
+  const serverClient = await readFile(
+    new URL('../src/lib/api/public-content-server.ts', import.meta.url),
+    'utf8',
+  )
 
-  assert.match(route, /\/categories\/\$\{encodeURIComponent\(slug\)\}/)
-  assert.match(route, /response\.status === 404/)
+  assert.match(route, /getPublishedCategory\(slug, page, revalidate\)/)
   assert.match(route, /notFound\(\)/)
+  assert.match(serverClient, /\/categories\/\$\{encodeURIComponent\(slug\)\}/)
+  assert.match(serverClient, /response\.status === 404/)
   assert.match(categories, /to=\{`\/categories\/\$\{category\.slug\}`\}/)
 })
 
-test('search debounces URL updates and public query failures offer retry and offline guidance', async () => {
+test('search debounces URL updates and route failures offer retry and offline guidance', async () => {
   const search = await readFile(new URL('../src/features/culinary/pages/Search.tsx', import.meta.url), 'utf8')
-  const queryError = await readFile(
-    new URL('../src/features/culinary/components/PublicQueryError.tsx', import.meta.url),
-    'utf8',
-  )
+  const routeError = await readFile(new URL('../src/app/error.tsx', import.meta.url), 'utf8')
   const networkStatus = await readFile(
     new URL('../src/features/culinary/components/NetworkStatusBanner.tsx', import.meta.url),
     'utf8',
@@ -70,7 +72,7 @@ test('search debounces URL updates and public query failures offer retry and off
 
   assert.match(search, /setTimeout\(\(\) =>/)
   assert.match(search, /, 400\)/)
-  assert.match(queryError, /onRetry/)
+  assert.match(routeError, /reset/)
   assert.match(networkStatus, /navigator\.onLine/)
   assert.match(networkStatus, /addEventListener\('offline'/)
 })
@@ -80,8 +82,12 @@ test('recipe detail route maps an API 404 to the Next.js not-found response', as
     new URL('../src/app/(public)/recipes/[slug]/page.tsx', import.meta.url),
     'utf8',
   )
+  const serverClient = await readFile(
+    new URL('../src/lib/api/public-content-server.ts', import.meta.url),
+    'utf8',
+  )
 
-  assert.match(source, /response\.status === 404/)
+  assert.match(source, /getPublishedRecipe\(slug, revalidate\)/)
   assert.match(source, /notFound\(\)/)
-  assert.match(source, /cache: 'no-store'/)
+  assert.match(serverClient, /response\.status === 404/)
 })

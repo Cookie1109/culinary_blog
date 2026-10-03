@@ -1,17 +1,19 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
 import { LayoutGrid, List } from 'lucide-react'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
-import { PublicQueryError } from '@/features/culinary/components/PublicQueryError'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
-import { listCategories, searchPublishedRecipes } from '@/lib/api/content-client'
+import type { Category, PageEnvelope, Recipe } from '@/lib/api/content-client'
 import { useUIStore } from '@/store/useUIStore'
 
-const PAGE_SIZE = 12
-
-export function RecipesList() {
+export function RecipesList({
+  categories,
+  result,
+}: {
+  categories: Category[]
+  result: PageEnvelope<Recipe>
+}) {
   const [searchParams, setSearchParams] = useSearchParams()
   const category = searchParams.get('category') ?? ''
   const difficulty = searchParams.get('difficulty') ?? ''
@@ -20,21 +22,7 @@ export function RecipesList() {
   const sort = searchParams.get('sort') ?? 'newest'
   const requestedPage = Number.parseInt(searchParams.get('page') ?? '1', 10)
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
-  const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
-  const recipesQuery = useQuery({
-    queryKey: ['public-recipes', 'listing', category, difficulty, maxTime, sort, page],
-    queryFn: () =>
-      searchPublishedRecipes({
-        q: '',
-        category,
-        difficulty,
-        maxTime,
-        sort,
-        page,
-        pageSize: PAGE_SIZE,
-      }),
-  })
-  const recipes = recipesQuery.data?.data ?? []
+  const recipes = result.data
   const viewMode = useUIStore((state) => state.viewMode)
   const setViewMode = useUIStore((state) => state.setViewMode)
 
@@ -71,7 +59,7 @@ export function RecipesList() {
             className="w-full border border-border bg-background px-3 py-2"
           >
             <option value="">Tất cả danh mục</option>
-            {(categoriesQuery.data ?? []).map((item) => (
+            {categories.map((item) => (
               <option key={item.id} value={item.slug}>
                 {item.name}
               </option>
@@ -140,16 +128,7 @@ export function RecipesList() {
         </button>
       </div>
 
-      {recipesQuery.isPending ? (
-        <p role="status" className="py-20 text-center text-muted-foreground">
-          Đang tải công thức…
-        </p>
-      ) : recipesQuery.isError ? (
-        <PublicQueryError
-          message="Không thể tải danh sách công thức. Vui lòng kiểm tra kết nối mạng."
-          onRetry={() => void recipesQuery.refetch()}
-        />
-      ) : recipes.length === 0 ? (
+      {recipes.length === 0 ? (
         <p className="py-20 text-center text-muted-foreground">Không có công thức phù hợp.</p>
       ) : (
         <div
@@ -161,29 +140,27 @@ export function RecipesList() {
         </div>
       )}
 
-      {(recipesQuery.data?.meta.totalPages ?? 0) > 1 && (
+      {result.meta.totalPages > 1 && (
         <nav className="mt-20 flex justify-center gap-2" aria-label="Phân trang công thức">
-          {Array.from({ length: recipesQuery.data!.meta.totalPages }, (_, index) => index + 1).map(
-            (pageNumber) => (
-              <button
-                key={pageNumber}
-                type="button"
-                aria-current={pageNumber === page ? 'page' : undefined}
-                onClick={() => {
-                  const next = new URLSearchParams(searchParams)
-                  next.set('page', String(pageNumber))
-                  setSearchParams(next)
-                }}
-                className={`h-10 w-10 border font-serif text-lg ${
-                  pageNumber === page
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-border text-muted-foreground hover:border-foreground'
-                }`}
-              >
-                {pageNumber}
-              </button>
-            ),
-          )}
+          {Array.from({ length: result.meta.totalPages }, (_, index) => index + 1).map((pageNumber) => (
+            <button
+              key={pageNumber}
+              type="button"
+              aria-current={pageNumber === page ? 'page' : undefined}
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.set('page', String(pageNumber))
+                setSearchParams(next)
+              }}
+              className={`h-10 w-10 border font-serif text-lg ${
+                pageNumber === page
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-border text-muted-foreground hover:border-foreground'
+              }`}
+            >
+              {pageNumber}
+            </button>
+          ))}
         </nav>
       )}
     </div>

@@ -17,6 +17,8 @@ test('revalidation callback is secret-protected and invalidates public content p
   assert.match(source, /timingSafeEqual/)
   assert.match(source, /const paths = \['\/', '\/recipes', '\/categories', '\/sitemap\.xml'\]/)
   assert.match(source, /revalidatePath\('\/recipes\/\[slug\]'/)
+  assert.match(source, /revalidatePath\('\/categories\/\[slug\]'/)
+  assert.match(source, /revalidateTag\(PUBLIC_CONTENT_TAG\)/)
 })
 
 test('robots advertises the canonical sitemap URL', async () => {

@@ -1,5 +1,38 @@
-'use client'
-
 import { RecipesList } from '@/features/culinary/pages/RecipesList'
+import { getPublicCategories, searchPublishedRecipesOnServer } from '@/lib/api/public-content-server'
 
-export default RecipesList
+export const dynamic = 'force-dynamic'
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>
+
+function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '')
+}
+
+function positiveInteger(value: string, fallback: number) {
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+export default async function RecipesPage({ searchParams }: { searchParams: SearchParams }) {
+  const query = await searchParams
+  const category = first(query.category)
+  const difficulty = first(query.difficulty)
+  const maxTime = positiveInteger(first(query.maxTime), 0)
+  const sort = first(query.sort) || 'newest'
+  const page = positiveInteger(first(query.page), 1)
+  const [result, categories] = await Promise.all([
+    searchPublishedRecipesOnServer({
+      q: '',
+      category,
+      difficulty,
+      maxTime,
+      sort,
+      page,
+      pageSize: 12,
+    }),
+    getPublicCategories(1800),
+  ])
+
+  return <RecipesList result={result} categories={categories} />
+}
