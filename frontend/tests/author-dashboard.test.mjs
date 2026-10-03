@@ -151,3 +151,67 @@ test('P7-06: Concurrency conflict UX provides reload, discard, and clipboard pre
   assert.match(editorSource, /Hủy thay đổi cục bộ/, 'Must offer discard local changes action')
   assert.match(editorSource, /Sao chép nội dung cục bộ/, 'Must offer copy local edits action')
 })
+
+test('P7-17: Author UI wires the complete recipe lifecycle to real API operations', async () => {
+  const clientSource = await readFile(new URL('../src/lib/api/content-client.ts', import.meta.url), 'utf8')
+  const editorSource = await readFile(
+    new URL('../src/features/culinary/pages/dashboard/RecipeEditor.tsx', import.meta.url),
+    'utf8',
+  )
+  const recipesSource = await readFile(
+    new URL('../src/features/culinary/pages/dashboard/MyRecipes.tsx', import.meta.url),
+    'utf8',
+  )
+
+  for (const operation of [
+    'createRecipe',
+    'updateRecipe',
+    'createIngredient',
+    'createStep',
+    'publishRecipe',
+    'unpublishRecipe',
+    'archiveRecipe',
+    'unarchiveRecipe',
+    'deleteRecipe',
+  ]) {
+    assert.match(
+      clientSource,
+      new RegExp(`export (?:async )?function ${operation}`),
+      `${operation} must be exported`,
+    )
+  }
+
+  assert.match(editorSource, /createRecipe/, 'Editor must create drafts through the API client')
+  assert.match(editorSource, /updateRecipe/, 'Editor must save edits through the API client')
+  assert.match(recipesSource, /publishRecipe/)
+  assert.match(recipesSource, /unpublishRecipe/)
+  assert.match(recipesSource, /archiveRecipe/)
+  assert.match(recipesSource, /unarchiveRecipe/)
+  assert.match(recipesSource, /deleteRecipe/)
+})
+
+test('P7-20: Author dashboard surfaces loading, empty, error, and unauthenticated states', async () => {
+  const dashboardSource = await readFile(
+    new URL('../src/features/culinary/pages/dashboard/Dashboard.tsx', import.meta.url),
+    'utf8',
+  )
+  const recipesSource = await readFile(
+    new URL('../src/features/culinary/pages/dashboard/MyRecipes.tsx', import.meta.url),
+    'utf8',
+  )
+
+  assert.match(dashboardSource, /if \(!user\)/, 'Dashboard must deny an unauthenticated render')
+  assert.match(dashboardSource, /navigate\('\/login'\)/, 'Dashboard denial must link to login')
+  assert.match(
+    dashboardSource,
+    /isLoading.*role="status"/s,
+    'Dashboard must expose an accessible loading state',
+  )
+  assert.match(dashboardSource, /isError.*role="alert"/s, 'Dashboard must expose an accessible error state')
+  assert.match(dashboardSource, /recentRecipes\.length === 0/, 'Dashboard must expose an empty state')
+
+  assert.match(recipesSource, /recipesQuery\.isPending.*role="status"/s)
+  assert.match(recipesSource, /recipesQuery\.isError.*role="alert"/s)
+  assert.match(recipesSource, /filtered\.length === 0/)
+  assert.match(recipesSource, /Thử lại/, 'Recipe list error state must be retryable')
+})

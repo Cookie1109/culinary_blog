@@ -1,3 +1,4 @@
+using CulinaryBlog.Api.Health;
 using CulinaryBlog.Infrastructure.Caching;
 using CulinaryBlog.Infrastructure.Content;
 using CulinaryBlog.Infrastructure.Jobs;
@@ -36,6 +37,7 @@ internal static class TelemetryExtensions
             metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
+                .AddMeter(HealthMetricsPublisher.MeterName)
                 .AddMeter(CacheMetrics.MeterName)
                 .AddMeter(MediaJobMetrics.MeterName)
                 .AddMeter(ContentMetrics.MeterName);

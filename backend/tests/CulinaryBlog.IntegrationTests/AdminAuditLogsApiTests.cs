@@ -47,7 +47,19 @@ public sealed class AdminAuditLogsApiTests(AuthApiFactory factory) : IClassFixtu
         var admin = await LoginAsync(adminEmail);
         SetToken(admin.AccessToken);
 
-        using var response = await _client.GetAsync("/api/v1/admin/audit-logs?page=1&pageSize=20");
+        var correlationId = $"audit-{Guid.NewGuid():N}";
+        _client.DefaultRequestHeaders.Add("X-Correlation-ID", correlationId);
+        using var createResponse = await _client.PostAsJsonAsync("/api/v1/categories", new
+        {
+            name = $"Audit Category {Guid.NewGuid():N}",
+            description = "Created to verify the structured audit trail.",
+            imageUrl = (string?)null,
+            orderIndex = 1,
+        });
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        using var response = await _client.GetAsync(
+            $"/api/v1/admin/audit-logs?search={correlationId}&page=1&pageSize=20");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var body = await response.Content.ReadFromJsonAsync<AuditLogsEnvelope>();
@@ -56,6 +68,14 @@ public sealed class AdminAuditLogsApiTests(AuthApiFactory factory) : IClassFixtu
         Assert.NotNull(body.Meta);
         Assert.NotNull(body.Telemetry);
         Assert.True(body.Telemetry.OperationalNetworkRestricted, "Telemetry must specify operational network restriction");
+        var auditEntry = Assert.Single(body.Data, entry => entry.EventName == "category.created");
+        Assert.Equal("category.created", auditEntry.EventName);
+        Assert.Equal(correlationId, auditEntry.CorrelationId);
+        Assert.False(string.IsNullOrWhiteSpace(auditEntry.UserId));
+        Assert.Equal("POST", auditEntry.RequestMethod);
+        Assert.Equal("/api/v1/categories", auditEntry.RequestPath);
+
+        _client.DefaultRequestHeaders.Remove("X-Correlation-ID");
     }
 
     private async Task<AuthSession> RegisterAsync(string email)

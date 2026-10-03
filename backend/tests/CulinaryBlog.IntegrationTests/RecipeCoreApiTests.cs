@@ -14,7 +14,7 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task DraftOwnershipVisibilityAndSoftDeleteAreEnforced()
+    public async Task P7OwnershipRoleEscalationAndAdminOverrideAreEnforced()
     {
         var owner = await RegisterAsync($"owner-{Guid.NewGuid():N}@example.com");
         var other = await RegisterAsync($"other-{Guid.NewGuid():N}@example.com");
@@ -47,6 +47,14 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
         using var forbiddenUpdateResponse = await _client.SendAsync(forbiddenUpdate);
         Assert.Equal(HttpStatusCode.Forbidden, forbiddenUpdateResponse.StatusCode);
 
+        using var forbiddenAdminList = await _client.GetAsync("/api/v1/admin/recipes");
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenAdminList.StatusCode);
+
+        using var forbiddenCategoryCreate = await _client.PostAsJsonAsync(
+            "/api/v1/categories",
+            new { name = $"Escalation {Guid.NewGuid():N}", description = "Must be forbidden", orderIndex = 99 });
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenCategoryCreate.StatusCode);
+
         await using (var adminScope = factory.Services.CreateAsyncScope())
         {
             var userManager = adminScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -55,14 +63,23 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
             Assert.True((await userManager.AddToRoleAsync(promotedUser, "Admin")).Succeeded);
         }
 
+        using var staleAuthorTokenResponse = await _client.GetAsync("/api/v1/admin/recipes");
+        Assert.Equal(HttpStatusCode.Forbidden, staleAuthorTokenResponse.StatusCode);
+
         var admin = await LoginAsync(other.User.Email);
         SetToken(admin.AccessToken);
         using var adminResponse = await _client.GetAsync($"/api/v1/admin/recipes/{created.Data.Id}");
         Assert.Equal(HttpStatusCode.OK, adminResponse.StatusCode);
 
+        using var adminUpdate = CreatePut(
+            created.Data.Id, 1, RecipeBody(categoryId, "Admin authorized update"));
+        using var adminUpdateResponse = await _client.SendAsync(adminUpdate);
+        Assert.Equal(HttpStatusCode.OK, adminUpdateResponse.StatusCode);
+        Assert.Equal("\"2\"", adminUpdateResponse.Headers.ETag?.Tag);
+
         SetToken(owner.AccessToken);
         using var deleteRequest = new HttpRequestMessage(HttpMethod.Delete, $"/api/v1/recipes/{created.Data.Id}");
-        deleteRequest.Headers.IfMatch.Add(new EntityTagHeaderValue("\"1\""));
+        deleteRequest.Headers.IfMatch.Add(new EntityTagHeaderValue("\"2\""));
         using var deleteResponse = await _client.SendAsync(deleteRequest);
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 

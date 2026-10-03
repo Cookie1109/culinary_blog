@@ -2,7 +2,7 @@
 
 Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây dựng theo đặc tả SRS v1.0.0. Repository sử dụng mô hình monorepo với hai ứng dụng độc lập: frontend Next.js và backend ASP.NET Core; tài liệu, hạ tầng, Docker Compose và CI được quản lý tập trung tại thư mục gốc.
 
-> **Trạng thái:** Phase 0 đã chốt baseline đặc tả; Phase 1–3 đã hoàn thành. Phase 4 đã triển khai ingredient/step/media/Hangfire và pass các local static gates; nghiệm thu integration PostgreSQL/MinIO còn chờ Docker Engine.
+> **Trạng thái:** Phase 0–7 đã được triển khai; bằng chứng observability/operations mới nhất nằm tại [báo cáo Phase 7](docs/specs/phase-7/README.md). Các production drill và release gate thuộc Phase 8.
 
 ## Công nghệ chính
 
@@ -34,7 +34,7 @@ culinary-blog/
 ### Yêu cầu
 
 - Docker Desktop hỗ trợ Docker Compose v2
-- Các cổng `5433`, `6379`, `8080`, `8025`, `9000`, `9001` và `5341` đang khả dụng
+- Các cổng `3001`, `5433`, `6379`, `8080`, `8025`, `9000`, `9001`, `9090`, `9093` và `5341` đang khả dụng
 
 ### Khởi động
 
@@ -52,6 +52,9 @@ Sau khi các container healthy, truy cập ứng dụng tại [http://localhost:
 | MinIO Console | [http://localhost:9001](http://localhost:9001) |
 | MailHog | [http://localhost:8025](http://localhost:8025) |
 | Seq | [http://localhost:5341](http://localhost:5341) |
+| Grafana | [http://127.0.0.1:3001](http://127.0.0.1:3001) |
+| Prometheus | [http://127.0.0.1:9090](http://127.0.0.1:9090) |
+| Alertmanager | [http://127.0.0.1:9093](http://127.0.0.1:9093) |
 
 Dừng hệ thống bằng lệnh sau. Named volumes vẫn được giữ để tái sử dụng dữ liệu local.
 
@@ -184,6 +187,8 @@ Production không tự động chạy migration khi API khởi động. Migratio
 - [Báo cáo Phase 2](docs/specs/phase-2/README.md)
 - [Báo cáo Phase 3](docs/specs/phase-3/README.md)
 - [Báo cáo Phase 4](docs/specs/phase-4/README.md)
+- [Báo cáo Phase 7](docs/specs/phase-7/README.md)
+- [Operations runbook](docs/operations/runbook.md)
 - [OpenAPI contract v1](docs/specs/phase-0/openapi.v1.yaml)
 
 ## Xử lý sự cố thường gặp

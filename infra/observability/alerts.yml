@@ -1,0 +1,56 @@
+groups:
+  - name: culinary-blog-availability
+    rules:
+      - alert: CulinaryBlogReadinessDown
+        expr: culinary_health_readiness == 0 or absent(culinary_health_readiness)
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Culinary Blog API is not ready
+          description: PostgreSQL or Redis has remained unavailable for at least one minute.
+
+      - alert: CulinaryBlogDependencyUnavailable
+        expr: |
+          culinary_health_check{dependency=~"postgresql|redis|minio"} == 0
+          or absent(culinary_health_check{dependency="postgresql"})
+          or absent(culinary_health_check{dependency="redis"})
+          or absent(culinary_health_check{dependency="minio"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Culinary Blog dependency is unavailable
+          description: "{{ $labels.dependency }} has failed its health check for at least one minute."
+
+      - alert: CulinaryBlogTelemetryMissing
+        expr: up{job="culinary-blog"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Culinary Blog telemetry is missing
+          description: Prometheus cannot scrape the OpenTelemetry collector.
+
+  - name: culinary-blog-errors
+    rules:
+      - alert: CulinaryBlogHighErrorRate
+        expr: |
+          sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(http_server_request_duration_seconds_count[5m])), 0.001)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Culinary Blog 5xx rate is above 5%
+          description: More than 5% of API requests have returned 5xx responses for five minutes.
+
+      - alert: CulinaryBlogJobFailures
+        expr: increase(culinary_media_jobs_failed_total[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: Culinary Blog background job failed
+          description: At least one media or outbox job failed during the last ten minutes.

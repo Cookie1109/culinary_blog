@@ -28,24 +28,6 @@ internal sealed partial class ContentService(
 {
     private const int MaximumPageSize = 50;
 
-    private static readonly Action<ILogger, Guid, Guid, Exception?> RecipeCreated =
-        LoggerMessage.Define<Guid, Guid>(
-            LogLevel.Information,
-            new EventId(4001, nameof(RecipeCreated)),
-            "Audit event recipe.created for recipe {RecipeId} by user {UserId}");
-
-    private static readonly Action<ILogger, Guid, Guid, Exception?> RecipePublished =
-        LoggerMessage.Define<Guid, Guid>(
-            LogLevel.Information,
-            new EventId(4002, nameof(RecipePublished)),
-            "Audit event recipe.published for recipe {RecipeId} by user {UserId}");
-
-    private static readonly Action<ILogger, Guid, Guid, Exception?> RecipeUnpublished =
-        LoggerMessage.Define<Guid, Guid>(
-            LogLevel.Information,
-            new EventId(4003, nameof(RecipeUnpublished)),
-            "Audit event recipe.unpublished for recipe {RecipeId} by user {UserId}");
-
     private static readonly Action<ILogger, string, double, Exception?> SlowDiscoveryQuery =
         LoggerMessage.Define<string, double>(
             LogLevel.Warning,
@@ -213,7 +195,6 @@ internal sealed partial class ContentService(
             {
                 await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 ContentMetrics.RecipeCreated.Add(1);
-                RecipeCreated(logger, recipe.Id, userId, null);
                 return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
             }
             catch (DbUpdateException exception) when (IsUniqueViolation(exception, "Slug"))
@@ -278,7 +259,6 @@ internal sealed partial class ContentService(
         recipe.Publish(timeProvider.GetUtcNow(), categoryExists, ingredientCount, stepNumbers);
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         ContentMetrics.RecipePublished.Add(1);
-        RecipePublished(logger, recipe.Id, userId, null);
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }
 
@@ -294,7 +274,6 @@ internal sealed partial class ContentService(
         recipe.Unpublish();
         await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
         ContentMetrics.RecipeUnpublished.Add(1);
-        RecipeUnpublished(logger, recipe.Id, userId, null);
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }
 

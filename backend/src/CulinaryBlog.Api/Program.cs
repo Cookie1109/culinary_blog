@@ -67,6 +67,7 @@ try
     app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseMiddleware<AuditMutationMiddleware>();
 
     var backgroundJobsEnabled = builder.Configuration.GetValue("BackgroundJobs:Enabled", true);
     if (backgroundJobsEnabled)

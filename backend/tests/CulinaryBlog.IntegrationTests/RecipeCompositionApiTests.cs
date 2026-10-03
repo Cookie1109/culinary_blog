@@ -17,7 +17,7 @@ namespace CulinaryBlog.IntegrationTests;
 public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFactory>
 {
     [Fact]
-    public async Task OwnerCanComposeRecipeAndStepReorderStaysContinuous()
+    public async Task P7AuthorCanComposeRecipeAndStepReorderStaysContinuous()
     {
         using var client = factory.CreateClient();
         var owner = await RegisterAsync(client, $"compose-{Guid.NewGuid():N}@example.com");
@@ -80,7 +80,7 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
     }
 
     [Fact]
-    public async Task OwnerCanManagePublishingLifecycleWithStableMetadataAndPublicIsolation()
+    public async Task P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle()
     {
         var observedMetrics = new ConcurrentDictionary<string, long>(StringComparer.Ordinal);
         using var meterListener = new MeterListener();
@@ -233,6 +233,14 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         Assert.Equal(1, observedMetrics["recipe.unpublished"]);
         Assert.True(observedMetrics["cache.hits"] >= 1);
         Assert.True(observedMetrics["cache.misses"] >= 1);
+
+        using var deleteRequest = new HttpRequestMessage(HttpMethod.Delete, $"/api/v1/recipes/{recipe.Id}");
+        deleteRequest.Headers.IfMatch.Add(new EntityTagHeaderValue("\"9\""));
+        using var deleteResponse = await client.SendAsync(deleteRequest);
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        using var deletedDetailResponse = await client.GetAsync($"/api/v1/me/recipes/{recipe.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, deletedDetailResponse.StatusCode);
     }
 
     [Fact]

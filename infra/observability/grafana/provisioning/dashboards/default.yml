@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: Culinary Blog
+    orgId: 1
+    folder: Culinary Blog
+    type: file
+    disableDeletion: true
+    editable: false
+    options:
+      path: /var/lib/grafana/dashboards

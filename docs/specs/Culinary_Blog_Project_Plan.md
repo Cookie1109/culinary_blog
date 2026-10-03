@@ -68,7 +68,7 @@ Dựa trên kiểm tra mã nguồn thực tế, dưới đây là trạng thái 
 - [x] **[FR-JOB]** Background Jobs *(Hangfire xử lý ảnh và Sitemap Job)*
 - [x] **[NFR-SEO]** Tối ưu SEO *(Metadata, canonical, social cards, Recipe JSON-LD và robots/sitemap đã hoàn thiện; kiểm tra Rich Results lại trên staging trước release)*
 - [x] **[NFR-USE]** Responsive và Accessibility *(Breakpoints 320–767/768–1199/≥1200, semantic landmarks, keyboard nav, focus trap modal/mobile, contrast WCAG AA, axe automated test 0 violations)*
-- [ ] **[FR-OBS]** Observability & Operations *(Chưa hoàn thiện Admin Dashboard)*
+- [x] **[FR-OBS]** Observability & Operations *(Metrics dashboard, alerts, structured audit, health privacy và runbook đã hoàn thiện)*
 - [ ] **[NFR-QA]** Hardening, Bảo mật, UAT và Phát hành
 
 ---
@@ -636,6 +636,8 @@ Tạo trải nghiệm công khai hoàn chỉnh cho Guest, tối ưu rendering, S
 
 ## 11. Phase 7 — Dashboard Author/Admin và vận hành
 
+> Trạng thái 03/10/2026: **Implementation Complete / Local Accepted**. Bằng chứng kiểm chứng tại [Phase 7 observability & operations](./phase-7/README.md).
+
 ### 11.1. Mục tiêu
 
 Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận hành cần thiết trước khi bước vào release hardening.
@@ -665,18 +667,18 @@ Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận 
 
 #### Observability và operations
 
-- **[FR-OBS]** P7-12: Dashboard metrics request count, latency, error rate, cache hit rate, job failures và business events.
-- **[FR-OBS]** P7-13: Alert cho readiness down, 5xx spike, job failed, DB/Redis/MinIO unavailable.
-- **[FR-OBS]** P7-14: Structured audit log cho create/update/publish/delete với user/time/correlation.
-- **[FR-OBS]** P7-15: Runbook xử lý failed jobs, object orphan, cache flush, migration và rollback.
-- **[FR-OBS]** P7-16: Kiểm tra health detail không lộ topology/secrets ra public.
+- [x] **[FR-OBS]** P7-12: Dashboard metrics request count, latency, error rate, cache hit rate, job failures và business events.
+- [x] **[FR-OBS]** P7-13: Alert cho readiness down, 5xx spike, job failed, DB/Redis/MinIO unavailable.
+- [x] **[FR-OBS]** P7-14: Structured audit log cho create/update/publish/delete với user/time/correlation.
+- [x] **[FR-OBS]** P7-15: Runbook xử lý failed jobs, object orphan, cache flush, migration và rollback.
+- [x] **[FR-OBS]** P7-16: Kiểm tra health detail không lộ topology/secrets ra public.
 
 #### QA
 
-- **[FR-RCP-CORE]** P7-17: E2E Author complete journey.
-- **[FR-RCP-CORE]** P7-18: E2E Author khác bị chặn và Admin được phép.
-- **[FR-RCP-CORE]** P7-19: Role escalation/direct URL tests.
-- **[FR-RCP-CORE]** P7-20: Test dashboard loading/empty/error/permission-denied states.
+- [x] **[FR-RCP-CORE]** P7-17: E2E Author complete journey.
+- [x] **[FR-RCP-CORE]** P7-18: E2E Author khác bị chặn và Admin được phép.
+- [x] **[FR-RCP-CORE]** P7-19: Role escalation/direct URL tests.
+- [x] **[FR-RCP-CORE]** P7-20: Test dashboard loading/empty/error/permission-denied states.
 
 ### 11.4. Đầu ra bàn giao
 

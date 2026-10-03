@@ -148,8 +148,10 @@ public sealed class AuditLogService(
                 var requestMethod = root.TryGetProperty("RequestMethod", out var rProp) ? rProp.GetString() : null;
                 int? statusCode = root.TryGetProperty("StatusCode", out var sProp) && sProp.TryGetInt32(out var sc) ? sc : null;
 
-                var eventName = "AppLog";
-                if (root.TryGetProperty("EventId", out var evProp))
+                var eventName = root.TryGetProperty("AuditEvent", out var auditEventProp)
+                    ? auditEventProp.GetString() ?? "ContentAudit"
+                    : "AppLog";
+                if (eventName == "AppLog" && root.TryGetProperty("EventId", out var evProp))
                 {
                     if (evProp.ValueKind == JsonValueKind.Object && evProp.TryGetProperty("Name", out var evNameProp))
                     {
@@ -160,7 +162,7 @@ public sealed class AuditLogService(
                         eventName = $"Event_{evProp.GetInt32()}";
                     }
                 }
-                else if (message.Contains("Audit event", StringComparison.OrdinalIgnoreCase))
+                else if (eventName == "AppLog" && message.Contains("Audit event", StringComparison.OrdinalIgnoreCase))
                 {
                     var parts = message.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     var idx = Array.FindIndex(parts, p => string.Equals(p, "event", StringComparison.OrdinalIgnoreCase));
