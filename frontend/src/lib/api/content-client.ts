@@ -153,8 +153,12 @@ export function deleteCategory(id: string) {
   return authenticatedApiRequest<void>(`/categories/${id}`, { method: 'DELETE' })
 }
 
-export function listMyRecipes(status?: RecipeStatus) {
-  const query = status ? `?status=${status}` : ''
+export function listMyRecipes(status?: RecipeStatus, page: number = 1, pageSize: number = 12) {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  if (page) params.set('page', String(page))
+  if (pageSize) params.set('pageSize', String(pageSize))
+  const query = params.toString() ? `?${params.toString()}` : ''
   return authenticatedApiRequest<PageEnvelope<Recipe>>(`/me/recipes${query}`)
 }
 

@@ -649,12 +649,12 @@ Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận 
 
 #### Author dashboard
 
-- **[FR-RCP-CORE]** P7-01: Dashboard summary: số Draft/Published/Archived và recent recipes.
-- **[FR-RCP-CORE]** P7-02: Recipe table/card với filter status, pagination và actions hợp lệ.
-- **[FR-RCP-CORE]** P7-03: Hoàn thiện create/edit wizard, preview, save state và navigation guard khi có thay đổi chưa lưu.
-- **[FR-RCP-005/006]** P7-04: Publish/unpublish/soft-delete confirmation UX; archive/unarchive khi FR-RCP-006 Should được đưa vào release.
-- **[FR-RCP-CORE]** P7-05: Hiển thị validation tổng hợp và deep link đến wizard step bị lỗi.
-- **[FR-RCP-CORE]** P7-06: Conflict UX cho stale version: reload, xem thay đổi mới hoặc hủy local edits.
+- [x] **[FR-RCP-CORE]** P7-01: Dashboard summary: số Draft/Published/Archived và recent recipes.
+- [x] **[FR-RCP-CORE]** P7-02: Recipe table/card với filter status, pagination và actions hợp lệ.
+- [x] **[FR-RCP-CORE]** P7-03: Hoàn thiện create/edit wizard, preview, save state và navigation guard khi có thay đổi chưa lưu.
+- [x] **[FR-RCP-005/006]** P7-04: Publish/unpublish/soft-delete confirmation UX; archive/unarchive khi FR-RCP-006 Should được đưa vào release.
+- [x] **[FR-RCP-CORE]** P7-05: Hiển thị validation tổng hợp và deep link đến wizard step bị lỗi.
+- [x] **[FR-RCP-CORE]** P7-06: Conflict UX cho stale version: reload, xem thay đổi mới hoặc hủy local edits.
 
 #### Admin
 

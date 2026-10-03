@@ -1,15 +1,30 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Eye, EyeOff, Globe, Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
-import { useState } from 'react'
-import { Link } from 'react-router'
+import {
+  Archive,
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Globe,
+  Pencil,
+  PlusCircle,
+  RotateCcw,
+  Search,
+  Trash2,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { ApiProblem } from '@/lib/api/problem-details'
 import {
+  archiveRecipe,
   deleteRecipe,
   listMyRecipes,
   publishRecipe,
+  unarchiveRecipe,
   unpublishRecipe,
+  type Recipe,
   type RecipeStatus,
 } from '@/lib/api/content-client'
 
@@ -27,35 +42,71 @@ const STATUS_LABELS: Record<RecipeStatus, string> = {
 }
 
 const STATUS_BADGE: Record<RecipeStatus, string> = {
-  published: 'bg-green-50 text-green-700 border-green-200',
-  draft: 'bg-amber-50 text-amber-700 border-amber-200',
-  archived: 'bg-secondary text-muted-foreground border-border',
+  published: 'bg-green-50 text-green-700 border border-green-200',
+  draft: 'bg-amber-50 text-amber-700 border border-amber-200',
+  archived: 'bg-secondary text-muted-foreground border border-border',
+}
+
+type ConfirmActionType = 'publish' | 'unpublish' | 'archive' | 'unarchive' | 'delete'
+
+interface ConfirmDialogState {
+  type: ConfirmActionType
+  recipe: Recipe
 }
 
 export function MyRecipes() {
   const queryClient = useQueryClient()
-  const [status, setStatus] = useState<RecipeStatus | undefined>()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const initialStatus = searchParams.get('status') as RecipeStatus | null
+  const [status, setStatus] = useState<RecipeStatus | undefined>(
+    initialStatus === 'published' || initialStatus === 'draft' || initialStatus === 'archived'
+      ? initialStatus
+      : undefined,
+  )
   const [search, setSearch] = useState('')
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const pageSize = 10
+
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
   const [actionNotice, setActionNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
+  // Sync status if URL query changes
+  useEffect(() => {
+    const urlStatus = searchParams.get('status') as RecipeStatus | null
+    if (urlStatus === 'published' || urlStatus === 'draft' || urlStatus === 'archived') {
+      setStatus(urlStatus)
+    }
+  }, [searchParams])
+
   const recipesQuery = useQuery({
-    queryKey: ['my-recipes', status],
-    queryFn: () => listMyRecipes(status),
+    queryKey: ['my-recipes', status, page, pageSize],
+    queryFn: () => listMyRecipes(status, page, pageSize),
   })
 
   const removeRecipe = useMutation({
     mutationFn: ({ id, version }: { id: string; version: number }) => deleteRecipe(id, version),
     onSuccess: async () => {
-      setConfirmDelete(null)
+      setConfirmDialog(null)
+      setActionError(null)
+      setActionNotice('Đã xóa công thức thành công.')
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+    },
+    onError: (error) => {
+      setActionNotice(null)
+      setActionError(
+        error instanceof ApiProblem
+          ? (error.problem.detail ?? error.problem.title)
+          : 'Không thể xóa công thức.',
+      )
     },
   })
 
   const publishMutation = useMutation({
     mutationFn: ({ id, version }: { id: string; version: number }) => publishRecipe(id, version),
     onSuccess: async () => {
+      setConfirmDialog(null)
       setActionError(null)
       setActionNotice('Công thức đã được xuất bản thành công.')
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
@@ -77,6 +128,7 @@ export function MyRecipes() {
   const unpublishMutation = useMutation({
     mutationFn: ({ id, version }: { id: string; version: number }) => unpublishRecipe(id, version),
     onSuccess: async () => {
+      setConfirmDialog(null)
       setActionError(null)
       setActionNotice('Đã gỡ xuất bản công thức (chuyển về bản nháp).')
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
@@ -91,7 +143,70 @@ export function MyRecipes() {
     },
   })
 
+  const archiveMutation = useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) => archiveRecipe(id, version),
+    onSuccess: async () => {
+      setConfirmDialog(null)
+      setActionError(null)
+      setActionNotice('Đã đưa công thức vào kho lưu trữ.')
+      await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+    },
+    onError: (error) => {
+      setActionNotice(null)
+      setActionError(
+        error instanceof ApiProblem
+          ? (error.problem.detail ?? error.problem.title)
+          : 'Không thể lưu trữ công thức.',
+      )
+    },
+  })
+
+  const unarchiveMutation = useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) => unarchiveRecipe(id, version),
+    onSuccess: async () => {
+      setConfirmDialog(null)
+      setActionError(null)
+      setActionNotice('Đã khôi phục công thức về trạng thái bản nháp.')
+      await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+    },
+    onError: (error) => {
+      setActionNotice(null)
+      setActionError(
+        error instanceof ApiProblem
+          ? (error.problem.detail ?? error.problem.title)
+          : 'Không thể khôi phục công thức.',
+      )
+    },
+  })
+
+  const isPendingAction =
+    removeRecipe.isPending ||
+    publishMutation.isPending ||
+    unpublishMutation.isPending ||
+    archiveMutation.isPending ||
+    unarchiveMutation.isPending
+
+  const handleConfirmAction = () => {
+    if (!confirmDialog) return
+    const { type, recipe } = confirmDialog
+    if (type === 'delete') {
+      removeRecipe.mutate({ id: recipe.id, version: recipe.version })
+    } else if (type === 'publish') {
+      publishMutation.mutate({ id: recipe.id, version: recipe.version })
+    } else if (type === 'unpublish') {
+      unpublishMutation.mutate({ id: recipe.id, version: recipe.version })
+    } else if (type === 'archive') {
+      archiveMutation.mutate({ id: recipe.id, version: recipe.version })
+    } else if (type === 'unarchive') {
+      unarchiveMutation.mutate({ id: recipe.id, version: recipe.version })
+    }
+  }
+
   const recipes = recipesQuery.data?.data ?? []
+  const meta = recipesQuery.data?.meta
+  const total = meta?.total ?? 0
+  const totalPages = meta?.totalPages ?? 1
+
   const normalizedSearch = search.trim().toLocaleLowerCase('vi')
   const filtered = recipes.filter(
     (recipe) =>
@@ -99,17 +214,25 @@ export function MyRecipes() {
       recipe.title.toLocaleLowerCase('vi').includes(normalizedSearch) ||
       recipe.category.name.toLocaleLowerCase('vi').includes(normalizedSearch),
   )
-  const error = recipesQuery.error instanceof ApiProblem ? recipesQuery.error.problem.detail : null
+
+  const handleStatusChange = (newStatus: RecipeStatus | undefined) => {
+    setStatus(newStatus)
+    setPage(1)
+    if (newStatus) {
+      setSearchParams({ status: newStatus })
+    } else {
+      setSearchParams({})
+    }
+  }
 
   return (
     <div>
+      {/* Header */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="font-serif text-3xl text-foreground lg:text-4xl">Công thức của tôi</h1>
           <p className="mt-1 text-muted-foreground">
-            {recipesQuery.data
-              ? `Tổng cộng ${recipesQuery.data.meta.total} công thức`
-              : 'Quản lý bản nháp của bạn'}
+            {recipesQuery.data ? `Tổng cộng ${total} công thức` : 'Quản lý các công thức và bản nháp của bạn'}
           </p>
         </div>
         <Link
@@ -120,7 +243,8 @@ export function MyRecipes() {
         </Link>
       </div>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+      {/* Filter and Search Bar */}
+      <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative max-w-sm flex-1">
           <Search
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -128,17 +252,23 @@ export function MyRecipes() {
           />
           <input
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Tìm kiếm công thức…"
+            onChange={(event) => {
+              setSearch(event.target.value)
+            }}
+            placeholder="Tìm kiếm theo tiêu đề, danh mục…"
             className="w-full border border-border bg-background py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
-        <div className="flex border border-border bg-background">
+        <div className="flex flex-wrap border border-border bg-background">
           {STATUS_FILTERS.map((item) => (
             <button
               key={item.label}
-              onClick={() => setStatus(item.value)}
-              className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest transition-colors ${status === item.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-secondary'}`}
+              onClick={() => handleStatusChange(item.value)}
+              className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest transition-colors ${
+                status === item.value
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:bg-secondary'
+              }`}
             >
               {item.label}
             </button>
@@ -146,24 +276,7 @@ export function MyRecipes() {
         </div>
       </div>
 
-      {recipesQuery.isPending && (
-        <div className="border border-border p-10 text-center text-muted-foreground" role="status">
-          Đang tải công thức…
-        </div>
-      )}
-      {recipesQuery.isError && (
-        <div className="border border-red-200 bg-red-50 p-6 text-red-700" role="alert">
-          <p>{error ?? 'Không thể tải danh sách công thức.'}</p>
-          <button className="mt-3 underline" onClick={() => recipesQuery.refetch()}>
-            Thử lại
-          </button>
-        </div>
-      )}
-      {removeRecipe.error && (
-        <p className="mb-4 border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
-          Không thể xóa công thức. Hãy tải lại dữ liệu và thử lại.
-        </p>
-      )}
+      {/* Notifications */}
       {actionNotice && (
         <p className="mb-4 border border-green-200 bg-green-50 p-3 text-sm text-green-700" role="status">
           {actionNotice}
@@ -175,123 +288,380 @@ export function MyRecipes() {
         </p>
       )}
 
+      {/* Loading & Error States */}
+      {recipesQuery.isPending && (
+        <div className="border border-border p-12 text-center text-muted-foreground" role="status">
+          Đang tải danh sách công thức…
+        </div>
+      )}
+      {recipesQuery.isError && (
+        <div className="border border-red-200 bg-red-50 p-6 text-red-700" role="alert">
+          <p>
+            {recipesQuery.error instanceof ApiProblem
+              ? recipesQuery.error.problem.detail
+              : 'Không thể tải danh sách công thức.'}
+          </p>
+          <button className="mt-3 underline" onClick={() => recipesQuery.refetch()}>
+            Thử lại
+          </button>
+        </div>
+      )}
+
+      {/* Recipe List */}
       {recipesQuery.isSuccess && (
-        <div className="overflow-hidden border border-border bg-background">
+        <div className="space-y-6">
           {filtered.length === 0 ? (
-            <div className="px-4 py-16 text-center">
+            <div className="border border-border bg-background px-4 py-16 text-center">
               <p className="mb-2 font-serif text-xl">Không tìm thấy công thức nào</p>
-              <p className="text-sm text-muted-foreground">Hãy đổi bộ lọc hoặc tạo bản nháp đầu tiên.</p>
+              <p className="text-sm text-muted-foreground">
+                {search
+                  ? 'Không có công thức phù hợp với từ khóa tìm kiếm.'
+                  : 'Hãy tạo bản nháp đầu tiên của bạn.'}
+              </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
-                  <tr>
-                    <th className="px-6 py-3">Tiêu đề</th>
-                    <th className="hidden px-6 py-3 sm:table-cell">Danh mục</th>
-                    <th className="px-6 py-3">Trạng thái</th>
-                    <th className="hidden px-6 py-3 text-right md:table-cell">Ngày tạo</th>
-                    <th className="px-6 py-3">
-                      <span className="sr-only">Thao tác</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((recipe) => (
-                    <tr
-                      key={recipe.id}
-                      className="border-b border-border last:border-0 hover:bg-secondary/30"
-                    >
-                      <td className="px-6 py-4 font-medium">{recipe.title}</td>
-                      <td className="hidden px-6 py-4 text-muted-foreground sm:table-cell">
-                        {recipe.category.name}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`border px-2.5 py-1 text-xs ${STATUS_BADGE[recipe.status]}`}>
-                          {STATUS_LABELS[recipe.status]}
-                        </span>
-                      </td>
-                      <td className="hidden px-6 py-4 text-right text-muted-foreground md:table-cell">
-                        {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          {recipe.status === 'published' && (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-hidden border border-border bg-background">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
+                      <tr>
+                        <th className="px-6 py-3 font-medium">Tiêu đề</th>
+                        <th className="px-6 py-3 font-medium">Danh mục</th>
+                        <th className="px-6 py-3 font-medium">Trạng thái</th>
+                        <th className="px-6 py-3 text-right font-medium">Ngày tạo</th>
+                        <th className="px-6 py-3 text-right font-medium">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((recipe) => (
+                        <tr
+                          key={recipe.id}
+                          className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors"
+                        >
+                          <td className="px-6 py-4">
                             <Link
-                              to={`/recipes/${recipe.slug}`}
-                              aria-label="Xem công thức"
-                              title="Xem công thức công khai"
+                              to={`/dashboard/recipes/${recipe.id}/edit`}
+                              className="font-medium text-foreground hover:underline"
                             >
-                              <Eye size={15} />
+                              {recipe.title}
                             </Link>
-                          )}
-                          {recipe.status === 'draft' && (
-                            <button
-                              onClick={() => {
-                                setActionError(null)
-                                setActionNotice(null)
-                                publishMutation.mutate({ id: recipe.id, version: recipe.version })
-                              }}
-                              disabled={
-                                publishMutation.isPending && publishMutation.variables?.id === recipe.id
-                              }
-                              aria-label="Xuất bản công thức"
-                              title="Xuất bản công thức"
-                              className="text-muted-foreground hover:text-green-600 disabled:opacity-50"
-                            >
-                              <Globe size={15} />
-                            </button>
-                          )}
-                          {recipe.status === 'published' && (
-                            <button
-                              onClick={() => {
-                                setActionError(null)
-                                setActionNotice(null)
-                                unpublishMutation.mutate({ id: recipe.id, version: recipe.version })
-                              }}
-                              disabled={
-                                unpublishMutation.isPending && unpublishMutation.variables?.id === recipe.id
-                              }
-                              aria-label="Gỡ xuất bản công thức"
-                              title="Gỡ xuất bản (chuyển về bản nháp)"
-                              className="text-muted-foreground hover:text-amber-600 disabled:opacity-50"
-                            >
-                              <EyeOff size={15} />
-                            </button>
-                          )}
-                          <Link to={`/dashboard/recipes/${recipe.id}/edit`} aria-label="Chỉnh sửa công thức">
-                            <Pencil size={15} />
-                          </Link>
-                          {confirmDelete === recipe.id ? (
-                            <span className="flex gap-2 text-xs">
-                              <button
-                                disabled={removeRecipe.isPending}
-                                className="font-medium text-red-600"
-                                onClick={() =>
-                                  removeRecipe.mutate({ id: recipe.id, version: recipe.version })
-                                }
-                              >
-                                Xóa
-                              </button>
-                              <button onClick={() => setConfirmDelete(null)}>Hủy</button>
+                          </td>
+                          <td className="px-6 py-4 text-muted-foreground">{recipe.category.name}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2.5 py-1 text-xs ${STATUS_BADGE[recipe.status]}`}>
+                              {STATUS_LABELS[recipe.status]}
                             </span>
-                          ) : (
-                            <button
-                              onClick={() => setConfirmDelete(recipe.id)}
-                              aria-label="Xóa công thức"
-                              className="text-muted-foreground hover:text-red-600"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right text-muted-foreground">
+                            {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-3">
+                              {/* Public view if published */}
+                              {recipe.status === 'published' && (
+                                <Link
+                                  to={`/recipes/${recipe.slug}`}
+                                  aria-label={`Xem công thức công khai ${recipe.title}`}
+                                  title="Xem công khai"
+                                  className="text-muted-foreground hover:text-foreground"
+                                >
+                                  <Eye size={16} />
+                                </Link>
+                              )}
+
+                              {/* Preview link */}
+                              <Link
+                                to={`/dashboard/recipes/${recipe.id}/preview`}
+                                aria-label={`Xem trước ${recipe.title}`}
+                                title="Xem trước riêng tư"
+                                className="text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                              >
+                                Xem trước
+                              </Link>
+
+                              {/* Edit link - disabled/blocked for archived recipes */}
+                              {recipe.status !== 'archived' && (
+                                <Link
+                                  to={`/dashboard/recipes/${recipe.id}/edit`}
+                                  aria-label={`Chỉnh sửa ${recipe.title}`}
+                                  title="Chỉnh sửa công thức"
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  <Pencil size={16} />
+                                </Link>
+                              )}
+
+                              {/* Publish (Draft -> Published) */}
+                              {recipe.status === 'draft' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDialog({ type: 'publish', recipe })}
+                                  aria-label={`Xuất bản ${recipe.title}`}
+                                  title="Xuất bản công thức"
+                                  className="text-muted-foreground hover:text-green-600"
+                                >
+                                  <Globe size={16} />
+                                </button>
+                              )}
+
+                              {/* Unpublish (Published -> Draft) */}
+                              {recipe.status === 'published' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDialog({ type: 'unpublish', recipe })}
+                                  aria-label={`Gỡ xuất bản ${recipe.title}`}
+                                  title="Gỡ xuất bản"
+                                  className="text-muted-foreground hover:text-amber-600"
+                                >
+                                  <EyeOff size={16} />
+                                </button>
+                              )}
+
+                              {/* Archive (Draft / Published -> Archived) */}
+                              {recipe.status !== 'archived' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDialog({ type: 'archive', recipe })}
+                                  aria-label={`Lưu trữ ${recipe.title}`}
+                                  title="Lưu trữ công thức"
+                                  className="text-muted-foreground hover:text-foreground"
+                                >
+                                  <Archive size={16} />
+                                </button>
+                              )}
+
+                              {/* Unarchive (Archived -> Draft) */}
+                              {recipe.status === 'archived' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDialog({ type: 'unarchive', recipe })}
+                                  aria-label={`Khôi phục ${recipe.title}`}
+                                  title="Khôi phục về bản nháp"
+                                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                                >
+                                  <RotateCcw size={14} /> Khôi phục
+                                </button>
+                              )}
+
+                              {/* Delete button */}
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDialog({ type: 'delete', recipe })}
+                                aria-label={`Xóa ${recipe.title}`}
+                                title="Xóa công thức"
+                                className="text-muted-foreground hover:text-red-600"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="grid gap-4 md:hidden">
+                {filtered.map((recipe) => (
+                  <article key={recipe.id} className="border border-border bg-background p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                          {recipe.category.name}
+                        </span>
+                        <h2 className="font-serif text-lg font-medium text-foreground">{recipe.title}</h2>
+                      </div>
+                      <span className={`px-2 py-0.5 text-xs ${STATUS_BADGE[recipe.status]}`}>
+                        {STATUS_LABELS[recipe.status]}
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-muted-foreground">
+                      Ngày tạo: {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+                      <div className="flex items-center gap-3">
+                        {recipe.status === 'published' && (
+                          <Link
+                            to={`/recipes/${recipe.slug}`}
+                            className="text-xs underline text-muted-foreground hover:text-foreground"
+                          >
+                            Xem bài viết
+                          </Link>
+                        )}
+                        <Link
+                          to={`/dashboard/recipes/${recipe.id}/preview`}
+                          className="text-xs underline text-muted-foreground hover:text-foreground"
+                        >
+                          Xem trước
+                        </Link>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {recipe.status !== 'archived' && (
+                          <Link
+                            to={`/dashboard/recipes/${recipe.id}/edit`}
+                            className="border border-border px-3 py-1.5 text-xs uppercase tracking-wider hover:bg-secondary"
+                          >
+                            Sửa
+                          </Link>
+                        )}
+                        {recipe.status === 'draft' && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDialog({ type: 'publish', recipe })}
+                            className="border border-green-600 bg-green-50 px-3 py-1.5 text-xs uppercase tracking-wider text-green-700 hover:bg-green-100"
+                          >
+                            Xuất bản
+                          </button>
+                        )}
+                        {recipe.status === 'published' && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDialog({ type: 'unpublish', recipe })}
+                            className="border border-amber-600 bg-amber-50 px-3 py-1.5 text-xs uppercase tracking-wider text-amber-700 hover:bg-amber-100"
+                          >
+                            Gỡ
+                          </button>
+                        )}
+                        {recipe.status === 'archived' && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDialog({ type: 'unarchive', recipe })}
+                            className="border border-primary bg-primary px-3 py-1.5 text-xs uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
+                          >
+                            Khôi phục
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDialog({ type: 'delete', recipe })}
+                          aria-label={`Xóa ${recipe.title}`}
+                          className="p-1.5 text-muted-foreground hover:text-red-600"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col items-center justify-between gap-4 border-t border-border pt-6 sm:flex-row">
+                  <p className="text-xs text-muted-foreground">
+                    Hiển thị {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, total)} trong tổng số{' '}
+                    {total} công thức
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      className="flex items-center gap-1 border border-border bg-background px-3 py-1.5 text-xs uppercase tracking-wider hover:bg-secondary disabled:opacity-40 disabled:hover:bg-background"
+                    >
+                      <ArrowLeft size={14} /> Trước
+                    </button>
+                    <span className="px-2 text-xs font-medium text-foreground">
+                      Trang {page} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                      className="flex items-center gap-1 border border-border bg-background px-3 py-1.5 text-xs uppercase tracking-wider hover:bg-secondary disabled:opacity-40 disabled:hover:bg-background"
+                    >
+                      Sau <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
+        </div>
+      )}
+
+      {/* P7-04 Action Confirmation Modal */}
+      {confirmDialog && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        >
+          <div className="w-full max-w-md border border-border bg-background p-6 shadow-xl space-y-4">
+            <h2 id="confirm-modal-title" className="font-serif text-2xl text-foreground">
+              {confirmDialog.type === 'publish' && 'Xác nhận xuất bản'}
+              {confirmDialog.type === 'unpublish' && 'Xác nhận gỡ xuất bản'}
+              {confirmDialog.type === 'archive' && 'Xác nhận lưu trữ'}
+              {confirmDialog.type === 'unarchive' && 'Xác nhận khôi phục'}
+              {confirmDialog.type === 'delete' && 'Xác nhận xóa công thức'}
+            </h2>
+
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {confirmDialog.type === 'publish' && (
+                <>
+                  Công thức <strong>«{confirmDialog.recipe.title}»</strong> sẽ được hiển thị công khai trên
+                  trang web cho tất cả độc giả truy cập.
+                </>
+              )}
+              {confirmDialog.type === 'unpublish' && (
+                <>
+                  Công thức <strong>«{confirmDialog.recipe.title}»</strong> sẽ được gỡ khỏi chế độ công khai
+                  và chuyển về bản nháp.
+                </>
+              )}
+              {confirmDialog.type === 'archive' && (
+                <>
+                  Công thức <strong>«{confirmDialog.recipe.title}»</strong> sẽ được chuyển vào kho lưu trữ và
+                  không hiển thị công khai.
+                </>
+              )}
+              {confirmDialog.type === 'unarchive' && (
+                <>
+                  Công thức <strong>«{confirmDialog.recipe.title}»</strong> sẽ được khôi phục về trạng thái
+                  bản nháp để bạn có thể chỉnh sửa tiếp.
+                </>
+              )}
+              {confirmDialog.type === 'delete' && (
+                <>
+                  Bạn có chắc chắn muốn xóa công thức <strong>«{confirmDialog.recipe.title}»</strong>? Thao
+                  tác này không thể hoàn tác trực tiếp trên giao diện.
+                </>
+              )}
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+              <button
+                type="button"
+                disabled={isPendingAction}
+                onClick={() => setConfirmDialog(null)}
+                className="border border-border px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary disabled:opacity-50"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={isPendingAction}
+                onClick={handleConfirmAction}
+                className={`px-5 py-2 text-xs uppercase tracking-wider text-white disabled:opacity-50 ${
+                  confirmDialog.type === 'delete'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : confirmDialog.type === 'publish'
+                      ? 'bg-green-700 hover:bg-green-800'
+                      : 'bg-primary hover:bg-primary/90'
+                }`}
+              >
+                {isPendingAction ? 'Đang xử lý…' : 'Xác nhận'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
