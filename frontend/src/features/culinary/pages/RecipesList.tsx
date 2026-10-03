@@ -4,12 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import { LayoutGrid, List } from 'lucide-react'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
+import { PublicQueryError } from '@/features/culinary/components/PublicQueryError'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
-import {
-  listCategories,
-  listPublishedRecipes,
-  listPublishedRecipesByCategory,
-} from '@/lib/api/content-client'
+import { listCategories, searchPublishedRecipes } from '@/lib/api/content-client'
 import { useUIStore } from '@/store/useUIStore'
 
 const PAGE_SIZE = 12
@@ -17,16 +14,25 @@ const PAGE_SIZE = 12
 export function RecipesList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const category = searchParams.get('category') ?? ''
+  const difficulty = searchParams.get('difficulty') ?? ''
+  const requestedMaxTime = Number.parseInt(searchParams.get('maxTime') ?? '0', 10)
+  const maxTime = Number.isFinite(requestedMaxTime) && requestedMaxTime > 0 ? requestedMaxTime : 0
+  const sort = searchParams.get('sort') ?? 'newest'
   const requestedPage = Number.parseInt(searchParams.get('page') ?? '1', 10)
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
   const recipesQuery = useQuery({
-    queryKey: ['public-recipes', category, page],
-    queryFn: async () => {
-      if (!category) return listPublishedRecipes(page, PAGE_SIZE)
-      const result = await listPublishedRecipesByCategory(category, page, PAGE_SIZE)
-      return { data: result.data.recipes, meta: result.meta }
-    },
+    queryKey: ['public-recipes', 'listing', category, difficulty, maxTime, sort, page],
+    queryFn: () =>
+      searchPublishedRecipes({
+        q: '',
+        category,
+        difficulty,
+        maxTime,
+        sort,
+        page,
+        pageSize: PAGE_SIZE,
+      }),
   })
   const recipes = recipesQuery.data?.data ?? []
   const viewMode = useUIStore((state) => state.viewMode)
@@ -36,10 +42,10 @@ export function RecipesList() {
     void useUIStore.persist.rehydrate()
   }, [])
 
-  const selectCategory = (slug: string) => {
+  const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams)
-    if (slug) next.set('category', slug)
-    else next.delete('category')
+    if (value) next.set(key, value)
+    else next.delete(key)
     next.delete('page')
     setSearchParams(next)
   }
@@ -53,29 +59,65 @@ export function RecipesList() {
         </p>
       </header>
 
-      <div className="mb-16 flex flex-wrap items-center justify-center gap-4 border-b border-border pb-8">
-        <button
-          type="button"
-          onClick={() => selectCategory('')}
-          aria-pressed={!category}
-          className={!category ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}
-        >
-          Tất cả
-        </button>
-        {(categoriesQuery.data ?? []).map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => selectCategory(item.slug)}
-            aria-pressed={category === item.slug}
-            className={
-              category === item.slug ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-            }
+      <section
+        className="mb-10 grid gap-4 border-y border-border py-6 sm:grid-cols-2 lg:grid-cols-4"
+        aria-label="Bộ lọc công thức"
+      >
+        <label className="text-sm">
+          <span className="mb-2 block text-muted-foreground">Danh mục</span>
+          <select
+            value={category}
+            onChange={(event) => setFilter('category', event.target.value)}
+            className="w-full border border-border bg-background px-3 py-2"
           >
-            {item.name}
-          </button>
-        ))}
-      </div>
+            <option value="">Tất cả danh mục</option>
+            {(categoriesQuery.data ?? []).map((item) => (
+              <option key={item.id} value={item.slug}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="mb-2 block text-muted-foreground">Độ khó</span>
+          <select
+            value={difficulty}
+            onChange={(event) => setFilter('difficulty', event.target.value)}
+            className="w-full border border-border bg-background px-3 py-2"
+          >
+            <option value="">Tất cả độ khó</option>
+            <option value="easy">Dễ</option>
+            <option value="medium">Trung bình</option>
+            <option value="hard">Nâng cao</option>
+            <option value="expert">Chuyên gia</option>
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="mb-2 block text-muted-foreground">Tổng thời gian</span>
+          <select
+            value={maxTime || ''}
+            onChange={(event) => setFilter('maxTime', event.target.value)}
+            className="w-full border border-border bg-background px-3 py-2"
+          >
+            <option value="">Không giới hạn</option>
+            <option value="30">Tối đa 30 phút</option>
+            <option value="60">Tối đa 60 phút</option>
+            <option value="120">Tối đa 120 phút</option>
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="mb-2 block text-muted-foreground">Sắp xếp</span>
+          <select
+            value={sort}
+            onChange={(event) => setFilter('sort', event.target.value)}
+            className="w-full border border-border bg-background px-3 py-2"
+          >
+            <option value="newest">Mới nhất</option>
+            <option value="quickest">Nấu nhanh nhất</option>
+            <option value="az">Tên A–Z</option>
+          </select>
+        </label>
+      </section>
 
       <div className="mb-6 flex justify-end gap-2" aria-label="Kiểu hiển thị công thức">
         <button
@@ -103,9 +145,10 @@ export function RecipesList() {
           Đang tải công thức…
         </p>
       ) : recipesQuery.isError ? (
-        <p role="alert" className="py-20 text-center text-red-600">
-          Không thể tải danh sách công thức.
-        </p>
+        <PublicQueryError
+          message="Không thể tải danh sách công thức. Vui lòng kiểm tra kết nối mạng."
+          onRetry={() => void recipesQuery.refetch()}
+        />
       ) : recipes.length === 0 ? (
         <p className="py-20 text-center text-muted-foreground">Không có công thức phù hợp.</p>
       ) : (

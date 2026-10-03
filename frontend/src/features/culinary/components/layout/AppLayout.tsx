@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useNavigate, NavLink } from 'react-router'
 import { ChefHat, Search, Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { NetworkStatusBanner } from '@/features/culinary/components/NetworkStatusBanner'
 import { useUIStore } from '@/store/useUIStore'
 
 export function AppLayout() {
@@ -165,6 +166,8 @@ export function AppLayout() {
           </div>
         </div>
       </header>
+
+      <NetworkStatusBanner />
 
       {/* Mobile menu overlay */}
       {mobileOpen && (

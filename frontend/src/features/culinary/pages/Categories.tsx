@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { BookOpen } from 'lucide-react'
 import { Link } from 'react-router'
+import { PublicQueryError } from '@/features/culinary/components/PublicQueryError'
 import { listCategories } from '@/lib/api/content-client'
 
 export function Categories() {
@@ -20,9 +21,10 @@ export function Categories() {
           Đang tải danh mục…
         </p>
       ) : categoriesQuery.isError ? (
-        <p role="alert" className="py-20 text-center text-red-600">
-          Không thể tải danh mục.
-        </p>
+        <PublicQueryError
+          message="Không thể tải danh mục. Vui lòng kiểm tra kết nối mạng."
+          onRetry={() => void categoriesQuery.refetch()}
+        />
       ) : categoriesQuery.data.length === 0 ? (
         <p className="py-20 text-center text-muted-foreground">Chưa có danh mục nào.</p>
       ) : (
@@ -30,7 +32,7 @@ export function Categories() {
           {categoriesQuery.data.map((category) => (
             <article key={category.id} className="group flex flex-col border border-border p-6">
               <h2 className="mb-2 font-serif text-xl text-foreground transition-colors group-hover:text-primary">
-                <Link to={`/recipes?category=${category.slug}`}>{category.name}</Link>
+                <Link to={`/categories/${category.slug}`}>{category.name}</Link>
               </h2>
               <p className="mb-4 flex-1 text-sm leading-relaxed text-muted-foreground">
                 {category.description ?? 'Chưa có mô tả.'}

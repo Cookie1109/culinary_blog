@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Search as SearchIcon, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
+import { PublicQueryError } from '@/features/culinary/components/PublicQueryError'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
 import { listCategories, searchPublishedRecipes } from '@/lib/api/content-client'
 
@@ -35,6 +36,21 @@ export function Search() {
     if (key !== 'page') next.delete('page')
     setSearchParams(next)
   }
+
+  useEffect(() => {
+    const value = inputValue.trim()
+    if (value === q || value.length === 1) return
+
+    const timeout = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParams)
+      if (value) next.set('q', value)
+      else next.delete('q')
+      next.delete('page')
+      setSearchParams(next)
+    }, 400)
+
+    return () => window.clearTimeout(timeout)
+  }, [inputValue, q, searchParams, setSearchParams])
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault()
@@ -70,7 +86,10 @@ export function Search() {
         </form>
       </header>
 
-      <section className="mb-10 grid gap-4 border-y border-border py-6 sm:grid-cols-3" aria-label="Bộ lọc">
+      <section
+        className="mb-10 grid gap-4 border-y border-border py-6 sm:grid-cols-2 lg:grid-cols-4"
+        aria-label="Bộ lọc"
+      >
         <label className="text-sm">
           <span className="mb-2 block text-muted-foreground">Danh mục</span>
           <select
@@ -101,6 +120,19 @@ export function Search() {
           </select>
         </label>
         <label className="text-sm">
+          <span className="mb-2 block text-muted-foreground">Tổng thời gian</span>
+          <select
+            value={maxTime || ''}
+            onChange={(event) => setFilter('maxTime', event.target.value)}
+            className="w-full border border-border bg-background px-3 py-2"
+          >
+            <option value="">Không giới hạn</option>
+            <option value="30">Tối đa 30 phút</option>
+            <option value="60">Tối đa 60 phút</option>
+            <option value="120">Tối đa 120 phút</option>
+          </select>
+        </label>
+        <label className="text-sm">
           <span className="mb-2 block text-muted-foreground">Sắp xếp</span>
           <select
             value={sort}
@@ -116,7 +148,7 @@ export function Search() {
       </section>
 
       <div className="mb-6 flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground" aria-live="polite">
           <span className="font-medium text-foreground">{recipesQuery.data?.meta.total ?? 0}</span> công thức
           phù hợp
         </p>
@@ -136,9 +168,10 @@ export function Search() {
           Đang tìm công thức…
         </p>
       ) : recipesQuery.isError ? (
-        <p role="alert" className="py-20 text-center text-red-600">
-          Không thể tải dữ liệu tìm kiếm.
-        </p>
+        <PublicQueryError
+          message="Không thể tải dữ liệu tìm kiếm. Vui lòng kiểm tra kết nối mạng."
+          onRetry={() => void recipesQuery.refetch()}
+        />
       ) : results.length === 0 ? (
         <div className="py-24 text-center">
           <SearchIcon size={40} aria-hidden="true" className="mx-auto mb-4 text-muted-foreground" />

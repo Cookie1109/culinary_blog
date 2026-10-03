@@ -1,16 +1,18 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, BookOpen } from 'lucide-react'
 import { Link } from 'react-router'
+import { PublicQueryError } from '@/features/culinary/components/PublicQueryError'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
-import { listPublishedRecipes } from '@/lib/api/content-client'
+import { listCategories, listPublishedRecipes } from '@/lib/api/content-client'
 
 export function Home() {
   const recipesQuery = useQuery({
     queryKey: ['public-recipes', 'featured'],
     queryFn: () => listPublishedRecipes(1, 3),
   })
+  const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
   const recipes = recipesQuery.data?.data ?? []
   const featured = recipes[0]
 
@@ -60,15 +62,65 @@ export function Home() {
             Đang tải công thức…
           </p>
         ) : recipesQuery.isError ? (
-          <p role="alert" className="py-16 text-center text-red-600">
-            Không thể tải công thức. Vui lòng thử lại sau.
-          </p>
+          <PublicQueryError
+            message="Không thể tải công thức. Vui lòng kiểm tra kết nối mạng."
+            onRetry={() => void recipesQuery.refetch()}
+          />
         ) : recipes.length === 0 ? (
           <p className="py-16 text-center text-muted-foreground">Chưa có công thức nào được xuất bản.</p>
         ) : (
           <div className="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3">
             {recipes.map((recipe) => (
               <RecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-6 lg:px-8" aria-labelledby="categories-title">
+        <div className="mb-10 flex items-end justify-between border-b border-border pb-6">
+          <div>
+            <p className="mb-2 text-sm uppercase tracking-widest text-primary">Khám phá theo chủ đề</p>
+            <h2 id="categories-title" className="font-serif text-3xl text-foreground">
+              Danh mục nổi bật
+            </h2>
+          </div>
+          <Link
+            to="/categories"
+            className="text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:text-foreground"
+          >
+            Xem tất cả
+          </Link>
+        </div>
+
+        {categoriesQuery.isPending ? (
+          <p role="status" className="py-12 text-center text-muted-foreground">
+            Đang tải danh mục…
+          </p>
+        ) : categoriesQuery.isError ? (
+          <PublicQueryError
+            message="Không thể tải danh mục. Vui lòng kiểm tra kết nối mạng."
+            onRetry={() => void categoriesQuery.refetch()}
+          />
+        ) : categoriesQuery.data.length === 0 ? (
+          <p className="py-12 text-center text-muted-foreground">Chưa có danh mục nào.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {categoriesQuery.data.slice(0, 4).map((category) => (
+              <Link
+                key={category.id}
+                to={`/categories/${category.slug}`}
+                className="group border border-border bg-card p-6 transition-colors hover:border-primary"
+              >
+                <BookOpen className="mb-8 text-primary" size={24} aria-hidden="true" />
+                <h3 className="mb-2 font-serif text-xl group-hover:text-primary">{category.name}</h3>
+                <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                  {category.description ?? 'Khám phá các công thức trong danh mục này.'}
+                </p>
+                <span className="mt-5 block text-xs uppercase tracking-wider text-muted-foreground">
+                  {category.recipeCount} công thức
+                </span>
+              </Link>
             ))}
           </div>
         )}
