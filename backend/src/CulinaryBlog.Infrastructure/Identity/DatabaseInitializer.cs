@@ -15,6 +15,8 @@ public sealed class DatabaseInitializer(
     UserManager<ApplicationUser> userManager,
     IOptions<AdminSeedOptions> adminOptions)
 {
+    private const int FunctionalRegressionAuthorCount = 5;
+    private const int FunctionalRegressionRecipeCount = 50;
     private static readonly string[] Roles = ["Author", "Admin"];
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
@@ -30,8 +32,9 @@ public sealed class DatabaseInitializer(
             }
         }
 
+        var authorIds = await SeedAuthorsAsync(cancellationToken).ConfigureAwait(false);
         var categoryIds = await SeedCategoriesAsync(cancellationToken).ConfigureAwait(false);
-        await SeedRecipesAsync(categoryIds, cancellationToken).ConfigureAwait(false);
+        await SeedRecipesAsync(categoryIds, authorIds, cancellationToken).ConfigureAwait(false);
 
         var options = adminOptions.Value;
         if (!options.Enabled)
@@ -63,6 +66,43 @@ public sealed class DatabaseInitializer(
         {
             EnsureSucceeded(await userManager.AddToRoleAsync(admin, "Admin").ConfigureAwait(false), "assign the Admin role");
         }
+    }
+
+    private async Task<List<Guid>> SeedAuthorsAsync(CancellationToken cancellationToken)
+    {
+        var authorIds = new List<Guid>(FunctionalRegressionAuthorCount);
+        for (var index = 1; index <= FunctionalRegressionAuthorCount; index++)
+        {
+            var email = $"phase8-author-{index:D2}@example.test";
+            var author = await userManager.FindByEmailAsync(email).ConfigureAwait(false);
+            if (author is null)
+            {
+                author = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    DisplayName = $"Tác giả kiểm thử {index:D2}",
+                    IsActive = true,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                };
+                EnsureSucceeded(
+                    await userManager.CreateAsync(author).ConfigureAwait(false),
+                    $"create synthetic author {index:D2}");
+            }
+
+            if (!await userManager.IsInRoleAsync(author, "Author").ConfigureAwait(false))
+            {
+                EnsureSucceeded(
+                    await userManager.AddToRoleAsync(author, "Author").ConfigureAwait(false),
+                    $"assign synthetic author {index:D2} to the Author role");
+            }
+
+            authorIds.Add(author.Id);
+        }
+
+        return authorIds;
     }
 
     private async Task<List<Guid>> SeedCategoriesAsync(CancellationToken cancellationToken)
@@ -122,9 +162,12 @@ public sealed class DatabaseInitializer(
         return existingCategories.Select(c => c.Id).Concat(generated.Select(c => c.Id)).Take(20).ToList();
     }
 
-    private async Task SeedRecipesAsync(List<Guid> categoryIds, CancellationToken cancellationToken)
+    private async Task SeedRecipesAsync(
+        List<Guid> categoryIds,
+        List<Guid> authorIds,
+        CancellationToken cancellationToken)
     {
-        if (categoryIds.Count == 0)
+        if (categoryIds.Count == 0 || authorIds.Count == 0)
         {
             return;
         }
@@ -133,23 +176,7 @@ public sealed class DatabaseInitializer(
             .CountAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var countToGenerate = Math.Max(0, 100 - existingCount);
-
-        var author = await userManager.Users.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-        if (author is null)
-        {
-            author = new ApplicationUser
-            {
-                Id = Guid.NewGuid(),
-                UserName = "author@culinaryblog.local",
-                Email = "author@culinaryblog.local",
-                DisplayName = "Bếp Trưởng",
-                IsActive = true,
-                CreatedAt = DateTimeOffset.UtcNow,
-            };
-            EnsureSucceeded(await userManager.CreateAsync(author, "Chef@123456").ConfigureAwait(false), "create the default author");
-            EnsureSucceeded(await userManager.AddToRoleAsync(author, "Author").ConfigureAwait(false), "assign the Author role");
-        }
+        var countToGenerate = Math.Max(0, FunctionalRegressionRecipeCount - existingCount);
 
         var dishPrefixes = new[]
         {
@@ -211,7 +238,7 @@ public sealed class DatabaseInitializer(
 
                 return Recipe.Create(
                     Guid.NewGuid(),
-                    author.Id,
+                    authorIds[index % authorIds.Count],
                     slug,
                     title,
                     description,
@@ -225,6 +252,19 @@ public sealed class DatabaseInitializer(
             });
 
         var recipes = countToGenerate > 0 ? recipeFaker.Generate(countToGenerate) : [];
+        for (var index = 0; index < recipes.Count; index++)
+        {
+            if (index % 3 == 1)
+            {
+                recipes[index].Publish(DateTimeOffset.UtcNow.AddMinutes(-index), true, 10, [1, 2, 3, 4, 5]);
+            }
+            else if (index % 3 == 2)
+            {
+                recipes[index].Publish(DateTimeOffset.UtcNow.AddMinutes(-index), true, 10, [1, 2, 3, 4, 5]);
+                recipes[index].Archive();
+            }
+        }
+
         if (recipes.Count > 0)
         {
             dbContext.Recipes.AddRange(recipes);

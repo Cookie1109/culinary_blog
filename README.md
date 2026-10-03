@@ -2,7 +2,7 @@
 
 Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây dựng theo đặc tả SRS v1.0.0. Repository sử dụng mô hình monorepo với hai ứng dụng độc lập: frontend Next.js và backend ASP.NET Core; tài liệu, hạ tầng, Docker Compose và CI được quản lý tập trung tại thư mục gốc.
 
-> **Trạng thái:** Phase 0–7 đã được triển khai; bằng chứng observability/operations mới nhất nằm tại [báo cáo Phase 7](docs/specs/phase-7/README.md). Các production drill và release gate thuộc Phase 8.
+> **Trạng thái:** Phase 0–7 đã được triển khai; functional regression P8-01 đến P8-04 đã Local Accepted tại [báo cáo Phase 8](docs/specs/phase-8/README.md). Các performance/security/reliability, staging UAT và production release gate còn lại thuộc Phase 8.
 
 ## Công nghệ chính
 
@@ -188,6 +188,7 @@ Production không tự động chạy migration khi API khởi động. Migratio
 - [Báo cáo Phase 3](docs/specs/phase-3/README.md)
 - [Báo cáo Phase 4](docs/specs/phase-4/README.md)
 - [Báo cáo Phase 7](docs/specs/phase-7/README.md)
+- [Báo cáo functional regression Phase 8](docs/specs/phase-8/README.md)
 - [Operations runbook](docs/operations/runbook.md)
 - [OpenAPI contract v1](docs/specs/phase-0/openapi.v1.yaml)
 

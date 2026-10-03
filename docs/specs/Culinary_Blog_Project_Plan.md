@@ -696,6 +696,8 @@ Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận 
 
 ## 12. Phase 8 — Hardening, UAT và phát hành
 
+> Trạng thái 03/10/2026: **Functional Regression Complete / Local Accepted** cho P8-01 đến P8-04. Bằng chứng tại [Phase 8 functional regression](./phase-8/README.md); staging browser E2E/UAT và các performance, security, reliability, release gate còn chờ thực hiện.
+
 ### 12.1. Mục tiêu
 
 Chứng minh hệ thống đáp ứng yêu cầu chức năng và phi chức năng, triển khai staging giống production và phát hành có khả năng rollback/khôi phục.
@@ -709,10 +711,10 @@ Chứng minh hệ thống đáp ứng yêu cầu chức năng và phi chức nă
 
 #### Functional regression
 
-- **[NFR-QA]** P8-01: Chạy traceability matrix toàn bộ FR/API/screen/test.
-- **[NFR-QA]** P8-02: Regression Guest/Author/Admin và critical journeys.
-- **[NFR-QA]** P8-03: Migration test từ database version trước lên release candidate.
-- **[NFR-QA]** P8-04: Seed 50 recipes, 5 authors và categories; đảm bảo không chứa secrets/PII thật.
+- [x] **[NFR-QA]** P8-01: Chạy traceability matrix toàn bộ FR/API/screen/test.
+- [x] **[NFR-QA]** P8-02: Regression Guest/Author/Admin và critical journeys *(local integration/wiring pass; staging browser run thuộc P8-24/P8-25)*.
+- [x] **[NFR-QA]** P8-03: Migration test từ database version trước lên release candidate.
+- [x] **[NFR-QA]** P8-04: Seed 50 recipes, 5 authors và categories; đảm bảo không chứa secrets/PII thật.
 
 #### Performance
 
