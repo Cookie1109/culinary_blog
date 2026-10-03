@@ -1,5 +1,16 @@
 import { Outlet, NavLink, Link, useNavigate } from 'react-router'
-import { LayoutDashboard, BookOpen, PlusCircle, Tag, User, LogOut, ChevronRight } from 'lucide-react'
+import {
+  LayoutDashboard,
+  BookOpen,
+  PlusCircle,
+  Tag,
+  User,
+  LogOut,
+  ChevronRight,
+  ClipboardList,
+  Activity,
+  ExternalLink,
+} from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -31,7 +42,12 @@ export function DashboardLayout() {
 
   const navigationItems =
     user?.role === 'admin'
-      ? [...NAV_ITEMS, { to: '/dashboard/categories', label: 'Quản lý danh mục', icon: Tag, end: true }]
+      ? [
+          ...NAV_ITEMS,
+          { to: '/dashboard/categories', label: 'Quản lý danh mục', icon: Tag, end: true },
+          { to: '/dashboard/recipes?scope=all', label: 'Tất cả công thức (Admin)', icon: BookOpen, end: false },
+          { to: '/dashboard/audit', label: 'Nhật ký kiểm toán', icon: ClipboardList, end: true },
+        ]
       : NAV_ITEMS
 
   return (
@@ -94,6 +110,30 @@ export function DashboardLayout() {
               ))}
             </ul>
           </div>
+
+          {user?.role === 'admin' && (
+            <div className="mt-6 pt-4 border-t border-border">
+              <p className="px-4 mb-2 text-xs uppercase tracking-widest text-muted-foreground">
+                Vận hành (Admin)
+              </p>
+              <ul className="space-y-0.5">
+                <li>
+                  <a
+                    href="/jobs"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary hover:text-primary transition-colors border-l-2 border-transparent"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Activity size={18} strokeWidth={1.5} />
+                      <span>Hangfire Jobs</span>
+                    </div>
+                    <ExternalLink size={14} className="text-muted-foreground" />
+                  </a>
+                </li>
+              </ul>
+            </div>
+          )}
         </nav>
 
         {/* Sign out */}

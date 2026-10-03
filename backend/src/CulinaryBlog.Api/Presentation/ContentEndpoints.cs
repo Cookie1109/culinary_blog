@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using CulinaryBlog.Application.Abstractions.Caching;
+using CulinaryBlog.Application.Audit;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Features.Recipes.Commands;
 using CulinaryBlog.Application.Features.Recipes.Queries;
@@ -78,6 +79,9 @@ internal static class ContentEndpoints
         var admin = endpoints.MapGroup("/api/v1/admin/recipes").RequireAuthorization("AdminPolicy");
         admin.MapGet("/", ListAdminRecipesAsync);
         admin.MapGet("/{id:guid}", GetAdminRecipeAsync);
+
+        var adminAudit = endpoints.MapGroup("/api/v1/admin/audit-logs").RequireAuthorization("AdminPolicy");
+        adminAudit.MapGet("/", ListAdminAuditLogsAsync);
 
         return endpoints;
     }
@@ -425,6 +429,16 @@ internal static class ContentEndpoints
         IContentService contentService,
         CancellationToken cancellationToken) =>
         Results.Ok(await contentService.ListAdminRecipesAsync(status, authorId, page ?? 1, pageSize ?? 12, cancellationToken).ConfigureAwait(false));
+
+    private static async Task<IResult> ListAdminAuditLogsAsync(
+        string? level,
+        string? search,
+        int? page,
+        int? pageSize,
+        IAuditLogService auditLogService,
+        CancellationToken cancellationToken) =>
+        Results.Ok(await auditLogService.ListAuditLogsAsync(
+            level, search, page ?? 1, pageSize ?? 20, cancellationToken).ConfigureAwait(false));
 
     private static async Task<IResult> CreateIngredientAsync(
         Guid id,

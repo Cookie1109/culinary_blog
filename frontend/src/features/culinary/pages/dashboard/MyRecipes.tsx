@@ -16,10 +16,12 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { useAuth } from '../../contexts/AuthContext'
 import { ApiProblem } from '@/lib/api/problem-details'
 import {
   archiveRecipe,
   deleteRecipe,
+  listAdminRecipes,
   listMyRecipes,
   publishRecipe,
   unarchiveRecipe,
@@ -58,6 +60,11 @@ export function MyRecipes() {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
 
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
+  const scopeParam = searchParams.get('scope')
+  const [scope, setScope] = useState<'mine' | 'all'>(isAdmin && scopeParam === 'all' ? 'all' : 'mine')
+
   const initialStatus = searchParams.get('status') as RecipeStatus | null
   const [status, setStatus] = useState<RecipeStatus | undefined>(
     initialStatus === 'published' || initialStatus === 'draft' || initialStatus === 'archived'
@@ -72,7 +79,15 @@ export function MyRecipes() {
   const [actionNotice, setActionNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  // Sync status if URL query changes
+  // Sync scope and status if URL query changes
+  useEffect(() => {
+    if (isAdmin && scopeParam === 'all') {
+      setScope('all')
+    } else if (scopeParam === 'mine') {
+      setScope('mine')
+    }
+  }, [isAdmin, scopeParam])
+
   useEffect(() => {
     const urlStatus = searchParams.get('status') as RecipeStatus | null
     if (urlStatus === 'published' || urlStatus === 'draft' || urlStatus === 'archived') {
@@ -81,8 +96,11 @@ export function MyRecipes() {
   }, [searchParams])
 
   const recipesQuery = useQuery({
-    queryKey: ['my-recipes', status, page, pageSize],
-    queryFn: () => listMyRecipes(status, page, pageSize),
+    queryKey: [scope === 'all' ? 'admin-recipes' : 'my-recipes', status, page, pageSize],
+    queryFn: () =>
+      scope === 'all'
+        ? listAdminRecipes(status, undefined, page, pageSize)
+        : listMyRecipes(status, page, pageSize),
   })
 
   const removeRecipe = useMutation({
@@ -92,6 +110,7 @@ export function MyRecipes() {
       setActionError(null)
       setActionNotice('Đã xóa công thức thành công.')
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
     },
     onError: (error) => {
       setActionNotice(null)
@@ -110,6 +129,7 @@ export function MyRecipes() {
       setActionError(null)
       setActionNotice('Công thức đã được xuất bản thành công.')
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
     },
     onError: (error) => {
       setActionNotice(null)
@@ -132,6 +152,7 @@ export function MyRecipes() {
       setActionError(null)
       setActionNotice('Đã gỡ xuất bản công thức (chuyển về bản nháp).')
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
     },
     onError: (error) => {
       setActionNotice(null)
@@ -150,6 +171,7 @@ export function MyRecipes() {
       setActionError(null)
       setActionNotice('Đã đưa công thức vào kho lưu trữ.')
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
     },
     onError: (error) => {
       setActionNotice(null)
@@ -168,6 +190,7 @@ export function MyRecipes() {
       setActionError(null)
       setActionNotice('Đã khôi phục công thức về trạng thái bản nháp.')
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
     },
     onError: (error) => {
       setActionNotice(null)
@@ -212,27 +235,85 @@ export function MyRecipes() {
     (recipe) =>
       !normalizedSearch ||
       recipe.title.toLocaleLowerCase('vi').includes(normalizedSearch) ||
-      recipe.category.name.toLocaleLowerCase('vi').includes(normalizedSearch),
+      recipe.category.name.toLocaleLowerCase('vi').includes(normalizedSearch) ||
+      (scope === 'all' && recipe.author?.displayName?.toLocaleLowerCase('vi').includes(normalizedSearch)),
   )
+
+  const handleScopeChange = (newScope: 'mine' | 'all') => {
+    setScope(newScope)
+    setPage(1)
+    const nextParams = new URLSearchParams(searchParams)
+    if (newScope === 'all') {
+      nextParams.set('scope', 'all')
+    } else {
+      nextParams.delete('scope')
+    }
+    setSearchParams(nextParams)
+  }
 
   const handleStatusChange = (newStatus: RecipeStatus | undefined) => {
     setStatus(newStatus)
     setPage(1)
+    const nextParams = new URLSearchParams(searchParams)
     if (newStatus) {
-      setSearchParams({ status: newStatus })
+      nextParams.set('status', newStatus)
     } else {
-      setSearchParams({})
+      nextParams.delete('status')
     }
+    setSearchParams(nextParams)
   }
 
   return (
     <div>
+      {/* Admin Scope Toggle Tabs */}
+      {isAdmin && (
+        <div className="mb-6 flex border-b border-border" role="tablist" aria-label="Phạm vi quản lý công thức">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scope === 'mine'}
+            onClick={() => handleScopeChange('mine')}
+            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
+              scope === 'mine'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <span>Công thức của tôi</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scope === 'all'}
+            onClick={() => handleScopeChange('all')}
+            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
+              scope === 'all'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <span>Tất cả công thức (Chế độ Quản trị)</span>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary font-mono">
+              /admin/recipes
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-serif text-3xl text-foreground lg:text-4xl">Công thức của tôi</h1>
+          <h1 className="font-serif text-3xl text-foreground lg:text-4xl">
+            {scope === 'all' ? 'Tất cả công thức (Quản trị hệ thống)' : 'Công thức của tôi'}
+          </h1>
           <p className="mt-1 text-muted-foreground">
-            {recipesQuery.data ? `Tổng cộng ${total} công thức` : 'Quản lý các công thức và bản nháp của bạn'}
+            {scope === 'all'
+              ? recipesQuery.data
+                ? `Tổng cộng ${total} công thức trên toàn hệ thống (dùng API /admin/recipes)`
+                : 'Quản lý toàn bộ công thức trên hệ thống qua quyền quản trị'
+              : recipesQuery.data
+                ? `Tổng cộng ${total} công thức`
+                : 'Quản lý các công thức và bản nháp của bạn'}
           </p>
         </div>
         <Link
@@ -328,6 +409,7 @@ export function MyRecipes() {
                     <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
                       <tr>
                         <th className="px-6 py-3 font-medium">Tiêu đề</th>
+                        {scope === 'all' && <th className="px-6 py-3 font-medium">Tác giả</th>}
                         <th className="px-6 py-3 font-medium">Danh mục</th>
                         <th className="px-6 py-3 font-medium">Trạng thái</th>
                         <th className="px-6 py-3 text-right font-medium">Ngày tạo</th>
@@ -348,6 +430,11 @@ export function MyRecipes() {
                               {recipe.title}
                             </Link>
                           </td>
+                          {scope === 'all' && (
+                            <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
+                              {recipe.author?.displayName ?? 'Ẩn danh'}
+                            </td>
+                          )}
                           <td className="px-6 py-4 text-muted-foreground">{recipe.category.name}</td>
                           <td className="px-6 py-4">
                             <span className={`px-2.5 py-1 text-xs ${STATUS_BADGE[recipe.status]}`}>
@@ -480,8 +567,15 @@ export function MyRecipes() {
                       </span>
                     </div>
 
-                    <div className="text-xs text-muted-foreground">
-                      Ngày tạo: {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      {scope === 'all' && (
+                        <div>
+                          Tác giả: <span className="font-medium text-foreground">{recipe.author?.displayName ?? 'Ẩn danh'}</span>
+                        </div>
+                      )}
+                      <div>
+                        Ngày tạo: {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">

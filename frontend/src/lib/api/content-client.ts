@@ -166,6 +166,66 @@ export async function getMyRecipe(id: string) {
   return (await authenticatedApiRequest<DataEnvelope<Recipe>>(`/me/recipes/${id}`)).data
 }
 
+export function listAdminRecipes(
+  status?: RecipeStatus,
+  authorId?: string,
+  page: number = 1,
+  pageSize: number = 12,
+) {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  if (authorId) params.set('authorId', authorId)
+  if (page) params.set('page', String(page))
+  if (pageSize) params.set('pageSize', String(pageSize))
+  const query = params.toString() ? `?${params.toString()}` : ''
+  return authenticatedApiRequest<PageEnvelope<Recipe>>(`/admin/recipes${query}`)
+}
+
+export async function getAdminRecipe(id: string) {
+  return (await authenticatedApiRequest<DataEnvelope<Recipe>>(`/admin/recipes/${id}`)).data
+}
+
+export interface AuditLogEntry {
+  id: string
+  timestamp: string
+  level: string
+  eventName: string
+  message: string
+  userId: string | null
+  correlationId: string | null
+  requestPath: string | null
+  requestMethod: string | null
+  statusCode: number | null
+  properties: Record<string, string> | null
+}
+
+export interface TelemetryStatus {
+  seqConfigured: boolean
+  otlpConfigured: boolean
+  operationalNetworkRestricted: boolean
+}
+
+export interface AuditLogsEnvelope {
+  data: AuditLogEntry[]
+  meta: PageEnvelope<AuditLogEntry>['meta']
+  telemetry: TelemetryStatus
+}
+
+export function listAuditLogs(params?: {
+  level?: string
+  search?: string
+  page?: number
+  pageSize?: number
+}) {
+  const urlParams = new URLSearchParams()
+  if (params?.level && params.level !== 'all') urlParams.set('level', params.level)
+  if (params?.search) urlParams.set('search', params.search)
+  if (params?.page) urlParams.set('page', String(params.page))
+  if (params?.pageSize) urlParams.set('pageSize', String(params.pageSize))
+  const query = urlParams.toString() ? `?${urlParams.toString()}` : ''
+  return authenticatedApiRequest<AuditLogsEnvelope>(`/admin/audit-logs${query}`)
+}
+
 export async function createRecipe(data: RecipeWrite) {
   return (
     await authenticatedApiRequest<DataEnvelope<Recipe>>('/recipes', {

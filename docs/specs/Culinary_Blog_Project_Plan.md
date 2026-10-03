@@ -658,10 +658,10 @@ Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận 
 
 #### Admin
 
-- **[FR-CAT]** P7-07: Category CRUD hoàn chỉnh, order, delete conflict và confirm dialog.
-- **[FR-CAT]** P7-08: Admin recipe listing/action dùng `/admin/recipes`; mọi mutation vẫn qua resource policy và audit.
-- **[FR-JOB]** P7-10: Hangfire dashboard bảo vệ bằng Admin policy và network restriction phù hợp.
-- **[FR-RCP-CORE]** P7-11: Admin có application audit/log view đúng SRS; raw Seq/OTLP telemetry yêu cầu thêm operational authentication/network control.
+- [x] **[FR-CAT]** P7-07: Category CRUD hoàn chỉnh, order, delete conflict và confirm dialog.
+- [x] **[FR-CAT]** P7-08: Admin recipe listing/action dùng `/admin/recipes`; mọi mutation vẫn qua resource policy và audit.
+- [x] **[FR-JOB]** P7-10: Hangfire dashboard bảo vệ bằng Admin policy và network restriction phù hợp.
+- [x] **[FR-RCP-CORE]** P7-11: Admin có application audit/log view đúng SRS; raw Seq/OTLP telemetry yêu cầu thêm operational authentication/network control.
 
 #### Observability và operations
 

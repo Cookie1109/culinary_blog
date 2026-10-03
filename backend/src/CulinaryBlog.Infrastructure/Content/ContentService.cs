@@ -56,7 +56,8 @@ internal sealed partial class ContentService(
     {
         var categories = await dbContext.Categories
             .AsNoTracking()
-            .OrderBy(category => category.Name)
+            .OrderBy(category => category.OrderIndex)
+            .ThenBy(category => category.Name)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
         return await MapCategoriesAsync(categories, cancellationToken).ConfigureAwait(false);
