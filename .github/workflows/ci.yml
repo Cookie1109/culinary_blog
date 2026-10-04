@@ -85,11 +85,12 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
       - uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_IGNORED_LICENSES: LGPL-3.0-or-later,Apache-2.0 AND LGPL-3.0-or-later AND MIT,Apache-2.0 AND LGPL-3.0-or-later
         with:
           scan-type: fs
           scan-ref: .
           scanners: license
-          ignored-licenses: LGPL-3.0-or-later
           severity: HIGH,CRITICAL
           exit-code: 1
 

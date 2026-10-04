@@ -34,7 +34,7 @@
 | API image | Trivy 0.74.0, không bỏ qua unfixed: Ubuntu 24.04 `0` High/Critical; application/runtime .NET `0`. |
 | Web image | Node 22.23.3 trên distroless Debian 13.7, UID/GID 65532: `0` High/Critical cho OS và Node packages. |
 | Dockerfile misconfiguration | Trivy: API `0`, Web `0` High/Critical. |
-| License | Runtime Web còn libvips x64 `LGPL-3.0-or-later`, được triage thành exception đúng một SPDX ID; binary WASM/musl không dùng đã loại khỏi image. GPL-3.0/AGPL-3.0 vẫn bị dependency-review chặn. Nếu phân phối container cho bên thứ ba thay vì chỉ vận hành dịch vụ, Legal phải review lại nghĩa vụ LGPL. |
+| License | Runtime Web còn libvips x64 `LGPL-3.0-or-later`; CI chỉ allowlist ba biểu thức SPDX chính xác do các optional package sharp/libvips khai báo: LGPL thuần và hai tổ hợp `Apache-2.0 AND LGPL-3.0-or-later [AND MIT]`. Binary WASM/musl không dùng đã loại khỏi image. GPL-3.0/AGPL-3.0 vẫn bị dependency-review chặn. Nếu phân phối container cho bên thứ ba thay vì chỉ vận hành dịch vụ, Legal phải review lại nghĩa vụ LGPL. |
 
 Hai finding runtime đã được remediation trong lúc review: OpenSSL High của API base được sửa bằng digest mới; Node 20 hết vòng đời và các CVE OS/npm của image Web được xử lý bằng Node 22 LTS, distroless Debian 13 và loại platform binaries không dùng. CI quét cả High/Critical có và chưa có bản vá; không còn `ignore-unfixed`.
 
