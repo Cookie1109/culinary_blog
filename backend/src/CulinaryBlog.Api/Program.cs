@@ -131,6 +131,25 @@ try
         },
         meta = new { },
     }));
+    app.MapGet("/api/v1/operations/maintenance", (IConfiguration configuration) =>
+    {
+        var section = configuration.GetSection("Operations:Maintenance");
+        var enabled = section.GetValue<bool>("Enabled");
+        var endsAtUtc = section.GetValue<DateTimeOffset?>("EndsAtUtc");
+
+        return Results.Ok(new
+        {
+            data = new
+            {
+                enabled = enabled && endsAtUtc > DateTimeOffset.UtcNow,
+                message = section["Message"],
+                announcedAtUtc = section.GetValue<DateTimeOffset?>("AnnouncedAtUtc"),
+                startsAtUtc = section.GetValue<DateTimeOffset?>("StartsAtUtc"),
+                endsAtUtc,
+            },
+            meta = new { },
+        });
+    });
 
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {

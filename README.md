@@ -155,6 +155,18 @@ docker compose -p culinary-blog-performance -f compose.yaml -f performance/compo
 
 Kết quả và mô tả hardware/dataset/network được lưu dưới `artifacts/performance/`. Xem budget và cách chạy rút gọn tại [báo cáo Phase 8](docs/specs/phase-8/README.md).
 
+### Reliability Phase 8
+
+Khởi động stack với backup, resource limits và log rotation; sau đó chạy restore/failure drill:
+
+```powershell
+docker compose -f compose.yaml -f infra/operations/compose.reliability.yaml up --detach --build --wait
+./scripts/restore-drill.ps1
+./scripts/failure-drill.ps1
+```
+
+Mỗi drill ghi evidence RTO/RPO và recovery time dưới `artifacts/reliability/`. Cấu hình receiver thật bằng secret file và overlay `infra/operations/compose.alert-routing.yaml`; xem checklist staging tại [báo cáo Reliability Phase 8](docs/reports/phase-8-reliability-report.md).
+
 ## Cấu hình và bảo mật
 
 - Sao chép `.env.example` thành `.env` để cấu hình môi trường local; không commit tệp `.env`.

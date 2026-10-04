@@ -1,0 +1,6 @@
+services:
+  alertmanager:
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ./infra/observability/alertmanager.production.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ${OPS_ALERT_WEBHOOK_URL_FILE:?Set OPS_ALERT_WEBHOOK_URL_FILE to the approved receiver secret file}:/run/secrets/operations_webhook_url:ro

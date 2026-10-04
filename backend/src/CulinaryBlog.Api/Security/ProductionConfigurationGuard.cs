@@ -51,6 +51,7 @@ public static class ProductionConfigurationGuard
         {
             ValidateHttpsUrl(origin, "Cors:AllowedOrigins", failures);
         }
+        ValidateMaintenanceAnnouncement(configuration.GetSection("Operations:Maintenance"), failures);
 
         if (failures.Count > 0)
         {
@@ -84,6 +85,32 @@ public static class ProductionConfigurationGuard
             || !System.Text.RegularExpressions.Regex.IsMatch(value, pattern))
         {
             failures.Add($"{key} must identify the immutable deployed artifact");
+        }
+    }
+
+    private static void ValidateMaintenanceAnnouncement(IConfigurationSection section, List<string> failures)
+    {
+        if (!section.GetValue<bool>("Enabled"))
+        {
+            return;
+        }
+
+        var message = section["Message"];
+        var announcedAtUtc = section.GetValue<DateTimeOffset?>("AnnouncedAtUtc");
+        var startsAtUtc = section.GetValue<DateTimeOffset?>("StartsAtUtc");
+        var endsAtUtc = section.GetValue<DateTimeOffset?>("EndsAtUtc");
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            failures.Add("Operations:Maintenance:Message is required when maintenance is enabled");
+        }
+        if (announcedAtUtc is null || startsAtUtc is null || startsAtUtc - announcedAtUtc < TimeSpan.FromHours(48))
+        {
+            failures.Add("Operations:Maintenance must be announced at least 48 hours before it starts");
+        }
+        if (startsAtUtc is null || endsAtUtc is null || endsAtUtc <= startsAtUtc)
+        {
+            failures.Add("Operations:Maintenance:EndsAtUtc must be later than StartsAtUtc");
         }
     }
 }

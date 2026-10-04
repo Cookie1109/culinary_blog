@@ -697,7 +697,7 @@ Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận 
 
 ## 12. Phase 8 — Hardening, UAT và phát hành
 
-> Trạng thái 04/10/2026: **Functional Regression & Performance Complete / Local Accepted** cho P8-01 đến P8-09. Bằng chứng tại [Phase 8 hardening](./phase-8/README.md); staging browser E2E/UAT, security, reliability và release gate còn chờ thực hiện.
+> Trạng thái 05/10/2026: **Hardening & Reliability / Local Accepted** cho P8-01 đến P8-14 và P8-16 đến P8-21a. Bằng chứng tại [Phase 8 hardening](./phase-8/README.md); ZAP staging, browser E2E/UAT và release gate còn chờ thực hiện.
 
 ### 12.1. Mục tiêu
 
@@ -737,13 +737,13 @@ Chứng minh hệ thống đáp ứng yêu cầu chức năng và phi chức nă
 
 #### Reliability và operations
 
-- **[NFR-QA]** P8-16: Backup PostgreSQL hàng ngày, retention 30 ngày.
-- **[NFR-QA]** P8-17: Backup/versioning object storage theo hạ tầng đã chọn.
-- **[NFR-QA]** P8-18: Restore drill sang môi trường sạch và đo RTO/RPO thực tế.
-- **[NFR-QA]** P8-19: Failure drills: restart API/worker, Redis down, MinIO down, SMTP down và DB unavailable.
-- **[NFR-QA]** P8-20: Xác minh restart policy, persistent volumes, resource limits và log retention.
-- **[NFR-QA]** P8-21: Uptime monitor và alert routing.
-- **[NFR-QA]** P8-21a: Probe readiness mỗi 10 giây; alert khi down quá 1 phút; maintenance banner được công bố trước 48 giờ để đáp ứng NFR-REL-001.
+- [x] **[NFR-QA]** P8-16: Backup PostgreSQL hàng ngày, retention 30 ngày *(sidecar 86.400 giây, checksum và restore verification; staging phải đặt backup volume trên storage độc lập)*.
+- [x] **[NFR-QA]** P8-17: Backup/versioning object storage theo hạ tầng đã chọn *(MinIO versioning + daily snapshot, retention 30 ngày)*.
+- [x] **[NFR-QA]** P8-18: Restore drill sang môi trường sạch và đo RTO/RPO thực tế *(local 05/10/2026: RTO 10,45 giây, RPO 11 giây)*.
+- [x] **[NFR-QA]** P8-19: Failure drills: restart API/worker, Redis down, MinIO down, SMTP down và DB unavailable *(local pass; worker chạy in-process cùng API)*.
+- [x] **[NFR-QA]** P8-20: Xác minh restart policy, persistent volumes, resource limits và log retention *(Compose runtime policy render và Docker inspect pass)*.
+- [x] **[NFR-QA]** P8-21: Uptime monitor và alert routing *(blackbox probe + Prometheus/Alertmanager local pass; receiver staging phải gửi alert thử tới owner)*.
+- [x] **[NFR-QA]** P8-21a: Probe readiness mỗi 10 giây; alert khi down quá 1 phút; maintenance banner được công bố trước 48 giờ để đáp ứng NFR-REL-001 *(failure drill xác minh alert; production guard chặn thông báo dưới 48 giờ)*.
 
 #### Release engineering
 

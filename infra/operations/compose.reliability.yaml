@@ -1,0 +1,227 @@
+x-logging: &bounded-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "5"
+
+services:
+  postgres:
+    deploy:
+      resources:
+        limits: { cpus: "2.0", memory: 4G }
+    logging: *bounded-logging
+
+  redis:
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+    logging: *bounded-logging
+
+  minio:
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 2G }
+    logging: *bounded-logging
+
+  minio-bootstrap:
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128M }
+    logging: *bounded-logging
+
+  mailhog:
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 256M }
+    logging: *bounded-logging
+
+  seq:
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 2G }
+    logging: *bounded-logging
+
+  otel-collector:
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512M }
+    logging: *bounded-logging
+
+  prometheus:
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+    logging: *bounded-logging
+
+  blackbox-exporter:
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128M }
+    logging: *bounded-logging
+
+  alertmanager:
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 256M }
+    logging: *bounded-logging
+
+  grafana:
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512M }
+    logging: *bounded-logging
+
+  api:
+    deploy:
+      resources:
+        limits: { cpus: "2.0", memory: 4G }
+    logging: *bounded-logging
+
+  web:
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+    logging: *bounded-logging
+
+  nginx:
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 256M }
+    logging: *bounded-logging
+
+  postgres-backup:
+    image: postgres:16.10-bookworm@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-culinary_blog}
+      POSTGRES_USER: ${POSTGRES_USER:-culinary}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETRY_SECONDS: ${BACKUP_RETRY_SECONDS:-300}
+    volumes:
+      - ./infra/operations/postgres-backup.sh:/opt/operations/postgres-backup.sh:ro
+      - postgres-backups:/backups
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        while true; do
+          if /bin/sh /opt/operations/postgres-backup.sh; then
+            sleep "$${BACKUP_INTERVAL_SECONDS}"
+          else
+            sleep "$${BACKUP_RETRY_SECONDS}"
+          fi
+        done
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512M }
+    logging: *bounded-logging
+
+  minio-backup:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-culinary-local}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-local-development-only}
+      MINIO_BUCKET: ${MINIO_BUCKET:-culinary-media}
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETRY_SECONDS: ${BACKUP_RETRY_SECONDS:-300}
+    volumes:
+      - ./infra/operations/minio-backup.sh:/opt/operations/minio-backup.sh:ro
+      - minio-backups:/backups
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        while true; do
+          if /bin/sh /opt/operations/minio-backup.sh; then
+            sleep "$${BACKUP_INTERVAL_SECONDS}"
+          else
+            sleep "$${BACKUP_RETRY_SECONDS}"
+          fi
+        done
+    depends_on:
+      minio-bootstrap:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512M }
+    logging: *bounded-logging
+
+  postgres-restore:
+    profiles: [restore-drill]
+    image: postgres:16.10-bookworm@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-culinary_blog}
+      POSTGRES_USER: ${POSTGRES_USER:-culinary}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    logging: *bounded-logging
+
+  minio-restore:
+    profiles: [restore-drill]
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-culinary-local}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-local-development-only}
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    logging: *bounded-logging
+
+  postgres-restore-verifier:
+    profiles: [restore-drill]
+    image: postgres:16.10-bookworm@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-culinary_blog}
+      POSTGRES_USER: ${POSTGRES_USER:-culinary}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+    volumes:
+      - ./infra/operations/restore-postgres-drill.sh:/opt/operations/restore-postgres-drill.sh:ro
+      - postgres-backups:/backups:ro
+    entrypoint: ["/bin/sh", "/opt/operations/restore-postgres-drill.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-restore:
+        condition: service_healthy
+    logging: *bounded-logging
+
+  minio-restore-verifier:
+    profiles: [restore-drill]
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-culinary-local}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-local-development-only}
+      MINIO_BUCKET: ${MINIO_BUCKET:-culinary-media}
+    volumes:
+      - ./infra/operations/restore-minio-drill.sh:/opt/operations/restore-minio-drill.sh:ro
+      - minio-backups:/backups:ro
+    entrypoint: ["/bin/sh", "/opt/operations/restore-minio-drill.sh"]
+    depends_on:
+      minio-restore:
+        condition: service_healthy
+    logging: *bounded-logging
+
+volumes:
+  postgres-backups:
+  minio-backups:

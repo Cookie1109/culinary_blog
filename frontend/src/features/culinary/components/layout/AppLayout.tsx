@@ -3,6 +3,7 @@ import { Outlet, Link, useNavigate, NavLink } from 'react-router'
 import { ChefHat, Search, Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { NetworkStatusBanner } from '@/features/culinary/components/NetworkStatusBanner'
+import { MaintenanceBanner } from '@/features/culinary/components/MaintenanceBanner'
 import { useUIStore } from '@/store/useUIStore'
 
 const FOCUSABLE_SELECTOR =
@@ -257,6 +258,7 @@ export function AppLayout() {
       </header>
 
       <NetworkStatusBanner />
+      <MaintenanceBanner />
 
       {/* Mobile menu overlay */}
       {mobileOpen && (

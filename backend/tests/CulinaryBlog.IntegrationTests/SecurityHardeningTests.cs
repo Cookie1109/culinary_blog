@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -59,6 +60,24 @@ public sealed class SecurityHardeningTests
     }
 
     [Fact]
+    public void ProductionRejectsMaintenanceAnnouncedLessThanFortyEightHoursAhead()
+    {
+        var configuration = CreateValidProductionConfiguration(new Dictionary<string, string?>
+        {
+            ["Operations:Maintenance:Enabled"] = "true",
+            ["Operations:Maintenance:Message"] = "Nâng cấp cơ sở dữ liệu",
+            ["Operations:Maintenance:AnnouncedAtUtc"] = "2026-10-01T00:00:00Z",
+            ["Operations:Maintenance:StartsAtUtc"] = "2026-10-02T23:59:59Z",
+            ["Operations:Maintenance:EndsAtUtc"] = "2026-10-03T01:00:00Z",
+        });
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => ProductionConfigurationGuard.Validate(isProduction: true, configuration));
+
+        Assert.Contains("at least 48 hours", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ReleaseEndpointExposesImmutableDeploymentIdentity()
     {
         using var factory = new SecurityApiFactory();
@@ -70,6 +89,22 @@ public sealed class SecurityHardeningTests
         Assert.Equal(new string('a', 40), response.Data.CommitSha);
         Assert.Equal($"sha256:{new string('b', 64)}", response.Data.ApiImageDigest);
         Assert.Equal($"sha256:{new string('c', 64)}", response.Data.WebImageDigest);
+    }
+
+    [Fact]
+    public async Task MaintenanceEndpointExposesRuntimeAnnouncement()
+    {
+        using var factory = new SecurityApiFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetFromJsonAsync<MaintenanceEnvelope>("/api/v1/operations/maintenance");
+
+        Assert.NotNull(response);
+        Assert.True(response.Data.Enabled);
+        Assert.Equal("Bảo trì theo kế hoạch", response.Data.Message);
+        Assert.Equal(
+            DateTimeOffset.Parse("2099-10-08T00:00:00Z", CultureInfo.InvariantCulture),
+            response.Data.StartsAtUtc);
     }
 
     [Fact]
@@ -113,6 +148,33 @@ public sealed class SecurityHardeningTests
         return request;
     }
 
+    private static IConfiguration CreateValidProductionConfiguration(
+        IReadOnlyDictionary<string, string?>? overrides = null)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:Database"] = "Host=database;Database=culinary;Username=app;Password=a-deployment-secret",
+            ["Jwt:SigningKey"] = "a-deployment-managed-signing-key-at-least-32-characters",
+            ["ObjectStorage:AccessKey"] = "deployment-access-key",
+            ["ObjectStorage:SecretKey"] = "deployment-secret-key",
+            ["AllowedHosts"] = "culinary.example.test",
+            ["Sitemap:PublicBaseUrl"] = "https://culinary.example.test",
+            ["Cors:AllowedOrigins:0"] = "https://culinary.example.test",
+            ["Release:CommitSha"] = new string('a', 40),
+            ["Release:ApiImageDigest"] = $"sha256:{new string('b', 64)}",
+            ["Release:WebImageDigest"] = $"sha256:{new string('c', 64)}",
+        };
+        if (overrides is not null)
+        {
+            foreach (var (key, value) in overrides)
+            {
+                values[key] = value;
+            }
+        }
+
+        return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+    }
+
     private sealed class SecurityApiFactory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -123,10 +185,24 @@ public sealed class SecurityHardeningTests
             builder.UseSetting("Release:CommitSha", new string('a', 40));
             builder.UseSetting("Release:ApiImageDigest", $"sha256:{new string('b', 64)}");
             builder.UseSetting("Release:WebImageDigest", $"sha256:{new string('c', 64)}");
+            builder.UseSetting("Operations:Maintenance:Enabled", "true");
+            builder.UseSetting("Operations:Maintenance:Message", "Bảo trì theo kế hoạch");
+            builder.UseSetting("Operations:Maintenance:AnnouncedAtUtc", "2099-10-05T00:00:00Z");
+            builder.UseSetting("Operations:Maintenance:StartsAtUtc", "2099-10-08T00:00:00Z");
+            builder.UseSetting("Operations:Maintenance:EndsAtUtc", "2099-10-08T01:00:00Z");
         }
     }
 
     private sealed record ReleaseEnvelope(ReleaseData Data);
 
     private sealed record ReleaseData(string CommitSha, string ApiImageDigest, string WebImageDigest);
+
+    private sealed record MaintenanceEnvelope(MaintenanceData Data);
+
+    private sealed record MaintenanceData(
+        bool Enabled,
+        string? Message,
+        DateTimeOffset? AnnouncedAtUtc,
+        DateTimeOffset? StartsAtUtc,
+        DateTimeOffset? EndsAtUtc);
 }

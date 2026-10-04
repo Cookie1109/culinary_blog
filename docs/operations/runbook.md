@@ -99,3 +99,37 @@ Sau migration, chạy readiness và smoke journey. Rollback ứng dụng bằng 
 - 5xx và p95 trở về baseline; worker không tạo failure mới.
 - Một request thử có thể truy từ response `X-Correlation-ID` sang Seq/audit.
 - Ghi timeline, root cause, biện pháp, phần còn lại và owner follow-up.
+
+## 10. Backup và restore drill
+
+Chạy stack reliability để kích hoạt PostgreSQL dump và MinIO snapshot hằng ngày. Hai loại backup giữ 30 ngày; backup volumes trên staging/production phải nằm trên encrypted storage độc lập với data volumes và Docker host chính.
+
+```powershell
+docker compose -f compose.yaml -f infra/operations/compose.reliability.yaml up --detach --build --wait
+./scripts/restore-drill.ps1
+```
+
+Restore drill chỉ ghi vào PostgreSQL/MinIO tmpfs sạch, kiểm tra checksum, migration/recipe/object count rồi ghi RTO/RPO vào `artifacts/reliability/`. Không xem backup là hợp lệ nếu chưa có restore drill pass. Production restore cần incident approval, write freeze và target mới; không restore đè trực tiếp lên database/bucket đang phục vụ.
+
+## 11. Failure drill
+
+```powershell
+./scripts/failure-drill.ps1
+```
+
+Script lần lượt restart API/worker, dừng Redis, MinIO, SMTP và PostgreSQL; `finally` khởi động lại toàn bộ dependency. Chỉ chạy trên local/staging hoặc trong maintenance window đã duyệt. Trước khi chạy phải xác nhận project name/URL không trỏ nhầm production. Sau drill, giữ readiness healthy tối thiểu 5 phút và đính kèm JSON evidence vào ticket.
+
+## 12. Uptime và alert routing
+
+Blackbox Exporter gọi `/health/ready` mỗi 10 giây. `CulinaryBlogReadinessDown` firing sau 1 phút; `CulinaryBlogWatchdog` phải luôn hiện ở receiver. Production dùng `infra/observability/alertmanager.production.yml` và URL receiver từ secret file, không commit webhook URL.
+
+```powershell
+$env:OPS_ALERT_WEBHOOK_URL_FILE = '<absolute-secret-file-path>'
+docker compose -f compose.yaml -f infra/operations/compose.alert-routing.yaml up --detach alertmanager
+```
+
+Gửi alert thử, xác nhận đúng on-call owner nhận cả firing và resolved notification, rồi ghi thời gian/receiver/ticket. Nếu Watchdog biến mất ở hệ thống nhận alert nhưng còn firing trong Alertmanager, xử lý như sự cố alert routing.
+
+## 13. Maintenance announcement
+
+Thiết lập `MAINTENANCE_ENABLED`, `MAINTENANCE_MESSAGE`, `MAINTENANCE_ANNOUNCED_AT_UTC`, `MAINTENANCE_STARTS_AT_UTC` và `MAINTENANCE_ENDS_AT_UTC`. Production guard từ chối khởi động nếu announcement cách start dưới 48 giờ, message rỗng hoặc end không sau start. Kiểm tra `GET /api/v1/operations/maintenance` và banner trên public/dashboard pages trước khi thông báo hoàn tất.

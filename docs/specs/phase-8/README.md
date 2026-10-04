@@ -1,6 +1,6 @@
 # Phase 8 — Hardening, UAT và phát hành
 
-> Trạng thái ngày 04/10/2026: **Implementation Complete / Local Accepted** cho P8-01 đến P8-14. Functional regression, performance và security local đã đạt; full npm audit đã được remediation về 0 High/Critical. P8-15 vẫn No-Go chỉ trong khi chờ ZAP evidence từ immutable staging HTTPS. Reliability, browser E2E/UAT và release sign-off chưa hoàn tất.
+> Trạng thái ngày 05/10/2026: **Implementation Complete / Local Accepted** cho P8-01 đến P8-14 và P8-16 đến P8-21a. Functional regression, performance, security và reliability local đã đạt. P8-15 vẫn No-Go trong khi chờ ZAP evidence từ immutable staging HTTPS; browser E2E/UAT và release sign-off chưa hoàn tất.
 
 ## Phạm vi
 
@@ -117,9 +117,21 @@ Mỗi lần chạy tạo `artifacts/performance/<timestamp>/environment.json`, s
 
 Chi tiết threat review, scan evidence, ZAP triage và release decision nằm tại [báo cáo Security Phase 8](../../reports/phase-8-security-report.md).
 
+## Reliability và operations P8-16 đến P8-21a
+
+- `infra/operations/compose.reliability.yaml` bổ sung PostgreSQL dump và MinIO snapshot mỗi 86.400 giây, retention 30 ngày; dump có SHA-256 và được kiểm tra bằng `pg_restore --list`, bucket nguồn/đích bắt buộc bật versioning.
+- Restore drill dùng PostgreSQL và MinIO sạch trên `tmpfs`, so khớp migration/recipe/object count và xuất JSON RTO/RPO. Lần chạy local ngày 05/10/2026 đạt RTO **10,45 giây**, RPO **11 giây**, 5 migration, 100 recipe và 1 object.
+- Failure drill đạt cho restart API/worker, Redis, MinIO, SMTP và PostgreSQL. Recovery lần lượt là 4,95 / 2,17 / 4,25 / 0,47 / 4,64 giây; readiness alert đã tới Alertmanager sau cửa sổ 1 phút.
+- Blackbox Exporter probe `/health/ready` mỗi 10 giây. Prometheus phát `CulinaryBlogReadinessDown` sau 1 phút và `CulinaryBlogWatchdog` kiểm tra pipeline; production receiver đọc URL từ secret file.
+- Reliability profile đặt resource limits, `restart: unless-stopped`, persistent volumes và log rotation `10 MB × 5`. Docker inspect xác nhận API nhận 2 CPU, 4 GiB và đúng log/restart policy.
+- Banner bảo trì đọc cấu hình runtime từ `GET /api/v1/operations/maintenance`; production guard yêu cầu `AnnouncedAtUtc` trước `StartsAtUtc` ít nhất 48 giờ.
+
+Lệnh tái hiện và kết quả chi tiết nằm tại [báo cáo Reliability Phase 8](../../reports/phase-8-reliability-report.md).
+
 ## Gate còn lại
 
 - Chạy lại `./scripts/performance.ps1 -Profile all` trên immutable artifact của staging trước go/no-go; kết quả local hiện tại không thay thế staging sign-off.
+- Chạy lại restore/failure drill trên staging, đặt volume backup trên storage độc lập/encrypted và gửi alert thử qua receiver thật để xác nhận đúng on-call owner.
 - Chạy `release-images.yml`, deploy API/Web theo digest từ release manifests, cấu hình `Release__CommitSha`, `Release__ApiImageDigest`, `Release__WebImageDigest`, rồi chạy `security-dynamic.yml` trên URL staging HTTPS và manual-triage report trước khi đóng P8-15.
 - Chạy CJ-01 đến CJ-05 bằng browser trên staging với đúng immutable release artifact và PostgreSQL/Redis/MinIO/Hangfire thật.
 - Ghi staging run ID, artifact digest và Product Owner sign-off ở P8-24/P8-25.

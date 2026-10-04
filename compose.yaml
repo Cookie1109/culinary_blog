@@ -119,6 +119,14 @@ services:
     depends_on:
       - otel-collector
       - alertmanager
+      - blackbox-exporter
+    restart: unless-stopped
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.27.0@sha256:a50c4c0eda297baa1678cd4dc4712a67fdea713b832d43ce7fcc5f9bea05094d
+    command: ["--config.file=/etc/blackbox_exporter/config.yml"]
+    volumes:
+      - ./infra/observability/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
     restart: unless-stopped
 
   alertmanager:
@@ -175,6 +183,11 @@ services:
       Sitemap__PublicBaseUrl: ${SITE_URL:-http://localhost:8080}
       Sitemap__RevalidationEndpoint: http://web:3000/api/revalidate
       Sitemap__RevalidationSecret: ${REVALIDATION_SECRET:-local-development-only-revalidation-secret}
+      Operations__Maintenance__Enabled: ${MAINTENANCE_ENABLED:-false}
+      Operations__Maintenance__Message: ${MAINTENANCE_MESSAGE:-}
+      Operations__Maintenance__AnnouncedAtUtc: ${MAINTENANCE_ANNOUNCED_AT_UTC:-}
+      Operations__Maintenance__StartsAtUtc: ${MAINTENANCE_STARTS_AT_UTC:-}
+      Operations__Maintenance__EndsAtUtc: ${MAINTENANCE_ENDS_AT_UTC:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -2,13 +2,13 @@ groups:
   - name: culinary-blog-availability
     rules:
       - alert: CulinaryBlogReadinessDown
-        expr: culinary_health_readiness == 0 or absent(culinary_health_readiness)
+        expr: probe_success{job="culinary-blog-readiness"} == 0 or absent(probe_success{job="culinary-blog-readiness"})
         for: 1m
         labels:
           severity: critical
         annotations:
           summary: Culinary Blog API is not ready
-          description: PostgreSQL or Redis has remained unavailable for at least one minute.
+          description: The external readiness probe has failed every 10 seconds for at least one minute.
 
       - alert: CulinaryBlogDependencyUnavailable
         expr: |
@@ -31,6 +31,14 @@ groups:
         annotations:
           summary: Culinary Blog telemetry is missing
           description: Prometheus cannot scrape the OpenTelemetry collector.
+
+      - alert: CulinaryBlogWatchdog
+        expr: vector(1)
+        labels:
+          severity: watchdog
+        annotations:
+          summary: Culinary Blog alert pipeline heartbeat
+          description: This alert must always reach the operations receiver; absence indicates broken alert routing.
 
   - name: culinary-blog-errors
     rules:
