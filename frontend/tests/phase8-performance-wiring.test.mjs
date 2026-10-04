@@ -29,8 +29,9 @@ test('P8-07: k6 verifies application cache hit rate from Prometheus', async () =
 })
 
 test('P8-08: release Lighthouse run stores artifacts and reuses enforced budgets', async () => {
-  const [config, packageJson] = await Promise.all([
+  const [config, runner, packageJson] = await Promise.all([
     frontendSource('lighthouserc.release.cjs'),
+    frontendSource('scripts/run-lighthouse-release.mjs'),
     frontendSource('package.json').then(JSON.parse),
   ])
 
@@ -42,8 +43,12 @@ test('P8-08: release Lighthouse run stores artifacts and reuses enforced budgets
   assert.match(config, /total-blocking-time/)
   assert.match(config, /resource-summary:script:size/)
   assert.match(config, /--disable-gpu/)
+  assert.match(runner, /numberOfRuns/)
+  assert.match(runner, /assertion-summary\.json/)
+  assert.match(runner, /resource-summary:script:size/)
   assert.ok(packageJson.scripts['lighthouse:release'])
-  assert.ok(packageJson.devDependencies['@lhci/cli'])
+  assert.ok(packageJson.devDependencies.lighthouse)
+  assert.equal(packageJson.devDependencies['@lhci/cli'], undefined)
 })
 
 test('P8-09: performance runner records environment and only runs measured gates', async () => {

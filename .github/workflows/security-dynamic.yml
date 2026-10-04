@@ -1,0 +1,124 @@
+name: security-dynamic
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: Immutable staging artifact URL to scan (HTTPS only)
+        required: true
+        type: string
+      commit_sha:
+        description: Full Git commit SHA deployed to staging
+        required: true
+        type: string
+      api_digest:
+        description: Deployed API image digest (sha256:...)
+        required: true
+        type: string
+      web_digest:
+        description: Deployed Web image digest (sha256:...)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-dynamic-${{ inputs.target_url }}
+  cancel-in-progress: false
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-latest
+    environment: staging-security
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate immutable deployment identity
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          API_DIGEST: ${{ inputs.api_digest }}
+          WEB_DIGEST: ${{ inputs.web_digest }}
+        run: |
+          mkdir -p artifacts/security
+          case "$TARGET_URL" in
+            https://*) ;;
+            *) echo "target_url must use HTTPS" >&2; exit 1 ;;
+          esac
+          [[ "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "commit_sha must be a full Git SHA" >&2; exit 1; }
+          [[ "$API_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "api_digest must be a sha256 digest" >&2; exit 1; }
+          [[ "$WEB_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "web_digest must be a sha256 digest" >&2; exit 1; }
+          [ "$COMMIT_SHA" = "$GITHUB_SHA" ] || { echo "commit_sha must match the checked-out workflow revision" >&2; exit 1; }
+
+          curl --fail --silent --show-error --retry 3 \
+            "${TARGET_URL%/}/api/v1/release" \
+            --output artifacts/security/deployed-release.json
+          jq -e \
+            --arg commit "$COMMIT_SHA" \
+            --arg api "$API_DIGEST" \
+            --arg web "$WEB_DIGEST" \
+            '.data.commitSha == $commit and .data.apiImageDigest == $api and .data.webImageDigest == $web' \
+            artifacts/security/deployed-release.json >/dev/null || {
+              echo "Staging identity does not match the requested immutable artifacts" >&2
+              exit 1
+            }
+      - name: Run ZAP baseline
+        id: zap
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          set +e
+          docker run --rm \
+            -v "$PWD/security/zap:/zap/config:ro" \
+            -v "$PWD/artifacts/security:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable@sha256:781a2bdaea47324e7bab583e2263f21d257b0aee61ed51521a5be45f5f5081ef \
+            zap-baseline.py -I -t "$TARGET_URL" -c /zap/config/rules.tsv \
+            -J zap-report.json -r zap-report.html -w zap-report.md
+          status=$?
+          echo "$status" > artifacts/security/zap-exit-code.txt
+          set -e
+          if [ "$status" -eq 1 ] || [ "$status" -eq 3 ]; then
+            exit "$status"
+          fi
+          warning_count=$(jq '[.site[].alerts[]?] | length' artifacts/security/zap-report.json)
+          if [ "$status" -eq 2 ] || [ "$warning_count" -gt 0 ]; then
+            echo "::warning::ZAP reported warnings; manual triage is required before release sign-off."
+          fi
+      - name: Write immutable evidence manifest
+        if: always()
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          API_DIGEST: ${{ inputs.api_digest }}
+          WEB_DIGEST: ${{ inputs.web_digest }}
+          ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:stable@sha256:781a2bdaea47324e7bab583e2263f21d257b0aee61ed51521a5be45f5f5081ef
+        run: |
+          report_sha=$(test -f artifacts/security/zap-report.json && sha256sum artifacts/security/zap-report.json | cut -d' ' -f1 || true)
+          release_sha=$(test -f artifacts/security/deployed-release.json && sha256sum artifacts/security/deployed-release.json | cut -d' ' -f1 || true)
+          zap_exit_code=$(cat artifacts/security/zap-exit-code.txt 2>/dev/null || printf 'not-run')
+          jq -n \
+            --arg targetUrl "$TARGET_URL" \
+            --arg commitSha "$COMMIT_SHA" \
+            --arg apiImageDigest "$API_DIGEST" \
+            --arg webImageDigest "$WEB_DIGEST" \
+            --arg zapImage "$ZAP_IMAGE" \
+            --arg workflowRunUrl "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg generatedAtUtc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg zapExitCode "$zap_exit_code" \
+            --arg zapReportSha256 "$report_sha" \
+            --arg deployedReleaseSha256 "$release_sha" \
+            '{targetUrl: $targetUrl, commitSha: $commitSha, apiImageDigest: $apiImageDigest, webImageDigest: $webImageDigest, zapImage: $zapImage, workflowRunUrl: $workflowRunUrl, generatedAtUtc: $generatedAtUtc, zapExitCode: $zapExitCode, zapReportSha256: $zapReportSha256, deployedReleaseSha256: $deployedReleaseSha256}' \
+            > artifacts/security/evidence.json
+      - name: Upload ZAP evidence
+        id: evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-security-report-${{ inputs.commit_sha }}
+          path: artifacts/security
+          if-no-files-found: error
+          retention-days: 90
+      - name: Record evidence artifact digest
+        if: always()
+        run: |
+          echo "ZAP evidence artifact digest: ${{ steps.evidence.outputs.artifact-digest }}" >> "$GITHUB_STEP_SUMMARY"

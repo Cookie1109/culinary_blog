@@ -147,7 +147,7 @@ test('P7-18/P7-19: Direct navigation and admin scope remain role-gated', async (
     /matcher:\s*\[.*\/dashboard\/:path\*/s,
     'Direct dashboard URLs must pass Auth.js middleware',
   )
-  assert.match(authSource, /authorized\(\{ auth \}\).*Boolean\(auth\?\.accessToken && !auth\.error\)/s)
+  assert.match(authSource, /authorized\(\{ auth \}\).*Boolean\(auth\?\.backendUser\)/s)
   assert.match(layoutSource, /user\?\.role === 'admin'/, 'Admin navigation must be hidden from authors')
   assert.match(
     recipesSource,

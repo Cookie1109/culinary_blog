@@ -147,6 +147,7 @@ services:
     restart: unless-stopped
 
   api:
+    image: culinary-blog-api:local
     build:
       context: ./backend
       dockerfile: src/CulinaryBlog.Api/Dockerfile
@@ -161,6 +162,7 @@ services:
       ObjectStorage__BucketName: ${MINIO_BUCKET:-culinary-media}
       Seq__ServerUrl: http://seq
       Telemetry__OtlpEndpoint: http://otel-collector:4317
+      ReverseProxy__TrustForwardedHeaders: "true"
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-local-development-only-change-this-key-before-shared-use}
       Google__ClientId: ${AUTH_GOOGLE_ID:-}
       Database__ApplyMigrationsOnStartup: "true"
@@ -194,6 +196,7 @@ services:
     restart: unless-stopped
 
   web:
+    image: culinary-blog-web:local
     build:
       context: .
       dockerfile: frontend/Dockerfile
@@ -215,7 +218,7 @@ services:
       test:
         [
           "CMD",
-          "node",
+          "/nodejs/bin/node",
           "-e",
           "fetch('http://localhost:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
         ]

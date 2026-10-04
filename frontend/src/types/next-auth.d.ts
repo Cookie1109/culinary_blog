@@ -1,20 +1,19 @@
-import type { BackendSession, AuthUser } from '@/lib/api/auth-types'
+import type { BackendAccessSession, AuthUser } from '@/lib/api/auth-types'
 
 declare module 'next-auth' {
   interface User {
-    backendSession?: BackendSession
+    backendSession?: BackendAccessSession
   }
 
   interface Session {
     accessToken?: string
+    accessTokenExpiresAt?: string
     backendUser?: AuthUser
-    error?: 'RefreshTokenError'
   }
 }
 
 declare module '@auth/core/jwt' {
   interface JWT {
-    backend?: BackendSession
-    error?: 'RefreshTokenError'
+    backend?: BackendAccessSession
   }
 }

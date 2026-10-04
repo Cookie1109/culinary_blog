@@ -1,7 +1,40 @@
 import { authenticatedAxios } from '@/lib/api/axios'
-import type { AuthUser } from '@/lib/api/auth-types'
+import type { AuthUser, BackendSession } from '@/lib/api/auth-types'
+import { publicEnvironment } from '@/lib/env'
 
 export type { AuthUser } from '@/lib/api/auth-types'
+
+async function exchangeSession(path: string, body: unknown): Promise<BackendSession> {
+  const response = await fetch(`${publicEnvironment.NEXT_PUBLIC_API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  })
+  if (!response.ok) throw new Error('Authentication failed.')
+  return ((await response.json()) as { data: BackendSession }).data
+}
+
+export function loginWithPassword(email: string, password: string) {
+  return exchangeSession('/auth/login', { email, password })
+}
+
+export function registerWithPassword(displayName: string, email: string, password: string) {
+  return exchangeSession('/auth/register', { displayName, email, password })
+}
+
+export function rotateBackendSession(refreshToken: string) {
+  return exchangeSession('/auth/refresh', { refreshToken })
+}
+
+export async function revokeBackendSession(refreshToken: string) {
+  await fetch(`${publicEnvironment.NEXT_PUBLIC_API_BASE_URL}/auth/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+    cache: 'no-store',
+  })
+}
 
 export async function authenticatedApiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)

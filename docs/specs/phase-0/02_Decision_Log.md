@@ -30,7 +30,7 @@
 | GAP-022 | Bucket private; public/private delivery theo trạng thái | TL/Ops | ADR-006 | Accepted |
 | GAP-023 | Hangfire PostgreSQL + Transactional Outbox cho reliable dispatch | TL/Ops | ADR-009 | Accepted |
 | GAP-024 | Browser minimum dùng bảng 5.4: Chrome 112, Firefox 113, Edge 112, Safari 16 | PO/FE/QA | Test Strategy | Accepted |
-| GAP-025 | .NET 10, Next.js 15, Node 20 LTS; pin exact patch/image digest | TL/FE/Ops | Project Plan | Accepted |
+| GAP-025 | .NET 10, Next.js 15, Node 22 LTS; pin exact patch/image digest | TL/FE/Ops | Project Plan/ADR-010 | Amended 04/10/2026 |
 | GAP-026 | FluentValidation chỉ ở Application; Domain chỉ dùng .NET BCL | TL | Project Plan/tests | Accepted |
 | GAP-027 | Dùng 7 NFR-SEC; số 6 là lỗi đếm | TL/QA | Conformance/Test Strategy | Accepted |
 | GAP-028 | RecipeImage là entity/table riêng, quan hệ 1:N | TL | Data Dictionary | Accepted |
@@ -48,5 +48,6 @@ Không còn GAP chưa có quyết định. Việc triển khai chỉ được ph
 
 | Ngày | GAP/ADR | Thay đổi | Căn cứ |
 |---|---|---|---|
+| 04/10/2026 | GAP-025 / ADR-010 | Node 20.19.5 → Node 22.23.3 LTS | Node 20 EOL; Phase 8 container scan phát hiện runtime không còn nhận security fixes |
 | 09/09/2026 | GAP-001-026 | Tạo baseline đề xuất lần đầu | Phân tích SRS |
 | 11/09/2026 | GAP-001-033 | Chốt toàn bộ quyết định, bổ sung 7 GAP bị bỏ sót và đồng bộ tài liệu | Chỉ đạo chuẩn hóa theo SRS nguồn |

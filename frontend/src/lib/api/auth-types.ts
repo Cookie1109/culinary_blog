@@ -16,3 +16,5 @@ export interface BackendSession {
   expiresAt: string
   user: AuthUser
 }
+
+export type BackendAccessSession = Omit<BackendSession, 'refreshToken'>

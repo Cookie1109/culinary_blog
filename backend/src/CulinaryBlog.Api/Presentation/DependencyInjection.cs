@@ -8,6 +8,7 @@ using CulinaryBlog.Api.Telemetry;
 using CulinaryBlog.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +22,43 @@ public static class DependencyInjection
         var authPermitLimit = configuration.GetValue("RateLimiting:AuthPermitLimit", 10);
         var globalPermitLimit = configuration.GetValue("RateLimiting:GlobalPermitLimit", 100);
         var uploadPermitLimit = configuration.GetValue("RateLimiting:UploadPermitLimit", 5);
+        var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        if (allowedOrigins.Any(origin =>
+            !Uri.TryCreate(origin, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)))
+        {
+            throw new InvalidOperationException("CORS allowed origins must be absolute HTTP or HTTPS origins.");
+        }
+
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardLimit = 1;
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+        services.AddHsts(options =>
+        {
+            options.MaxAge = TimeSpan.FromDays(365);
+            options.IncludeSubDomains = true;
+            options.Preload = true;
+        });
+        services.AddCors(options => options.AddPolicy("Frontend", policy =>
+        {
+            if (allowedOrigins.Length == 0)
+            {
+                policy.SetIsOriginAllowed(_ => false);
+            }
+            else
+            {
+                policy.WithOrigins(allowedOrigins);
+            }
+
+            policy
+                .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .WithHeaders("Authorization", "Content-Type", "If-Match", "X-Correlation-ID")
+                .WithExposedHeaders("ETag", "Retry-After", "X-Correlation-ID");
+        }));
         services.AddProblemDetails(options =>
         {
             options.CustomizeProblemDetails = context =>

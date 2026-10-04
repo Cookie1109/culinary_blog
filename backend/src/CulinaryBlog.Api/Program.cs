@@ -2,6 +2,7 @@ using System.Globalization;
 using CulinaryBlog.Api.Health;
 using CulinaryBlog.Api.Middleware;
 using CulinaryBlog.Api.Presentation;
+using CulinaryBlog.Api.Security;
 using CulinaryBlog.Api.Telemetry;
 using CulinaryBlog.Application;
 using CulinaryBlog.Infrastructure;
@@ -21,6 +22,7 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+    ProductionConfigurationGuard.Validate(builder.Environment.IsProduction(), builder.Configuration);
 
     builder.Host.UseSerilog((context, services, loggerConfiguration) =>
     {
@@ -52,6 +54,15 @@ try
 
     var app = builder.Build();
 
+    if (builder.Configuration.GetValue<bool>("ReverseProxy:TrustForwardedHeaders"))
+    {
+        app.UseForwardedHeaders();
+    }
+    if (app.Environment.IsProduction())
+    {
+        app.UseHsts();
+    }
+
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseSerilogRequestLogging(options =>
     {
@@ -64,6 +75,7 @@ try
         };
     });
     app.UseExceptionHandler();
+    app.UseCors("Frontend");
     app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
@@ -109,6 +121,16 @@ try
         data = new { service = "CulinaryBlog.Api", version = "1.0.0" },
         meta = new { },
     }));
+    app.MapGet("/api/v1/release", (IConfiguration configuration) => Results.Ok(new
+    {
+        data = new
+        {
+            commitSha = configuration["Release:CommitSha"],
+            apiImageDigest = configuration["Release:ApiImageDigest"],
+            webImageDigest = configuration["Release:WebImageDigest"],
+        },
+        meta = new { },
+    }));
 
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {
@@ -131,6 +153,7 @@ try
 catch (Exception exception) when (exception is not HostAbortedException)
 {
     Log.Fatal(exception, "CulinaryBlog API terminated unexpectedly");
+    Environment.ExitCode = 1;
 }
 finally
 {

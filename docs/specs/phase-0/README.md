@@ -24,7 +24,7 @@ Thư mục này chứa toàn bộ đầu ra Phase 0 đã hợp nhất từ SRS. 
 | Acceptance criteria | [07_Critical_Journey_Acceptance.md](./07_Critical_Journey_Acceptance.md) | P0-22 | Accepted |
 | Threat model | [08_Threat_Model.md](./08_Threat_Model.md) | P0-23 | Accepted |
 | Test strategy | [09_Test_Strategy.md](./09_Test_Strategy.md) | Phase 0 deliverable | Accepted |
-| 9 Architecture Decision Records | [adr/](./adr/) | P0-06–P0-14 | Accepted |
+| 10 Architecture Decision Records | [adr/](./adr/) | P0-06–P0-14 + security amendment | Accepted |
 
 ## ADR
 
@@ -39,6 +39,7 @@ Thư mục này chứa toàn bộ đầu ra Phase 0 đã hợp nhất từ SRS. 
 | [ADR-007](./adr/ADR-007-distributed-cache.md) | Redis-backed cache | Accepted |
 | [ADR-008](./adr/ADR-008-vietnamese-full-text-search.md) | FTS tiếng Việt | Accepted |
 | [ADR-009](./adr/ADR-009-transactional-outbox.md) | Transactional Outbox | Accepted |
+| [ADR-010](./adr/ADR-010-supported-node-runtime.md) | Node runtime phải còn security support | Accepted |
 
 ## Kết quả thực hiện P0-01–P0-23
 

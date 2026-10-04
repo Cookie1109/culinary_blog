@@ -1,0 +1,9 @@
+# ZAP baseline rule configuration. FAIL findings block the dynamic security workflow.
+10010	FAIL	(Cookie No HttpOnly Flag)
+10011	FAIL	(Cookie Without Secure Flag)
+10015	WARN	(Incomplete or No Cache-control and Pragma HTTP Header Set)
+10020	FAIL	(X-Frame-Options Header Scanner)
+10021	FAIL	(X-Content-Type-Options Header Missing)
+10035	FAIL	(Strict-Transport-Security Header Scanner)
+10038	FAIL	(Content Security Policy Header Not Set)
+10054	FAIL	(Cookie without SameSite Attribute)

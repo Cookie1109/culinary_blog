@@ -1,6 +1,6 @@
 # Phase 8 — Hardening, UAT và phát hành
 
-> Trạng thái ngày 04/10/2026: **Implementation Complete / Local Accepted** cho P8-01 đến P8-09. Functional regression và performance đã đạt trên release build local; staging browser E2E/UAT, security, reliability và release gate chưa được tài liệu này tuyên bố hoàn tất.
+> Trạng thái ngày 04/10/2026: **Implementation Complete / Local Accepted** cho P8-01 đến P8-14. Functional regression, performance và security local đã đạt; full npm audit đã được remediation về 0 High/Critical. P8-15 vẫn No-Go chỉ trong khi chờ ZAP evidence từ immutable staging HTTPS. Reliability, browser E2E/UAT và release sign-off chưa hoàn tất.
 
 ## Phạm vi
 
@@ -75,8 +75,8 @@ Role matrix được kiểm tra ở API và UI wiring: Guest chỉ thấy Publis
 | Format/build | `dotnet format ... --verify-no-changes`; `dotnet build ... -c Release` | Pass, 0 warning/error |
 | Unit | `dotnet test CulinaryBlog.UnitTests` | 58/58 pass |
 | Architecture | `dotnet test CulinaryBlog.ArchitectureTests` | 3/3 pass |
-| Functional integration | `dotnet test CulinaryBlog.IntegrationTests --filter FullyQualifiedName!~RecipeDiscoveryPerformanceTests` | 45/45 pass với PostgreSQL/Redis Testcontainers |
-| Frontend regression | `npm test` | 54/54 pass |
+| Functional integration | `dotnet test CulinaryBlog.IntegrationTests --filter FullyQualifiedName!~RecipeDiscoveryPerformanceTests` | 50/50 pass với PostgreSQL/Redis/MinIO Testcontainers |
+| Frontend regression | `npm test` | 61/61 pass |
 
 Chạy lại bộ regression bằng `./scripts/functional-regression.ps1`. Test performance được loại khỏi script này vì thuộc P8-05 đến P8-09.
 
@@ -107,9 +107,20 @@ Chạy nhanh smoke API/cache, bỏ Lighthouse:
 
 Mỗi lần chạy tạo `artifacts/performance/<timestamp>/environment.json`, summary JSON của từng profile k6 và Lighthouse reports. Kết quả local ngày 04/10/2026 được tổng hợp tại [báo cáo performance Phase 8](../../reports/phase-8-performance-report.md); tài liệu không dùng số đo giả hoặc số đo từ development server.
 
+## Security P8-10 đến P8-15
+
+- OWASP review, CORS/headers/TLS configuration, session-token hardening và rate-limit tests đã hoàn tất ở local.
+- Gitleaks không thấy secret trong 38 commit; production npm dependencies và hai runtime images có 0 Critical/High. Web runtime dùng Node 22 distroless/non-root.
+- ZAP local spider 78 URL với 0 FAIL; 7 nhóm warning đã được manual-triage. `X-Powered-By` được remediation và pass ở vòng quét lại.
+- Dev toolchain đã remediation: bỏ `@lhci/cli` và `eslint-config-next`, thay bằng Lighthouse runner trực tiếp cùng ESLint flat config; full npm audit đạt 0 High/Critical.
+- P8-15 vẫn No-Go: cần ZAP trên immutable staging HTTPS. Workflow sẽ từ chối scan nếu `/api/v1/release` không khớp commit SHA và hai image digest được khai báo.
+
+Chi tiết threat review, scan evidence, ZAP triage và release decision nằm tại [báo cáo Security Phase 8](../../reports/phase-8-security-report.md).
+
 ## Gate còn lại
 
 - Chạy lại `./scripts/performance.ps1 -Profile all` trên immutable artifact của staging trước go/no-go; kết quả local hiện tại không thay thế staging sign-off.
+- Chạy `release-images.yml`, deploy API/Web theo digest từ release manifests, cấu hình `Release__CommitSha`, `Release__ApiImageDigest`, `Release__WebImageDigest`, rồi chạy `security-dynamic.yml` trên URL staging HTTPS và manual-triage report trước khi đóng P8-15.
 - Chạy CJ-01 đến CJ-05 bằng browser trên staging với đúng immutable release artifact và PostgreSQL/Redis/MinIO/Hangfire thật.
 - Ghi staging run ID, artifact digest và Product Owner sign-off ở P8-24/P8-25.
 - Google OAuth chỉ được đưa vào RC khi có Change Request/credential và bổ sung issuer/audience/expiry/link integration test; hiện là Should-have deferred đã công bố từ Phase 2.

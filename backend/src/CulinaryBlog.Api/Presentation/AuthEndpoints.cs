@@ -11,7 +11,14 @@ internal static class AuthEndpoints
 {
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var auth = endpoints.MapGroup("/api/v1/auth").RequireRateLimiting("auth");
+        var auth = endpoints.MapGroup("/api/v1/auth")
+            .RequireRateLimiting("auth")
+            .AddEndpointFilter(async (context, next) =>
+            {
+                context.HttpContext.Response.Headers.CacheControl = "no-store";
+                context.HttpContext.Response.Headers.Pragma = "no-cache";
+                return await next(context).ConfigureAwait(false);
+            });
 
         auth.MapPost("/register", RegisterAsync).AllowAnonymous();
         auth.MapPost("/login", LoginAsync).AllowAnonymous();

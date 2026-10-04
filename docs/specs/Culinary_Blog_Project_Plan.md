@@ -39,7 +39,7 @@ Nhóm làm theo sprint 2 tuần. Với nhóm trên, kế hoạch dự kiến kho
 ### 2.2. Baseline kỹ thuật
 
 - Backend: .NET 10 Minimal APIs, Clean Architecture, CQRS/MediatR.
-- Frontend: Next.js 15 App Router, Node.js 20 LTS, TypeScript, Tailwind CSS, Auth.js v5, TanStack Query, React Hook Form, Zod.
+- Frontend: Next.js 15 App Router, Node.js 22 LTS (security amendment ADR-010), TypeScript, Tailwind CSS, Auth.js v5, TanStack Query, React Hook Form, Zod.
 - Data: PostgreSQL 16 và EF Core Code First.
 - Cache: Redis 7 hoặc .NET Output Cache dùng Redis-backed store.
 - Storage: MinIO/S3 với bucket private; Published media qua public proxy/CDN, Draft/Archived qua authorized short-lived URL.
@@ -727,13 +727,13 @@ Chứng minh hệ thống đáp ứng yêu cầu chức năng và phi chức nă
 
 #### Security
 
-- **[NFR-QA]** P8-10: OWASP review cho broken access control, auth, injection, upload, SSRF, security misconfiguration.
-- **[NFR-QA]** P8-11: Dependency/container/secret/license scans.
-- **[NFR-QA]** P8-12: CORS allowlist, CSP, HSTS, TLS 1.2+, secure headers và production token body/sessionStorage settings; cookie chỉ dùng cho Auth.js state/session nếu không chứa Culinary refresh token.
-- **[NFR-QA]** P8-13: Rate-limit test auth/general/upload.
-- **[NFR-QA]** P8-13a: Xác minh cấu hình 10 request/phút/IP cho auth, 100 request/phút/IP cho API chung và 5 request/phút/IP cho upload.
-- **[NFR-QA]** P8-14: ZAP hoặc dynamic scan phù hợp; manual verification cho false positives.
-- **[NFR-QA]** P8-15: Không release nếu còn Critical/High chưa được remediation hoặc risk acceptance chính thức.
+- [x] **[NFR-QA]** P8-10: OWASP review cho broken access control, auth, injection, upload, SSRF, security misconfiguration.
+- [x] **[NFR-QA]** P8-11: Dependency/container/secret/license scans.
+- [x] **[NFR-QA]** P8-12: CORS allowlist, CSP, HSTS, TLS 1.2+, secure headers và production token body/sessionStorage settings; cookie chỉ dùng cho Auth.js state/session nếu không chứa Culinary refresh token.
+- [x] **[NFR-QA]** P8-13: Rate-limit test auth/general/upload.
+- [x] **[NFR-QA]** P8-13a: Xác minh cấu hình 10 request/phút/IP cho auth, 100 request/phút/IP cho API chung và 5 request/phút/IP cho upload.
+- [x] **[NFR-QA]** P8-14: ZAP hoặc dynamic scan phù hợp; manual verification cho false positives *(local: 78 URL, 0 FAIL; staging HTTPS rerun vẫn bắt buộc trước release)*.
+- [ ] **[NFR-QA]** P8-15: Không release nếu còn Critical/High chưa được remediation hoặc risk acceptance chính thức *(full npm audit đã đạt 0 High/Critical; No-Go còn lại là ZAP evidence trên immutable staging HTTPS)*.
 
 #### Reliability và operations
 

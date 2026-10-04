@@ -67,7 +67,7 @@ docker compose down
 ### Yêu cầu
 
 - .NET SDK `10.0.401`
-- Node.js `20.19.5`
+- Node.js `22.23.3` LTS
 - Docker Desktop
 
 Phiên bản công cụ được khai báo trong `backend/global.json` và `.mise.toml`. Có thể chạy `mise install` nếu máy đã cài [mise](https://mise.jdx.dev/).
