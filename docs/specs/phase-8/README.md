@@ -1,6 +1,6 @@
 # Phase 8 — Hardening, UAT và phát hành
 
-> Trạng thái ngày 05/10/2026: **Implementation Complete / Local Accepted** cho P8-01 đến P8-14 và P8-16 đến P8-21a. Functional regression, performance, security và reliability local đã đạt. P8-15 vẫn No-Go trong khi chờ ZAP evidence từ immutable staging HTTPS; browser E2E/UAT và release sign-off chưa hoàn tất.
+> Trạng thái ngày 05/10/2026: **Release Engineering / Local Accepted** cho P8-01 đến P8-14, P8-16 đến P8-23 và P8-26. Functional regression, performance, security, reliability và release template gate local đã đạt. P8-15/P8-24/P8-25/P8-27/P8-28 vẫn No-Go trong khi chờ immutable staging HTTPS, chữ ký và production evidence thật.
 
 ## Phạm vi
 
@@ -76,7 +76,7 @@ Role matrix được kiểm tra ở API và UI wiring: Guest chỉ thấy Publis
 | Unit | `dotnet test CulinaryBlog.UnitTests` | 58/58 pass |
 | Architecture | `dotnet test CulinaryBlog.ArchitectureTests` | 3/3 pass |
 | Functional integration | `dotnet test CulinaryBlog.IntegrationTests --filter FullyQualifiedName!~RecipeDiscoveryPerformanceTests` | 50/50 pass với PostgreSQL/Redis/MinIO Testcontainers |
-| Frontend regression | `npm test` | 61/61 pass |
+| Frontend regression | `npm test` | 69/69 pass |
 
 Chạy lại bộ regression bằng `./scripts/functional-regression.ps1`. Test performance được loại khỏi script này vì thuộc P8-05 đến P8-09.
 
@@ -136,3 +136,17 @@ Lệnh tái hiện và kết quả chi tiết nằm tại [báo cáo Reliability
 - Chạy CJ-01 đến CJ-05 bằng browser trên staging với đúng immutable release artifact và PostgreSQL/Redis/MinIO/Hangfire thật.
 - Ghi staging run ID, artifact digest và Product Owner sign-off ở P8-24/P8-25.
 - Google OAuth chỉ được đưa vào RC khi có Change Request/credential và bổ sung issuer/audience/expiry/link integration test; hiện là Should-have deferred đã công bố từ Phase 2.
+
+## Release engineering P8-22 đến P8-28
+
+| Task | Đầu ra | Trạng thái |
+|---|---|---|
+| P8-22 | `infra/production/compose.production.yaml`, Nginx TLS, mọi image theo digest, không build, internal backend network, external encrypted volumes | Local Accepted |
+| P8-23 | `docs/release/environment-and-secrets-checklist.md` có owner, rotation trigger/cycle và sign-off | Complete |
+| P8-24 | Workflow tạo bundle API/Web + checksum; `release-gate.ps1` đối chiếu manifest/Compose; `deploy-release.ps1` pull `--no-build` và sinh evidence | Automation ready; staging run pending |
+| P8-25 | UAT critical journeys, defect register và Product Owner/QA signature record | Template ready; sign-off pending |
+| P8-26 | `CHANGELOG.md`, v1.0.0 release notes, README/runbook và handover links tới OpenAPI/ADR/reports | Complete |
+| P8-27 | Go/no-go checklist, trigger và rollback theo previous digest/schema/restore decision | Plan ready; meeting pending |
+| P8-28 | Production approval guard, post-deploy release identity/health/header smoke và evidence JSON; monitoring schedule 24–48 giờ | Automation ready; production pending |
+
+Template production đã render và `./scripts/release-gate.ps1 -Template` pass ngày 05/10/2026. Kết quả này chỉ chứng minh cấu hình/gate có thể thực thi; không thay thế image digest thật, secret/TLS/volume checks, staging evidence, UAT hay production monitoring.

@@ -1,0 +1,340 @@
+name: ${COMPOSE_PROJECT_NAME:-culinary-blog-release}
+
+x-runtime: &runtime
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "5"
+
+services:
+  postgres:
+    <<: *runtime
+    image: ${POSTGRES_IMAGE:-postgres:16.10-bookworm@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Inject POSTGRES_PASSWORD from the deployment secret store}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    deploy:
+      resources:
+        limits: { cpus: "2.0", memory: 4G }
+
+  redis:
+    <<: *runtime
+    image: ${REDIS_IMAGE:-redis:7.4.5-alpine@sha256:bb186d083732f669da90be8b0f975a37812b15e913465bb14d845db72a4e3e08}
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+
+  minio:
+    <<: *runtime
+    image: ${MINIO_IMAGE:-minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e}
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Inject MINIO_ROOT_USER from the deployment secret store}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Inject MINIO_ROOT_PASSWORD from the deployment secret store}
+    volumes:
+      - minio-data:/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 2G }
+
+  minio-bootstrap:
+    image: ${MINIO_MC_IMAGE:-minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727}
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Inject MINIO_ROOT_USER from the deployment secret store}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Inject MINIO_ROOT_PASSWORD from the deployment secret store}
+      MINIO_BUCKET: ${MINIO_BUCKET:?Set MINIO_BUCKET}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing "local/$${MINIO_BUCKET}"
+        mc anonymous set none "local/$${MINIO_BUCKET}"
+        mc version enable "local/$${MINIO_BUCKET}"
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks: [backend]
+    restart: "no"
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "5" }
+
+  otel-collector:
+    <<: *runtime
+    image: ${OTEL_IMAGE:?Set OTEL_IMAGE to a verified image@sha256 digest}
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ../observability/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    networks: [backend]
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512M }
+
+  prometheus:
+    <<: *runtime
+    image: ${PROMETHEUS_IMAGE:?Set PROMETHEUS_IMAGE to a verified image@sha256 digest}
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    depends_on: [otel-collector, alertmanager, blackbox-exporter]
+    networks: [backend]
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+
+  blackbox-exporter:
+    <<: *runtime
+    image: ${BLACKBOX_IMAGE:-prom/blackbox-exporter:v0.27.0@sha256:a50c4c0eda297baa1678cd4dc4712a67fdea713b832d43ce7fcc5f9bea05094d}
+    command: ["--config.file=/etc/blackbox_exporter/config.yml"]
+    volumes:
+      - ../observability/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    networks: [backend]
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128M }
+
+  alertmanager:
+    <<: *runtime
+    image: ${ALERTMANAGER_IMAGE:?Set ALERTMANAGER_IMAGE to a verified image@sha256 digest}
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ../observability/alertmanager.production.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ${OPS_ALERT_WEBHOOK_URL_FILE:?Set OPS_ALERT_WEBHOOK_URL_FILE to the approved receiver secret file}:/run/secrets/operations_webhook_url:ro
+    networks: [backend, egress]
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 256M }
+
+  grafana:
+    <<: *runtime
+    image: ${GRAFANA_IMAGE:?Set GRAFANA_IMAGE to a verified image@sha256 digest}
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?Set GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Inject GRAFANA_ADMIN_PASSWORD from the deployment secret store}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on: [prometheus]
+    networks: [backend]
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512M }
+
+  api:
+    <<: *runtime
+    image: ${API_IMAGE:?Set API_IMAGE to the release manifest image@sha256 digest}
+    pull_policy: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      AllowedHosts: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS to the public host allowlist}
+      ConnectionStrings__Database: ${DATABASE_CONNECTION_STRING:?Inject DATABASE_CONNECTION_STRING from the deployment secret store}
+      ConnectionStrings__Redis: ${REDIS_CONNECTION_STRING:-redis:6379,abortConnect=false}
+      ObjectStorage__Endpoint: http://minio:9000
+      ObjectStorage__AccessKey: ${MINIO_ROOT_USER:?Inject MINIO_ROOT_USER from the deployment secret store}
+      ObjectStorage__SecretKey: ${MINIO_ROOT_PASSWORD:?Inject MINIO_ROOT_PASSWORD from the deployment secret store}
+      ObjectStorage__BucketName: ${MINIO_BUCKET:?Set MINIO_BUCKET}
+      Telemetry__OtlpEndpoint: http://otel-collector:4317
+      ReverseProxy__TrustForwardedHeaders: "true"
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?Inject JWT_SIGNING_KEY from the deployment secret store}
+      Google__ClientId: ${AUTH_GOOGLE_ID:-}
+      Database__ApplyMigrationsOnStartup: "false"
+      Email__Enabled: ${EMAIL_ENABLED:-true}
+      Email__Host: ${SMTP_HOST:?Set SMTP_HOST}
+      Email__Port: ${SMTP_PORT:-587}
+      Email__FromAddress: ${SMTP_FROM_ADDRESS:?Set SMTP_FROM_ADDRESS}
+      Email__FromName: ${SMTP_FROM_NAME:-Culinary Blog}
+      AdminSeed__Enabled: "false"
+      Sitemap__PublicBaseUrl: ${PUBLIC_URL:?Set PUBLIC_URL to the public HTTPS origin}
+      Sitemap__RevalidationEndpoint: http://web:3000/api/revalidate
+      Sitemap__RevalidationSecret: ${REVALIDATION_SECRET:?Inject REVALIDATION_SECRET from the deployment secret store}
+      Cors__AllowedOrigins__0: ${PUBLIC_URL:?Set PUBLIC_URL to the public HTTPS origin}
+      Release__CommitSha: ${RELEASE_COMMIT_SHA:?Set RELEASE_COMMIT_SHA from the release manifest}
+      Release__ApiImageDigest: ${API_IMAGE_DIGEST:?Set API_IMAGE_DIGEST from the release manifest}
+      Release__WebImageDigest: ${WEB_IMAGE_DIGEST:?Set WEB_IMAGE_DIGEST from the release manifest}
+      Operations__Maintenance__Enabled: ${MAINTENANCE_ENABLED:-false}
+      Operations__Maintenance__Message: ${MAINTENANCE_MESSAGE:-}
+      Operations__Maintenance__AnnouncedAtUtc: ${MAINTENANCE_ANNOUNCED_AT_UTC:-}
+      Operations__Maintenance__StartsAtUtc: ${MAINTENANCE_STARTS_AT_UTC:-}
+      Operations__Maintenance__EndsAtUtc: ${MAINTENANCE_ENDS_AT_UTC:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-bootstrap:
+        condition: service_completed_successfully
+      otel-collector:
+        condition: service_started
+    networks: [backend, egress]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+    deploy:
+      resources:
+        limits: { cpus: "2.0", memory: 4G }
+
+  web:
+    <<: *runtime
+    image: ${WEB_IMAGE:?Set WEB_IMAGE to the release manifest image@sha256 digest}
+    pull_policy: always
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: /api/v1
+      INTERNAL_API_BASE_URL: http://api:8080/api/v1
+      AUTH_SECRET: ${AUTH_SECRET:?Inject AUTH_SECRET from the deployment secret store}
+      AUTH_TRUST_HOST: "true"
+      AUTH_URL: ${PUBLIC_URL:?Set PUBLIC_URL to the public HTTPS origin}
+      NEXTAUTH_URL: ${PUBLIC_URL:?Set PUBLIC_URL to the public HTTPS origin}
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID:-}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET:-}
+      SITE_URL: ${PUBLIC_URL:?Set PUBLIC_URL to the public HTTPS origin}
+      REVALIDATION_SECRET: ${REVALIDATION_SECRET:?Inject REVALIDATION_SECRET from the deployment secret store}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [backend, egress]
+    healthcheck:
+      test: ["CMD", "/nodejs/bin/node", "-e", "fetch('http://localhost:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+
+  nginx:
+    <<: *runtime
+    image: ${NGINX_IMAGE:-nginx:1.28.0-alpine@sha256:30f1c0d78e0ad60901648be663a710bdadf19e4c10ac6782c235200619158284}
+    ports:
+      - "${HTTP_BIND_ADDRESS:-0.0.0.0}:80:80"
+      - "${HTTPS_BIND_ADDRESS:-0.0.0.0}:443:443"
+    volumes:
+      - ../nginx/nginx.production.conf:/etc/nginx/nginx.conf:ro
+      - ${TLS_CERT_FILE:?Set TLS_CERT_FILE to the deployed certificate}:/etc/nginx/tls/tls.crt:ro
+      - ${TLS_KEY_FILE:?Set TLS_KEY_FILE to the deployed private key}:/etc/nginx/tls/tls.key:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    networks: [public, backend]
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "--spider", "-q", "https://127.0.0.1/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 256M }
+
+  postgres-backup:
+    <<: *runtime
+    image: ${POSTGRES_IMAGE:-postgres:16.10-bookworm@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74}
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Inject POSTGRES_PASSWORD from the deployment secret store}
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_INTERVAL_SECONDS: "86400"
+      BACKUP_RETRY_SECONDS: "300"
+    volumes:
+      - ../operations/postgres-backup.sh:/opt/operations/postgres-backup.sh:ro
+      - postgres-backups:/backups
+    entrypoint: ["/bin/sh", "-ec", "while true; do /bin/sh /opt/operations/postgres-backup.sh && sleep 86400 || sleep 300; done"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [backend]
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512M }
+
+  minio-backup:
+    <<: *runtime
+    image: ${MINIO_MC_IMAGE:-minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727}
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Inject MINIO_ROOT_USER from the deployment secret store}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Inject MINIO_ROOT_PASSWORD from the deployment secret store}
+      MINIO_BUCKET: ${MINIO_BUCKET:?Set MINIO_BUCKET}
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_INTERVAL_SECONDS: "86400"
+      BACKUP_RETRY_SECONDS: "300"
+    volumes:
+      - ../operations/minio-backup.sh:/opt/operations/minio-backup.sh:ro
+      - minio-backups:/backups
+    entrypoint: ["/bin/sh", "-ec", "while true; do /bin/sh /opt/operations/minio-backup.sh && sleep 86400 || sleep 300; done"]
+    depends_on:
+      minio-bootstrap:
+        condition: service_completed_successfully
+    networks: [backend]
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512M }
+
+networks:
+  public: {}
+  egress: {}
+  backend:
+    internal: true
+
+volumes:
+  postgres-data:
+    external: true
+    name: ${POSTGRES_DATA_VOLUME:?Set POSTGRES_DATA_VOLUME to an encrypted persistent volume}
+  redis-data:
+    external: true
+    name: ${REDIS_DATA_VOLUME:?Set REDIS_DATA_VOLUME to an encrypted persistent volume}
+  minio-data:
+    external: true
+    name: ${MINIO_DATA_VOLUME:?Set MINIO_DATA_VOLUME to an encrypted persistent volume}
+  prometheus-data:
+    external: true
+    name: ${PROMETHEUS_DATA_VOLUME:?Set PROMETHEUS_DATA_VOLUME}
+  grafana-data:
+    external: true
+    name: ${GRAFANA_DATA_VOLUME:?Set GRAFANA_DATA_VOLUME}
+  postgres-backups:
+    external: true
+    name: ${POSTGRES_BACKUP_VOLUME:?Set POSTGRES_BACKUP_VOLUME on independent encrypted storage}
+  minio-backups:
+    external: true
+    name: ${MINIO_BACKUP_VOLUME:?Set MINIO_BACKUP_VOLUME on independent encrypted storage}

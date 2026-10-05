@@ -697,7 +697,7 @@ Hoàn thiện trải nghiệm quản trị nội dung và các công cụ vận 
 
 ## 12. Phase 8 — Hardening, UAT và phát hành
 
-> Trạng thái 05/10/2026: **Hardening & Reliability / Local Accepted** cho P8-01 đến P8-14 và P8-16 đến P8-21a. Bằng chứng tại [Phase 8 hardening](./phase-8/README.md); ZAP staging, browser E2E/UAT và release gate còn chờ thực hiện.
+> Trạng thái 05/10/2026: **Release Engineering / Local Accepted** cho P8-01 đến P8-14, P8-16 đến P8-23 và P8-26. Bằng chứng tại [Phase 8 hardening](./phase-8/README.md); staging ZAP/deployment/UAT, go/no-go và production release vẫn **No-Go** cho tới khi có bằng chứng/chữ ký thật.
 
 ### 12.1. Mục tiêu
 
@@ -747,13 +747,13 @@ Chứng minh hệ thống đáp ứng yêu cầu chức năng và phi chức nă
 
 #### Release engineering
 
-- **[NFR-QA]** P8-22: Production Docker Compose/Nginx configuration với pinned images.
-- **[NFR-QA]** P8-23: Environment/secrets checklist và rotation ownership.
-- **[NFR-QA]** P8-24: Staging deployment từ đúng artifact sẽ phát hành production.
-- **[NFR-QA]** P8-25: UAT với Product Owner; ghi defect và sign-off.
-- **[NFR-QA]** P8-26: Release notes, CHANGELOG, OpenAPI, README, ADR và operations runbook.
-- **[NFR-QA]** P8-27: Go/no-go meeting và rollback plan.
-- **[NFR-QA]** P8-28: Production deployment, smoke test và monitoring tăng cường 24–48 giờ đầu.
+- [x] **[NFR-QA]** P8-22: Production Docker Compose/Nginx configuration với pinned images *(Compose production không build, gate bắt buộc mọi image theo digest, internal network và TLS edge)*.
+- [x] **[NFR-QA]** P8-23: Environment/secrets checklist và rotation ownership *(owner/rotation/verification và pre-deploy sign-off đã bàn giao)*.
+- [ ] **[NFR-QA]** P8-24: Staging deployment từ đúng artifact sẽ phát hành production *(workflow bundle, promotion gate và deploy script sẵn sàng; chờ staging run/evidence thật)*.
+- [ ] **[NFR-QA]** P8-25: UAT với Product Owner; ghi defect và sign-off *(biểu mẫu/defect gate sẵn sàng; không tự giả lập chữ ký)*.
+- [x] **[NFR-QA]** P8-26: Release notes, CHANGELOG, OpenAPI, README, ADR và operations runbook *(handover inventory liên kết contract/ADR/runbook; release notes và CHANGELOG RC đã tạo)*.
+- [ ] **[NFR-QA]** P8-27: Go/no-go meeting và rollback plan *(rollback plan/gate đã chuẩn bị; meeting và chữ ký còn chờ)*.
+- [ ] **[NFR-QA]** P8-28: Production deployment, smoke test và monitoring tăng cường 24–48 giờ đầu *(automation/evidence schema sẵn sàng; chưa deploy production)*.
 
 ### 12.4. Đầu ra bàn giao
 

@@ -2,7 +2,7 @@
 
 Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây dựng theo đặc tả SRS v1.0.0. Repository sử dụng mô hình monorepo với hai ứng dụng độc lập: frontend Next.js và backend ASP.NET Core; tài liệu, hạ tầng, Docker Compose và CI được quản lý tập trung tại thư mục gốc.
 
-> **Trạng thái:** Phase 0–7 đã được triển khai; functional regression và performance P8-01 đến P8-09 đã Local Accepted tại [báo cáo Phase 8](docs/specs/phase-8/README.md). Các security/reliability, staging UAT và production release gate còn lại thuộc Phase 8.
+> **Trạng thái:** Phase 0–7 và Phase 8 local hardening/release-engineering đã được triển khai. Release candidate vẫn **No-Go production** cho tới khi ZAP/browser UAT trên immutable staging, Product Owner sign-off, go/no-go và production smoke hoàn tất; xem [báo cáo Phase 8](docs/specs/phase-8/README.md).
 
 ## Công nghệ chính
 
@@ -167,6 +167,23 @@ docker compose -f compose.yaml -f infra/operations/compose.reliability.yaml up -
 
 Mỗi drill ghi evidence RTO/RPO và recovery time dưới `artifacts/reliability/`. Cấu hình receiver thật bằng secret file và overlay `infra/operations/compose.alert-routing.yaml`; xem checklist staging tại [báo cáo Reliability Phase 8](docs/reports/phase-8-reliability-report.md).
 
+### Release staging/production
+
+Workflow `release-images.yml` tạo API/Web image, SBOM/provenance và bundle manifest theo full commit SHA. Sao chép `infra/production/release.env.example` ra vị trí bảo mật ngoài repository, điền image digest/secret/volume/TLS của môi trường rồi validate cùng hai manifest `api.json`, `web.json`:
+
+```powershell
+./scripts/deploy-release.ps1 `
+  -Target staging `
+  -EnvFile C:\deployment\staging.env `
+  -ManifestDirectory C:\deployment\release-bundle `
+  -EvidenceDirectory artifacts\release\staging `
+  -ValidateOnly
+```
+
+Sau migration có kiểm soát và khi cửa sổ triển khai được duyệt, bỏ `-ValidateOnly` để pull/deploy đúng `image@sha256` và chạy smoke. Production bắt buộc thêm `-ApprovedChangeId <id>` từ biên bản go/no-go. Compose production không có `build`, chỉ Nginx publish 80/443, giữ datastore/dashboard trên internal network và yêu cầu volume backup độc lập.
+
+Quy trình và biểu mẫu nằm trong [release notes](docs/release/v1.0.0-release-notes.md), [environment/secrets checklist](docs/release/environment-and-secrets-checklist.md), [UAT sign-off](docs/release/uat-signoff.md) và [go/no-go/rollback](docs/release/go-no-go-and-rollback.md).
+
 ## Cấu hình và bảo mật
 
 - Sao chép `.env.example` thành `.env` để cấu hình môi trường local; không commit tệp `.env`.
@@ -214,6 +231,8 @@ Production không tự động chạy migration khi API khởi động. Migratio
 - [Báo cáo functional regression Phase 8](docs/specs/phase-8/README.md)
 - [Operations runbook](docs/operations/runbook.md)
 - [OpenAPI contract v1](docs/specs/phase-0/openapi.v1.yaml)
+- [Release notes v1.0.0](docs/release/v1.0.0-release-notes.md)
+- [CHANGELOG](CHANGELOG.md)
 
 ## Xử lý sự cố thường gặp
 

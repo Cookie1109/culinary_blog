@@ -72,3 +72,37 @@ jobs:
           path: artifacts/release/${{ matrix.name }}.json
           if-no-files-found: error
           retention-days: 90
+
+  bundle:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-image-*-${{ github.sha }}
+          path: artifacts/release
+          merge-multiple: true
+      - name: Validate and bundle immutable manifests
+        run: |
+          test -f artifacts/release/api.json
+          test -f artifacts/release/web.json
+          jq -e --arg sha "$GITHUB_SHA" '.component == "api" and .commitSha == $sha and (.digest | test("^sha256:[0-9a-f]{64}$"))' artifacts/release/api.json >/dev/null
+          jq -e --arg sha "$GITHUB_SHA" '.component == "web" and .commitSha == $sha and (.digest | test("^sha256:[0-9a-f]{64}$"))' artifacts/release/web.json >/dev/null
+          jq -s --arg sha "$GITHUB_SHA" '{commitSha: $sha, images: map({component, image, digest})}' \
+            artifacts/release/api.json artifacts/release/web.json > artifacts/release/release-bundle.json
+          sha256sum artifacts/release/api.json artifacts/release/web.json artifacts/release/release-bundle.json \
+            > artifacts/release/SHA256SUMS
+      - name: Upload release bundle
+        id: bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle-${{ github.sha }}
+          path: artifacts/release
+          if-no-files-found: error
+          retention-days: 90
+      - name: Record promotion identity
+        run: |
+          echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release bundle artifact digest: ${{ steps.bundle.outputs.artifact-digest }}" >> "$GITHUB_STEP_SUMMARY"
+          cat artifacts/release/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"

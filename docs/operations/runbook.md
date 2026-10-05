@@ -133,3 +133,26 @@ Gửi alert thử, xác nhận đúng on-call owner nhận cả firing và resol
 ## 13. Maintenance announcement
 
 Thiết lập `MAINTENANCE_ENABLED`, `MAINTENANCE_MESSAGE`, `MAINTENANCE_ANNOUNCED_AT_UTC`, `MAINTENANCE_STARTS_AT_UTC` và `MAINTENANCE_ENDS_AT_UTC`. Production guard từ chối khởi động nếu announcement cách start dưới 48 giờ, message rỗng hoặc end không sau start. Kiểm tra `GET /api/v1/operations/maintenance` và banner trên public/dashboard pages trước khi thông báo hoàn tất.
+
+## 14. Immutable release deployment
+
+Lấy artifact `release-bundle-<sha>` từ workflow `release-images.yml`; kiểm tra artifact digest/SHA256SUMS và giữ nguyên `api.json`, `web.json`. Tạo env file ngoài repository theo `infra/production/release.env.example`; mọi image phải ở dạng `image@sha256`, secret lấy từ secret store và backup volume phải độc lập với data volume.
+
+Trước deploy, chạy migration đã review theo mục 8 rồi validate mà không đổi runtime:
+
+```powershell
+./scripts/deploy-release.ps1 `
+  -Target staging `
+  -EnvFile <secure-staging-env-file> `
+  -ManifestDirectory <downloaded-release-bundle> `
+  -EvidenceDirectory artifacts/release/staging `
+  -ValidateOnly
+```
+
+Sau approval, chạy lại không có `-ValidateOnly`. Production yêu cầu `-Target production -ApprovedChangeId <signed-go-no-go-id>`. Script pull với `--no-build`, chờ health, kiểm tra readiness/home/HSTS/CSP và đối chiếu `/api/v1/release`; giữ JSON evidence trong change record. Không tiếp tục nếu commit/digest khác staging UAT.
+
+## 15. Post-deploy và rollback
+
+Tại các mốc 0/15/30/60/120 phút rồi mỗi ca trong 24–48 giờ, ghi readiness, 5xx, p95/p99, dependency health, cache, failed jobs và business error; xác nhận Watchdog/alert receiver và thử correlation ID. Production smoke gồm CJ-01, CJ-02 và CJ-04 tối thiểu, đồng thời kiểm tra Draft/private media không xuất hiện public.
+
+Khi gặp rollback trigger trong `docs/release/go-no-go-and-rollback.md`, dừng rollout/write traffic nếu có rủi ro dữ liệu. Nếu schema backward-compatible, điền env bằng previous commit/API/Web digest, chạy release gate và deploy lại; không rebuild/retag. Nếu schema không compatible hoặc dữ liệu hỏng, DBA/Technical Lead chọn reviewed down-migration hoặc restore sang target sạch theo mục 8/10. Sau rollback, chạy smoke, theo dõi 60 phút và lưu incident/evidence.

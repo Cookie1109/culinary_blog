@@ -54,6 +54,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose config --quiet
+      - name: Validate production release template
+        shell: pwsh
+        run: ./scripts/release-gate.ps1 -EnvFile infra/production/release.env.example -Template
       - run: docker compose build api web
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
