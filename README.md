@@ -6,15 +6,15 @@ Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây d�
 
 ## Công nghệ chính
 
-| Thành phần | Công nghệ |
-|---|---|
-| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS 4, TanStack Query |
-| Backend | .NET 10, ASP.NET Core, Entity Framework Core, MediatR, FluentValidation |
-| Dữ liệu | PostgreSQL 16, Redis 7, MinIO |
-| Background jobs | Hangfire với PostgreSQL storage, transactional media outbox |
-| Quan sát hệ thống | Serilog, Seq, OpenTelemetry, health checks |
-| Hạ tầng phát triển | Docker Compose, Nginx, MailHog |
-| Chất lượng | xUnit, Testcontainers, ESLint, TypeScript strict, GitHub Actions |
+| Thành phần         | Công nghệ                                                               |
+| ------------------ | ----------------------------------------------------------------------- |
+| Frontend           | Next.js 15, React 19, TypeScript, Tailwind CSS 4, TanStack Query        |
+| Backend            | .NET 10, ASP.NET Core, Entity Framework Core, MediatR, FluentValidation |
+| Dữ liệu            | PostgreSQL 16, Redis 7, MinIO                                           |
+| Background jobs    | Hangfire với PostgreSQL storage, transactional media outbox             |
+| Quan sát hệ thống  | Serilog, Seq, OpenTelemetry, health checks                              |
+| Hạ tầng phát triển | Docker Compose, Nginx, MailHog                                          |
+| Chất lượng         | xUnit, Testcontainers, ESLint, TypeScript strict, GitHub Actions        |
 
 ## Cấu trúc repository
 
@@ -45,21 +45,37 @@ docker compose up --detach --build --wait
 
 Sau khi các container healthy, truy cập ứng dụng tại [http://localhost:8080](http://localhost:8080).
 
-| Dịch vụ | Địa chỉ |
-|---|---|
-| Ứng dụng | [http://localhost:8080](http://localhost:8080) |
+| Dịch vụ          | Địa chỉ                                                      |
+| ---------------- | ------------------------------------------------------------ |
+| Ứng dụng         | [http://localhost:8080](http://localhost:8080)               |
 | Aggregate health | [http://localhost:8080/health](http://localhost:8080/health) |
-| MinIO Console | [http://localhost:9001](http://localhost:9001) |
-| MailHog | [http://localhost:8025](http://localhost:8025) |
-| Seq | [http://localhost:5341](http://localhost:5341) |
-| Grafana | [http://127.0.0.1:3001](http://127.0.0.1:3001) |
-| Prometheus | [http://127.0.0.1:9090](http://127.0.0.1:9090) |
-| Alertmanager | [http://127.0.0.1:9093](http://127.0.0.1:9093) |
+| MinIO Console    | [http://localhost:9001](http://localhost:9001)               |
+| MailHog          | [http://localhost:8025](http://localhost:8025)               |
+| Seq              | [http://localhost:5341](http://localhost:5341)               |
+| Grafana          | [http://127.0.0.1:3001](http://127.0.0.1:3001)               |
+| Prometheus       | [http://127.0.0.1:9090](http://127.0.0.1:9090)               |
+| Alertmanager     | [http://127.0.0.1:9093](http://127.0.0.1:9093)               |
 
 Dừng hệ thống bằng lệnh sau. Named volumes vẫn được giữ để tái sử dụng dữ liệu local.
 
 ```powershell
 docker compose down
+```
+
+### Phát triển frontend trong Docker không rebuild image
+
+Khi chỉnh sửa giao diện, dùng cấu hình development để Next.js hot reload trực tiếp từ mã nguồn thay vì build lại image `web`:
+
+```powershell
+docker compose -f compose.yaml -f compose.dev.yaml up --detach --no-build --wait
+```
+
+Truy cập ứng dụng tại [http://localhost:8080](http://localhost:8080). Các thay đổi trong `frontend/` được cập nhật tự động. `node_modules`, npm cache và `.next` được lưu trong `.docker-dev/` ở cùng ổ đĩa với repository; log của container `web` được giới hạn dung lượng. Chỉ dùng `docker compose up --build` khi cần kiểm tra image production.
+
+Dừng môi trường development mà vẫn giữ database và dữ liệu media:
+
+```powershell
+docker compose -f compose.yaml -f compose.dev.yaml down
 ```
 
 ## Phát triển frontend và backend riêng biệt

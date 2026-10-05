@@ -154,12 +154,12 @@ test('P6-25: JSON-LD serialization snapshot protects against script injection (X
   assert.match(serialized, /\\u003c\/script>/)
 })
 
-test('P6-25: Page metadata snapshots for Home, Recipe Detail, Categories, and Search', async () => {
-  const [seoSource, recipePage, categoryPage, searchPage] = await Promise.all([
+test('P6-25: Page metadata snapshots for Home, Recipe Detail, Categories, and Recipes', async () => {
+  const [seoSource, recipePage, categoryPage, recipesPage] = await Promise.all([
     source('src/lib/seo.ts'),
     source('src/app/(public)/recipes/[slug]/page.tsx'),
     source('src/app/(public)/categories/[slug]/page.tsx'),
-    source('src/app/(public)/search/page.tsx'),
+    source('src/app/(public)/recipes/page.tsx'),
   ])
 
   // OpenGraph website vs article
@@ -181,10 +181,10 @@ test('P6-25: Page metadata snapshots for Home, Recipe Detail, Categories, and Se
   assert.match(categoryPage, /createPageMetadata\(\{/)
   assert.match(categoryPage, /title:\s*`\$\{category\.name\}/)
 
-  // Search page noindex, follow directive snapshot
-  assert.match(searchPage, /createPageMetadata\(\{/)
-  assert.match(searchPage, /index:\s*false/)
-  assert.match(searchPage, /follow:\s*true/)
+  // Recipe listing remains indexable without filters and noindex when filtered.
+  assert.match(recipesPage, /createPageMetadata\(\{/)
+  assert.match(recipesPage, /index:\s*!hasFilters/)
+  assert.match(recipesPage, /follow:\s*true/)
 })
 
 test('P6-25: Private preview route snapshot strictly enforces noindex, nofollow and private media', async () => {

@@ -73,6 +73,13 @@ public sealed class RecipeImage : BaseEntity
         ProcessingStatus = ImageProcessingStatus.Ready;
     }
 
+    public void MarkPending()
+    {
+        MediumObjectKey = null;
+        ThumbnailObjectKey = null;
+        ProcessingStatus = ImageProcessingStatus.Pending;
+    }
+
     public void MarkFailed() => ProcessingStatus = ImageProcessingStatus.Failed;
 
     public void Delete() => SoftDelete();

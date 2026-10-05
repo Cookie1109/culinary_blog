@@ -19,7 +19,9 @@ function positiveInteger(value: string, fallback: number) {
 export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
   const query = await searchParams
   const page = positiveInteger(first(query.page), 1)
-  const hasFilters = ['category', 'difficulty', 'maxTime', 'sort'].some((key) => Boolean(first(query[key])))
+  const hasFilters = ['q', 'category', 'difficulty', 'maxTime', 'sort'].some((key) =>
+    Boolean(first(query[key])),
+  )
   const suffix = page > 1 ? ` – Trang ${page}` : ''
 
   return createPageMetadata({
@@ -40,7 +42,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Sear
   const page = positiveInteger(first(query.page), 1)
   const [result, categories] = await Promise.all([
     searchPublishedRecipesOnServer({
-      q: '',
+      q: first(query.q).trim(),
       category,
       difficulty,
       maxTime,

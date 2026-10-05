@@ -5,7 +5,6 @@ import test from 'node:test'
 const publicPages = [
   ['src/app/(public)/page.tsx', 'getPublishedRecipes'],
   ['src/app/(public)/recipes/page.tsx', 'searchPublishedRecipesOnServer'],
-  ['src/app/(public)/search/page.tsx', 'searchPublishedRecipesOnServer'],
   ['src/app/(public)/categories/page.tsx', 'getPublicCategories'],
 ]
 
@@ -33,7 +32,8 @@ test('home, listing, and detail expose the required public discovery content', a
   )
 
   assert.match(home, /categories/)
-  for (const urlState of ['category', 'difficulty', 'maxTime', 'sort', 'page']) {
+  assert.match(home, /listPublishedRecipes\(loadedPage \+ 1, recipePage\.meta\.pageSize\)/)
+  for (const urlState of ['q', 'category', 'difficulty', 'maxTime', 'sort', 'page']) {
     assert.match(listing, new RegExp(`searchParams\\.get\\('${urlState}'\\)`))
   }
   for (const detailContent of ['recipe.ingredients', 'recipe.steps', 'recipe.nutrition', 'recipe.images']) {
@@ -50,6 +50,10 @@ test('category detail route uses the public category endpoint and maps API 404 t
     new URL('../src/features/culinary/pages/Categories.tsx', import.meta.url),
     'utf8',
   )
+  const categoryCard = await readFile(
+    new URL('../src/features/culinary/components/CategoryCard.tsx', import.meta.url),
+    'utf8',
+  )
   const serverClient = await readFile(
     new URL('../src/lib/api/public-content-server.ts', import.meta.url),
     'utf8',
@@ -59,19 +63,23 @@ test('category detail route uses the public category endpoint and maps API 404 t
   assert.match(route, /notFound\(\)/)
   assert.match(serverClient, /\/categories\/\$\{encodeURIComponent\(slug\)\}/)
   assert.match(serverClient, /response\.status === 404/)
-  assert.match(categories, /to=\{`\/categories\/\$\{category\.slug\}`\}/)
+  assert.match(categories, /<CategoryCard key=\{category\.id\} category=\{category\}/)
+  assert.match(categoryCard, /to=\{`\/categories\/\$\{category\.slug\}`\}/)
 })
 
-test('search debounces URL updates and route failures offer retry and offline guidance', async () => {
-  const search = await readFile(new URL('../src/features/culinary/pages/Search.tsx', import.meta.url), 'utf8')
+test('recipe listing submits search terms and route failures offer retry and offline guidance', async () => {
+  const listing = await readFile(
+    new URL('../src/features/culinary/pages/RecipesList.tsx', import.meta.url),
+    'utf8',
+  )
   const routeError = await readFile(new URL('../src/app/error.tsx', import.meta.url), 'utf8')
   const networkStatus = await readFile(
     new URL('../src/features/culinary/components/NetworkStatusBanner.tsx', import.meta.url),
     'utf8',
   )
 
-  assert.match(search, /setTimeout\(\(\) =>/)
-  assert.match(search, /, 400\)/)
+  assert.match(listing, /submitSearch/)
+  assert.match(listing, /setFilter\('q', searchValue\.trim\(\)\)/)
   assert.match(routeError, /reset/)
   assert.match(networkStatus, /navigator\.onLine/)
   assert.match(networkStatus, /addEventListener\('offline'/)

@@ -21,15 +21,14 @@ test('public revalidated caches use the agreed TTLs and shared public-content ta
   assert.match(recipe, /export const revalidate = 300/)
   assert.match(serverClient, /PUBLIC_CONTENT_TAG = 'public-content'/)
   assert.match(serverClient, /tags: \[PUBLIC_CONTENT_TAG\]/)
+  assert.match(serverClient, /export function getPublishedRecipes/)
 })
 
-test('listing and search render query-state data dynamically on the server', async () => {
-  for (const path of ['src/app/(public)/recipes/page.tsx', 'src/app/(public)/search/page.tsx']) {
-    const route = await source(path)
-    assert.match(route, /export const dynamic = 'force-dynamic'/)
-    assert.match(route, /await searchParams/)
-    assert.match(route, /searchPublishedRecipesOnServer/)
-  }
+test('recipe listing renders search and filter query-state data dynamically on the server', async () => {
+  const route = await source('src/app/(public)/recipes/page.tsx')
+  assert.match(route, /export const dynamic = 'force-dynamic'/)
+  assert.match(route, /await searchParams/)
+  assert.match(route, /searchPublishedRecipesOnServer/)
 
   const serverClient = await source('src/lib/api/public-content-server.ts')
   assert.match(serverClient, /noStore: true/)

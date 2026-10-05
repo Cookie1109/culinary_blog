@@ -5,12 +5,12 @@ import test from 'node:test'
 const source = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 
 test('public routes expose canonical, Open Graph, Twitter, and index directives', async () => {
-  const [config, seo, recipe, category, search] = await Promise.all([
+  const [config, seo, recipe, category, recipes] = await Promise.all([
     source('next.config.mjs'),
     source('src/lib/seo.ts'),
     source('src/app/(public)/recipes/[slug]/page.tsx'),
     source('src/app/(public)/categories/[slug]/page.tsx'),
-    source('src/app/(public)/search/page.tsx'),
+    source('src/app/(public)/recipes/page.tsx'),
   ])
 
   assert.match(seo, /alternates: \{ canonical \}/)
@@ -19,8 +19,9 @@ test('public routes expose canonical, Open Graph, Twitter, and index directives'
   assert.match(seo, /robots: \{ index, follow \}/)
   assert.match(recipe, /export async function generateMetadata/)
   assert.match(category, /export async function generateMetadata/)
-  assert.match(search, /index: false/)
-  assert.match(search, /follow: true/)
+  assert.match(recipes, /index: !hasFilters/)
+  assert.match(recipes, /follow: true/)
+  assert.match(config, /source: '\/search', destination: '\/recipes', permanent: true/)
   assert.match(config, /htmlLimitedBots:\s*\/\.\*\//)
 })
 

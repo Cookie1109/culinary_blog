@@ -1,6 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import dynamic from 'next/dynamic'
 import {
   AlertCircle,
   Archive,
@@ -20,12 +21,7 @@ import {
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { ApiProblem } from '@/lib/api/problem-details'
-import {
-  RecipeCompositionWizard,
-  computeRecipeValidation,
-  type Stage,
-  type WizardAllSteps,
-} from './RecipeCompositionWizard'
+import { computeRecipeValidation, type Stage, type WizardAllSteps } from './recipe-validation'
 import {
   archiveRecipe,
   createRecipe,
@@ -41,6 +37,20 @@ import {
   type RecipeStatus,
   type RecipeWrite,
 } from '@/lib/api/content-client'
+
+const RecipeCompositionWizard = dynamic(
+  () => import('./RecipeCompositionWizard').then((module) => module.RecipeCompositionWizard),
+  {
+    loading: () => (
+      <div
+        className="mt-6 border border-border bg-card p-8 text-center text-sm text-muted-foreground"
+        role="status"
+      >
+        Đang tải trình soạn công thức…
+      </div>
+    ),
+  },
+)
 
 const STATUS_LABELS: Record<RecipeStatus, string> = {
   draft: 'Bản nháp',

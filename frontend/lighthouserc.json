@@ -8,8 +8,7 @@
         "http://localhost:3000/recipes",
         "http://localhost:3000/recipes/pho-bo-ha-noi",
         "http://localhost:3000/categories",
-        "http://localhost:3000/categories/mon-viet",
-        "http://localhost:3000/search"
+        "http://localhost:3000/categories/mon-viet"
       ],
       "numberOfRuns": 3,
       "settings": {

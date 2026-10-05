@@ -16,7 +16,7 @@ import {
   Star,
   Trash2,
 } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { authenticatedBlobUrl } from '@/lib/api/auth-client'
 import {
   createIngredient,
@@ -38,82 +38,10 @@ import {
   type StepWrite,
 } from '@/lib/api/content-client'
 import { ApiProblem } from '@/lib/api/problem-details'
-
-export type Stage = 'ingredients' | 'steps' | 'images' | 'preview'
-export type WizardAllSteps = 'basic' | Stage
+import { computeRecipeValidation, type Stage, type WizardAllSteps } from './recipe-validation'
 
 const EMPTY_INGREDIENT: IngredientWrite = { name: '', quantity: null, unit: null, notes: null, orderIndex: 0 }
 const EMPTY_STEP: StepWrite = { title: '', description: '', timerMinutes: null, imageUrl: null }
-
-export interface ValidationItem {
-  id: string
-  step: WizardAllSteps
-  stepLabel: string
-  label: string
-  isValid: boolean
-  message: string
-}
-
-export function computeRecipeValidation(recipe: Recipe): ValidationItem[] {
-  return [
-    {
-      id: 'title',
-      step: 'basic',
-      stepLabel: '1. Thông tin cơ bản',
-      label: 'Tên công thức',
-      isValid: (recipe.title?.trim().length ?? 0) >= 5,
-      message: 'Cần có ít nhất 5 ký tự.',
-    },
-    {
-      id: 'description',
-      step: 'basic',
-      stepLabel: '1. Thông tin cơ bản',
-      label: 'Mô tả',
-      isValid: (recipe.description?.trim().length ?? 0) > 0,
-      message: 'Vui lòng nhập mô tả cho công thức.',
-    },
-    {
-      id: 'category',
-      step: 'basic',
-      stepLabel: '1. Thông tin cơ bản',
-      label: 'Danh mục',
-      isValid: Boolean(recipe.category?.id),
-      message: 'Vui lòng chọn danh mục.',
-    },
-    {
-      id: 'prepTime',
-      step: 'basic',
-      stepLabel: '1. Thông tin cơ bản',
-      label: 'Thời gian chuẩn bị',
-      isValid: recipe.prepTime >= 1,
-      message: 'Thời gian chuẩn bị phải ít nhất 1 phút.',
-    },
-    {
-      id: 'ingredients',
-      step: 'ingredients',
-      stepLabel: '2. Nguyên liệu',
-      label: 'Nguyên liệu',
-      isValid: recipe.ingredients.length >= 1,
-      message: `Cần ít nhất 1 nguyên liệu (hiện có: ${recipe.ingredients.length}).`,
-    },
-    {
-      id: 'steps',
-      step: 'steps',
-      stepLabel: '3. Các bước thực hiện',
-      label: 'Các bước thực hiện',
-      isValid: recipe.steps.length >= 1,
-      message: `Cần ít nhất 1 bước thực hiện (hiện có: ${recipe.steps.length}).`,
-    },
-    {
-      id: 'images',
-      step: 'images',
-      stepLabel: '4. Hình ảnh',
-      label: 'Hình ảnh công thức',
-      isValid: recipe.images.length >= 1,
-      message: `Khuyến nghị ít nhất 1 hình ảnh đại diện (hiện có: ${recipe.images.length}).`,
-    },
-  ]
-}
 
 interface Props {
   recipe: Recipe
@@ -131,10 +59,33 @@ function errorMessage(error: unknown) {
 }
 
 function PrivateImage({ image }: { image: RecipeImage }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
   const [source, setSource] = useState<string | null>(null)
   const path = image.thumbnailUrl ?? image.mediumUrl ?? image.originalUrl
 
   useEffect(() => {
+    const element = containerRef.current
+    if (!element || !('IntersectionObserver' in window)) {
+      setShouldLoad(true)
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        setShouldLoad(true)
+        observer.disconnect()
+      },
+      { rootMargin: '300px' },
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!shouldLoad) return undefined
+
     let active = true
     let objectUrl: string | null = null
     authenticatedBlobUrl(path)
@@ -147,13 +98,23 @@ function PrivateImage({ image }: { image: RecipeImage }) {
       active = false
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [path])
+  }, [path, shouldLoad])
 
-  return source ? (
-    <img src={source} alt={image.altText ?? ''} className="h-32 w-full object-cover" />
-  ) : (
-    <div className="flex h-32 items-center justify-center bg-muted text-xs text-muted-foreground">
-      {image.processingStatus === 'failed' ? 'Xử lý ảnh thất bại' : 'Đang xử lý ảnh…'}
+  return (
+    <div ref={containerRef} className="h-32 w-full bg-muted">
+      {source ? (
+        <img
+          src={source}
+          alt={image.altText ?? ''}
+          loading="lazy"
+          decoding="async"
+          className="h-32 w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
+          {image.processingStatus === 'failed' ? 'Xử lý ảnh thất bại' : 'Đang xử lý ảnh…'}
+        </div>
+      )}
     </div>
   )
 }

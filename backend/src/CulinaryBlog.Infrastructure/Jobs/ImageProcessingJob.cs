@@ -41,8 +41,8 @@ public sealed class ImageProcessingJob(
             var mediumKey = $"{prefix}/medium.webp";
             var thumbnailKey = $"{prefix}/thumbnail.webp";
 
-            await UploadVariantAsync(decoded, mediumKey, 800, 600, cancellationToken).ConfigureAwait(false);
-            await UploadVariantAsync(decoded, thumbnailKey, 300, 300, cancellationToken).ConfigureAwait(false);
+            await UploadVariantAsync(decoded, mediumKey, 1200, 900, cancellationToken).ConfigureAwait(false);
+            await UploadVariantAsync(decoded, thumbnailKey, 480, 480, cancellationToken).ConfigureAwait(false);
 
             imageRecord.MarkReady(mediumKey, thumbnailKey);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -75,7 +75,7 @@ public sealed class ImageProcessingJob(
             new SKSamplingOptions(SKCubicResampler.Mitchell))
             ?? throw new InvalidDataException("The image variant cannot be resized.");
         using var variantImage = SKImage.FromBitmap(variant);
-        using var encoded = variantImage.Encode(SKEncodedImageFormat.Webp, 82);
+        using var encoded = variantImage.Encode(SKEncodedImageFormat.Webp, 90);
         await using var output = new MemoryStream();
         encoded.SaveTo(output);
         output.Position = 0;

@@ -1,0 +1,42 @@
+services:
+  web:
+    image: node:22.23.3-bookworm-slim@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c
+    build: !reset null
+    working_dir: /workspace/frontend
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        lock_hash="$$(sha256sum package-lock.json | cut -d ' ' -f 1)"
+        if [ ! -f node_modules/.culinary-lock-hash ] || [ "$$(cat node_modules/.culinary-lock-hash)" != "$$lock_hash" ]; then
+          npm ci
+          printf '%s\n' "$$lock_hash" > node_modules/.culinary-lock-hash
+        fi
+        npm run generate:api
+        node scripts/warm-dev-routes.mjs &
+        exec npm run dev
+    environment:
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/workspace/frontend
+      - ./docs/specs/phase-0/openapi.v1.yaml:/workspace/docs/specs/phase-0/openapi.v1.yaml:ro
+      - ./.docker-dev/frontend-node-modules:/workspace/frontend/node_modules
+      - ./.docker-dev/frontend-next:/workspace/frontend/.next
+      - ./.docker-dev/npm-cache:/root/.npm
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"

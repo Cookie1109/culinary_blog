@@ -1,7 +1,11 @@
-using Bogus;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using CulinaryBlog.Application.Abstractions.Caching;
+using CulinaryBlog.Application.Media;
 using CulinaryBlog.Domain.Categories;
-using CulinaryBlog.Domain.Common;
 using CulinaryBlog.Domain.Recipes;
+using CulinaryBlog.Infrastructure.Jobs;
 using CulinaryBlog.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +17,10 @@ public sealed class DatabaseInitializer(
     AppDbContext dbContext,
     RoleManager<IdentityRole<Guid>> roleManager,
     UserManager<ApplicationUser> userManager,
+    IFileStorageService fileStorage,
+    IApplicationCache cache,
     IOptions<AdminSeedOptions> adminOptions)
 {
-    private const int FunctionalRegressionAuthorCount = 5;
-    private const int FunctionalRegressionRecipeCount = 50;
     private static readonly string[] Roles = ["Author", "Admin"];
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
@@ -27,15 +31,319 @@ public sealed class DatabaseInitializer(
         {
             if (!await roleManager.RoleExistsAsync(role).ConfigureAwait(false))
             {
-                var result = await roleManager.CreateAsync(new IdentityRole<Guid>(role)).ConfigureAwait(false);
-                EnsureSucceeded(result, $"create the {role} role");
+                EnsureSucceeded(
+                    await roleManager.CreateAsync(new IdentityRole<Guid>(role)).ConfigureAwait(false),
+                    $"create the {role} role");
             }
         }
 
-        var authorIds = await SeedAuthorsAsync(cancellationToken).ConfigureAwait(false);
+        var authorIds = await SeedAuthorsAsync().ConfigureAwait(false);
+        await RemoveNonSeedDataAsync(cancellationToken).ConfigureAwait(false);
         var categoryIds = await SeedCategoriesAsync(cancellationToken).ConfigureAwait(false);
         await SeedRecipesAsync(categoryIds, authorIds, cancellationToken).ConfigureAwait(false);
+        await cache.RemoveByTagAsync(PublicCacheKeys.RecipesTag, cancellationToken).ConfigureAwait(false);
+        await cache.RemoveByTagAsync(PublicCacheKeys.CategoriesTag, cancellationToken).ConfigureAwait(false);
+        await SeedAdminAsync().ConfigureAwait(false);
+    }
 
+    private async Task<List<Guid>> SeedAuthorsAsync()
+    {
+        var authorIds = new List<Guid>(VietnameseSeedData.Authors.Count);
+        foreach (var seed in VietnameseSeedData.Authors)
+        {
+            var author = await userManager.FindByEmailAsync(seed.Email).ConfigureAwait(false);
+            if (author is null)
+            {
+                author = new ApplicationUser
+                {
+                    Id = StableGuid($"author:{seed.Email}"),
+                    UserName = seed.Email,
+                    Email = seed.Email,
+                    EmailConfirmed = true,
+                    DisplayName = seed.DisplayName,
+                    Bio = seed.Bio,
+                    IsActive = true,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                };
+                EnsureSucceeded(
+                    await userManager.CreateAsync(author).ConfigureAwait(false),
+                    $"create seed author {seed.Email}");
+            }
+            else
+            {
+                author.DisplayName = seed.DisplayName;
+                author.Bio = seed.Bio;
+                author.EmailConfirmed = true;
+                author.IsActive = true;
+                EnsureSucceeded(
+                    await userManager.UpdateAsync(author).ConfigureAwait(false),
+                    $"update seed author {seed.Email}");
+            }
+
+            if (!await userManager.IsInRoleAsync(author, "Author").ConfigureAwait(false))
+            {
+                EnsureSucceeded(
+                    await userManager.AddToRoleAsync(author, "Author").ConfigureAwait(false),
+                    $"assign seed author {seed.Email} to the Author role");
+            }
+
+            authorIds.Add(author.Id);
+        }
+
+        return authorIds;
+    }
+
+    private async Task RemoveNonSeedDataAsync(CancellationToken cancellationToken)
+    {
+        var seedSlugs = VietnameseSeedData.Recipes.Select(recipe => recipe.Slug)
+            .ToHashSet(StringComparer.Ordinal);
+        var recipes = await dbContext.Recipes.IgnoreQueryFilters()
+            .Where(recipe => !seedSlugs.Contains(recipe.Slug))
+            .Select(recipe => recipe.Id)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var nonSeedRecipeIds = recipes.ToArray();
+
+        var legacyImages = await dbContext.RecipeImages.IgnoreQueryFilters()
+            .Where(image => nonSeedRecipeIds.Contains(image.RecipeId))
+            .Select(image => new { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var objectKeys = legacyImages
+            .SelectMany(image => new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey })
+            .OfType<string>();
+
+        await dbContext.RecipeImages.IgnoreQueryFilters().Where(image => nonSeedRecipeIds.Contains(image.RecipeId))
+            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        await dbContext.RecipeIngredients.IgnoreQueryFilters().Where(item => nonSeedRecipeIds.Contains(item.RecipeId))
+            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        await dbContext.RecipeSteps.IgnoreQueryFilters().Where(item => nonSeedRecipeIds.Contains(item.RecipeId))
+            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        await dbContext.Recipes.IgnoreQueryFilters().Where(recipe => nonSeedRecipeIds.Contains(recipe.Id))
+            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        var seedCategorySlugs = VietnameseSeedData.Categories.Select(category => category.Slug).ToArray();
+        await dbContext.Categories.IgnoreQueryFilters()
+            .Where(category => !seedCategorySlugs.Contains(category.Slug))
+            .ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var objectKey in objectKeys.Distinct(StringComparer.Ordinal))
+        {
+            if (await fileStorage.ExistsAsync(objectKey, cancellationToken).ConfigureAwait(false))
+            {
+                await fileStorage.DeleteAsync(objectKey, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        dbContext.ChangeTracker.Clear();
+    }
+
+    private async Task<IReadOnlyDictionary<string, Guid>> SeedCategoriesAsync(CancellationToken cancellationToken)
+    {
+        var existing = await dbContext.Categories.IgnoreQueryFilters()
+            .Where(category => !category.IsDeleted)
+            .ToDictionaryAsync(category => category.Slug, StringComparer.Ordinal, cancellationToken)
+            .ConfigureAwait(false);
+
+        for (var index = 0; index < VietnameseSeedData.Categories.Count; index++)
+        {
+            var seed = VietnameseSeedData.Categories[index];
+            if (existing.TryGetValue(seed.Slug, out var category))
+            {
+                category.Update(seed.Name, seed.Description, null, index);
+                continue;
+            }
+
+            category = Category.Create(
+                StableGuid($"category:{seed.Slug}"),
+                seed.Name,
+                seed.Slug,
+                seed.Description,
+                null,
+                index);
+            dbContext.Categories.Add(category);
+            existing.Add(seed.Slug, category);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return existing
+            .Where(pair => VietnameseSeedData.Categories.Any(seed => seed.Slug == pair.Key))
+            .ToDictionary(pair => pair.Key, pair => pair.Value.Id, StringComparer.Ordinal);
+    }
+
+    private async Task SeedRecipesAsync(
+        IReadOnlyDictionary<string, Guid> categoryIds,
+        List<Guid> authorIds,
+        CancellationToken cancellationToken)
+    {
+        var seedSlugs = VietnameseSeedData.Recipes.Select(recipe => recipe.Slug).ToArray();
+        var existingRecipeIds = await dbContext.Recipes.IgnoreQueryFilters()
+            .Where(recipe => seedSlugs.Contains(recipe.Slug))
+            .Select(recipe => recipe.Id)
+            .ToArrayAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await dbContext.RecipeIngredients.IgnoreQueryFilters()
+            .Where(item => existingRecipeIds.Contains(item.RecipeId))
+            .ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await dbContext.RecipeSteps.IgnoreQueryFilters()
+            .Where(item => existingRecipeIds.Contains(item.RecipeId))
+            .ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+        dbContext.ChangeTracker.Clear();
+        var existingRecipes = await dbContext.Recipes.IgnoreQueryFilters()
+            .Where(recipe => seedSlugs.Contains(recipe.Slug))
+            .ToDictionaryAsync(recipe => recipe.Slug, StringComparer.Ordinal, cancellationToken)
+            .ConfigureAwait(false);
+        var publishedAt = DateTimeOffset.UtcNow.AddDays(-VietnameseSeedData.Recipes.Count);
+
+        for (var recipeIndex = 0; recipeIndex < VietnameseSeedData.Recipes.Count; recipeIndex++)
+        {
+            var seed = VietnameseSeedData.Recipes[recipeIndex];
+            var nutrition = RecipeNutrition.Create(
+                seed.Nutrition.Calories,
+                seed.Nutrition.Protein,
+                seed.Nutrition.Carbohydrates,
+                seed.Nutrition.Fat,
+                seed.Nutrition.Fiber,
+                seed.Nutrition.Sodium);
+            var instructions = string.Join(
+                "\n\n",
+                seed.Steps.Select((step, index) => $"{index + 1}. {step.Title}: {step.Description}"));
+            var isNew = !existingRecipes.TryGetValue(seed.Slug, out var recipe);
+            if (isNew)
+            {
+                recipe = Recipe.Create(
+                    StableGuid($"recipe:{seed.Slug}"),
+                    authorIds[recipeIndex % authorIds.Count],
+                    seed.Slug,
+                    seed.Title,
+                    seed.Description,
+                    categoryIds[seed.CategorySlug],
+                    seed.PrepTime,
+                    seed.CookTime,
+                    seed.Servings,
+                    seed.Difficulty,
+                    instructions,
+                    nutrition);
+                recipe.Publish(
+                    publishedAt.AddDays(recipeIndex),
+                    true,
+                    seed.Ingredients.Count,
+                    Enumerable.Range(1, seed.Steps.Count).ToArray());
+                dbContext.Recipes.Add(recipe);
+            }
+            else
+            {
+                recipe!.Update(
+                    seed.Slug,
+                    seed.Title,
+                    seed.Description,
+                    categoryIds[seed.CategorySlug],
+                    seed.PrepTime,
+                    seed.CookTime,
+                    seed.Servings,
+                    seed.Difficulty,
+                    instructions,
+                    nutrition);
+            }
+
+            var recipeId = recipe!.Id;
+
+            for (var ingredientIndex = 0; ingredientIndex < seed.Ingredients.Count; ingredientIndex++)
+            {
+                var ingredient = seed.Ingredients[ingredientIndex];
+                dbContext.RecipeIngredients.Add(RecipeIngredient.Create(
+                    StableGuid($"ingredient:{seed.Slug}:{ingredientIndex}"),
+                    recipeId,
+                    ingredient.Name,
+                    ingredient.Quantity,
+                    ingredient.Unit,
+                    ingredient.Notes,
+                    ingredientIndex));
+            }
+
+            for (var stepIndex = 0; stepIndex < seed.Steps.Count; stepIndex++)
+            {
+                var step = seed.Steps[stepIndex];
+                dbContext.RecipeSteps.Add(RecipeStep.Create(
+                    StableGuid($"step:{seed.Slug}:{stepIndex}"),
+                    recipeId,
+                    stepIndex + 1,
+                    step.Title,
+                    step.Description,
+                    step.TimerMinutes,
+                    null));
+            }
+
+            await EnsureRecipeImageAsync(recipeId, seed, cancellationToken).ConfigureAwait(false);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task EnsureRecipeImageAsync(Guid recipeId, SeedRecipe seed, CancellationToken cancellationToken)
+    {
+        var imageId = StableGuid($"image:{seed.Slug}");
+        var objectKey = $"recipes/{recipeId:N}/{imageId:N}/original.jpg";
+        var imageRecord = await dbContext.RecipeImages.IgnoreQueryFilters()
+            .SingleOrDefaultAsync(image => image.RecipeId == recipeId, cancellationToken)
+            .ConfigureAwait(false);
+        var resourceName = typeof(DatabaseInitializer).Assembly.GetManifestResourceNames()
+            .Single(name => name.EndsWith($".{seed.Slug}.jpg", StringComparison.Ordinal));
+        await using var imageStream = typeof(DatabaseInitializer).Assembly.GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException($"Seed image resource '{resourceName}' was not found.");
+        var objectExists = await fileStorage.ExistsAsync(objectKey, cancellationToken).ConfigureAwait(false);
+        var sourceChanged = !objectExists;
+        if (objectExists)
+        {
+            await using var storedImage = await fileStorage.OpenReadAsync(objectKey, cancellationToken).ConfigureAwait(false);
+            sourceChanged = storedImage.Length != imageStream.Length;
+        }
+
+        if (sourceChanged)
+        {
+            await fileStorage.UploadAsync(
+                objectKey,
+                imageStream,
+                imageStream.Length,
+                "image/jpeg",
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        if (imageRecord is null)
+        {
+            imageRecord = RecipeImage.Create(
+                imageId,
+                recipeId,
+                objectKey,
+                "image/jpeg",
+                $"{seed.Title} hoàn chỉnh",
+                true,
+                0);
+            dbContext.RecipeImages.Add(imageRecord);
+        }
+        else if (sourceChanged)
+        {
+            imageRecord.MarkPending();
+        }
+        else
+        {
+            return;
+        }
+
+        dbContext.MediaOutbox.Add(new MediaOutboxMessage
+        {
+            Id = Guid.NewGuid(),
+            Type = MediaOutboxTypes.ResizeImage,
+            Payload = JsonSerializer.Serialize(new ResizeImagePayload(imageId)),
+            CreatedAt = DateTimeOffset.UtcNow,
+            NextAttemptAt = DateTimeOffset.UtcNow,
+        });
+    }
+
+    private async Task SeedAdminAsync()
+    {
         var options = adminOptions.Value;
         if (!options.Enabled)
         {
@@ -59,329 +367,23 @@ public sealed class DatabaseInitializer(
                 IsActive = true,
                 CreatedAt = DateTimeOffset.UtcNow,
             };
-            EnsureSucceeded(await userManager.CreateAsync(admin, options.Password).ConfigureAwait(false), "create the admin user");
+            EnsureSucceeded(
+                await userManager.CreateAsync(admin, options.Password).ConfigureAwait(false),
+                "create the admin user");
         }
 
         if (!await userManager.IsInRoleAsync(admin, "Admin").ConfigureAwait(false))
         {
-            EnsureSucceeded(await userManager.AddToRoleAsync(admin, "Admin").ConfigureAwait(false), "assign the Admin role");
+            EnsureSucceeded(
+                await userManager.AddToRoleAsync(admin, "Admin").ConfigureAwait(false),
+                "assign the Admin role");
         }
     }
 
-    private async Task<List<Guid>> SeedAuthorsAsync(CancellationToken cancellationToken)
+    private static Guid StableGuid(string value)
     {
-        var authorIds = new List<Guid>(FunctionalRegressionAuthorCount);
-        for (var index = 1; index <= FunctionalRegressionAuthorCount; index++)
-        {
-            var email = $"phase8-author-{index:D2}@example.test";
-            var author = await userManager.FindByEmailAsync(email).ConfigureAwait(false);
-            if (author is null)
-            {
-                author = new ApplicationUser
-                {
-                    Id = Guid.NewGuid(),
-                    UserName = email,
-                    Email = email,
-                    EmailConfirmed = true,
-                    DisplayName = $"Tác giả kiểm thử {index:D2}",
-                    IsActive = true,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                };
-                EnsureSucceeded(
-                    await userManager.CreateAsync(author).ConfigureAwait(false),
-                    $"create synthetic author {index:D2}");
-            }
-
-            if (!await userManager.IsInRoleAsync(author, "Author").ConfigureAwait(false))
-            {
-                EnsureSucceeded(
-                    await userManager.AddToRoleAsync(author, "Author").ConfigureAwait(false),
-                    $"assign synthetic author {index:D2} to the Author role");
-            }
-
-            authorIds.Add(author.Id);
-        }
-
-        return authorIds;
-    }
-
-    private async Task<List<Guid>> SeedCategoriesAsync(CancellationToken cancellationToken)
-    {
-        var existingCategories = await dbContext.Categories.IgnoreQueryFilters()
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (existingCategories.Count >= 20)
-        {
-            return existingCategories.Select(category => category.Id).Take(20).ToList();
-        }
-
-        var existingNames = existingCategories.Select(c => c.NormalizedName).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var foodThemes = new[]
-        {
-            "Món chính", "Món chay", "Canh và súp", "Làm bánh", "Món tráng miệng",
-            "Món khai vị", "Món nướng", "Món xào", "Món kho", "Món hấp",
-            "Đồ uống", "Món ăn vặt", "Món lẩu", "Salad", "Món cuốn",
-            "Mì bún phở", "Đồ muối chua", "Nước sốt", "Hải sản", "Món ăn sáng"
-        };
-
-        var orderOffset = existingCategories.Count;
-        var countToGenerate = 20 - existingCategories.Count;
-
-        var categoryFaker = new Faker<Category>()
-            .CustomInstantiator(f =>
-            {
-                var index = f.IndexGlobal + orderOffset;
-                var baseName = index < foodThemes.Length ? foodThemes[index] : f.Commerce.Department();
-                var name = $"{baseName} {f.Commerce.ProductAdjective()} {index + 1}".Trim();
-                if (name.Length > 90)
-                {
-                    name = name[..90];
-                }
-
-                while (existingNames.Contains(name))
-                {
-                    name = $"{baseName} {f.Commerce.ProductAdjective()} {Guid.NewGuid().ToString("N")[..4]}";
-                }
-
-                existingNames.Add(name);
-
-                var id = Guid.NewGuid();
-                var slug = Slug.From(name, 120);
-                var description = f.Lorem.Sentence();
-                var imageUrl = $"https://picsum.photos/seed/{id}/600/400";
-
-                return Category.Create(id, name, slug, description, imageUrl, index);
-            });
-
-        var generated = categoryFaker.Generate(countToGenerate);
-        dbContext.Categories.AddRange(generated);
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        return existingCategories.Select(c => c.Id).Concat(generated.Select(c => c.Id)).Take(20).ToList();
-    }
-
-    private async Task SeedRecipesAsync(
-        List<Guid> categoryIds,
-        List<Guid> authorIds,
-        CancellationToken cancellationToken)
-    {
-        if (categoryIds.Count == 0 || authorIds.Count == 0)
-        {
-            return;
-        }
-
-        var existingCount = await dbContext.Recipes.IgnoreQueryFilters()
-            .CountAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var countToGenerate = Math.Max(0, FunctionalRegressionRecipeCount - existingCount);
-
-        var dishPrefixes = new[]
-        {
-            "Phở bò", "Bún chả", "Cơm tấm", "Bánh mì", "Gỏi cuốn",
-            "Bò kho", "Cá kho tộ", "Gà rang sả ớt", "Sườn xào chua ngọt", "Canh chua cá lóc",
-            "Mì xào giòn", "Lẩu thái hải sản", "Nộm hoa chuối", "Bánh xèo", "Chả giò rế",
-            "Thịt kho tàu", "Vịt om sấu", "Bún bò Huế", "Mực hấp gừng", "Tôm rim mặn ngọt"
-        };
-
-        var existingSlugs = await dbContext.Recipes.IgnoreQueryFilters()
-            .Select(r => r.Slug)
-            .ToHashSetAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var recipeFaker = new Faker<Recipe>()
-            .CustomInstantiator(f =>
-            {
-                var index = f.IndexGlobal + existingCount;
-                var baseTitle = dishPrefixes[index % dishPrefixes.Length];
-                var title = $"{baseTitle} {f.Commerce.ProductAdjective()} {index + 1}".Trim();
-                if (title.Length > 190)
-                {
-                    title = title[..190];
-                }
-
-                var slug = Slug.From(title, 220);
-                while (existingSlugs.Contains(slug))
-                {
-                    title = $"{baseTitle} {f.Commerce.ProductAdjective()} {Guid.NewGuid().ToString("N")[..4]}";
-                    slug = Slug.From(title, 220);
-                }
-
-                existingSlugs.Add(slug);
-
-                var description = f.Lorem.Paragraph();
-                if (description.Length > 1900)
-                {
-                    description = description[..1900];
-                }
-
-                var categoryId = f.PickRandom(categoryIds);
-                var prepTime = f.Random.Int(5, 60);
-                var cookTime = f.Random.Int(10, 120);
-                var servings = f.Random.Int(1, 8);
-                var difficulty = f.PickRandom<RecipeDifficulty>();
-                var instructions = f.Lorem.Paragraphs(2);
-                if (instructions.Length > 9000)
-                {
-                    instructions = instructions[..9000];
-                }
-
-                var nutrition = RecipeNutrition.Create(
-                    f.Random.Int(150, 750),
-                    f.Random.Int(5, 45),
-                    f.Random.Int(10, 80),
-                    f.Random.Int(2, 35),
-                    f.Random.Int(1, 15),
-                    f.Random.Int(100, 1200));
-
-                return Recipe.Create(
-                    Guid.NewGuid(),
-                    authorIds[index % authorIds.Count],
-                    slug,
-                    title,
-                    description,
-                    categoryId,
-                    prepTime,
-                    cookTime,
-                    servings,
-                    difficulty,
-                    instructions,
-                    nutrition);
-            });
-
-        var recipes = countToGenerate > 0 ? recipeFaker.Generate(countToGenerate) : [];
-        for (var index = 0; index < recipes.Count; index++)
-        {
-            if (index % 3 == 1)
-            {
-                recipes[index].Publish(DateTimeOffset.UtcNow.AddMinutes(-index), true, 10, [1, 2, 3, 4, 5]);
-            }
-            else if (index % 3 == 2)
-            {
-                recipes[index].Publish(DateTimeOffset.UtcNow.AddMinutes(-index), true, 10, [1, 2, 3, 4, 5]);
-                recipes[index].Archive();
-            }
-        }
-
-        if (recipes.Count > 0)
-        {
-            dbContext.Recipes.AddRange(recipes);
-        }
-
-        var ingredientNames = new[]
-        {
-            "Thịt bò", "Thịt lợn", "Thịt gà", "Tôm tươi", "Mực ống", "Cá hồi",
-            "Trứng gà", "Đậu phụ", "Hành lá", "Tỏi", "Hành tím", "Gừng",
-            "Sả", "Ớt tươi", "Cà chua", "Cà rốt", "Khoai tây", "Nấm hương",
-            "Rau thơm", "Nước mắm", "Dầu ăn", "Hạt nêm", "Đường", "Tiêu đen",
-            "Xì dầu", "Bột năng", "Bột bắp", "Bơ nhạt", "Sữa tươi", "Nước cốt dừa"
-        };
-
-        var units = new[] { "g", "kg", "ml", "muỗng canh", "thìa cà phê", "quả", "củ", "nhánh", "tép", "lát" };
-
-        var allIngredients = new List<RecipeIngredient>();
-        var faker = new Faker();
-
-        var existingRecipesWithoutIngredients = await dbContext.Recipes.IgnoreQueryFilters()
-            .Where(r => !dbContext.RecipeIngredients.IgnoreQueryFilters().Any(i => i.RecipeId == r.Id))
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var recipesNeedingIngredients = recipes.Concat(existingRecipesWithoutIngredients)
-            .DistinctBy(r => r.Id)
-            .ToList();
-
-        foreach (var recipe in recipesNeedingIngredients)
-        {
-            var pickedIngredients = faker.PickRandom(ingredientNames, 10).Distinct().ToList();
-            while (pickedIngredients.Count < 10)
-            {
-                var extra = faker.PickRandom(ingredientNames);
-                if (!pickedIngredients.Contains(extra))
-                {
-                    pickedIngredients.Add(extra);
-                }
-            }
-
-            for (var orderIndex = 0; orderIndex < 10; orderIndex++)
-            {
-                var ingredientId = Guid.NewGuid();
-                var name = pickedIngredients[orderIndex];
-                var quantity = Math.Round(faker.Random.Decimal(1, 500), 1);
-                var unit = faker.PickRandom(units);
-                var notes = faker.Random.Bool(0.2f) ? faker.Lorem.Word() : null;
-
-                allIngredients.Add(RecipeIngredient.Create(
-                    ingredientId,
-                    recipe.Id,
-                    name,
-                    quantity,
-                    unit,
-                    notes,
-                    orderIndex));
-            }
-        }
-
-        if (allIngredients.Count > 0)
-        {
-            dbContext.RecipeIngredients.AddRange(allIngredients);
-        }
-
-        var stepTitles = new[]
-        {
-            "Sơ chế nguyên liệu",
-            "Ướp gia vị",
-            "Chế biến nhiệt",
-            "Hoàn thiện món ăn",
-            "Trình bày và thưởng thức"
-        };
-
-        var allSteps = new List<RecipeStep>();
-
-        var existingRecipesWithoutSteps = await dbContext.Recipes.IgnoreQueryFilters()
-            .Where(r => !dbContext.RecipeSteps.IgnoreQueryFilters().Any(s => s.RecipeId == r.Id))
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var recipesNeedingSteps = recipes.Concat(existingRecipesWithoutSteps)
-            .DistinctBy(r => r.Id)
-            .ToList();
-
-        foreach (var recipe in recipesNeedingSteps)
-        {
-            for (var stepIndex = 0; stepIndex < 5; stepIndex++)
-            {
-                var stepId = Guid.NewGuid();
-                var stepNumber = stepIndex + 1;
-                var title = stepIndex < stepTitles.Length ? stepTitles[stepIndex] : $"Bước {stepNumber}";
-                var description = faker.Lorem.Paragraph();
-                if (description.Length > 1900)
-                {
-                    description = description[..1900];
-                }
-
-                var timerMinutes = faker.Random.Bool(0.6f) ? faker.Random.Int(5, 45) : (int?)null;
-                var imageUrl = $"https://picsum.photos/seed/{stepId}/600/400";
-
-                allSteps.Add(RecipeStep.Create(
-                    stepId,
-                    recipe.Id,
-                    stepNumber,
-                    title,
-                    description,
-                    timerMinutes,
-                    imageUrl));
-            }
-        }
-
-        if (allSteps.Count > 0)
-        {
-            dbContext.RecipeSteps.AddRange(allSteps);
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"culinary-blog-seed:{value}"));
+        return new Guid(hash.AsSpan(0, 16));
     }
 
     private static void EnsureSucceeded(IdentityResult result, string operation)

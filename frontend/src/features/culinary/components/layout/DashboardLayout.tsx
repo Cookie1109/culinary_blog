@@ -4,7 +4,6 @@ import {
   BookOpen,
   PlusCircle,
   Tag,
-  User,
   LogOut,
   ChevronRight,
   ClipboardList,
@@ -15,13 +14,8 @@ import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Tổng quan', icon: LayoutDashboard, end: true },
-  { to: '/dashboard/recipes', label: 'Công thức của tôi', icon: BookOpen, end: false },
+  { to: '/dashboard/recipes', label: 'Công thức của tôi', icon: BookOpen, end: true },
   { to: '/dashboard/recipes/new', label: 'Tạo công thức mới', icon: PlusCircle, end: true },
-]
-
-const SECONDARY_ITEMS = [
-  { to: '/categories', label: 'Danh mục', icon: Tag },
-  { to: '/profile', label: 'Hồ sơ của tôi', icon: User },
 ]
 
 export function DashboardLayout() {
@@ -62,7 +56,11 @@ export function DashboardLayout() {
         {/* User card */}
         {user && (
           <div className="px-4 py-6 border-b border-border">
-            <div className="flex items-center gap-3">
+            <Link
+              to="/profile"
+              aria-label="Đi đến hồ sơ của tôi"
+              className="flex items-center gap-3 hover:text-primary transition-colors"
+            >
               {user.avatar ? (
                 <img
                   src={user.avatar}
@@ -80,7 +78,7 @@ export function DashboardLayout() {
                   {user.role === 'admin' ? 'Quản trị viên' : 'Tác giả'}
                 </p>
               </div>
-            </div>
+            </Link>
           </div>
         )}
 
@@ -96,25 +94,6 @@ export function DashboardLayout() {
               </li>
             ))}
           </ul>
-
-          <div className="mt-8 pt-4 border-t border-border">
-            <p className="px-4 mb-2 text-xs uppercase tracking-widest text-muted-foreground">
-              Trang công khai
-            </p>
-            <ul className="space-y-0.5">
-              {SECONDARY_ITEMS.map(({ to, label, icon: Icon }) => (
-                <li key={to}>
-                  <Link
-                    to={to}
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary hover:text-primary transition-colors border-l-2 border-transparent"
-                  >
-                    <Icon size={18} strokeWidth={1.5} />
-                    <span>{label}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
 
           {user?.role === 'admin' && (
             <div className="mt-6 pt-4 border-t border-border">

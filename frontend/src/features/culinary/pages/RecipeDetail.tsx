@@ -37,7 +37,8 @@ export function RecipeDetail({
     .sort(
       (left, right) => Number(right.isPrimary) - Number(left.isPrimary) || left.orderIndex - right.orderIndex,
     )
-  const heroImage = recipe.primaryImageUrl ?? images[0]?.mediumUrl ?? images[0]?.originalUrl
+  const primaryImage = images.find((image) => image.isPrimary)
+  const heroImage = primaryImage?.originalUrl ?? primaryImage?.mediumUrl ?? recipe.primaryImageUrl
   const imageSource = privatePreview ? privateMediaUrl : publicMediaUrl
   const nutrition = recipe.nutrition
     ? NUTRITION_LABELS.filter(([key]) => recipe.nutrition?.[key] != null)
@@ -96,10 +97,12 @@ export function RecipeDetail({
         <div className="relative aspect-video w-full overflow-hidden bg-muted">
           {heroImage ? (
             <Image
-              src={imageSource(heroImage)}
+              src={`${imageSource(heroImage)}?v=${recipe.version}`}
               alt={recipe.title}
               fill
               priority
+              loading="eager"
+              quality={90}
               sizes="(max-width: 1280px) 100vw, 1280px"
               placeholder="blur"
               blurDataURL={IMAGE_PLACEHOLDER}
@@ -115,136 +118,142 @@ export function RecipeDetail({
       </div>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <dl className="mb-16 grid grid-cols-2 border border-border bg-secondary sm:grid-cols-4">
-          <div className="border-b border-r border-border p-3 sm:p-5 sm:border-b-0">
-            <dt className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-              <Clock size={15} aria-hidden="true" /> Chuẩn bị
-            </dt>
-            <dd className="font-serif text-lg sm:text-xl">{recipe.prepTime} phút</dd>
-          </div>
-          <div className="border-b border-border p-3 sm:p-5 sm:border-b-0 sm:border-r">
-            <dt className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-              <ChefHat size={15} aria-hidden="true" /> Nấu
-            </dt>
-            <dd className="font-serif text-lg sm:text-xl">{recipe.cookTime} phút</dd>
-          </div>
-          <div className="border-r border-border p-3 sm:p-5">
-            <dt className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-              <Users size={15} aria-hidden="true" /> Khẩu phần
-            </dt>
-            <dd className="font-serif text-lg sm:text-xl">{recipe.servings}</dd>
-          </div>
-          <div className="p-3 sm:p-5">
-            <dt className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Độ khó</dt>
-            <dd className="font-serif text-lg sm:text-xl">{DIFFICULTY_LABELS[recipe.difficulty]}</dd>
-          </div>
-        </dl>
+        <section className="mb-16" aria-labelledby="nutrition-title">
+          <h2 id="nutrition-title" className="mb-6 border-b border-border pb-3 font-serif text-3xl">
+            Dinh dưỡng mỗi khẩu phần
+          </h2>
+          {nutrition.length === 0 ? (
+            <p className="text-muted-foreground">Chưa có thông tin dinh dưỡng.</p>
+          ) : (
+            <dl className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
+              {nutrition.map(([key, label, unit]) => (
+                <div key={key} className="bg-card p-5">
+                  <dt className="text-sm text-muted-foreground">{label}</dt>
+                  <dd className="mt-1 font-serif text-2xl">
+                    {recipe.nutrition?.[key]} <span className="text-sm">{unit}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </section>
 
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
-          <section className="lg:col-span-5" aria-labelledby="ingredients-title">
-            <h2 id="ingredients-title" className="mb-6 border-b border-border pb-3 font-serif text-3xl">
-              Nguyên liệu
+          <div className="space-y-12 lg:col-span-5">
+            <dl className="space-y-4 border border-border bg-secondary p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4">
+                <dt className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                  <Clock size={15} aria-hidden="true" /> Chuẩn bị
+                </dt>
+                <dd className="font-serif text-lg">{recipe.prepTime} phút</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-4">
+                <dt className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                  <ChefHat size={15} aria-hidden="true" /> Nấu
+                </dt>
+                <dd className="font-serif text-lg">{recipe.cookTime} phút</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-4">
+                <dt className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                  <Users size={15} aria-hidden="true" /> Khẩu phần
+                </dt>
+                <dd className="font-serif text-lg">{recipe.servings}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-4">
+                <dt className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                  Độ khó
+                </dt>
+                <dd className="font-serif text-lg">{DIFFICULTY_LABELS[recipe.difficulty]}</dd>
+              </div>
+            </dl>
+
+            <section aria-labelledby="ingredients-title">
+              <h2 id="ingredients-title" className="mb-6 border-b border-border pb-3 font-serif text-3xl">
+                Nguyên liệu
+              </h2>
+              {ingredients.length === 0 ? (
+                <p className="text-muted-foreground">Tác giả chưa bổ sung nguyên liệu.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {ingredients.map((ingredient) => (
+                    <li key={ingredient.id} className="flex items-start justify-between gap-5 py-4">
+                      <div>
+                        <span className="font-medium">{ingredient.name}</span>
+                        {ingredient.notes && (
+                          <span className="mt-1 block text-sm text-muted-foreground">{ingredient.notes}</span>
+                        )}
+                      </div>
+                      {(ingredient.quantity != null || ingredient.unit) && (
+                        <span className="shrink-0 text-muted-foreground">
+                          {ingredient.quantity != null
+                            ? new Intl.NumberFormat('vi-VN').format(ingredient.quantity)
+                            : ''}{' '}
+                          {ingredient.unit}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+
+          <section className="lg:col-span-7" aria-labelledby="steps-title">
+            <h2 id="steps-title" className="mb-8 border-b border-border pb-3 font-serif text-3xl">
+              Các bước thực hiện
             </h2>
-            {ingredients.length === 0 ? (
-              <p className="text-muted-foreground">Tác giả chưa bổ sung nguyên liệu.</p>
+            {steps.length === 0 ? (
+              recipe.instructions ? (
+                <p className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
+                  {recipe.instructions}
+                </p>
+              ) : (
+                <p className="text-muted-foreground">Tác giả chưa bổ sung các bước thực hiện.</p>
+              )
             ) : (
-              <ul className="divide-y divide-border">
-                {ingredients.map((ingredient) => (
-                  <li key={ingredient.id} className="flex items-start justify-between gap-5 py-4">
+              <ol className="space-y-10">
+                {steps.map((step) => (
+                  <li key={step.id} className="grid gap-5 sm:grid-cols-[4rem_1fr]">
+                    <span
+                      className="grid h-12 w-12 place-items-center rounded-full bg-primary font-serif text-xl text-primary-foreground"
+                      aria-hidden="true"
+                    >
+                      {step.stepNumber}
+                    </span>
                     <div>
-                      <span className="font-medium">{ingredient.name}</span>
-                      {ingredient.notes && (
-                        <span className="mt-1 block text-sm text-muted-foreground">{ingredient.notes}</span>
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                        <h3 className="font-serif text-2xl">{step.title}</h3>
+                        {step.timerMinutes != null && (
+                          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <Timer size={15} aria-hidden="true" /> {step.timerMinutes} phút
+                          </span>
+                        )}
+                      </div>
+                      <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                        {step.description}
+                      </p>
+                      {step.imageUrl && (
+                        <div className="relative mt-5 aspect-video w-full overflow-hidden bg-muted">
+                          <Image
+                            src={imageSource(step.imageUrl)}
+                            alt={`Bước ${step.stepNumber}: ${step.title}`}
+                            fill
+                            loading="lazy"
+                            sizes="(max-width: 1024px) 100vw, 768px"
+                            placeholder="blur"
+                            blurDataURL={IMAGE_PLACEHOLDER}
+                            unoptimized={privatePreview}
+                            className="object-cover"
+                          />
+                        </div>
                       )}
                     </div>
-                    {(ingredient.quantity != null || ingredient.unit) && (
-                      <span className="shrink-0 text-muted-foreground">
-                        {ingredient.quantity != null
-                          ? new Intl.NumberFormat('vi-VN').format(ingredient.quantity)
-                          : ''}{' '}
-                        {ingredient.unit}
-                      </span>
-                    )}
                   </li>
                 ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="lg:col-span-7" aria-labelledby="nutrition-title">
-            <h2 id="nutrition-title" className="mb-6 border-b border-border pb-3 font-serif text-3xl">
-              Dinh dưỡng mỗi khẩu phần
-            </h2>
-            {nutrition.length === 0 ? (
-              <p className="text-muted-foreground">Chưa có thông tin dinh dưỡng.</p>
-            ) : (
-              <dl className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
-                {nutrition.map(([key, label, unit]) => (
-                  <div key={key} className="bg-card p-5">
-                    <dt className="text-sm text-muted-foreground">{label}</dt>
-                    <dd className="mt-1 font-serif text-2xl">
-                      {recipe.nutrition?.[key]} <span className="text-sm">{unit}</span>
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              </ol>
             )}
           </section>
         </div>
-
-        <section className="mt-20" aria-labelledby="steps-title">
-          <h2 id="steps-title" className="mb-8 border-b border-border pb-3 font-serif text-3xl">
-            Các bước thực hiện
-          </h2>
-          {recipe.instructions && (
-            <p className="mb-10 whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
-              {recipe.instructions}
-            </p>
-          )}
-          {steps.length === 0 ? (
-            <p className="text-muted-foreground">Tác giả chưa bổ sung các bước thực hiện.</p>
-          ) : (
-            <ol className="space-y-10">
-              {steps.map((step) => (
-                <li key={step.id} className="grid gap-5 sm:grid-cols-[4rem_1fr]">
-                  <span
-                    className="grid h-12 w-12 place-items-center rounded-full bg-primary font-serif text-xl text-primary-foreground"
-                    aria-hidden="true"
-                  >
-                    {step.stepNumber}
-                  </span>
-                  <div>
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                      <h3 className="font-serif text-2xl">{step.title}</h3>
-                      {step.timerMinutes != null && (
-                        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <Timer size={15} aria-hidden="true" /> {step.timerMinutes} phút
-                        </span>
-                      )}
-                    </div>
-                    <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
-                      {step.description}
-                    </p>
-                    {step.imageUrl && (
-                      <div className="relative mt-5 aspect-video w-full overflow-hidden bg-muted">
-                        <Image
-                          src={imageSource(step.imageUrl)}
-                          alt={`Bước ${step.stepNumber}: ${step.title}`}
-                          fill
-                          sizes="(max-width: 1024px) 100vw, 768px"
-                          placeholder="blur"
-                          blurDataURL={IMAGE_PLACEHOLDER}
-                          unoptimized={privatePreview}
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
 
         {images.length > 1 && (
           <section className="mt-20" aria-labelledby="gallery-title">
@@ -255,9 +264,11 @@ export function RecipeDetail({
               {images.map((image, index) => (
                 <div key={image.id} className="relative aspect-square overflow-hidden bg-muted">
                   <Image
-                    src={imageSource(image.mediumUrl ?? image.originalUrl)}
+                    src={`${imageSource(image.mediumUrl ?? image.originalUrl)}?v=${recipe.version}`}
                     alt={image.altText ?? `${recipe.title} — ảnh món ăn ${index + 1}`}
                     fill
+                    loading="lazy"
+                    quality={90}
                     sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
                     placeholder="blur"
                     blurDataURL={IMAGE_PLACEHOLDER}

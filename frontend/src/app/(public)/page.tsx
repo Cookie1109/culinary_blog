@@ -14,10 +14,10 @@ export const metadata: Metadata = createPageMetadata({
 
 export default async function HomePage() {
   await connection()
-  const [recipes, categories] = await Promise.all([
-    getPublishedRecipes(1, 3, revalidate),
+  const [recipePage, categories] = await Promise.all([
+    getPublishedRecipes(1, 12, revalidate),
     getPublicCategories(revalidate),
   ])
 
-  return <Home recipes={recipes.data} categories={categories} />
+  return <Home recipePage={recipePage} categories={categories} />
 }

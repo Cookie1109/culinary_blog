@@ -24,6 +24,22 @@ test('P7-01: Dashboard queries real API data and does not use hardcoded fixtures
   assert.match(source, /Bạn chưa có công thức nào/, 'Must have empty state description')
 })
 
+test('dashboard sidebar keeps navigation states exclusive and links the user card to profile', async () => {
+  const source = await readFile(
+    new URL('../src/features/culinary/components/layout/DashboardLayout.tsx', import.meta.url),
+    'utf8',
+  )
+
+  assert.match(
+    source,
+    /to: '\/dashboard\/recipes', label: 'Công thức của tôi', icon: BookOpen, end: true/,
+    'The recipe list item must not stay active on the new-recipe route',
+  )
+  assert.match(source, /<Link\s+to="\/profile"\s+aria-label="Đi đến hồ sơ của tôi"/)
+  assert.doesNotMatch(source, /Trang công khai/)
+  assert.doesNotMatch(source, /SECONDARY_ITEMS/)
+})
+
 test('P7-02: content-client supports pagination and MyRecipes wires filter, table/card, and actions', async () => {
   const clientSource = await readFile(new URL('../src/lib/api/content-client.ts', import.meta.url), 'utf8')
   assert.match(
@@ -112,20 +128,26 @@ test('P7-04: Confirmation UX is implemented for publish, unpublish, archive, una
 })
 
 test('P7-05: Validation summary checklist calculates criteria and provides deep link navigation', async () => {
-  const wizardSource = await readFile(
-    new URL('../src/features/culinary/pages/dashboard/RecipeCompositionWizard.tsx', import.meta.url),
-    'utf8',
-  )
+  const [wizardSource, validationSource] = await Promise.all([
+    readFile(
+      new URL('../src/features/culinary/pages/dashboard/RecipeCompositionWizard.tsx', import.meta.url),
+      'utf8',
+    ),
+    readFile(
+      new URL('../src/features/culinary/pages/dashboard/recipe-validation.ts', import.meta.url),
+      'utf8',
+    ),
+  ])
 
   // Verify computeRecipeValidation exists and checks all critical elements
-  assert.match(wizardSource, /export function computeRecipeValidation/)
-  assert.match(wizardSource, /recipe\.title.*length/)
-  assert.match(wizardSource, /recipe\.description.*length/)
-  assert.match(wizardSource, /recipe\.category/)
-  assert.match(wizardSource, /recipe\.prepTime/)
-  assert.match(wizardSource, /recipe\.ingredients\.length/)
-  assert.match(wizardSource, /recipe\.steps\.length/)
-  assert.match(wizardSource, /recipe\.images\.length/)
+  assert.match(validationSource, /export function computeRecipeValidation/)
+  assert.match(validationSource, /recipe\.title.*length/)
+  assert.match(validationSource, /recipe\.description.*length/)
+  assert.match(validationSource, /recipe\.category/)
+  assert.match(validationSource, /recipe\.prepTime/)
+  assert.match(validationSource, /recipe\.ingredients\.length/)
+  assert.match(validationSource, /recipe\.steps\.length/)
+  assert.match(validationSource, /recipe\.images\.length/)
 
   // Verify deep links to wizard steps
   assert.match(wizardSource, /onNavigateToStep/)

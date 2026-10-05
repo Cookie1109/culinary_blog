@@ -241,6 +241,10 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal(ImageProcessingStatus.Pending, image.ProcessingStatus);
         image.MarkReady("recipes/key/medium.webp", "recipes/key/thumbnail.webp");
         Assert.Equal(ImageProcessingStatus.Ready, image.ProcessingStatus);
+        image.MarkPending();
+        Assert.Equal(ImageProcessingStatus.Pending, image.ProcessingStatus);
+        Assert.Null(image.MediumObjectKey);
+        Assert.Null(image.ThumbnailObjectKey);
         Assert.Throws<DomainException>(() => RecipeStep.Create(
             Guid.NewGuid(), Guid.NewGuid(), 0, "Bước", "Mô tả", null, null));
     }

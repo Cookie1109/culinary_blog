@@ -1,13 +1,12 @@
-import { BookOpen } from 'lucide-react'
-import { Link } from 'react-router'
+import { CategoryCard } from '@/features/culinary/components/CategoryCard'
 import type { Category } from '@/lib/api/content-client'
 
 export function Categories({ categories }: { categories: Category[] }) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <header className="mb-12 border-b border-border pb-8">
-        <h1 className="mb-2 font-serif text-3xl sm:text-4xl text-foreground lg:text-5xl">Danh mục món ăn</h1>
-        <p className="text-muted-foreground">Khám phá các công thức theo chủ đề ẩm thực.</p>
+      <header className="mb-12">
+        <h1 className="mb-3 font-serif text-3xl sm:text-4xl text-foreground lg:text-5xl">Danh mục món ăn</h1>
+        <p className="text-base text-muted-foreground">Khám phá các công thức theo chủ đề ẩm thực.</p>
       </header>
 
       {categories.length === 0 ? (
@@ -15,23 +14,7 @@ export function Categories({ categories }: { categories: Category[] }) {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {categories.map((category) => (
-            <article key={category.id} className="group flex flex-col border border-border p-6">
-              <h2 className="mb-2 font-serif text-xl text-foreground transition-colors group-hover:text-primary">
-                <Link
-                  to={`/categories/${category.slug}`}
-                  aria-label={`Danh mục ${category.name}, có ${category.recipeCount} công thức`}
-                >
-                  {category.name}
-                </Link>
-              </h2>
-              <p className="mb-4 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {category.description ?? 'Chưa có mô tả.'}
-              </p>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <BookOpen size={13} aria-hidden="true" />
-                <span>{category.recipeCount} công thức</span>
-              </div>
-            </article>
+            <CategoryCard key={category.id} category={category} />
           ))}
         </div>
       )}

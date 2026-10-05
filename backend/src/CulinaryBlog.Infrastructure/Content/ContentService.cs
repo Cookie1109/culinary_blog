@@ -65,7 +65,11 @@ internal sealed partial class ContentService(
         var recipes = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken)
             .ConfigureAwait(false);
         var mapped = await MapRecipesAsync(recipes, cancellationToken).ConfigureAwait(false);
-        var categoryDto = ToCategoryDto(category, total);
+        var categoryImage = category.ImageUrl
+            ?? mapped.FirstOrDefault()?.Images.FirstOrDefault(i => i.IsPrimary)?.MediumUrl
+            ?? mapped.FirstOrDefault()?.Images.FirstOrDefault()?.OriginalUrl
+            ?? mapped.FirstOrDefault()?.PrimaryImageUrl;
+        var categoryDto = ToCategoryDto(category, total, categoryImage);
         return new CategoryDetailEnvelope(
             new CategoryDetailData(categoryDto, mapped),
             CreateMeta(page, pageSize, total));
@@ -822,6 +826,11 @@ internal sealed partial class ContentService(
             images);
     }
 
+    private static readonly Dictionary<string, string> PreferredCategoryRecipeSlugs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["mon-nuoc"] = "pho-bo-ha-noi",
+    };
+
     private async Task<IReadOnlyCollection<CategoryDto>> MapCategoriesAsync(
         IReadOnlyCollection<Category> categories,
         CancellationToken cancellationToken)
@@ -832,11 +841,49 @@ internal sealed partial class ContentService(
             .Select(group => new { CategoryId = group.Key, Count = group.Count() })
             .ToDictionaryAsync(item => item.CategoryId, item => item.Count, cancellationToken)
             .ConfigureAwait(false);
-        return categories.Select(category => ToCategoryDto(category, counts.GetValueOrDefault(category.Id))).ToArray();
+
+        var categoryImages = await (
+            from image in dbContext.RecipeImages.AsNoTracking()
+            join recipe in dbContext.Recipes.AsNoTracking() on image.RecipeId equals recipe.Id
+            where recipe.Status == RecipeStatus.Published && image.ProcessingStatus == ImageProcessingStatus.Ready
+            orderby image.IsPrimary descending, recipe.PublishedAt descending, image.OrderIndex
+            select new
+            {
+                recipe.CategoryId,
+                RecipeSlug = recipe.Slug,
+                ImageId = image.Id,
+                HasMedium = image.MediumObjectKey != null,
+            }
+        ).ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        var imageByCategory = new Dictionary<Guid, string>();
+        foreach (var category in categories)
+        {
+            var imagesForCategory = categoryImages.Where(item => item.CategoryId == category.Id).ToList();
+            if (imagesForCategory.Count == 0) continue;
+
+            if (PreferredCategoryRecipeSlugs.TryGetValue(category.Slug, out var preferredSlug))
+            {
+                var preferred = imagesForCategory.FirstOrDefault(item => string.Equals(item.RecipeSlug, preferredSlug, StringComparison.OrdinalIgnoreCase));
+                if (preferred != null)
+                {
+                    imageByCategory[category.Id] = MediaUrl(preferred.ImageId, preferred.HasMedium ? "medium" : "original");
+                    continue;
+                }
+            }
+
+            var first = imagesForCategory.First();
+            imageByCategory[category.Id] = MediaUrl(first.ImageId, first.HasMedium ? "medium" : "original");
+        }
+
+        return categories.Select(category => ToCategoryDto(
+            category,
+            counts.GetValueOrDefault(category.Id),
+            category.ImageUrl ?? imageByCategory.GetValueOrDefault(category.Id))).ToArray();
     }
 
-    private static CategoryDto ToCategoryDto(Category category, int recipeCount) =>
-        new(category.Id, category.Name, category.Slug, category.Description, category.ImageUrl, category.OrderIndex, recipeCount);
+    private static CategoryDto ToCategoryDto(Category category, int recipeCount, string? resolvedImageUrl = null) =>
+        new(category.Id, category.Name, category.Slug, category.Description, resolvedImageUrl ?? category.ImageUrl, category.OrderIndex, recipeCount);
 
     private static RecipeNutrition? ToNutrition(NutritionDto? nutrition) => nutrition is null
         ? null

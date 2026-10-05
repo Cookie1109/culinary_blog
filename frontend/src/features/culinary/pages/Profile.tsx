@@ -201,7 +201,7 @@ export function Profile() {
                   onClick={() => setEditing(true)}
                   className="bg-foreground text-background px-6 py-3 text-sm uppercase tracking-widest hover:bg-primary transition-colors"
                 >
-                  Chỉnh sửa hồ sơ
+                  Cập nhật
                 </button>
                 <button
                   type="button"

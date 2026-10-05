@@ -27,6 +27,9 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
         Assert.Equal("draft", created?.Data.Status);
         Assert.Equal("\"1\"", createResponse.Headers.ETag?.Tag);
 
+        using var lowercaseStatusResponse = await _client.GetAsync("/api/v1/me/recipes?status=draft&page=1&pageSize=1");
+        Assert.Equal(HttpStatusCode.OK, lowercaseStatusResponse.StatusCode);
+
         using var collidingResponse = await _client.PostAsJsonAsync(
             "/api/v1/recipes",
             RecipeBody(categoryId, "Private family recipe", includeNutrition: false));

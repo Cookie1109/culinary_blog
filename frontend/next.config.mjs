@@ -14,11 +14,11 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "object-src 'none'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://images.unsplash.com",
   "font-src 'self'",
-  "connect-src 'self'",
+  `connect-src 'self'${process.env.NODE_ENV === 'development' ? ' ws: wss:' : ''}`,
 ].join('; ')
 
 const securityHeaders = [
@@ -68,6 +68,7 @@ const nextConfig = {
     return [
       { source: '/auth/login', destination: '/login', permanent: false },
       { source: '/auth/register', destination: '/register', permanent: false },
+      { source: '/search', destination: '/recipes', permanent: true },
     ]
   },
   async rewrites() {

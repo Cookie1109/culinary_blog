@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <InternalsVisibleTo Include="CulinaryBlog.IntegrationTests" />
+    <EmbeddedResource Include="Identity/SeedAssets/*.jpg" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../CulinaryBlog.Application/CulinaryBlog.Application.csproj" />

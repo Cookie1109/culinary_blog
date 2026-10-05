@@ -129,6 +129,11 @@ export async function listCategories() {
   return (await apiRequest<DataEnvelope<Category[]>>('/categories')).data
 }
 
+export function listPublishedRecipes(page: number = 1, pageSize: number = 12) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  return apiRequest<PageEnvelope<Recipe>>(`/recipes?${params}`)
+}
+
 export async function createCategory(data: Omit<Category, 'id' | 'slug' | 'recipeCount'>) {
   return (
     await authenticatedApiRequest<DataEnvelope<Category>>('/categories', {

@@ -45,3 +45,6 @@ Desktop.ini
 # beside it.
 /.plugins/
 /.opencode-skills/
+
+# Docker development caches live beside the repository on drive D.
+/.docker-dev/

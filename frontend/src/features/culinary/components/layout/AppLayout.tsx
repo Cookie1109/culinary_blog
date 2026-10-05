@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useNavigate, NavLink } from 'react-router'
-import { ChefHat, Search, Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react'
+import { ChefHat, Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { NetworkStatusBanner } from '@/features/culinary/components/NetworkStatusBanner'
 import { MaintenanceBanner } from '@/features/culinary/components/MaintenanceBanner'
@@ -121,7 +121,7 @@ export function AppLayout() {
 
       <header className="border-b border-border bg-background sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="relative flex h-20 items-center justify-between">
             {/* Mobile: hamburger */}
             <div className="flex items-center gap-3 lg:hidden">
               <button
@@ -138,19 +138,19 @@ export function AppLayout() {
 
             {/* Desktop nav left */}
             <nav className="hidden lg:flex items-center gap-8" aria-label="Điều hướng chính">
+              <NavLink to="/" end className={navLinkClass}>
+                Trang chủ
+              </NavLink>
               <NavLink to="/recipes" className={navLinkClass}>
                 Công thức
               </NavLink>
               <NavLink to="/categories" className={navLinkClass}>
                 Danh mục
               </NavLink>
-              <NavLink to="/search" className={navLinkClass}>
-                Tìm kiếm
-              </NavLink>
             </nav>
 
             {/* Center: logo */}
-            <div className="flex-1 flex justify-center lg:flex-none">
+            <div className="flex flex-1 justify-center lg:absolute lg:left-1/2 lg:-translate-x-1/2">
               <Link to="/" className="flex items-center gap-2.5 group">
                 <ChefHat
                   className="text-primary group-hover:rotate-12 transition-transform duration-300"
@@ -164,14 +164,6 @@ export function AppLayout() {
 
             {/* Right: actions */}
             <div className="flex items-center gap-3">
-              <Link
-                to="/search"
-                className="hidden lg:flex p-2 text-foreground hover:text-primary transition-colors"
-                aria-label="Tìm kiếm"
-              >
-                <Search size={20} strokeWidth={1.5} aria-hidden="true" />
-              </Link>
-
               {user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
@@ -311,7 +303,6 @@ export function AppLayout() {
                   { to: '/', label: 'Trang chủ' },
                   { to: '/recipes', label: 'Công thức' },
                   { to: '/categories', label: 'Danh mục' },
-                  { to: '/search', label: 'Tìm kiếm' },
                 ].map(({ to, label }) => (
                   <li key={to}>
                     <NavLink
@@ -425,6 +416,11 @@ export function AppLayout() {
                 <h3 className="font-serif text-lg mb-6 text-foreground">Khám phá</h3>
                 <ul className="space-y-4">
                   <li>
+                    <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
+                      Trang chủ
+                    </Link>
+                  </li>
+                  <li>
                     <Link
                       to="/recipes"
                       className="text-muted-foreground hover:text-primary transition-colors"
@@ -438,11 +434,6 @@ export function AppLayout() {
                       className="text-muted-foreground hover:text-primary transition-colors"
                     >
                       Danh mục
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/search" className="text-muted-foreground hover:text-primary transition-colors">
-                      Tìm kiếm
                     </Link>
                   </li>
                 </ul>

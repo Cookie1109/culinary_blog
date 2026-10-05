@@ -59,11 +59,6 @@ test('P6-22: lighthouserc.json specifies required public URLs and assertions mat
     urls.some((url) => url.includes('/categories/')),
     'Collect URLs must include category detail',
   )
-  assert.ok(
-    urls.some((url) => url.endsWith('/search')),
-    'Collect URLs must include search page',
-  )
-
   // Check assertions
   const assertions = lhrc.ci.assert.assertions
   assert.ok(assertions['largest-contentful-paint'], 'Must assert LCP')
@@ -120,4 +115,27 @@ test('P6-23: Bundle analyzer and code splitting optimizations are wired in next.
   const packageJson = JSON.parse(pkg)
   assert.ok(packageJson.scripts.analyze, 'package.json must provide "analyze" script')
   assert.ok(packageJson.scripts['budget:check'], 'package.json must provide "budget:check" script')
+})
+
+test('public imagery and heavy interactions use lazy loading without delaying LCP images', async () => {
+  const [home, recipeCard, categoryCard, detail, recipesList, editor, wizard] = await Promise.all([
+    source('src/features/culinary/pages/Home.tsx'),
+    source('src/features/culinary/components/RecipeCard.tsx'),
+    source('src/features/culinary/components/CategoryCard.tsx'),
+    source('src/features/culinary/pages/RecipeDetail.tsx'),
+    source('src/features/culinary/pages/RecipesList.tsx'),
+    source('src/features/culinary/pages/dashboard/RecipeEditor.tsx'),
+    source('src/features/culinary/pages/dashboard/RecipeCompositionWizard.tsx'),
+  ])
+
+  assert.match(home, /loading=\{index === 0 \? 'eager' : 'lazy'\}/)
+  assert.match(recipeCard, /loading="lazy"/)
+  assert.match(categoryCard, /loading="lazy"/)
+  assert.match(detail, /priority\s+loading="eager"/)
+  assert.match(detail, /loading="lazy"/)
+  assert.match(recipesList, /categoryModalOpen &&/)
+  assert.match(editor, /dynamic\(/)
+  assert.match(editor, /import\('\.\/RecipeCompositionWizard'\)/)
+  assert.match(wizard, /IntersectionObserver/)
+  assert.match(wizard, /rootMargin: '300px'/)
 })

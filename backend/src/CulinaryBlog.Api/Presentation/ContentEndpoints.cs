@@ -397,7 +397,7 @@ internal static class ContentEndpoints
     }
 
     private static async Task<IResult> ListMyRecipesAsync(
-        RecipeStatus? status,
+        string? status,
         int? page,
         int? pageSize,
         ClaimsPrincipal principal,
@@ -405,7 +405,7 @@ internal static class ContentEndpoints
         CancellationToken cancellationToken) =>
         Results.Ok(await contentService.ListMyRecipesAsync(
             GetUserId(principal),
-            status,
+            ParseRecipeStatus(status),
             page ?? 1,
             pageSize ?? 12,
             cancellationToken).ConfigureAwait(false));
@@ -422,13 +422,30 @@ internal static class ContentEndpoints
     }
 
     private static async Task<IResult> ListAdminRecipesAsync(
-        RecipeStatus? status,
+        string? status,
         Guid? authorId,
         int? page,
         int? pageSize,
         IContentService contentService,
         CancellationToken cancellationToken) =>
-        Results.Ok(await contentService.ListAdminRecipesAsync(status, authorId, page ?? 1, pageSize ?? 12, cancellationToken).ConfigureAwait(false));
+        Results.Ok(await contentService.ListAdminRecipesAsync(
+            ParseRecipeStatus(status), authorId, page ?? 1, pageSize ?? 12, cancellationToken).ConfigureAwait(false));
+
+    private static RecipeStatus? ParseRecipeStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return null;
+        }
+
+        if (!Enum.TryParse<RecipeStatus>(status, true, out var parsed) || !Enum.IsDefined(parsed))
+        {
+            throw new ContentProblemException(
+                "VALIDATION_ERROR", "status is invalid.", ContentProblemKind.BadRequest);
+        }
+
+        return parsed;
+    }
 
     private static async Task<IResult> ListAdminAuditLogsAsync(
         string? level,

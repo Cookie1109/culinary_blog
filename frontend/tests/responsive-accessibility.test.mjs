@@ -53,11 +53,10 @@ async function runAxeOnHtml(title, bodyHtml) {
 }
 
 test('P6-17: responsive breakpoints, fluid typography, and wrap behaviors are implemented', async () => {
-  const [home, listing, detail, search, layout] = await Promise.all([
+  const [home, listing, detail, layout] = await Promise.all([
     source('src/features/culinary/pages/Home.tsx'),
     source('src/features/culinary/pages/RecipesList.tsx'),
     source('src/features/culinary/pages/RecipeDetail.tsx'),
-    source('src/features/culinary/pages/Search.tsx'),
     source('src/features/culinary/components/layout/AppLayout.tsx'),
   ])
 
@@ -67,10 +66,8 @@ test('P6-17: responsive breakpoints, fluid typography, and wrap behaviors are im
     /flex-wrap justify-center gap-2/,
     'listing pagination must flex-wrap for 320px screens',
   )
-  assert.match(search, /flex-wrap justify-center gap-2/, 'search pagination must flex-wrap for 320px screens')
-
   // Search input wraps on small mobile
-  assert.match(search, /flex flex-col sm:flex-row/, 'search form must adapt on small mobile viewports')
+  assert.match(listing, /flex-col sm:flex-row/, 'recipe search form must adapt on small mobile viewports')
 
   // Mobile drawer constrained width
   assert.match(layout, /max-w-\[85vw\]/, 'mobile drawer must not overflow small viewports')
@@ -81,15 +78,17 @@ test('P6-17: responsive breakpoints, fluid typography, and wrap behaviors are im
 })
 
 test('P6-18: semantic HTML, landmarks, heading hierarchy, and accessible names are properly wired', async () => {
-  const [layout, dashboardLayout, home, recipeCard, detail, categories, categoryDetail] = await Promise.all([
-    source('src/features/culinary/components/layout/AppLayout.tsx'),
-    source('src/features/culinary/components/layout/DashboardLayout.tsx'),
-    source('src/features/culinary/pages/Home.tsx'),
-    source('src/features/culinary/components/RecipeCard.tsx'),
-    source('src/features/culinary/pages/RecipeDetail.tsx'),
-    source('src/features/culinary/pages/Categories.tsx'),
-    source('src/features/culinary/pages/CategoryDetail.tsx'),
-  ])
+  const [layout, dashboardLayout, home, recipeCard, detail, categories, categoryCard, categoryDetail] =
+    await Promise.all([
+      source('src/features/culinary/components/layout/AppLayout.tsx'),
+      source('src/features/culinary/components/layout/DashboardLayout.tsx'),
+      source('src/features/culinary/pages/Home.tsx'),
+      source('src/features/culinary/components/RecipeCard.tsx'),
+      source('src/features/culinary/pages/RecipeDetail.tsx'),
+      source('src/features/culinary/pages/Categories.tsx'),
+      source('src/features/culinary/components/CategoryCard.tsx'),
+      source('src/features/culinary/pages/CategoryDetail.tsx'),
+    ])
 
   // Skip to content bypass block
   assert.match(layout, /href="#main-content"/, 'AppLayout must have a skip to main content link')
@@ -100,6 +99,8 @@ test('P6-18: semantic HTML, landmarks, heading hierarchy, and accessible names a
   assert.match(layout, /aria-label="Điều hướng di động"/, 'Mobile drawer must declare navigation label')
   assert.match(layout, /aria-label="Khám phá"/, 'Footer must declare Khám phá navigation landmark')
   assert.match(layout, /aria-label="Kết nối"/, 'Footer must declare Kết nối navigation landmark')
+  assert.match(layout, /<NavLink to="\/" end/, 'Desktop navigation must expose an exact home tab')
+  assert.doesNotMatch(layout, /to="\/search"/, 'Navigation must not expose the removed search page')
 
   // No nested <main>
   assert.doesNotMatch(dashboardLayout, /<main\b/, 'DashboardLayout must not nest a redundant <main> landmark')
@@ -111,6 +112,11 @@ test('P6-18: semantic HTML, landmarks, heading hierarchy, and accessible names a
     'RecipeCard must support customizable heading level',
   )
   assert.match(home, /headingLevel="h3"/, 'Home must render recipe cards as h3 under h2 section heading')
+  assert.match(
+    home,
+    /<CategoryCard category=\{category\} headingLevel="h3"/,
+    'Home must render category cards as h3 under the category section h2',
+  )
 
   // Distinct link labels
   assert.match(home, /aria-label="Xem tất cả công thức nổi bật"/, 'Home must have distinct link labels')
@@ -125,10 +131,11 @@ test('P6-18: semantic HTML, landmarks, heading hierarchy, and accessible names a
     'CategoryDetail must have accessible back link label',
   )
   assert.match(
-    categories,
+    categoryCard,
     /aria-label=\{`Danh mục \$\{category\.name\}/,
     'Categories must have descriptive category link label',
   )
+  assert.match(categories, /<CategoryCard/, 'Categories must render the shared accessible category card')
 
   // Breadcrumbs structured navigation
   assert.match(detail, /aria-label="Đường dẫn"/, 'RecipeDetail must provide breadcrumb landmark')
@@ -176,9 +183,8 @@ test('P6-19: keyboard navigation, visible focus, escape handlers, and focus trap
 })
 
 test('P6-20: color contrast meets WCAG AA standards and screen reader async announcements are present', async () => {
-  const [globals, search, listing] = await Promise.all([
+  const [globals, listing] = await Promise.all([
     source('src/app/globals.css'),
-    source('src/features/culinary/pages/Search.tsx'),
     source('src/features/culinary/pages/RecipesList.tsx'),
   ])
 
@@ -219,9 +225,8 @@ test('P6-20: color contrast meets WCAG AA standards and screen reader async anno
   assert.ok(secondaryOnBg >= 4.5, `secondary text contrast must be >= 4.5, got ${secondaryOnBg.toFixed(2)}`)
 
   // Screen reader async announcements
-  assert.match(search, /aria-live="polite"/, 'Search page must have polite live region for result updates')
-  assert.match(search, /role="search"/, 'Search form must have search landmark role')
   assert.match(listing, /aria-live="polite"/, 'RecipesList must have polite live region for count updates')
+  assert.match(listing, /role="search"/, 'RecipesList must expose the integrated search landmark')
 })
 
 test('P6-21: axe-core automated audit on public views produces 0 critical or serious violations', async () => {
@@ -232,7 +237,7 @@ test('P6-21: axe-core automated audit on public views produces 0 critical or ser
       html: `
         <a href="#main-content" class="sr-only">Chuyển đến nội dung chính</a>
         <header>
-          <nav aria-label="Điều hướng chính"><a href="/recipes">Công thức</a><a href="/categories">Danh mục</a></nav>
+          <nav aria-label="Điều hướng chính"><a href="/">Trang chủ</a><a href="/recipes">Công thức</a><a href="/categories">Danh mục</a></nav>
         </header>
         <main id="main-content">
           <h1>Góc bếp Culinary Blog</h1>
@@ -255,7 +260,12 @@ test('P6-21: axe-core automated audit on public views produces 0 critical or ser
       name: 'Danh sách công thức (RecipesList)',
       html: `
         <main id="main-content">
-          <h1>Tất cả công thức</h1>
+          <h1>Tìm kiếm công thức</h1>
+          <form role="search" aria-label="Tìm kiếm công thức">
+            <label for="q-search">Từ khóa</label>
+            <input type="search" id="q-search" placeholder="Tìm kiếm" />
+            <button type="submit">Tìm</button>
+          </form>
           <section aria-label="Bộ lọc công thức">
             <label for="f-cat">Danh mục</label>
             <select id="f-cat"><option value="">Tất cả</option></select>
@@ -297,23 +307,6 @@ test('P6-21: axe-core automated audit on public views produces 0 critical or ser
               </li>
             </ol>
           </section>
-        </main>
-      `,
-    },
-    {
-      name: 'Tìm kiếm công thức (Search)',
-      html: `
-        <main id="main-content">
-          <h1>Tìm kiếm công thức</h1>
-          <form role="search" aria-label="Tìm kiếm công thức">
-            <label for="q-search">Từ khóa</label>
-            <input type="search" id="q-search" placeholder="Tìm kiếm" />
-            <button type="submit">Tìm</button>
-          </form>
-          <div aria-live="polite" class="sr-only">Tìm thấy 5 công thức</div>
-          <article>
-            <h2><a href="/recipes/cha-ca">Chả cá Lã Vọng</a></h2>
-          </article>
         </main>
       `,
     },
