@@ -257,6 +257,7 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         var categoryId = await GetCategoryIdAsync(client);
         SetToken(client, owner.AccessToken);
         var recipe = await CreateRecipeAsync(client, categoryId, "Secure image integration recipe");
+        var initialKeys = storage.Keys;
 
         using var invalidMime = await UploadAsync(client, recipe.Id, 1, "text/plain", "dish.txt", [1, 2, 3, 4]);
         var mimeProblem = await invalidMime.Content.ReadFromJsonAsync<Problem>();
@@ -267,20 +268,20 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         var spoofedProblem = await spoofed.Content.ReadFromJsonAsync<Problem>();
         Assert.Equal(HttpStatusCode.BadRequest, spoofed.StatusCode);
         Assert.Equal("FILE_SIGNATURE_INVALID", spoofedProblem?.Code);
-        Assert.Empty(storage.Keys);
+        Assert.Empty(storage.Keys.Except(initialKeys));
 
         using var oversized = await UploadAsync(client, recipe.Id, 1, "image/png", "large.png", new byte[(5 * 1024 * 1024) + 1]);
         var oversizedProblem = await oversized.Content.ReadFromJsonAsync<Problem>();
         Assert.Equal(HttpStatusCode.BadRequest, oversized.StatusCode);
         Assert.Equal("FILE_SIZE_EXCEEDED", oversizedProblem?.Code);
-        Assert.Empty(storage.Keys);
+        Assert.Empty(storage.Keys.Except(initialKeys));
 
         var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
         using var uploaded = await UploadAsync(client, recipe.Id, 1, "image/png", "../../dish.png", png);
         var image = (await uploaded.Content.ReadFromJsonAsync<MutationEnvelope<ImageResponse>>())!;
         Assert.Equal(HttpStatusCode.Created, uploaded.StatusCode);
         Assert.Equal(2, image.Meta.RecipeVersion);
-        Assert.All(storage.Keys, key => Assert.StartsWith($"recipes/{recipe.Id:N}/", key, StringComparison.Ordinal));
+        Assert.All(storage.Keys.Except(initialKeys), key => Assert.StartsWith($"recipes/{recipe.Id:N}/", key, StringComparison.Ordinal));
 
         using (var scope = customFactory.Services.CreateScope())
         {
@@ -288,7 +289,7 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
             await resizeJob.ProcessAsync(Guid.NewGuid(), image.Data.Id, CancellationToken.None);
             await resizeJob.ProcessAsync(Guid.NewGuid(), image.Data.Id, CancellationToken.None);
         }
-        Assert.Equal(3, storage.Keys.Length);
+        Assert.Equal(3, storage.Keys.Except(initialKeys).Count());
 
         using var secondUpload = await UploadAsync(client, recipe.Id, 2, "image/png", "second.png", png);
         var secondImage = (await secondUpload.Content.ReadFromJsonAsync<MutationEnvelope<ImageResponse>>())!;
@@ -330,9 +331,10 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
 
         using var deletionScope = customFactory.Services.CreateScope();
         var deletionJob = deletionScope.ServiceProvider.GetRequiredService<ObjectDeletionJob>();
-        var keys = storage.Keys.ToArray();
+        var keys = storage.Keys.Except(initialKeys).ToArray();
         await deletionJob.DeleteAsync(Guid.NewGuid(), keys, CancellationToken.None);
         await deletionJob.DeleteAsync(Guid.NewGuid(), keys, CancellationToken.None);
+        Assert.Equal(initialKeys.Order(), storage.Keys.Order());
     }
 
     private static async Task<HttpResponseMessage> UploadAsync(

@@ -152,7 +152,7 @@ export function RecipesList({
                   aria-haspopup="dialog"
                   className="mt-1 border-b border-primary py-1 text-left text-sm font-medium text-primary transition-colors hover:text-foreground"
                 >
-                    Xem thêm danh mục
+                  Xem thêm danh mục
                 </button>
               )}
             </div>

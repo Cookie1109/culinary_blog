@@ -82,7 +82,7 @@ test('P6-24: Recipes listing visual/responsive search, sidebar filters, and card
   )
   assert.match(listing, /type="range"/)
   assert.match(listing, /categories\.slice\(0, 4\)/)
-  assert.match(listing, /Xem tất cả/)
+  assert.match(listing, /Xem thêm danh mục/)
   assert.match(listing, /<Modal/)
 
   // Results retain a responsive one, two, and three-column card grid.
