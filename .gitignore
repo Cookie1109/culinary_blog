@@ -48,3 +48,9 @@ Desktop.ini
 
 # Docker development caches live beside the repository on drive D.
 /.docker-dev/
+
+# Local lab reports.
+/Lab02_2312708_TruongVoTrongNhan (1).docx
+/Lab03_2312708_TruongVoTrongNhan.docx
+/Lab04_2312708_TruongVoTrongNhan.docx
+/Lab05_2312708_TruongVoTrongNhan.docx

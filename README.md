@@ -1,274 +1,103 @@
 # Culinary Blog
 
-Culinary Blog là nền tảng chia sẻ công thức nấu ăn được xây dựng theo đặc tả SRS v1.0.0. Repository sử dụng mô hình monorepo với hai ứng dụng độc lập: frontend Next.js và backend ASP.NET Core; tài liệu, hạ tầng, Docker Compose và CI được quản lý tập trung tại thư mục gốc.
+Ứng dụng web chia sẻ và khám phá công thức nấu ăn, xây dựng theo [SRS v1.0.0](docs/specs/SRS_Culinary_Blog_v1.0.0.pdf). Dự án gồm frontend Next.js và backend ASP.NET Core theo Clean Architecture, CQRS.
 
-> **Trạng thái:** Phase 0–7 và Phase 8 local hardening/release-engineering đã được triển khai. Release candidate vẫn **No-Go production** cho tới khi ZAP/browser UAT trên immutable staging, Product Owner sign-off, go/no-go và production smoke hoàn tất; xem [báo cáo Phase 8](docs/specs/phase-8/README.md).
+**Trạng thái:** Đã triển khai và kiểm thử các phần chính ở môi trường local. Chưa được phê duyệt triển khai production; xem [báo cáo Phase 8](docs/specs/phase-8/README.md).
 
-## Công nghệ chính
+## Chức năng chính
 
-| Thành phần         | Công nghệ                                                               |
-| ------------------ | ----------------------------------------------------------------------- |
-| Frontend           | Next.js 15, React 19, TypeScript, Tailwind CSS 4, TanStack Query        |
-| Backend            | .NET 10, ASP.NET Core, Entity Framework Core, MediatR, FluentValidation |
-| Dữ liệu            | PostgreSQL 16, Redis 7, MinIO                                           |
-| Background jobs    | Hangfire với PostgreSQL storage, transactional media outbox             |
-| Quan sát hệ thống  | Serilog, Seq, OpenTelemetry, health checks                              |
-| Hạ tầng phát triển | Docker Compose, Nginx, MailHog                                          |
-| Chất lượng         | xUnit, Testcontainers, ESLint, TypeScript strict, GitHub Actions        |
+- Đăng ký, đăng nhập, quản lý phiên và hồ sơ cá nhân.
+- Tạo, chỉnh sửa, xuất bản và quản lý công thức với nguyên liệu, các bước, ảnh và dinh dưỡng.
+- Tìm kiếm tiếng Việt, lọc, sắp xếp và phân trang công thức.
+- Quản trị danh mục, phân quyền Author/Admin và kiểm soát quyền sở hữu công thức.
+- Xử lý ảnh nền, sinh sitemap, tối ưu SEO và giám sát hệ thống.
 
-## Cấu trúc repository
+## Công nghệ
 
-```text
-culinary-blog/
-├── frontend/          # Ứng dụng Next.js và giao diện sản phẩm
-├── backend/           # ASP.NET Core solution, source và tests
-├── docs/              # SRS, kế hoạch, đặc tả và quyết định kiến trúc
-├── infra/             # Cấu hình hạ tầng dùng chung
-├── scripts/           # Script kiểm định và smoke test
-├── .github/workflows/ # Pipeline CI
-└── compose.yaml       # Môi trường phát triển đầy đủ
-```
+| Thành phần             | Công nghệ                                                               |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Frontend               | Next.js 15, React 19, TypeScript, Tailwind CSS, TanStack Query, Auth.js |
+| Backend                | .NET 10, EF Core, MediatR, FluentValidation                             |
+| Dữ liệu                | PostgreSQL 16, Redis 7, MinIO                                           |
+| Tác vụ nền và giám sát | Hangfire, Serilog, Seq, OpenTelemetry                                   |
+| Hạ tầng và kiểm thử    | Docker Compose, Nginx, xUnit, Testcontainers, GitHub Actions            |
 
-## Bắt đầu nhanh với Docker
+## Chạy với Docker
 
-### Yêu cầu
-
-- Docker Desktop hỗ trợ Docker Compose v2
-- Các cổng `3001`, `5433`, `6379`, `8080`, `8025`, `9000`, `9001`, `9090`, `9093` và `5341` đang khả dụng
-
-### Khởi động
+Yêu cầu Docker Desktop đang chạy và các cổng trong [compose.yaml](compose.yaml) còn trống. Thực hiện tại thư mục gốc:
 
 ```powershell
-Copy-Item .env.example .env
+# Tạo cấu hình local nếu chưa có
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 docker compose up --detach --build --wait
 ```
 
-Sau khi các container healthy, truy cập ứng dụng tại [http://localhost:8080](http://localhost:8080).
+| Dịch vụ           | Địa chỉ                      |
+| ----------------- | ---------------------------- |
+| Ứng dụng          | http://localhost:8080        |
+| Tài liệu API      | http://localhost:8080/scalar |
+| Kiểm tra hệ thống | http://localhost:8080/health |
+| MinIO Console     | http://localhost:9001        |
+| Email thử nghiệm  | http://localhost:8025        |
+| Log hệ thống      | http://localhost:5341        |
 
-| Dịch vụ          | Địa chỉ                                                      |
-| ---------------- | ------------------------------------------------------------ |
-| Ứng dụng         | [http://localhost:8080](http://localhost:8080)               |
-| Aggregate health | [http://localhost:8080/health](http://localhost:8080/health) |
-| MinIO Console    | [http://localhost:9001](http://localhost:9001)               |
-| MailHog          | [http://localhost:8025](http://localhost:8025)               |
-| Seq              | [http://localhost:5341](http://localhost:5341)               |
-| Grafana          | [http://127.0.0.1:3001](http://127.0.0.1:3001)               |
-| Prometheus       | [http://127.0.0.1:9090](http://127.0.0.1:9090)               |
-| Alertmanager     | [http://127.0.0.1:9093](http://127.0.0.1:9093)               |
+Dừng hệ thống bằng `docker compose down`; dữ liệu trong named volumes được giữ lại.
 
-Dừng hệ thống bằng lệnh sau. Named volumes vẫn được giữ để tái sử dụng dữ liệu local.
+### Phát triển giao diện
 
-```powershell
-docker compose down
-```
-
-### Phát triển frontend trong Docker không rebuild image
-
-Khi chỉnh sửa giao diện, dùng cấu hình development để Next.js hot reload trực tiếp từ mã nguồn thay vì build lại image `web`:
+Sau khi khởi tạo stack, dùng cấu hình sau để Next.js tự cập nhật khi sửa code:
 
 ```powershell
 docker compose -f compose.yaml -f compose.dev.yaml up --detach --no-build --wait
 ```
 
-Truy cập ứng dụng tại [http://localhost:8080](http://localhost:8080). Các thay đổi trong `frontend/` được cập nhật tự động. `node_modules`, npm cache và `.next` được lưu trong `.docker-dev/` ở cùng ổ đĩa với repository; log của container `web` được giới hạn dung lượng. Chỉ dùng `docker compose up --build` khi cần kiểm tra image production.
+Truy cập tại `http://localhost:8080`. Dừng môi trường này bằng `docker compose -f compose.yaml -f compose.dev.yaml down`.
 
-Dừng môi trường development mà vẫn giữ database và dữ liệu media:
+## Cấu hình
 
-```powershell
-docker compose -f compose.yaml -f compose.dev.yaml down
-```
+- Cấu hình local nằm trong `.env`, tạo từ [.env.example](.env.example). Không commit secrets.
+- Đăng nhập Google cần `AUTH_GOOGLE_ID` và `AUTH_GOOGLE_SECRET` tương ứng với cấu hình Google OAuth.
+- `SITE_URL` là địa chỉ công khai; `REVALIDATION_SECRET` bảo vệ callback cập nhật nội dung giữa backend và frontend.
+- Admin seed mặc định tắt. Khi cần, cấu hình `ADMIN_SEED_ENABLED`, `ADMIN_EMAIL` và `ADMIN_PASSWORD`.
+- Docker local tự áp migration khi API khởi động. Production áp migration theo [quy trình phát hành](docs/release/v1.0.0-release-notes.md).
 
-## Phát triển frontend và backend riêng biệt
+## Tài liệu API
 
-### Yêu cầu
+API sử dụng tiền tố `/api/v1`. [Scalar](http://localhost:8080/scalar) và [OpenAPI JSON](http://localhost:8080/openapi/v1.json) được sinh từ code, chỉ mở trong môi trường Development/Testing.
 
-- .NET SDK `10.0.401`
-- Node.js `22.23.3` LTS
-- Docker Desktop
+Để thử API cần xác thực, gọi `/api/v1/auth/login` rồi nhập `data.accessToken` vào mục Bearer của Scalar. Khi sửa công thức hoặc các thành phần của công thức, gửi header `If-Match` với ETag hiện tại, ví dụ `"1"`. Upload ảnh sử dụng multipart form với trường `file`.
 
-Phiên bản công cụ được khai báo trong `backend/global.json` và `.mise.toml`. Có thể chạy `mise install` nếu máy đã cài [mise](https://mise.jdx.dev/).
-
-### 1. Khởi động dịch vụ phụ trợ
-
-Tại thư mục gốc của repository:
-
-```powershell
-Copy-Item .env.example .env
-docker compose up --detach postgres redis minio minio-bootstrap mailhog seq
-```
-
-### 2. Chạy backend
-
-```powershell
-Set-Location backend
-dotnet tool restore
-dotnet restore CulinaryBlog.slnx
-dotnet run --project src/CulinaryBlog.Api
-```
-
-API sử dụng địa chỉ được ASP.NET Core hiển thị trong terminal, mặc định là `http://localhost:5000` khi cấu hình local không bị ghi đè.
-
-Khi chạy backend native lần đầu, áp migration và seed role bằng lệnh `dotnet ef database update` ở phần Database migration. Docker Compose tự áp migration khi API khởi động.
-
-### 3. Chạy frontend
-
-Mở terminal khác tại thư mục gốc:
-
-```powershell
-Set-Location frontend
-npm ci
-npm run generate:api
-npm run dev
-```
-
-Frontend chạy tại [http://localhost:3000](http://localhost:3000). Khi đi qua Nginx, các request API sử dụng prefix `/api/v1`.
-
-Để dùng Auth.js khi chạy riêng frontend, đặt AUTH_SECRET (chuỗi ngẫu nhiên ít nhất 32 ký tự),
-AUTH_TRUST_HOST=true và INTERNAL_API_BASE_URL (mặc định http://localhost:5000/api/v1)
-trong frontend/.env.local.
-Đăng nhập Google cần thêm AUTH_GOOGLE_ID và AUTH_GOOGLE_SECRET cho frontend,
-đồng thời cấu hình Google:ClientId cùng client ID đó cho backend. Docker Compose lấy các
-giá trị này từ .env ở thư mục gốc.
-
-Sitemap dùng SITE_URL làm canonical origin và REVALIDATION_SECRET để bảo vệ callback nội bộ
-từ backend sang Next.js. Hai service phải dùng cùng một REVALIDATION_SECRET; Docker Compose
-đã nối sẵn callback và phục vụ sitemap công khai tại `/sitemap.xml`.
-
-## Tài liệu API tự sinh
-
-Trong môi trường `Development`, backend tự sinh tài liệu OpenAPI v1 từ các endpoint và DTO:
-
-- Docker Compose: [Scalar](http://localhost:8080/scalar), [OpenAPI JSON](http://localhost:8080/openapi/v1.json).
-- Backend chạy riêng: `/scalar` và `/openapi/v1.json` tại địa chỉ API (mặc định `http://localhost:5000`).
-
-Để thử endpoint cần xác thực, gọi `/api/v1/auth/login`, sao chép `data.accessToken` và nhập vào phần xác thực `Bearer` của Scalar. Khi sửa công thức, nguyên liệu, bước hoặc ảnh, gửi header `If-Match` với ETag hiện tại, ví dụ `"1"`; ETag lấy từ response xem công thức. Upload ảnh dùng multipart form với trường `file`, cùng `altText` và `isPrimary` tùy chọn.
-
-Tài liệu và giao diện Scalar chỉ mở trong `Development`/`Testing`. File `docs/specs/phase-0/openapi.v1.yaml` vẫn là contract đã chốt dùng cho lệnh `npm run generate:api`; tài liệu runtime được sinh trực tiếp từ code đang chạy.
+[OpenAPI contract](docs/specs/phase-0/openapi.v1.yaml) dùng để sinh TypeScript types bằng `npm --prefix frontend run generate:api`.
 
 ## Kiểm tra chất lượng
 
-Chạy toàn bộ quality gates:
+Để chạy kiểm tra trên máy, cần .NET SDK `10.0.401`, Node.js `22.23.3` và Docker Desktop:
 
 ```powershell
 ./scripts/verify.ps1
 ./scripts/smoke.ps1
 ```
 
-Hoặc chạy từng nhóm kiểm tra:
+`verify.ps1` kiểm tra backend, frontend và cấu hình Compose. `smoke.ps1` build, khởi động stack và kiểm tra health, trang chủ cùng CSP.
 
-```powershell
-Push-Location backend
-dotnet build CulinaryBlog.slnx --configuration Release
-dotnet test CulinaryBlog.slnx --configuration Release
-Pop-Location
+## Cấu trúc dự án
 
-npm --prefix frontend run lint
-npm --prefix frontend run typecheck
-npm --prefix frontend run build
-
-docker compose config --quiet
+```text
+frontend/          # Next.js, giao diện và API client
+backend/           # ASP.NET Core, nghiệp vụ và kiểm thử
+infra/             # Nginx, giám sát và cấu hình triển khai
+scripts/           # Kiểm tra, vận hành và triển khai
+docs/              # Đặc tả, kế hoạch và báo cáo
+.github/workflows/ # CI và phát hành image
 ```
 
-Pipeline tại `.github/workflows/ci.yml` tự động kiểm tra backend, frontend, cấu hình Compose, dependency, container và secrets khi có thay đổi trên repository.
+## Tài liệu liên quan
 
-### Performance Phase 8
-
-Khởi động stack có resource profile rồi chạy smoke/load/stress k6, cache hit-rate, release bundle budget và Lighthouse CI:
-
-```powershell
-docker compose -p culinary-blog-performance -f compose.yaml -f performance/compose.performance.yaml up --detach --build --wait
-./scripts/performance.ps1 -Profile all
-```
-
-Kết quả và mô tả hardware/dataset/network được lưu dưới `artifacts/performance/`. Xem budget và cách chạy rút gọn tại [báo cáo Phase 8](docs/specs/phase-8/README.md).
-
-### Reliability Phase 8
-
-Khởi động stack với backup, resource limits và log rotation; sau đó chạy restore/failure drill:
-
-```powershell
-docker compose -f compose.yaml -f infra/operations/compose.reliability.yaml up --detach --build --wait
-./scripts/restore-drill.ps1
-./scripts/failure-drill.ps1
-```
-
-Mỗi drill ghi evidence RTO/RPO và recovery time dưới `artifacts/reliability/`. Cấu hình receiver thật bằng secret file và overlay `infra/operations/compose.alert-routing.yaml`; xem checklist staging tại [báo cáo Reliability Phase 8](docs/reports/phase-8-reliability-report.md).
-
-### Release staging/production
-
-Workflow `release-images.yml` tạo API/Web image, SBOM/provenance và bundle manifest theo full commit SHA. Sao chép `infra/production/release.env.example` ra vị trí bảo mật ngoài repository, điền image digest/secret/volume/TLS của môi trường rồi validate cùng hai manifest `api.json`, `web.json`:
-
-```powershell
-./scripts/deploy-release.ps1 `
-  -Target staging `
-  -EnvFile C:\deployment\staging.env `
-  -ManifestDirectory C:\deployment\release-bundle `
-  -EvidenceDirectory artifacts\release\staging `
-  -ValidateOnly
-```
-
-Sau migration có kiểm soát và khi cửa sổ triển khai được duyệt, bỏ `-ValidateOnly` để pull/deploy đúng `image@sha256` và chạy smoke. Production bắt buộc thêm `-ApprovedChangeId <id>` từ biên bản go/no-go. Compose production không có `build`, chỉ Nginx publish 80/443, giữ datastore/dashboard trên internal network và yêu cầu volume backup độc lập.
-
-Quy trình và biểu mẫu nằm trong [release notes](docs/release/v1.0.0-release-notes.md), [environment/secrets checklist](docs/release/environment-and-secrets-checklist.md), [UAT sign-off](docs/release/uat-signoff.md) và [go/no-go/rollback](docs/release/go-no-go-and-rollback.md).
-
-## Cấu hình và bảo mật
-
-- Sao chép `.env.example` thành `.env` để cấu hình môi trường local; không commit tệp `.env`.
-- Giá trị mặc định trong `.env.example` chỉ dành cho phát triển cục bộ.
-- Với backend chạy native, có thể lưu secret bằng .NET User Secrets, ví dụ:
-
-  ```powershell
-  dotnet user-secrets --project backend/src/CulinaryBlog.Api set "ObjectStorage:SecretKey" "<secret>"
-  ```
-
-- Môi trường staging và production phải lấy secret từ secret store của nền tảng triển khai.
-- JWT signing key phải có ít nhất 32 ký tự ngẫu nhiên; access token sống 15 phút và refresh token sống 7 ngày.
-- Auth.js giữ refresh token trong cookie phiên mã hóa, HTTP-only; không lưu token trong sessionStorage.
-- Admin seed mặc định tắt. Chỉ bật `ADMIN_SEED_ENABLED` khi đồng thời cấp `ADMIN_EMAIL` và `ADMIN_PASSWORD` qua secret an toàn.
-- API dừng ngay khi thiếu cấu hình bắt buộc cho PostgreSQL, Redis hoặc object storage.
-
-## Database migration
-
-Phase 2 đã tạo migration Identity/session đầu tiên. Tạo và áp dụng migration từ thư mục `backend/`:
-
-```powershell
-dotnet ef migrations add <MigrationName> `
-  --project src/CulinaryBlog.Infrastructure `
-  --startup-project src/CulinaryBlog.Api `
-  --output-dir Persistence/Migrations
-
-dotnet ef database update `
-  --project src/CulinaryBlog.Infrastructure `
-  --startup-project src/CulinaryBlog.Api
-```
-
-Production không tự động chạy migration khi API khởi động. Migration phải là một bước có kiểm soát trong quy trình triển khai.
-
-## Tài liệu dự án
-
-- [SRS v1.0.0](docs/specs/SRS_Culinary_Blog_v1.0.0.pdf) — nguồn yêu cầu cốt lõi của dự án
-- [Phân tích và đối chiếu SRS](docs/specs/SRS_Culinary_Blog_Analysis.md)
+- [Baseline và quyết định kiến trúc](docs/specs/phase-0/README.md)
 - [Kế hoạch triển khai](docs/specs/Culinary_Blog_Project_Plan.md)
-- [Baseline Phase 0](docs/specs/phase-0/README.md)
-- [Báo cáo Phase 1](docs/specs/phase-1/README.md)
-- [Báo cáo Phase 2](docs/specs/phase-2/README.md)
-- [Báo cáo Phase 3](docs/specs/phase-3/README.md)
-- [Báo cáo Phase 4](docs/specs/phase-4/README.md)
-- [Báo cáo Phase 7](docs/specs/phase-7/README.md)
-- [Báo cáo functional regression Phase 8](docs/specs/phase-8/README.md)
-- [Operations runbook](docs/operations/runbook.md)
-- [OpenAPI contract v1](docs/specs/phase-0/openapi.v1.yaml)
-- [Release notes v1.0.0](docs/release/v1.0.0-release-notes.md)
-- [CHANGELOG](CHANGELOG.md)
+- [Kết quả kiểm thử và trạng thái phát hành](docs/specs/phase-8/README.md)
+- [Hướng dẫn vận hành](docs/operations/runbook.md)
+- [Cấu hình môi trường và secrets](docs/release/environment-and-secrets-checklist.md)
+- [Lịch sử thay đổi](CHANGELOG.md)
 
-## Xử lý sự cố thường gặp
-
-- **Cổng đã được sử dụng:** kiểm tra các cổng được liệt kê trong phần yêu cầu Docker và dừng tiến trình xung đột.
-- **Readiness không đạt:** chạy `docker compose ps` và `docker compose logs api postgres redis minio minio-bootstrap`.
-- **MinIO chưa sẵn sàng ở lần chạy đầu:** đợi tác vụ `minio-bootstrap` hoàn tất; thao tác tạo bucket có thể chạy lặp an toàn.
-- **Sai phiên bản .NET SDK:** kiểm tra bằng `dotnet --version`; repository yêu cầu phiên bản trong `backend/global.json`.
-- **Type API không đồng bộ:** chạy lại `npm --prefix frontend run generate:api` sau khi thay đổi OpenAPI contract.
-
-## Nguyên tắc đóng góp
-
-Mọi thay đổi phải tuân thủ SRS, đặc tả Phase 0 và dependency direction đã chốt. Trước khi tạo pull request, hãy chạy `./scripts/verify.ps1`; với thay đổi hạ tầng hoặc luồng khởi động, chạy thêm `./scripts/smoke.ps1`.
+Nếu stack chưa sẵn sàng, kiểm tra `docker compose ps` và `docker compose logs --tail 100 api web nginx`. Khi cập nhật backend, build lại image bằng `docker compose up --detach --build --wait api`; khi sửa Nginx, kiểm tra và nạp lại bằng `docker compose exec nginx nginx -t` và `docker compose exec nginx nginx -s reload`.
