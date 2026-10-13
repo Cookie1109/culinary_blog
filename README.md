@@ -134,6 +134,17 @@ Sitemap dùng SITE_URL làm canonical origin và REVALIDATION_SECRET để bảo
 từ backend sang Next.js. Hai service phải dùng cùng một REVALIDATION_SECRET; Docker Compose
 đã nối sẵn callback và phục vụ sitemap công khai tại `/sitemap.xml`.
 
+## Tài liệu API tự sinh
+
+Trong môi trường `Development`, backend tự sinh tài liệu OpenAPI v1 từ các endpoint và DTO:
+
+- Docker Compose: [Scalar](http://localhost:8080/scalar), [OpenAPI JSON](http://localhost:8080/openapi/v1.json).
+- Backend chạy riêng: `/scalar` và `/openapi/v1.json` tại địa chỉ API (mặc định `http://localhost:5000`).
+
+Để thử endpoint cần xác thực, gọi `/api/v1/auth/login`, sao chép `data.accessToken` và nhập vào phần xác thực `Bearer` của Scalar. Khi sửa công thức, nguyên liệu, bước hoặc ảnh, gửi header `If-Match` với ETag hiện tại, ví dụ `"1"`; ETag lấy từ response xem công thức. Upload ảnh dùng multipart form với trường `file`, cùng `altText` và `isPrimary` tùy chọn.
+
+Tài liệu và giao diện Scalar chỉ mở trong `Development`/`Testing`. File `docs/specs/phase-0/openapi.v1.yaml` vẫn là contract đã chốt dùng cho lệnh `npm run generate:api`; tài liệu runtime được sinh trực tiếp từ code đang chạy.
+
 ## Kiểm tra chất lượng
 
 Chạy toàn bộ quality gates:

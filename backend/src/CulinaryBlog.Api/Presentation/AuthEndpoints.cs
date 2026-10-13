@@ -12,6 +12,9 @@ internal static class AuthEndpoints
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var auth = endpoints.MapGroup("/api/v1/auth")
+            .WithTags("Auth")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
             .RequireRateLimiting("auth")
             .AddEndpointFilter(async (context, next) =>
             {
@@ -20,16 +23,44 @@ internal static class AuthEndpoints
                 return await next(context).ConfigureAwait(false);
             });
 
-        auth.MapPost("/register", RegisterAsync).AllowAnonymous();
-        auth.MapPost("/login", LoginAsync).AllowAnonymous();
-        auth.MapPost("/google", GoogleLoginAsync).AllowAnonymous();
-        auth.MapPost("/refresh", RefreshAsync).AllowAnonymous();
-        auth.MapPost("/logout", LogoutAsync).AllowAnonymous();
-        auth.MapGet("/me", GetMeAsync).RequireAuthorization("AuthorPolicy");
-        auth.MapPatch("/me", UpdateMeAsync).RequireAuthorization("AuthorPolicy");
+        auth.MapPost("/register", RegisterAsync).AllowAnonymous()
+            .WithSummary("Register an Author account")
+            .Produces<DataEnvelope<AuthSessionDto>>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        auth.MapPost("/login", LoginAsync).AllowAnonymous()
+            .WithSummary("Sign in with email and password")
+            .Produces<DataEnvelope<AuthSessionDto>>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+        auth.MapPost("/google", GoogleLoginAsync).AllowAnonymous()
+            .WithSummary("Exchange a Google ID token for a local session")
+            .Produces<DataEnvelope<AuthSessionDto>>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+        auth.MapPost("/refresh", RefreshAsync).AllowAnonymous()
+            .WithSummary("Rotate the refresh token and issue a new session")
+            .Produces<DataEnvelope<AuthSessionDto>>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+        auth.MapPost("/logout", LogoutAsync).AllowAnonymous()
+            .WithSummary("Revoke a refresh token")
+            .Produces(StatusCodes.Status204NoContent);
+        auth.MapGet("/me", GetMeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("View the current user profile")
+            .Produces<DataEnvelope<UserDto>>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+        auth.MapPatch("/me", UpdateMeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Update the current user profile")
+            .AddOpenApiOperationTransformer(async (operation, context, cancellationToken) =>
+            {
+                operation.RequestBody!.Content!["application/json"].Schema =
+                    await context.GetOrCreateSchemaAsync(typeof(ProfileUpdateBody), cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
+            })
+            .Produces<DataEnvelope<UserDto>>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return endpoints;
     }
+
+    private sealed record ProfileUpdateBody(string? DisplayName = null, string? AvatarUrl = null, string? Bio = null);
 
     private static async Task<IResult> RegisterAsync(
         RegisterRequest request,

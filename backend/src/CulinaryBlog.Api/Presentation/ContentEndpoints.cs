@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Audit;
+using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Features.Recipes.Commands;
 using CulinaryBlog.Application.Features.Recipes.Queries;
@@ -17,74 +18,142 @@ internal static class ContentEndpoints
 {
     public static IEndpointRouteBuilder MapContentEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var categories = endpoints.MapGroup("/api/v1/categories");
-        categories.MapGet("/", ListCategoriesAsync).AllowAnonymous();
-        categories.MapGet("/{slug}", GetCategoryAsync).AllowAnonymous();
+        var categories = endpoints.MapGroup("/api/v1/categories").WithTags("Categories");
+        categories.MapGet("/", ListCategoriesAsync).AllowAnonymous()
+            .WithSummary("List categories")
+            .Produces<DataEnvelope<IReadOnlyCollection<CategoryDto>>>();
+        categories.MapGet("/{slug}", GetCategoryAsync).AllowAnonymous()
+            .WithSummary("View a category and its published recipes")
+            .Produces<CategoryDetailEnvelope>();
         categories.MapPost("/", CreateCategoryAsync).RequireAuthorization("AdminPolicy")
+            .WithSummary("Create a category (Admin)")
+            .Produces<DataEnvelope<CategoryDto>>(StatusCodes.Status201Created)
             .AddEndpointFilter<PublicCacheInvalidationFilter>();
         categories.MapPut("/{id:guid}", UpdateCategoryAsync).RequireAuthorization("AdminPolicy")
+            .WithSummary("Update a category (Admin)")
+            .Produces<DataEnvelope<CategoryDto>>()
             .AddEndpointFilter<PublicCacheInvalidationFilter>();
         categories.MapDelete("/{id:guid}", DeleteCategoryAsync).RequireAuthorization("AdminPolicy")
+            .WithSummary("Delete an empty category (Admin)")
+            .Produces(StatusCodes.Status204NoContent)
             .AddEndpointFilter<PublicCacheInvalidationFilter>();
 
-        endpoints.MapGet("/api/v1/sitemap.xml", GetSitemapAsync).AllowAnonymous();
+        endpoints.MapGet("/api/v1/sitemap.xml", GetSitemapAsync).AllowAnonymous()
+            .WithTags("Sitemap").WithSummary("Download the generated sitemap")
+            .Produces<string>(contentType: "application/xml");
 
-        var recipes = endpoints.MapGroup("/api/v1/recipes");
-        recipes.MapGet("/", ListPublishedRecipesAsync).AllowAnonymous();
-        recipes.MapGet("/search", SearchPublishedRecipesAsync).AllowAnonymous();
-        recipes.MapGet("/{slug}", GetPublishedRecipeAsync).AllowAnonymous();
+        var recipes = endpoints.MapGroup("/api/v1/recipes").WithTags("Recipes");
+        recipes.MapGet("/", ListPublishedRecipesAsync).AllowAnonymous()
+            .WithSummary("List, filter and sort published recipes")
+            .Produces<PageEnvelope<RecipeDto>>();
+        recipes.MapGet("/search", SearchPublishedRecipesAsync).AllowAnonymous()
+            .WithSummary("Search published recipes")
+            .Produces<PageEnvelope<RecipeDto>>();
+        recipes.MapGet("/{slug}", GetPublishedRecipeAsync).AllowAnonymous()
+            .WithSummary("View a published recipe")
+            .Produces<DataEnvelope<RecipeDto>>();
         recipes.MapPost("/", CreateRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Create a draft recipe")
+            .Produces<DataEnvelope<RecipeDto>>(StatusCodes.Status201Created)
             .AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPut("/{id:guid}", UpdateRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Update a recipe")
+            .Produces<DataEnvelope<RecipeDto>>()
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPatch("/{id:guid}/publish", PublishRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Publish a recipe")
+            .Produces<DataEnvelope<RecipeDto>>()
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPatch("/{id:guid}/unpublish", UnpublishRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Return a published recipe to draft")
+            .Produces<DataEnvelope<RecipeDto>>()
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPatch("/{id:guid}/archive", ArchiveRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Archive a recipe")
+            .Produces<DataEnvelope<RecipeDto>>()
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPatch("/{id:guid}/unarchive", UnarchiveRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Restore an archived recipe to draft")
+            .Produces<DataEnvelope<RecipeDto>>()
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapDelete("/{id:guid}", DeleteRecipeAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Soft-delete a recipe")
+            .Produces(StatusCodes.Status204NoContent)
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPost("/{id:guid}/ingredients", CreateIngredientAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Add an ingredient")
+            .Produces<RecipeMutationEnvelope<IngredientDto>>(StatusCodes.Status201Created)
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPut("/{id:guid}/ingredients/{ingredientId:guid}", UpdateIngredientAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Update an ingredient")
+            .Produces<RecipeMutationEnvelope<IngredientDto>>()
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapDelete("/{id:guid}/ingredients/{ingredientId:guid}", DeleteIngredientAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Delete an ingredient")
+            .Produces(StatusCodes.Status204NoContent)
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPost("/{id:guid}/steps", CreateStepAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Add a preparation step")
+            .Produces<RecipeMutationEnvelope<StepDto>>(StatusCodes.Status201Created)
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPut("/{id:guid}/steps/{stepId:guid}", UpdateStepAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Update a preparation step")
+            .Produces<RecipeMutationEnvelope<StepDto>>()
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapDelete("/{id:guid}/steps/{stepId:guid}", DeleteStepAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Delete a preparation step")
+            .Produces(StatusCodes.Status204NoContent)
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapPost("/{id:guid}/images", UploadImageAsync)
+            .WithSummary("Upload a recipe image")
+            .WithDescription("JPEG, PNG, WebP or AVIF; maximum 5 MB. Image resizing runs in the background.")
+            .Produces<RecipeMutationEnvelope<RecipeImageDto>>(StatusCodes.Status201Created)
             .RequireAuthorization("AuthorPolicy")
             .AddEndpointFilter<RecipeOwnershipFilter>()
             .AddEndpointFilter<PublicCacheInvalidationFilter>()
             .RequireRateLimiting("upload")
             .DisableAntiforgery();
         recipes.MapPatch("/{id:guid}/images/{imageId:guid}", UpdateImageAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Update image metadata or select the primary image")
+            .Produces<RecipeMutationEnvelope<RecipeImageDto>>()
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
         recipes.MapDelete("/{id:guid}/images/{imageId:guid}", DeleteImageAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Delete a recipe image")
+            .Produces(StatusCodes.Status204NoContent)
             .AddEndpointFilter<RecipeOwnershipFilter>().AddEndpointFilter<PublicCacheInvalidationFilter>();
 
-        endpoints.MapGet("/api/v1/media/{imageId:guid}/{variant}", OpenMediaAsync).AllowAnonymous();
+        endpoints.MapGet("/api/v1/media/{imageId:guid}/{variant}", OpenMediaAsync).AllowAnonymous()
+            .WithTags("Images").WithSummary("Read an original, medium or thumbnail image")
+            .WithDescription("Published recipe images are public; private images require an owner or Admin JWT.")
+            .Produces(StatusCodes.Status200OK, contentType: "application/octet-stream");
 
-        var mine = endpoints.MapGroup("/api/v1/me/recipes").RequireAuthorization("AuthorPolicy");
-        mine.MapGet("/", ListMyRecipesAsync);
-        mine.MapGet("/{id:guid}", GetMyRecipeAsync);
+        var mine = endpoints.MapGroup("/api/v1/me/recipes").RequireAuthorization("AuthorPolicy").WithTags("MyRecipes");
+        mine.MapGet("/", ListMyRecipesAsync)
+            .WithSummary("List the current author's recipes")
+            .Produces<PageEnvelope<RecipeDto>>();
+        mine.MapGet("/{id:guid}", GetMyRecipeAsync)
+            .WithSummary("View an owned recipe, including drafts")
+            .Produces<DataEnvelope<RecipeDto>>();
 
-        var admin = endpoints.MapGroup("/api/v1/admin/recipes").RequireAuthorization("AdminPolicy");
-        admin.MapGet("/", ListAdminRecipesAsync);
-        admin.MapGet("/{id:guid}", GetAdminRecipeAsync);
+        var admin = endpoints.MapGroup("/api/v1/admin/recipes").RequireAuthorization("AdminPolicy").WithTags("Admin");
+        admin.MapGet("/", ListAdminRecipesAsync)
+            .WithSummary("List all recipes (Admin)")
+            .Produces<PageEnvelope<RecipeDto>>();
+        admin.MapGet("/{id:guid}", GetAdminRecipeAsync)
+            .WithSummary("View any recipe (Admin)")
+            .Produces<DataEnvelope<RecipeDto>>();
 
-        var adminAudit = endpoints.MapGroup("/api/v1/admin/audit-logs").RequireAuthorization("AdminPolicy");
-        adminAudit.MapGet("/", ListAdminAuditLogsAsync);
+        var adminAudit = endpoints.MapGroup("/api/v1/admin/audit-logs").RequireAuthorization("AdminPolicy").WithTags("Admin");
+        adminAudit.MapGet("/", ListAdminAuditLogsAsync)
+            .WithSummary("List audit logs and telemetry status (Admin)")
+            .Produces<AuditLogsEnvelope>();
 
         return endpoints;
     }
+
+    private sealed record RecipeMutationMeta(long RecipeVersion);
+
+    private sealed record RecipeMutationEnvelope<T>(T Data, RecipeMutationMeta Meta);
 
     private static async Task<IResult> GetSitemapAsync(
         IFileStorageService fileStorage,

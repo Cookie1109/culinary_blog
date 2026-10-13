@@ -10,6 +10,7 @@ using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Jobs;
 using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
@@ -50,6 +51,7 @@ try
         .AddApplication()
         .AddInfrastructure(builder.Configuration)
         .AddPresentation(builder.Configuration)
+        .AddApiDocumentation()
         .AddCulinaryTelemetry(builder.Configuration);
 
     var app = builder.Build();
@@ -101,6 +103,17 @@ try
 
     app.MapAuthEndpoints();
     app.MapContentEndpoints();
+
+    if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+    {
+        app.MapOpenApi().ExcludeFromDescription();
+        app.MapScalarApiReference(options => options
+            .WithTitle("Culinary Blog API v1")
+            .WithOpenApiRoutePattern("/openapi/{documentName}.json")
+            .AddPreferredSecuritySchemes("Bearer")
+            .DisableDefaultFonts()
+            .DisableAgent()).ExcludeFromDescription();
+    }
 
     if (backgroundJobsEnabled)
     {
