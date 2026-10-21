@@ -1,7 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -11,14 +11,26 @@ export function Modal({
   title,
   children,
   onClose,
+  busy = false,
+  size = 'md',
 }: {
   open: boolean
   title: string
   children: ReactNode
   onClose: () => void
+  busy?: boolean
+  size?: 'md' | 'lg'
 }) {
+  const titleId = useId()
   const dialogRef = useRef<HTMLElement>(null)
   const previousActiveElement = useRef<HTMLElement | null>(null)
+  const closeRef = useRef(onClose)
+  const busyRef = useRef(busy)
+
+  useEffect(() => {
+    closeRef.current = onClose
+    busyRef.current = busy
+  }, [onClose, busy])
 
   useEffect(() => {
     if (!open) return undefined
@@ -38,7 +50,7 @@ export function Modal({
       if (event.key === 'Escape') {
         event.preventDefault()
         event.stopPropagation()
-        onClose()
+        if (!busyRef.current) closeRef.current()
         return
       }
 
@@ -46,7 +58,7 @@ export function Modal({
         if (!dialogRef.current) return
         const elements = Array.from(
           dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-        ).filter((el) => !el.hasAttribute('disabled'))
+        ).filter((el) => !el.hasAttribute('disabled') && !el.closest('[hidden]'))
 
         if (elements.length === 0) {
           event.preventDefault()
@@ -80,30 +92,37 @@ export function Modal({
       document.body.style.overflow = originalOverflow
       previousActiveElement.current?.focus()
     }
-  }, [onClose, open])
+  }, [open])
 
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4" role="presentation">
-      <div className="absolute inset-0 bg-foreground/40" onClick={onClose} aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-foreground/40"
+        onClick={() => {
+          if (!busy) onClose()
+        }}
+        aria-hidden="true"
+      />
       <section
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative z-10 w-full max-w-lg border border-border bg-card p-6 shadow-xl outline-none"
+        className={`relative z-10 min-w-0 w-full max-h-[calc(100dvh-2rem)] overflow-y-auto [overflow-wrap:anywhere] border border-border bg-card p-6 shadow-xl outline-none ${size === 'lg' ? 'max-w-2xl' : 'max-w-lg'}`}
       >
         <div className="mb-5 flex items-center justify-between gap-4">
-          <h2 id="modal-title" className="font-serif text-2xl">
+          <h2 id={titleId} className="min-w-0 font-serif text-2xl">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
+            disabled={busy}
             aria-label="Đóng hộp thoại"
-            className="p-2 text-muted-foreground hover:text-primary transition-colors"
+            className="shrink-0 p-2 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
           >
             <X size={20} aria-hidden="true" />
           </button>

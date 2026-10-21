@@ -51,6 +51,9 @@ export function Home({
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [hovering, setHovering] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
   const collectionRef = useRef<HTMLDivElement>(null)
   const categoriesRef = useRef<HTMLDivElement>(null)
   const loadingMoreRecipesRef = useRef(false)
@@ -61,14 +64,22 @@ export function Home({
   const dragDistanceThreshold = 50
 
   useEffect(() => {
-    if (latestRecipes.length <= 1 || isDragging) return
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReducedMotion(preference.matches)
+    update()
+    preference.addEventListener('change', update)
+    return () => preference.removeEventListener('change', update)
+  }, [])
+
+  useEffect(() => {
+    if (latestRecipes.length <= 1 || isDragging || hovering || focused || reducedMotion) return
 
     const timer = window.setInterval(() => {
       setCurrentRecipeIndex((current) => (current + 1) % latestRecipes.length)
     }, 15_000)
 
     return () => window.clearInterval(timer)
-  }, [latestRecipes.length, isDragging])
+  }, [latestRecipes.length, isDragging, hovering, focused, reducedMotion])
 
   const showPreviousRecipe = () => {
     setCurrentRecipeIndex((current) => (current === 0 ? latestRecipes.length - 1 : current - 1))
@@ -127,6 +138,7 @@ export function Home({
   }
 
   const handleMouseLeave = () => {
+    setHovering(false)
     if (isDragging) {
       handleMouseUp()
     }
@@ -181,6 +193,11 @@ export function Home({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onMouseEnter={() => setHovering(true)}
+        onFocusCapture={() => setFocused(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
+        }}
       >
         {/* Sliding Track for horizontal swipe effect */}
         <div
@@ -188,7 +205,8 @@ export function Home({
           className="flex w-full h-[520px] sm:h-[580px] lg:h-[640px]"
           style={{
             transform: `translateX(calc(-${currentRecipeIndex * 100}% + ${dragOffset}px))`,
-            transition: isDragging ? 'none' : 'transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+            transition:
+              isDragging || reducedMotion ? 'none' : 'transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1)',
           }}
         >
           {latestRecipes.map((recipe, index) => {
@@ -199,6 +217,7 @@ export function Home({
                 key={recipe.id}
                 className="relative min-w-full w-full h-full shrink-0 overflow-hidden"
                 aria-hidden={!isActive}
+                inert={!isActive}
               >
                 {/* Full-width background image */}
                 {image ? (
@@ -239,6 +258,7 @@ export function Home({
                     <div className="pointer-events-auto">
                       <Link
                         to={`/recipes/${recipe.slug}`}
+                        tabIndex={isActive ? 0 : -1}
                         aria-label={`Khám phá công thức: ${recipe.title}`}
                         onClick={(e) => {
                           if (Math.abs(dragOffset) > 5) e.preventDefault()
@@ -266,33 +286,11 @@ export function Home({
           })}
         </div>
 
-        {/* Screen-reader only accessible controls for assistive devices */}
-        {latestRecipes.length > 1 && (
-          <div className="sr-only">
-            <button
-              type="button"
-              onClick={showPreviousRecipe}
-              aria-label="Xem công thức mới trước đó"
-              aria-controls="latest-recipes-carousel"
-            >
-              Trước
-            </button>
-            <button
-              type="button"
-              onClick={showNextRecipe}
-              aria-label="Xem công thức mới tiếp theo"
-              aria-controls="latest-recipes-carousel"
-            >
-              Tiếp
-            </button>
-          </div>
-        )}
-
         {/* 5 Dots Indicator: Clean floating dots without outer frame */}
         {latestRecipes.length > 1 && (
           <div
-            className="absolute bottom-6 sm:bottom-8 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3"
-            role="tablist"
+            className="absolute bottom-4 sm:bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center"
+            role="group"
             aria-label="Chọn công thức mới nhất"
           >
             {latestRecipes.map((recipe, index) => {
@@ -301,14 +299,16 @@ export function Home({
                 <button
                   key={recipe.id}
                   type="button"
-                  role="tab"
-                  aria-selected={isActive}
+                  aria-pressed={isActive}
                   aria-label={`Chuyển đến công thức ${index + 1}: ${recipe.title}`}
                   onClick={() => setCurrentRecipeIndex(index)}
-                  className={`rounded-full transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white cursor-pointer drop-shadow-md ${
-                    isActive ? 'h-3.5 w-8 bg-primary shadow-md' : 'h-2.5 w-2.5 bg-white/60 hover:bg-white'
-                  }`}
-                />
+                  className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-white cursor-pointer"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`rounded-full transition-all duration-300 drop-shadow-md ${isActive ? 'h-3.5 w-8 bg-primary shadow-md' : 'h-2.5 w-2.5 bg-white/60 hover:bg-white'}`}
+                  />
+                </button>
               )
             })}
           </div>
@@ -317,14 +317,14 @@ export function Home({
 
       {/* Featured Recipes Collection */}
       <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6 lg:px-8" aria-labelledby="featured-title">
-        <div className="mb-10 flex items-end justify-between border-b border-border pb-6">
+        <div className="mb-10 flex items-end justify-between gap-4 border-b border-border pb-6">
           <h2 id="featured-title" className="font-serif text-2xl text-foreground sm:text-3xl">
             Bộ sưu tập nổi bật
           </h2>
           <Link
             to="/recipes"
             aria-label="Xem tất cả công thức nổi bật"
-            className="text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:text-foreground"
+            className="shrink-0 text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:text-foreground"
           >
             Xem tất cả
           </Link>
@@ -364,7 +364,7 @@ export function Home({
             <div
               ref={collectionRef}
               id="featured-recipes-carousel"
-              className="flex snap-x snap-mandatory gap-8 overflow-x-auto scroll-smooth px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex snap-x snap-mandatory gap-8 overflow-x-auto scroll-smooth px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>div>article]:[content-visibility:visible]"
             >
               {recipes.map((recipe) => (
                 <div
@@ -386,7 +386,7 @@ export function Home({
 
       {/* Featured Categories */}
       <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6 lg:px-8" aria-labelledby="categories-title">
-        <div className="mb-10 flex items-end justify-between border-b border-border pb-6">
+        <div className="mb-10 flex items-end justify-between gap-4 border-b border-border pb-6">
           <div>
             <p className="mb-2 text-sm uppercase tracking-widest text-primary">Khám phá theo chủ đề</p>
             <h2 id="categories-title" className="font-serif text-2xl text-foreground sm:text-3xl">
@@ -396,7 +396,7 @@ export function Home({
           <Link
             to="/categories"
             aria-label="Xem tất cả danh mục nổi bật"
-            className="text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:text-foreground"
+            className="shrink-0 text-sm font-medium uppercase tracking-wide text-primary transition-colors hover:text-foreground"
           >
             Xem tất cả
           </Link>
@@ -431,7 +431,7 @@ export function Home({
             <div
               ref={categoriesRef}
               id="featured-categories-carousel"
-              className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>div>article]:[content-visibility:visible]"
             >
               {categories.map((category) => (
                 <div

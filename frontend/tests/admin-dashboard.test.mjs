@@ -24,9 +24,12 @@ test('P7-07: CategoryAdmin provides complete CRUD, orderIndex ordering, delete c
   assert.match(source, /Xung đột xóa danh mục|Xung đột dữ liệu/, 'Must explain delete conflict')
 
   // Verify accessible modal confirm dialog
-  assert.match(source, /role="dialog"/, 'Must render accessible dialog')
-  assert.match(source, /aria-modal="true"/, 'Must specify aria-modal')
-  assert.match(source, /aria-labelledby="confirm-delete-title"/, 'Must have accessible label')
+  assert.match(source, /<Modal/, 'Must use the shared accessible dialog')
+  assert.match(
+    source,
+    /title=\{deleteTarget\.recipeCount > 0 \? 'Không thể xóa danh mục' : 'Xác nhận xóa danh mục'\}/,
+    'Must have accessible label',
+  )
   assert.match(source, /deleteTarget/, 'Must track delete target entity state')
 })
 
@@ -68,7 +71,11 @@ test('P7-10: Dashboard layout and configuration wire Hangfire operations for adm
     'utf8',
   )
 
-  assert.match(layoutSource, /Hangfire Jobs/, 'Dashboard layout must provide Hangfire Jobs link for admin')
+  assert.match(
+    layoutSource,
+    /Tác vụ nền \(Hangfire\)/,
+    'Dashboard layout must provide Hangfire Jobs link for admin',
+  )
   assert.match(layoutSource, /\/jobs/, 'Hangfire link must target /jobs')
   assert.match(layoutSource, /user\?\.role === 'admin'/, 'Hangfire link must be gated to admin users')
 
@@ -101,16 +108,16 @@ test('P7-11: Admin application audit/log view is implemented with telemetry secu
   assert.match(auditViewSource, /user\?\.role !== 'admin'/, 'AuditLogAdmin must check admin role')
 
   // Verify table and filters
-  assert.match(auditViewSource, /Nhật ký kiểm toán/, 'Must render audit log header')
+  assert.match(auditViewSource, /Lịch sử hệ thống/, 'Must render audit log header')
   assert.match(auditViewSource, /Correlation ID|Mã tương quan/, 'Must display correlation ID')
   assert.match(auditViewSource, /copyToClipboard/, 'Must support copying correlation ID')
   assert.match(auditViewSource, /LEVEL_FILTERS/, 'Must provide level filters')
-  assert.match(auditViewSource, /role="dialog"/, 'Must provide detail modal dialog')
+  assert.match(auditViewSource, /<Modal/, 'Must provide shared detail modal dialog')
 
   // Verify operational telemetry policy notice
   assert.match(
     auditViewSource,
-    /Raw Seq.*OTLP.*telemetry.*operational authentication.*network control|Chính sách an toàn Telemetry/i,
+    /Trạng thái giám sát hệ thống/,
     'Must display operational notice regarding Seq and OTLP network restrictions',
   )
 
@@ -151,7 +158,7 @@ test('P7-18/P7-19: Direct navigation and admin scope remain role-gated', async (
   assert.match(layoutSource, /user\?\.role === 'admin'/, 'Admin navigation must be hidden from authors')
   assert.match(
     recipesSource,
-    /isAdmin && scopeParam === 'all'/,
+    /isAdmin && \(systemOverview \|\| scopeParam === 'all'\)/,
     'Query-string scope escalation must require Admin',
   )
   assert.match(categorySource, /if \(user\?\.role !== 'admin'\)/)

@@ -156,6 +156,8 @@ services:
 
   api:
     image: culinary-blog-api:local
+    volumes:
+      - api-logs:/app/logs
     build:
       context: ./backend
       dockerfile: src/CulinaryBlog.Api/Dockerfile
@@ -259,6 +261,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  api-logs:
   postgres-data:
   redis-data:
   minio-data:

@@ -225,6 +225,10 @@ paths:
         - {$ref: '#/components/parameters/Page'}
         - {$ref: '#/components/parameters/PageSize'}
         - {name: status, in: query, schema: {$ref: '#/components/schemas/RecipeStatus'}}
+        - name: q
+          in: query
+          description: Tìm trên toàn bộ công thức theo tiêu đề, danh mục hoặc tác giả trước khi phân trang.
+          schema: {type: string, maxLength: 100}
         - {name: authorId, in: query, schema: {type: string}}
       responses:
         '200': {$ref: '#/components/responses/RecipePage'}
@@ -241,6 +245,41 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /admin/audit-logs:
+    get:
+      tags: [Admin]
+      operationId: listSystemHistory
+      x-required-role: Admin
+      description: >-
+        Nhật ký ứng dụng và thao tác quản trị, mới nhất trước. properties có thể chứa
+        UserName, EntityName, EntityId, EntityType và StatusCode cho thao tác được ghi nhận.
+        Dữ liệu tổng hợp từ trạng thái hiện tại có Source=snapshot; không phải lịch sử đầy đủ
+        và không suy đoán người xuất bản khi không có bằng chứng. Thời gian trả về ở UTC.
+      parameters:
+        - {$ref: '#/components/parameters/Page'}
+        - {$ref: '#/components/parameters/PageSize'}
+        - {name: level, in: query, schema: {type: string, enum: [all, Information, Warning, Error]}}
+        - {name: search, in: query, description: Tìm theo người thực hiện, đối tượng, sự kiện hoặc mã tương quan., schema: {type: string}}
+      responses:
+        '200':
+          description: Nhật ký và trạng thái cấu hình giám sát.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta, telemetry]
+                properties:
+                  data: {type: array, items: {$ref: '#/components/schemas/AuditLogEntry'}}
+                  meta: {$ref: '#/components/schemas/PageMeta'}
+                  telemetry:
+                    type: object
+                    required: [seqConfigured, otlpConfigured, operationalNetworkRestricted]
+                    properties:
+                      seqConfigured: {type: boolean}
+                      otlpConfigured: {type: boolean}
+                      operationalNetworkRestricted: {type: boolean}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /recipes:
     get:
       tags: [Recipes]
@@ -395,6 +434,10 @@ paths:
         - {$ref: '#/components/parameters/Page'}
         - {$ref: '#/components/parameters/PageSize'}
         - {name: status, in: query, schema: {$ref: '#/components/schemas/RecipeStatus'}}
+        - name: q
+          in: query
+          description: Tìm trong toàn bộ công thức của tài khoản theo tiêu đề hoặc danh mục trước khi phân trang.
+          schema: {type: string, maxLength: 100}
       responses:
         '200': {$ref: '#/components/responses/RecipePage'}
         '401': {$ref: '#/components/responses/Problem'}
@@ -691,6 +734,23 @@ components:
         application/json:
           schema: {$ref: '#/components/schemas/ChildMutationEnvelope'}
   schemas:
+    AuditLogEntry:
+      type: object
+      required: [id, timestamp, level, eventName, message]
+      properties:
+        id: {type: string}
+        timestamp: {type: string, format: date-time}
+        level: {type: string}
+        eventName: {type: string, example: recipe.published}
+        message: {type: string}
+        userId: {type: [string, 'null']}
+        correlationId: {type: [string, 'null']}
+        requestPath: {type: [string, 'null']}
+        requestMethod: {type: [string, 'null']}
+        statusCode: {type: [integer, 'null']}
+        properties:
+          type: [object, 'null']
+          additionalProperties: {type: string}
     MaintenanceEnvelope:
       type: object
       required: [data]

@@ -17,6 +17,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/publish .
+RUN mkdir -p /app/logs && chown "$APP_UID" /app/logs
 USER $APP_UID
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "CulinaryBlog.Api.dll"]

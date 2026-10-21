@@ -2,26 +2,16 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-test('P7-01: Dashboard queries real API data and does not use hardcoded fixtures', async () => {
+test('system overview uses administrative counts and the shared managed list', async () => {
   const source = await readFile(
-    new URL('../src/features/culinary/pages/dashboard/Dashboard.tsx', import.meta.url),
+    new URL('../src/features/culinary/pages/dashboard/SystemOverview.tsx', import.meta.url),
     'utf8',
   )
-
-  // Verify listMyRecipes is imported and called for recent recipes and counts
-  assert.match(source, /import\s+.*listMyRecipes.*from\s+['"]@\/lib\/api\/content-client['"]/)
-  assert.match(source, /listMyRecipes\(undefined,\s*1,\s*5\)/, 'Must fetch recent recipes')
-  assert.match(source, /listMyRecipes\('published',\s*1,\s*1\)/, 'Must count published recipes')
-  assert.match(source, /listMyRecipes\('draft',\s*1,\s*1\)/, 'Must count draft recipes')
-  assert.match(source, /listMyRecipes\('archived',\s*1,\s*1\)/, 'Must count archived recipes')
-
-  // Verify hardcoded RECENT_RECIPES is gone
-  assert.doesNotMatch(source, /const RECENT_RECIPES\s*=/, 'Dashboard must not use static mock recipes')
-
-  // Verify loading, error, and empty states
-  assert.match(source, /role="status"/, 'Must have loading status element')
-  assert.match(source, /role="alert"/, 'Must have error alert element')
-  assert.match(source, /Bạn chưa có công thức nào/, 'Must have empty state description')
+  assert.match(source, /listAdminRecipes\(status, undefined, 1, 1\)/)
+  assert.match(source, /Tổng quan hệ thống/)
+  assert.match(source, /<MyRecipes systemOverview/)
+  assert.match(source, /to="\/dashboard\/audit"/)
+  assert.doesNotMatch(source, /listMyRecipes/)
 })
 
 test('dashboard sidebar keeps navigation states exclusive and links the user card to profile', async () => {
@@ -38,13 +28,14 @@ test('dashboard sidebar keeps navigation states exclusive and links the user car
   assert.match(source, /<Link\s+to="\/profile"\s+aria-label="Đi đến hồ sơ của tôi"/)
   assert.doesNotMatch(source, /Trang công khai/)
   assert.doesNotMatch(source, /SECONDARY_ITEMS/)
+  assert.match(source, /to: '\/dashboard', label: 'Tổng quan', icon: LayoutDashboard, end: true/)
 })
 
 test('P7-02: content-client supports pagination and MyRecipes wires filter, table/card, and actions', async () => {
   const clientSource = await readFile(new URL('../src/lib/api/content-client.ts', import.meta.url), 'utf8')
   assert.match(
     clientSource,
-    /export function listMyRecipes\(status\?: RecipeStatus,\s*page:\s*number\s*=\s*1,\s*pageSize:\s*number\s*=\s*12\)/,
+    /export function listMyRecipes\(status\?: RecipeStatus,\s*page:\s*number\s*=\s*1,\s*pageSize:\s*number\s*=\s*12,\s*q\?: string\)/,
     'listMyRecipes must accept status, page, and pageSize',
   )
 
@@ -94,7 +85,11 @@ test('P7-03: RecipeEditor provides 5-step wizard, save state tracking, and navig
   assert.match(editorSource, /Đã lưu bản nháp/, 'Must indicate successful save')
 
   // Verify navigation guard
-  assert.match(editorSource, /addEventListener\('beforeunload'/, 'Must wire beforeunload guard')
+  assert.match(
+    editorSource,
+    /useUnsavedChanges\(hasUnsavedChanges/,
+    'Must register the shared navigation guard',
+  )
   assert.match(editorSource, /navGuardTarget/, 'Must have in-app navigation guard dialog state')
   assert.match(editorSource, /Có thay đổi chưa lưu/, 'Must show in-app guard message')
 })
@@ -114,16 +109,16 @@ test('P7-04: Confirmation UX is implemented for publish, unpublish, archive, una
   )
 
   // MyRecipes modal checks
-  assert.match(myRecipesSource, /role="dialog"/, 'MyRecipes must render dialog')
+  assert.match(myRecipesSource, /<Modal/, 'MyRecipes must render dialog')
   assert.match(myRecipesSource, /confirmDialog/, 'MyRecipes must manage confirmDialog state')
   assert.match(myRecipesSource, /Xác nhận xóa công thức/, 'MyRecipes must confirm deletion')
 
   // Wizard modal checks
-  assert.match(wizardSource, /role="dialog"/, 'Wizard must render confirm dialog')
+  assert.match(wizardSource, /<Modal/, 'Wizard must render confirm dialog')
   assert.match(wizardSource, /Xác nhận xuất bản công thức/, 'Wizard must confirm publication')
 
   // Editor modal checks
-  assert.match(editorSource, /role="dialog"/, 'Editor must render dialogs')
+  assert.match(editorSource, /<Modal/, 'Editor must render dialogs')
   assert.match(editorSource, /confirmModal/, 'Editor must manage confirmModal state')
 })
 
@@ -212,7 +207,7 @@ test('P7-17: Author UI wires the complete recipe lifecycle to real API operation
   assert.match(recipesSource, /deleteRecipe/)
 })
 
-test('P7-20: Author dashboard surfaces loading, empty, error, and unauthenticated states', async () => {
+test('P7-20: Dashboard supports Author/Admin and the recipe list retains loading, empty and error states', async () => {
   const dashboardSource = await readFile(
     new URL('../src/features/culinary/pages/dashboard/Dashboard.tsx', import.meta.url),
     'utf8',
@@ -222,18 +217,26 @@ test('P7-20: Author dashboard surfaces loading, empty, error, and unauthenticate
     'utf8',
   )
 
-  assert.match(dashboardSource, /if \(!user\)/, 'Dashboard must deny an unauthenticated render')
-  assert.match(dashboardSource, /navigate\('\/login'\)/, 'Dashboard denial must link to login')
-  assert.match(
-    dashboardSource,
-    /isLoading.*role="status"/s,
-    'Dashboard must expose an accessible loading state',
-  )
-  assert.match(dashboardSource, /isError.*role="alert"/s, 'Dashboard must expose an accessible error state')
-  assert.match(dashboardSource, /recentRecipes\.length === 0/, 'Dashboard must expose an empty state')
+  assert.match(dashboardSource, /return <PersonalOverview \/>/)
+  assert.doesNotMatch(dashboardSource, /SystemOverview|listAdminRecipes/)
+  assert.doesNotMatch(dashboardSource, /navigate\(/)
+  assert.match(dashboardSource, /role="status"/)
 
   assert.match(recipesSource, /recipesQuery\.isPending.*role="status"/s)
   assert.match(recipesSource, /recipesQuery\.isError.*role="alert"/s)
-  assert.match(recipesSource, /filtered\.length === 0/)
+  assert.match(recipesSource, /recipes\.length === 0/)
   assert.match(recipesSource, /Thử lại/, 'Recipe list error state must be retryable')
+})
+
+test('SRS 5.1: Author dashboard retains personal totals, recent recipes and route access', async () => {
+  const personal = await readFile(
+    new URL('../src/features/culinary/pages/dashboard/PersonalOverview.tsx', import.meta.url),
+    'utf8',
+  )
+  const route = await readFile(new URL('../src/app/(dashboard)/dashboard/page.tsx', import.meta.url), 'utf8')
+  assert.match(personal, /listMyRecipes\(undefined, 1, 5\)/)
+  for (const status of ['published', 'draft', 'archived'])
+    assert.ok(personal.includes(`listMyRecipes('${status}', 1, 1)`))
+  assert.match(personal, /Công thức gần đây/)
+  assert.doesNotMatch(route, /redirect|roles.includes/)
 })

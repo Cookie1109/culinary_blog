@@ -43,7 +43,8 @@ test('private preview uses authenticated no-store reads and a private media prox
 
   assert.match(preview, /export const dynamic = 'force-dynamic'/)
   assert.match(preview, /export const revalidate = 0/)
-  assert.match(preview, /\/me\/recipes\/\$\{encodeURIComponent\(id\)\}/)
+  assert.match(preview, /roles.includes\('Admin'\) \? 'admin' : 'me'/)
+  assert.match(preview, /\$\{scope\}\/recipes\/\$\{encodeURIComponent\(id\)\}/)
   assert.match(preview, /cache: 'no-store'/)
   assert.match(preview, /Authorization: `Bearer \$\{session\.accessToken\}`/)
   assert.match(preview, /index: false, follow: false/)

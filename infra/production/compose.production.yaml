@@ -156,6 +156,8 @@ services:
 
   api:
     <<: *runtime
+    volumes:
+      - api-logs:/app/logs
     image: ${API_IMAGE:?Set API_IMAGE to the release manifest image@sha256 digest}
     pull_policy: always
     environment:
@@ -317,6 +319,7 @@ networks:
     internal: true
 
 volumes:
+  api-logs:
   postgres-data:
     external: true
     name: ${POSTGRES_DATA_VOLUME:?Set POSTGRES_DATA_VOLUME to an encrypted persistent volume}

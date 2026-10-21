@@ -196,6 +196,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Nhật ký ứng dụng và thao tác quản trị, mới nhất trước. properties có thể chứa UserName, EntityName, EntityId, EntityType và StatusCode cho thao tác được ghi nhận. Dữ liệu tổng hợp từ trạng thái hiện tại có Source=snapshot; không phải lịch sử đầy đủ và không suy đoán người xuất bản khi không có bằng chứng. Thời gian trả về ở UTC. */
+        get: operations["listSystemHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/recipes": {
         parameters: {
             query?: never;
@@ -537,6 +554,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AuditLogEntry: {
+            id: string;
+            /** Format: date-time */
+            timestamp: string;
+            level: string;
+            /** @example recipe.published */
+            eventName: string;
+            message: string;
+            userId?: string | null;
+            correlationId?: string | null;
+            requestPath?: string | null;
+            requestMethod?: string | null;
+            statusCode?: number | null;
+            properties?: {
+                [key: string]: string;
+            } | null;
+        };
         MaintenanceEnvelope: {
             data: {
                 enabled: boolean;
@@ -1127,6 +1161,8 @@ export interface operations {
                 page?: components["parameters"]["Page"];
                 pageSize?: components["parameters"]["PageSize"];
                 status?: components["schemas"]["RecipeStatus"];
+                /** @description Tìm trên toàn bộ công thức theo tiêu đề, danh mục hoặc tác giả trước khi phân trang. */
+                q?: string;
                 authorId?: string;
             };
             header?: never;
@@ -1155,6 +1191,42 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+        };
+    };
+    listSystemHistory: {
+        parameters: {
+            query?: {
+                page?: components["parameters"]["Page"];
+                pageSize?: components["parameters"]["PageSize"];
+                level?: "all" | "Information" | "Warning" | "Error";
+                /** @description Tìm theo người thực hiện */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Nhật ký và trạng thái cấu hình giám sát. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditLogEntry"][];
+                        meta: components["schemas"]["PageMeta"];
+                        telemetry: {
+                            seqConfigured: boolean;
+                            otlpConfigured: boolean;
+                            operationalNetworkRestricted: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
         };
     };
     listPublishedRecipes: {
@@ -1380,6 +1452,8 @@ export interface operations {
                 page?: components["parameters"]["Page"];
                 pageSize?: components["parameters"]["PageSize"];
                 status?: components["schemas"]["RecipeStatus"];
+                /** @description Tìm trong toàn bộ công thức của tài khoản theo tiêu đề hoặc danh mục trước khi phân trang. */
+                q?: string;
             };
             header?: never;
             path?: never;

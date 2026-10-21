@@ -25,8 +25,14 @@ type NavLinkProps = Omit<LinkProps, 'className'> & {
 
 export function NavLink({ to, end = false, className, ...props }: NavLinkProps) {
   const pathname = usePathname()
-  const target = typeof to === 'string' ? to : (to.pathname?.toString() ?? '/')
-  const isActive = end ? pathname === target : pathname === target || pathname.startsWith(`${target}/`)
+  const searchParams = useNextSearchParams()
+  const targetUrl = typeof to === 'string' ? to : (to.pathname?.toString() ?? '/')
+  const [target, query = ''] = targetUrl.split('?')
+  const queryMatches = [...new URLSearchParams(query)].every(
+    ([key, value]) => searchParams.get(key) === value,
+  )
+  const isActive =
+    queryMatches && (end ? pathname === target : pathname === target || pathname.startsWith(`${target}/`))
   const resolvedClassName = typeof className === 'function' ? className({ isActive }) : className
 
   return <NextLink href={to} className={resolvedClassName} {...props} />

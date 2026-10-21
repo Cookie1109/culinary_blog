@@ -50,7 +50,7 @@ export function CategoryCard({
           {category.name}
         </Link>
       </Heading>
-      <p className="mb-3 line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+      <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
         {category.description ?? 'Khám phá các món ăn hấp dẫn trong danh mục này.'}
       </p>
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

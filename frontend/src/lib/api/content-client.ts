@@ -158,8 +158,9 @@ export function deleteCategory(id: string) {
   return authenticatedApiRequest<void>(`/categories/${id}`, { method: 'DELETE' })
 }
 
-export function listMyRecipes(status?: RecipeStatus, page: number = 1, pageSize: number = 12) {
+export function listMyRecipes(status?: RecipeStatus, page: number = 1, pageSize: number = 12, q?: string) {
   const params = new URLSearchParams()
+  if (q?.trim()) params.set('q', q.trim())
   if (status) params.set('status', status)
   if (page) params.set('page', String(page))
   if (pageSize) params.set('pageSize', String(pageSize))
@@ -176,8 +177,10 @@ export function listAdminRecipes(
   authorId?: string,
   page: number = 1,
   pageSize: number = 12,
+  q?: string,
 ) {
   const params = new URLSearchParams()
+  if (q?.trim()) params.set('q', q.trim())
   if (status) params.set('status', status)
   if (authorId) params.set('authorId', authorId)
   if (page) params.set('page', String(page))

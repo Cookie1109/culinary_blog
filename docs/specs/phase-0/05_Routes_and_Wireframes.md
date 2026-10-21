@@ -16,7 +16,9 @@
 | `/auth/login` | CSR | Public | Local login và Google Should-have |
 | `/auth/register` | CSR | Public | Registration và auto-login |
 | `/profile` | CSR | Authenticated | View/update profile, Should-have |
-| `/dashboard` | CSR | Author/Admin | Counts và recent recipes |
+| `/dashboard` | CSR | Author/Admin | Tổng quan cá nhân: counts và recent recipes của chính người đăng nhập, kể cả Admin |
+| `/dashboard/system` | CSR | Admin | Tổng quan và quản lý công thức toàn hệ thống; giao diện thực hiện quyền Admin tại SRS 2.3, không thay thế `/dashboard` |
+| `/dashboard/audit` | CSR | Admin | Lịch sử thao tác theo SRS 2.3, FR-OBS-002 và NFR-SEC-006 |
 | `/dashboard/recipes` | CSR | Author/Admin | Author dùng `/me/recipes`; Admin có mode dùng `/admin/recipes` |
 | `/dashboard/recipes/new` | CSR | Author/Admin | Recipe wizard |
 | `/dashboard/recipes/[id]/edit` | CSR | Owner/Admin | Private detail/edit/composition/lifecycle |

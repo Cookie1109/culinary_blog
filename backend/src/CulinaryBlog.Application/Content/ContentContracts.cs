@@ -188,6 +188,7 @@ public interface IContentService
     Task<PageEnvelope<RecipeDto>> ListMyRecipesAsync(
         Guid userId,
         RecipeStatus? status,
+        string? q,
         int page,
         int pageSize,
         CancellationToken cancellationToken);
@@ -197,6 +198,7 @@ public interface IContentService
     Task<PageEnvelope<RecipeDto>> ListAdminRecipesAsync(
         RecipeStatus? status,
         Guid? authorId,
+        string? q,
         int page,
         int pageSize,
         CancellationToken cancellationToken);

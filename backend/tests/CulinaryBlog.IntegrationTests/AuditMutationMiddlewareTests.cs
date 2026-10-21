@@ -25,7 +25,7 @@ public sealed class AuditMutationMiddlewareTests
         {
             TraceIdentifier = "audit-correlation-123",
             User = new ClaimsPrincipal(new ClaimsIdentity(
-                [new Claim("sub", "user-123")],
+                [new Claim("sub", "user-123"), new Claim("name", "Người quản trị")],
                 "test")),
         };
         context.Request.Method = HttpMethods.Post;
@@ -38,10 +38,52 @@ public sealed class AuditMutationMiddlewareTests
         Assert.Equal("category", entry["EntityType"]);
         Assert.Equal("baking", entry["EntityId"]);
         Assert.Equal("user-123", entry["UserId"]);
+        Assert.Equal("Người quản trị", entry["UserName"]);
+        Assert.Equal(201, entry["StatusCode"]);
         Assert.Equal("audit-correlation-123", entry["CorrelationId"]);
         Assert.Equal("POST", entry["RequestMethod"]);
         Assert.Equal("/api/v1/categories/", entry["RequestPath"]);
         Assert.IsType<DateTimeOffset>(entry["OccurredAt"]);
+    }
+
+    [Theory]
+    [InlineData("PUT", "ingredients", "updated", 200)]
+    [InlineData("POST", "steps", "created", 201)]
+    [InlineData("DELETE", "images", "deleted", 204)]
+    public async Task NestedRecipeChangesAreRecorded(string method, string component, string action, int statusCode)
+    {
+        var provider = new CapturingLoggerProvider();
+        using var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(provider));
+        var middleware = new AuditMutationMiddleware(context =>
+        {
+            context.Response.StatusCode = statusCode;
+            return Task.CompletedTask;
+        }, loggerFactory.CreateLogger<AuditMutationMiddleware>(), TimeProvider.System);
+        var recipeId = Guid.NewGuid();
+        var context = new DefaultHttpContext();
+        context.Request.Method = method;
+        context.Request.Path = $"/api/v1/recipes/{recipeId}/{component}/{Guid.NewGuid()}";
+        await middleware.InvokeAsync(context);
+        var entry = Assert.Single(provider.Entries);
+        Assert.Equal($"recipe.{component}.{action}", entry["AuditEvent"]);
+        Assert.Equal(recipeId.ToString(), entry["EntityId"]);
+    }
+
+    [Fact]
+    public async Task FailedChangesDoNotAppearAsSuccessfulAuditEvents()
+    {
+        var provider = new CapturingLoggerProvider();
+        using var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(provider));
+        var middleware = new AuditMutationMiddleware(context =>
+        {
+            context.Response.StatusCode = 403;
+            return Task.CompletedTask;
+        }, loggerFactory.CreateLogger<AuditMutationMiddleware>(), TimeProvider.System);
+        var context = new DefaultHttpContext();
+        context.Request.Method = "DELETE";
+        context.Request.Path = $"/api/v1/recipes/{Guid.NewGuid()}";
+        await middleware.InvokeAsync(context);
+        Assert.Empty(provider.Entries);
     }
 
     private sealed class CapturingLoggerProvider : ILoggerProvider

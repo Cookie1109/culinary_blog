@@ -440,32 +440,21 @@ export function AppLayout() {
               </nav>
             </div>
             <div>
-              <nav aria-label="Kết nối">
-                <h3 className="font-serif text-lg mb-6 text-foreground">Kết nối</h3>
+              <nav aria-label="Tài khoản">
+                <h3 className="font-serif text-lg mb-6 text-foreground">Tài khoản</h3>
                 <ul className="space-y-4">
                   <li>
-                    <a
-                      href="#main-content"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Về chúng tôi
-                    </a>
+                    <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors">
+                      Đăng nhập
+                    </Link>
                   </li>
                   <li>
-                    <a
-                      href="#main-content"
+                    <Link
+                      to="/register"
                       className="text-muted-foreground hover:text-primary transition-colors"
                     >
-                      Liên hệ
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#main-content"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Bản tin
-                    </a>
+                      Tạo tài khoản
+                    </Link>
                   </li>
                 </ul>
               </nav>
@@ -473,14 +462,6 @@ export function AppLayout() {
           </div>
           <div className="pt-8 border-t border-border/50 text-sm text-muted-foreground flex flex-col sm:flex-row justify-between items-center gap-4">
             <p>&copy; {new Date().getFullYear()} Culinary Blog. Đã đăng ký bản quyền.</p>
-            <div className="flex gap-4">
-              <a href="#main-content" className="hover:text-foreground transition-colors">
-                Chính sách bảo mật
-              </a>
-              <a href="#main-content" className="hover:text-foreground transition-colors">
-                Điều khoản dịch vụ
-              </a>
-            </div>
           </div>
         </div>
       </footer>

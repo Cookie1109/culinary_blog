@@ -12,17 +12,16 @@ export function Register() {
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!name || !email || !password || !confirm) {
-      setError('Vui lòng điền đầy đủ các trường.')
-      return
-    }
-    if (password !== confirm) {
-      setError('Mật khẩu xác nhận không khớp.')
-      return
-    }
+    const errors: Record<string, string> = {}
+    if (name.trim().length < 2 || name.trim().length > 100)
+      errors.name = 'Họ và tên cần có từ 2 đến 100 ký tự.'
+    if (!email.trim()) errors.email = 'Vui lòng nhập email.'
+    else if ((document.getElementById('email') as HTMLInputElement).validity.typeMismatch)
+      errors.email = 'Địa chỉ email chưa hợp lệ.'
     if (
       password.length < 8 ||
       !/[a-z]/.test(password) ||
@@ -30,12 +29,18 @@ export function Register() {
       !/[0-9]/.test(password) ||
       !/[^a-zA-Z0-9]/.test(password)
     ) {
-      setError('Mật khẩu cần tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.')
+      errors.password = 'Mật khẩu cần tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.'
+    }
+    if (!confirm || password !== confirm) errors.confirm = 'Mật khẩu xác nhận không khớp.'
+    setFieldErrors(errors)
+    if (Object.keys(errors).length) {
+      setError('Vui lòng kiểm tra các trường được đánh dấu.')
+      document.getElementById(Object.keys(errors)[0])?.focus()
       return
     }
     try {
       setError('')
-      await register(name, email, password)
+      await register(name.trim(), email.trim(), password)
       navigate('/dashboard')
     } catch {
       setError('Đăng ký thất bại. Vui lòng thử lại.')
@@ -89,9 +94,11 @@ export function Register() {
             <p className="text-muted-foreground">Bắt đầu chia sẻ công thức nấu ăn của bạn ngay hôm nay.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form noValidate onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{error}</div>
+              <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+                {error}
+              </div>
             )}
 
             <div>
@@ -103,6 +110,9 @@ export function Register() {
               </label>
               <input
                 id="name"
+                required
+                aria-invalid={Boolean(fieldErrors.name)}
+                aria-describedby={fieldErrors.name ? 'name-error' : undefined}
                 type="text"
                 autoComplete="name"
                 value={name}
@@ -110,6 +120,11 @@ export function Register() {
                 placeholder="Họ và tên của bạn"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
+              {fieldErrors.name && (
+                <p id="name-error" className="mt-2 text-sm text-red-700">
+                  {fieldErrors.name}
+                </p>
+              )}
             </div>
 
             <div>
@@ -121,6 +136,9 @@ export function Register() {
               </label>
               <input
                 id="email"
+                required
+                aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                 type="email"
                 autoComplete="email"
                 value={email}
@@ -128,6 +146,11 @@ export function Register() {
                 placeholder="your@email.com"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
+              {fieldErrors.email && (
+                <p id="email-error" className="mt-2 text-sm text-red-700">
+                  {fieldErrors.email}
+                </p>
+              )}
             </div>
 
             <div>
@@ -140,23 +163,35 @@ export function Register() {
               <div className="relative">
                 <input
                   id="password"
+                  required
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  aria-describedby={'password-help' + (fieldErrors.password ? ' password-error' : '')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Tối thiểu 8 ký tự"
+                  placeholder="Tạo mật khẩu"
                   className="w-full border border-border bg-background px-4 py-3 pr-12 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
                 />
+                {fieldErrors.password && (
+                  <p id="password-error" className="mt-2 text-sm text-red-700">
+                    {fieldErrors.password}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-4 top-6 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
+
+            <p id="password-help" className="text-sm text-muted-foreground">
+              Tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.
+            </p>
 
             <div>
               <label
@@ -167,6 +202,9 @@ export function Register() {
               </label>
               <input
                 id="confirm"
+                required
+                aria-invalid={Boolean(fieldErrors.confirm)}
+                aria-describedby={fieldErrors.confirm ? 'confirm-error' : undefined}
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 value={confirm}
@@ -174,19 +212,12 @@ export function Register() {
                 placeholder="Nhập lại mật khẩu"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
+              {fieldErrors.confirm && (
+                <p id="confirm-error" className="mt-2 text-sm text-red-700">
+                  {fieldErrors.confirm}
+                </p>
+              )}
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              Bằng việc tạo tài khoản, bạn đồng ý với{' '}
-              <a href="#" className="underline hover:text-primary">
-                Điều khoản dịch vụ
-              </a>{' '}
-              và{' '}
-              <a href="#" className="underline hover:text-primary">
-                Chính sách bảo mật
-              </a>{' '}
-              của chúng tôi.
-            </p>
 
             <button
               type="submit"

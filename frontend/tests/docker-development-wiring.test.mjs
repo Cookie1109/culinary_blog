@@ -4,6 +4,18 @@ import test from 'node:test'
 
 const rootFile = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8')
 
+test('both edges route browser image proxies to Next.js instead of the backend API', async () => {
+  for (const file of ['infra/nginx/nginx.conf', 'infra/nginx/nginx.production.conf']) {
+    const config = await rootFile(file)
+    const mediaLocation = config.match(
+      /location ~ \^\/api\/\(\?:public-media\|private-media\)\/ \{([^}]+)\}/,
+    )?.[1]
+    assert.ok(mediaLocation, `${file} must route both media proxies`)
+    assert.match(mediaLocation, /proxy_pass http:\/\/web;/)
+    assert.match(mediaLocation, /proxy_set_header Host \$http_host;/)
+  }
+})
+
 test('Docker frontend development uses bind-mounted source and drive-local caches without rebuilding', async () => {
   const [compose, gitignore, readme, warmup, nginx, productionNginx, nextConfig] = await Promise.all([
     rootFile('compose.dev.yaml'),

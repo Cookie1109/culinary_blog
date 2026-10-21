@@ -37,6 +37,7 @@ import {
   type RecipeStep,
   type StepWrite,
 } from '@/lib/api/content-client'
+import { Modal } from '@/components/ui/modal'
 import { ApiProblem } from '@/lib/api/problem-details'
 import { computeRecipeValidation, type Stage, type WizardAllSteps } from './recipe-validation'
 
@@ -50,6 +51,7 @@ interface Props {
   activeStage?: Stage
   onStageChange?: (stage: Stage) => void
   onNavigateToStep?: (step: WizardAllSteps) => void
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 function errorMessage(error: unknown) {
@@ -126,6 +128,7 @@ export function RecipeCompositionWizard({
   activeStage,
   onStageChange,
   onNavigateToStep,
+  onDirtyChange,
 }: Props) {
   const [internalStage, setInternalStage] = useState<Stage>('ingredients')
   const stage = activeStage ?? internalStage
@@ -144,6 +147,35 @@ export function RecipeCompositionWizard({
   const [imagePrimary, setImagePrimary] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [clientError, setClientError] = useState<string | null>(null)
+
+  const originalIngredient = recipe.ingredients.find((item) => item.id === editingIngredient)
+  const ingredientBaseline = originalIngredient
+    ? {
+        name: originalIngredient.name,
+        quantity: originalIngredient.quantity,
+        unit: originalIngredient.unit,
+        notes: originalIngredient.notes,
+        orderIndex: originalIngredient.orderIndex,
+      }
+    : EMPTY_INGREDIENT
+  const originalStep = recipe.steps.find((item) => item.id === editingStep)
+  const stepBaseline = originalStep
+    ? {
+        title: originalStep.title,
+        description: originalStep.description,
+        timerMinutes: originalStep.timerMinutes,
+        imageUrl: originalStep.imageUrl,
+        stepNumber: originalStep.stepNumber,
+      }
+    : EMPTY_STEP
+  const dirty =
+    JSON.stringify(ingredientForm) !== JSON.stringify(ingredientBaseline) ||
+    JSON.stringify(stepForm) !== JSON.stringify(stepBaseline) ||
+    Boolean(imageFile || imageAlt || imagePrimary)
+
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+  }, [dirty, onDirtyChange])
 
   // Confirmation state for Publish / Unpublish in preview
   const [confirmModal, setConfirmModal] = useState<'publish' | 'unpublish' | null>(null)
@@ -298,7 +330,9 @@ export function RecipeCompositionWizard({
         <h2 id="composition-heading" className="font-serif text-2xl">
           Hoàn thiện nội dung công thức
         </h2>
-        <span className="text-xs text-muted-foreground">Mỗi thay đổi được lưu ngay vào máy chủ</span>
+        <span className="text-xs text-muted-foreground">
+          Bấm Thêm, Lưu hoặc Tải ảnh lên để lưu nội dung đang nhập.
+        </span>
       </div>
 
       {/* Stage Tabs */}
@@ -948,16 +982,13 @@ export function RecipeCompositionWizard({
 
       {/* P7-04 Publication Confirmation Modal */}
       {confirmModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="wizard-confirm-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        <Modal
+          open
+          title={confirmModal === 'publish' ? 'Xác nhận xuất bản công thức' : 'Xác nhận gỡ xuất bản'}
+          onClose={() => setConfirmModal(null)}
+          busy={publishMutation.isPending || unpublishMutation.isPending}
         >
-          <div className="w-full max-w-md border border-border bg-background p-6 shadow-xl space-y-4">
-            <h3 id="wizard-confirm-title" className="font-serif text-2xl text-foreground">
-              {confirmModal === 'publish' ? 'Xác nhận xuất bản công thức' : 'Xác nhận gỡ xuất bản'}
-            </h3>
+          <div className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">
               {confirmModal === 'publish' ? (
                 <>
@@ -997,7 +1028,7 @@ export function RecipeCompositionWizard({
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </section>
   )

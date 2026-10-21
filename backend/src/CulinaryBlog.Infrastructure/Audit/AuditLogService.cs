@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using CulinaryBlog.Application.Audit;
 using CulinaryBlog.Application.Content;
@@ -45,7 +47,28 @@ public sealed class AuditLogService(
 
         // 2. Synthesize audit entries from entity change tracking in database
         var dbEntries = await GetDatabaseAuditEntriesAsync(cancellationToken).ConfigureAwait(false);
-        entries.AddRange(dbEntries);
+        entries.AddRange(dbEntries.Where(snapshot => !entries.Any(entry =>
+            entry.EventName == snapshot.EventName &&
+            Math.Abs((entry.Timestamp - snapshot.Timestamp).TotalSeconds) < 1 &&
+            entry.Properties?.GetValueOrDefault("EntityId") is { } entityId &&
+            (snapshot.Properties?.GetValueOrDefault("RecipeId") == entityId ||
+             snapshot.Properties?.GetValueOrDefault("CategoryId") == entityId))));
+
+        var userIds = entries.Select(entry => Guid.TryParse(entry.UserId, out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty).Distinct().ToArray();
+        var userNames = await dbContext.Users.AsNoTracking().Where(user => userIds.Contains(user.Id))
+            .ToDictionaryAsync(user => user.Id.ToString(), user => user.DisplayName, cancellationToken).ConfigureAwait(false);
+        entries = entries.Select(entry =>
+        {
+            var properties = entry.Properties is null
+                ? new Dictionary<string, string>()
+                : new Dictionary<string, string>(entry.Properties);
+            if (string.IsNullOrWhiteSpace(properties.GetValueOrDefault("UserName")) && entry.UserId is not null && userNames.TryGetValue(entry.UserId, out var name))
+            {
+                properties["UserName"] = name;
+            }
+            return entry with { Properties = properties };
+        }).ToList();
 
         // Deduplicate and order by timestamp descending
         var query = entries
@@ -66,6 +89,7 @@ public sealed class AuditLogService(
                 (e.CorrelationId?.Contains(term, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.UserId?.Contains(term, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.RequestPath?.Contains(term, StringComparison.OrdinalIgnoreCase) == true) ||
+                (e.Properties?.Values.Any(value => value.Contains(term, StringComparison.OrdinalIgnoreCase)) == true) ||
                 (e.EventName.Contains(term, StringComparison.OrdinalIgnoreCase)));
         }
 
@@ -172,6 +196,12 @@ public sealed class AuditLogService(
                     }
                 }
 
+                // Keep history focused on recorded actions and operational warnings/errors, not SQL or request diagnostics.
+                if (!root.TryGetProperty("AuditEvent", out _) && level is not ("Warning" or "Error" or "Fatal"))
+                {
+                    continue;
+                }
+
                 var properties = new Dictionary<string, string>();
                 foreach (var prop in root.EnumerateObject())
                 {
@@ -182,7 +212,7 @@ public sealed class AuditLogService(
                 }
 
                 result.Add(new AuditLogEntryDto(
-                    Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture),
+                    Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(line))),
                     timestamp,
                     level,
                     eventName,
@@ -242,12 +272,12 @@ public sealed class AuditLogService(
                     "Information",
                     "recipe.published",
                     $"Recipe '{r.Title}' was published.",
-                    r.UpdatedBy ?? r.AuthorId.ToString(),
+                    null,
                     null,
                     $"/api/v1/recipes/{r.Id}/publish",
                     "POST",
                     200,
-                    new Dictionary<string, string> { ["RecipeId"] = r.Id.ToString(), ["Title"] = r.Title, ["Slug"] = r.Slug }));
+                    new Dictionary<string, string> { ["RecipeId"] = r.Id.ToString(), ["Title"] = r.Title, ["Slug"] = r.Slug, ["Source"] = "snapshot" }));
             }
 
             if (r.UpdatedAt.HasValue && r.UpdatedAt != r.CreatedAt)
@@ -337,6 +367,9 @@ public sealed class AuditLogService(
                 new Dictionary<string, string> { ["CategoryId"] = c.Id.ToString(), ["Name"] = c.Name }));
         }
 
-        return result;
+        return result.Select(entry => entry with
+        {
+            Properties = new Dictionary<string, string>(entry.Properties!) { ["Source"] = "snapshot" },
+        }).ToList();
     }
 }

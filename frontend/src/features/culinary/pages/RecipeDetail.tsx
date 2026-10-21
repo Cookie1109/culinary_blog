@@ -47,32 +47,34 @@ export function RecipeDetail({
   return (
     <article className="pb-24">
       <header className="mx-auto max-w-4xl px-4 pb-12 pt-12 text-center sm:px-6 lg:px-8">
-        <nav aria-label="Đường dẫn" className="mb-8 text-sm text-muted-foreground">
-          <ol className="flex flex-wrap items-center justify-center gap-2">
-            <li>
-              <Link to="/recipes" className="hover:text-primary">
-                Công thức
-              </Link>
-            </li>
-            <li aria-hidden="true" className="text-muted-foreground/60">
-              /
-            </li>
-            <li>
-              <Link to={`/categories/${recipe.category.slug}`} className="hover:text-primary">
-                {recipe.category.name}
-              </Link>
-            </li>
-            <li aria-hidden="true" className="text-muted-foreground/60">
-              /
-            </li>
-            <li
-              aria-current="page"
-              className="font-medium text-foreground truncate max-w-[200px] sm:max-w-none"
-            >
-              {recipe.title}
-            </li>
-          </ol>
-        </nav>
+        {!privatePreview && (
+          <nav aria-label="Đường dẫn" className="mb-8 text-sm text-muted-foreground">
+            <ol className="flex flex-wrap items-center justify-center gap-2">
+              <li>
+                <Link to="/recipes" className="hover:text-primary">
+                  Công thức
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-muted-foreground/60">
+                /
+              </li>
+              <li>
+                <Link to={`/categories/${recipe.category.slug}`} className="hover:text-primary">
+                  {recipe.category.name}
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-muted-foreground/60">
+                /
+              </li>
+              <li
+                aria-current="page"
+                className="font-medium text-foreground truncate max-w-[200px] sm:max-w-none"
+              >
+                {recipe.title}
+              </li>
+            </ol>
+          </nav>
+        )}
         <div className="mb-6 flex items-center justify-center gap-2 text-sm uppercase tracking-widest text-primary">
           <span>{recipe.category.name}</span>
           <span aria-hidden="true">&bull;</span>

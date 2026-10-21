@@ -512,6 +512,7 @@ internal sealed partial class ContentService(
     public Task<PageEnvelope<RecipeDto>> ListMyRecipesAsync(
         Guid userId,
         RecipeStatus? status,
+        string? q,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
@@ -522,7 +523,7 @@ internal sealed partial class ContentService(
             query = query.Where(recipe => recipe.Status == status.Value);
         }
 
-        return ListRecipesAsync(query, page, pageSize, cancellationToken);
+        return ListRecipesAsync(FilterManagedRecipes(query, q, includeAuthor: false), page, pageSize, cancellationToken);
     }
 
     public async Task<RecipeDto> GetAdminRecipeAsync(Guid id, CancellationToken cancellationToken)
@@ -536,6 +537,7 @@ internal sealed partial class ContentService(
     public Task<PageEnvelope<RecipeDto>> ListAdminRecipesAsync(
         RecipeStatus? status,
         Guid? authorId,
+        string? q,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
@@ -551,7 +553,30 @@ internal sealed partial class ContentService(
             query = query.Where(recipe => recipe.AuthorId == authorId.Value);
         }
 
-        return ListRecipesAsync(query, page, pageSize, cancellationToken);
+        return ListRecipesAsync(FilterManagedRecipes(query, q, includeAuthor: true), page, pageSize, cancellationToken);
+    }
+
+    private IQueryable<Recipe> FilterManagedRecipes(IQueryable<Recipe> query, string? q, bool includeAuthor)
+    {
+        var term = q?.Trim();
+        if (string.IsNullOrEmpty(term))
+        {
+            return query;
+        }
+
+        if (term.Length > 100)
+        {
+            throw new ContentProblemException("VALIDATION_ERROR", "q must not exceed 100 characters.", ContentProblemKind.BadRequest);
+        }
+
+        var escaped = term.Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal);
+        var pattern = $"%{escaped}%";
+        var categoryIds = dbContext.Categories.Where(category => EF.Functions.ILike(category.Name, pattern, "\\")).Select(category => category.Id);
+        var authorIds = dbContext.Users.Where(user => EF.Functions.ILike(user.DisplayName, pattern, "\\")).Select(user => user.Id);
+        return query.Where(recipe => EF.Functions.ILike(recipe.Title, pattern, "\\")
+            || categoryIds.Contains(recipe.CategoryId)
+            || (includeAuthor && authorIds.Contains(recipe.AuthorId)));
     }
 
     private async Task<PageEnvelope<RecipeDto>> ListRecipesAsync(

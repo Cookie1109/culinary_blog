@@ -467,6 +467,7 @@ internal static class ContentEndpoints
 
     private static async Task<IResult> ListMyRecipesAsync(
         string? status,
+        string? q,
         int? page,
         int? pageSize,
         ClaimsPrincipal principal,
@@ -475,6 +476,7 @@ internal static class ContentEndpoints
         Results.Ok(await contentService.ListMyRecipesAsync(
             GetUserId(principal),
             ParseRecipeStatus(status),
+            q,
             page ?? 1,
             pageSize ?? 12,
             cancellationToken).ConfigureAwait(false));
@@ -493,12 +495,13 @@ internal static class ContentEndpoints
     private static async Task<IResult> ListAdminRecipesAsync(
         string? status,
         Guid? authorId,
+        string? q,
         int? page,
         int? pageSize,
         IContentService contentService,
         CancellationToken cancellationToken) =>
         Results.Ok(await contentService.ListAdminRecipesAsync(
-            ParseRecipeStatus(status), authorId, page ?? 1, pageSize ?? 12, cancellationToken).ConfigureAwait(false));
+            ParseRecipeStatus(status), authorId, q, page ?? 1, pageSize ?? 12, cancellationToken).ConfigureAwait(false));
 
     private static RecipeStatus? ParseRecipeStatus(string? status)
     {

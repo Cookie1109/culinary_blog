@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
-import { Camera, Pencil, Check, X } from 'lucide-react'
+import { Pencil, Check, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export function Profile() {
@@ -11,6 +11,7 @@ export function Profile() {
   const [bio, setBio] = useState(user?.bio ?? '')
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   if (!user) {
     return (
@@ -38,12 +39,15 @@ export function Profile() {
     }
     try {
       setError('')
+      setSaving(true)
       await updateProfile({ name: name.trim(), bio })
       setEditing(false)
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch {
       setError('Cập nhật hồ sơ thất bại. Vui lòng thử lại.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -51,6 +55,14 @@ export function Profile() {
     setName(user.name)
     setBio(user.bio ?? '')
     setEditing(false)
+    setError('')
+  }
+
+  const beginEdit = () => {
+    setName(user.name)
+    setBio(user.bio ?? '')
+    setError('')
+    setEditing(true)
   }
 
   return (
@@ -76,12 +88,6 @@ export function Profile() {
                 {user.name[0]}
               </div>
             )}
-            <button
-              className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center hover:bg-primary transition-colors shadow"
-              aria-label="Đổi ảnh đại diện"
-            >
-              <Camera size={14} />
-            </button>
           </div>
           <div className="text-center lg:text-left">
             <p className="font-medium">{user.name}</p>
@@ -115,7 +121,7 @@ export function Profile() {
                 {!editing && (
                   <button
                     type="button"
-                    onClick={() => setEditing(true)}
+                    onClick={beginEdit}
                     className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
                   >
                     <Pencil size={12} /> Chỉnh sửa
@@ -124,6 +130,8 @@ export function Profile() {
               </div>
               {editing ? (
                 <input
+                  aria-label="Họ và tên"
+                  disabled={saving}
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -152,6 +160,8 @@ export function Profile() {
               </label>
               {editing ? (
                 <textarea
+                  aria-label="Tiểu sử giới thiệu"
+                  disabled={saving}
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={4}
@@ -182,13 +192,15 @@ export function Profile() {
               <div className="flex items-center gap-4">
                 <button
                   type="submit"
+                  disabled={saving}
                   className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
                 >
-                  <Check size={16} /> Lưu thay đổi
+                  <Check size={16} /> {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
                 </button>
                 <button
                   type="button"
                   onClick={handleCancel}
+                  disabled={saving}
                   className="flex items-center gap-2 border border-border px-6 py-3 text-sm uppercase tracking-widest hover:bg-secondary transition-colors"
                 >
                   <X size={16} /> Hủy
@@ -198,7 +210,7 @@ export function Profile() {
               <div className="flex items-center gap-4">
                 <button
                   type="button"
-                  onClick={() => setEditing(true)}
+                  onClick={beginEdit}
                   className="bg-foreground text-background px-6 py-3 text-sm uppercase tracking-widest hover:bg-primary transition-colors"
                 >
                   Cập nhật

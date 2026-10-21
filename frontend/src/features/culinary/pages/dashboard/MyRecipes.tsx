@@ -5,7 +5,6 @@ import {
   Archive,
   ArrowLeft,
   ArrowRight,
-  Eye,
   EyeOff,
   Globe,
   Pencil,
@@ -17,6 +16,7 @@ import {
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useAuth } from '../../contexts/AuthContext'
+import { Modal } from '@/components/ui/modal'
 import { ApiProblem } from '@/lib/api/problem-details'
 import {
   archiveRecipe,
@@ -56,51 +56,33 @@ interface ConfirmDialogState {
   recipe: Recipe
 }
 
-export function MyRecipes() {
+export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean }) {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
   const scopeParam = searchParams.get('scope')
-  const [scope, setScope] = useState<'mine' | 'all'>(isAdmin && scopeParam === 'all' ? 'all' : 'mine')
-
-  const initialStatus = searchParams.get('status') as RecipeStatus | null
-  const [status, setStatus] = useState<RecipeStatus | undefined>(
-    initialStatus === 'published' || initialStatus === 'draft' || initialStatus === 'archived'
-      ? initialStatus
-      : undefined,
-  )
+  const scope = isAdmin && (systemOverview || scopeParam === 'all') ? 'all' : 'mine'
+  const urlStatus = searchParams.get('status')
+  const status: RecipeStatus | undefined =
+    urlStatus === 'published' || urlStatus === 'draft' || urlStatus === 'archived' ? urlStatus : undefined
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 10
+
+  useEffect(() => setPage(1), [scope, status])
 
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
   const [actionNotice, setActionNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  // Sync scope and status if URL query changes
-  useEffect(() => {
-    if (isAdmin && scopeParam === 'all') {
-      setScope('all')
-    } else if (scopeParam === 'mine') {
-      setScope('mine')
-    }
-  }, [isAdmin, scopeParam])
-
-  useEffect(() => {
-    const urlStatus = searchParams.get('status') as RecipeStatus | null
-    if (urlStatus === 'published' || urlStatus === 'draft' || urlStatus === 'archived') {
-      setStatus(urlStatus)
-    }
-  }, [searchParams])
-
   const recipesQuery = useQuery({
-    queryKey: [scope === 'all' ? 'admin-recipes' : 'my-recipes', status, page, pageSize],
+    queryKey: [scope === 'all' ? 'admin-recipes' : 'my-recipes', status, search.trim(), page, pageSize],
     queryFn: () =>
       scope === 'all'
-        ? listAdminRecipes(status, undefined, page, pageSize)
-        : listMyRecipes(status, page, pageSize),
+        ? listAdminRecipes(status, undefined, page, pageSize, search)
+        : listMyRecipes(status, page, pageSize, search),
   })
 
   const removeRecipe = useMutation({
@@ -225,34 +207,18 @@ export function MyRecipes() {
     }
   }
 
+  const originSuffix = scope === 'all' ? '?from=system' : ''
+  const Heading = systemOverview ? 'h2' : 'h1'
   const recipes = recipesQuery.data?.data ?? []
   const meta = recipesQuery.data?.meta
   const total = meta?.total ?? 0
   const totalPages = meta?.totalPages ?? 1
 
-  const normalizedSearch = search.trim().toLocaleLowerCase('vi')
-  const filtered = recipes.filter(
-    (recipe) =>
-      !normalizedSearch ||
-      recipe.title.toLocaleLowerCase('vi').includes(normalizedSearch) ||
-      recipe.category.name.toLocaleLowerCase('vi').includes(normalizedSearch) ||
-      (scope === 'all' && recipe.author?.displayName?.toLocaleLowerCase('vi').includes(normalizedSearch)),
-  )
-
-  const handleScopeChange = (newScope: 'mine' | 'all') => {
-    setScope(newScope)
-    setPage(1)
-    const nextParams = new URLSearchParams(searchParams)
-    if (newScope === 'all') {
-      nextParams.set('scope', 'all')
-    } else {
-      nextParams.delete('scope')
-    }
-    setSearchParams(nextParams)
-  }
+  useEffect(() => {
+    if (recipesQuery.isSuccess && page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages))
+  }, [recipesQuery.isSuccess, page, totalPages])
 
   const handleStatusChange = (newStatus: RecipeStatus | undefined) => {
-    setStatus(newStatus)
     setPage(1)
     const nextParams = new URLSearchParams(searchParams)
     if (newStatus) {
@@ -265,67 +231,32 @@ export function MyRecipes() {
 
   return (
     <div>
-      {/* Admin Scope Toggle Tabs */}
-      {isAdmin && (
-        <div
-          className="mb-6 flex border-b border-border"
-          role="tablist"
-          aria-label="Phạm vi quản lý công thức"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={scope === 'mine'}
-            onClick={() => handleScopeChange('mine')}
-            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
-              scope === 'mine'
-                ? 'border-primary text-primary font-semibold'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <span>Công thức của tôi</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={scope === 'all'}
-            onClick={() => handleScopeChange('all')}
-            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-medium transition-colors ${
-              scope === 'all'
-                ? 'border-primary text-primary font-semibold'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <span>Tất cả công thức (Chế độ Quản trị)</span>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary font-mono">
-              /admin/recipes
-            </span>
-          </button>
-        </div>
-      )}
-
       {/* Header */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-serif text-3xl text-foreground lg:text-4xl">
-            {scope === 'all' ? 'Tất cả công thức (Quản trị hệ thống)' : 'Công thức của tôi'}
-          </h1>
+          <Heading
+            className={`font-serif text-foreground ${systemOverview ? 'text-2xl' : 'text-3xl lg:text-4xl'}`}
+          >
+            {scope === 'all' ? 'Tất cả công thức' : 'Công thức của tôi'}
+          </Heading>
           <p className="mt-1 text-muted-foreground">
             {scope === 'all'
               ? recipesQuery.data
-                ? `Tổng cộng ${total} công thức trên toàn hệ thống (dùng API /admin/recipes)`
+                ? `Tổng cộng ${total} công thức trên toàn hệ thống`
                 : 'Quản lý toàn bộ công thức trên hệ thống qua quyền quản trị'
               : recipesQuery.data
                 ? `Tổng cộng ${total} công thức`
                 : 'Quản lý các công thức và bản nháp của bạn'}
           </p>
         </div>
-        <Link
-          to="/dashboard/recipes/new"
-          className="flex shrink-0 items-center gap-2 bg-primary px-5 py-3 text-sm uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          <PlusCircle size={16} /> Tạo công thức mới
-        </Link>
+        {!systemOverview && (
+          <Link
+            to="/dashboard/recipes/new"
+            className="flex shrink-0 items-center gap-2 bg-primary px-5 py-3 text-sm uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <PlusCircle size={16} /> Tạo công thức mới
+          </Link>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -339,15 +270,26 @@ export function MyRecipes() {
             value={search}
             onChange={(event) => {
               setSearch(event.target.value)
+              setPage(1)
             }}
-            placeholder="Tìm kiếm theo tiêu đề, danh mục…"
+            type="search"
+            maxLength={100}
+            aria-label="Tìm kiếm công thức trong phạm vi đang chọn"
+            placeholder={
+              scope === 'all' ? 'Tìm theo tiêu đề, danh mục, tác giả…' : 'Tìm theo tiêu đề, danh mục…'
+            }
             className="w-full border border-border bg-background py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
-        <div className="flex flex-wrap border border-border bg-background">
+        <div
+          role="group"
+          aria-label="Lọc trạng thái công thức"
+          className="flex flex-wrap border border-border bg-background"
+        >
           {STATUS_FILTERS.map((item) => (
             <button
               key={item.label}
+              aria-pressed={status === item.value}
               onClick={() => handleStatusChange(item.value)}
               className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest transition-colors ${
                 status === item.value
@@ -395,14 +337,28 @@ export function MyRecipes() {
       {/* Recipe List */}
       {recipesQuery.isSuccess && (
         <div className="space-y-6">
-          {filtered.length === 0 ? (
+          {recipes.length === 0 ? (
             <div className="border border-border bg-background px-4 py-16 text-center">
               <p className="mb-2 font-serif text-xl">Không tìm thấy công thức nào</p>
               <p className="text-sm text-muted-foreground">
                 {search
                   ? 'Không có công thức phù hợp với từ khóa tìm kiếm.'
-                  : 'Hãy tạo bản nháp đầu tiên của bạn.'}
+                  : scope === 'all'
+                    ? 'Chưa có công thức nào trong phạm vi này.'
+                    : 'Hãy tạo bản nháp đầu tiên của bạn.'}
               </p>
+              {(search || status) && (
+                <button
+                  type="button"
+                  className="mt-4 text-sm text-primary underline"
+                  onClick={() => {
+                    setSearch('')
+                    handleStatusChange(undefined)
+                  }}
+                >
+                  Xóa tìm kiếm và bộ lọc
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -421,18 +377,13 @@ export function MyRecipes() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filtered.map((recipe) => (
+                      {recipes.map((recipe) => (
                         <tr
                           key={recipe.id}
                           className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors"
                         >
                           <td className="px-6 py-4">
-                            <Link
-                              to={`/dashboard/recipes/${recipe.id}/edit`}
-                              className="font-medium text-foreground hover:underline"
-                            >
-                              {recipe.title}
-                            </Link>
+                            <span className="font-medium text-foreground">{recipe.title}</span>
                           </td>
                           {scope === 'all' && (
                             <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
@@ -450,21 +401,9 @@ export function MyRecipes() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-3">
-                              {/* Public view if published */}
-                              {recipe.status === 'published' && (
-                                <Link
-                                  to={`/recipes/${recipe.slug}`}
-                                  aria-label={`Xem công thức công khai ${recipe.title}`}
-                                  title="Xem công khai"
-                                  className="text-muted-foreground hover:text-foreground"
-                                >
-                                  <Eye size={16} />
-                                </Link>
-                              )}
-
                               {/* Preview link */}
                               <Link
-                                to={`/dashboard/recipes/${recipe.id}/preview`}
+                                to={`/dashboard/recipes/${recipe.id}/preview${originSuffix}`}
                                 aria-label={`Xem trước ${recipe.title}`}
                                 title="Xem trước riêng tư"
                                 className="text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
@@ -475,7 +414,7 @@ export function MyRecipes() {
                               {/* Edit link - disabled/blocked for archived recipes */}
                               {recipe.status !== 'archived' && (
                                 <Link
-                                  to={`/dashboard/recipes/${recipe.id}/edit`}
+                                  to={`/dashboard/recipes/${recipe.id}/edit${originSuffix}`}
                                   aria-label={`Chỉnh sửa ${recipe.title}`}
                                   title="Chỉnh sửa công thức"
                                   className="text-muted-foreground hover:text-primary"
@@ -488,7 +427,10 @@ export function MyRecipes() {
                               {recipe.status === 'draft' && (
                                 <button
                                   type="button"
-                                  onClick={() => setConfirmDialog({ type: 'publish', recipe })}
+                                  onClick={() => {
+                                    setActionError(null)
+                                    setConfirmDialog({ type: 'publish', recipe })
+                                  }}
                                   aria-label={`Xuất bản ${recipe.title}`}
                                   title="Xuất bản công thức"
                                   className="text-muted-foreground hover:text-green-600"
@@ -501,7 +443,10 @@ export function MyRecipes() {
                               {recipe.status === 'published' && (
                                 <button
                                   type="button"
-                                  onClick={() => setConfirmDialog({ type: 'unpublish', recipe })}
+                                  onClick={() => {
+                                    setActionError(null)
+                                    setConfirmDialog({ type: 'unpublish', recipe })
+                                  }}
                                   aria-label={`Gỡ xuất bản ${recipe.title}`}
                                   title="Gỡ xuất bản"
                                   className="text-muted-foreground hover:text-amber-600"
@@ -514,7 +459,10 @@ export function MyRecipes() {
                               {recipe.status !== 'archived' && (
                                 <button
                                   type="button"
-                                  onClick={() => setConfirmDialog({ type: 'archive', recipe })}
+                                  onClick={() => {
+                                    setActionError(null)
+                                    setConfirmDialog({ type: 'archive', recipe })
+                                  }}
                                   aria-label={`Lưu trữ ${recipe.title}`}
                                   title="Lưu trữ công thức"
                                   className="text-muted-foreground hover:text-foreground"
@@ -527,7 +475,10 @@ export function MyRecipes() {
                               {recipe.status === 'archived' && (
                                 <button
                                   type="button"
-                                  onClick={() => setConfirmDialog({ type: 'unarchive', recipe })}
+                                  onClick={() => {
+                                    setActionError(null)
+                                    setConfirmDialog({ type: 'unarchive', recipe })
+                                  }}
                                   aria-label={`Khôi phục ${recipe.title}`}
                                   title="Khôi phục về bản nháp"
                                   className="flex items-center gap-1 text-xs text-primary hover:underline"
@@ -539,7 +490,10 @@ export function MyRecipes() {
                               {/* Delete button */}
                               <button
                                 type="button"
-                                onClick={() => setConfirmDialog({ type: 'delete', recipe })}
+                                onClick={() => {
+                                  setActionError(null)
+                                  setConfirmDialog({ type: 'delete', recipe })
+                                }}
                                 aria-label={`Xóa ${recipe.title}`}
                                 title="Xóa công thức"
                                 className="text-muted-foreground hover:text-red-600"
@@ -557,7 +511,7 @@ export function MyRecipes() {
 
               {/* Mobile Card View */}
               <div className="grid gap-4 md:hidden">
-                {filtered.map((recipe) => (
+                {recipes.map((recipe) => (
                   <article key={recipe.id} className="border border-border bg-background p-4 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -587,16 +541,8 @@ export function MyRecipes() {
 
                     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
                       <div className="flex items-center gap-3">
-                        {recipe.status === 'published' && (
-                          <Link
-                            to={`/recipes/${recipe.slug}`}
-                            className="text-xs underline text-muted-foreground hover:text-foreground"
-                          >
-                            Xem bài viết
-                          </Link>
-                        )}
                         <Link
-                          to={`/dashboard/recipes/${recipe.id}/preview`}
+                          to={`/dashboard/recipes/${recipe.id}/preview${originSuffix}`}
                           className="text-xs underline text-muted-foreground hover:text-foreground"
                         >
                           Xem trước
@@ -606,7 +552,7 @@ export function MyRecipes() {
                       <div className="flex items-center gap-2">
                         {recipe.status !== 'archived' && (
                           <Link
-                            to={`/dashboard/recipes/${recipe.id}/edit`}
+                            to={`/dashboard/recipes/${recipe.id}/edit${originSuffix}`}
                             className="border border-border px-3 py-1.5 text-xs uppercase tracking-wider hover:bg-secondary"
                           >
                             Sửa
@@ -615,7 +561,10 @@ export function MyRecipes() {
                         {recipe.status === 'draft' && (
                           <button
                             type="button"
-                            onClick={() => setConfirmDialog({ type: 'publish', recipe })}
+                            onClick={() => {
+                              setActionError(null)
+                              setConfirmDialog({ type: 'publish', recipe })
+                            }}
                             className="border border-green-600 bg-green-50 px-3 py-1.5 text-xs uppercase tracking-wider text-green-700 hover:bg-green-100"
                           >
                             Xuất bản
@@ -624,16 +573,34 @@ export function MyRecipes() {
                         {recipe.status === 'published' && (
                           <button
                             type="button"
-                            onClick={() => setConfirmDialog({ type: 'unpublish', recipe })}
+                            onClick={() => {
+                              setActionError(null)
+                              setConfirmDialog({ type: 'unpublish', recipe })
+                            }}
                             className="border border-amber-600 bg-amber-50 px-3 py-1.5 text-xs uppercase tracking-wider text-amber-700 hover:bg-amber-100"
                           >
                             Gỡ
                           </button>
                         )}
+                        {recipe.status !== 'archived' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActionError(null)
+                              setConfirmDialog({ type: 'archive', recipe })
+                            }}
+                            className="border border-border px-3 py-1.5 text-xs uppercase tracking-wider hover:bg-secondary"
+                          >
+                            Lưu trữ
+                          </button>
+                        )}
                         {recipe.status === 'archived' && (
                           <button
                             type="button"
-                            onClick={() => setConfirmDialog({ type: 'unarchive', recipe })}
+                            onClick={() => {
+                              setActionError(null)
+                              setConfirmDialog({ type: 'unarchive', recipe })
+                            }}
                             className="border border-primary bg-primary px-3 py-1.5 text-xs uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
                           >
                             Khôi phục
@@ -641,7 +608,10 @@ export function MyRecipes() {
                         )}
                         <button
                           type="button"
-                          onClick={() => setConfirmDialog({ type: 'delete', recipe })}
+                          onClick={() => {
+                            setActionError(null)
+                            setConfirmDialog({ type: 'delete', recipe })
+                          }}
                           aria-label={`Xóa ${recipe.title}`}
                           className="p-1.5 text-muted-foreground hover:text-red-600"
                         >
@@ -690,20 +660,26 @@ export function MyRecipes() {
 
       {/* P7-04 Action Confirmation Modal */}
       {confirmDialog && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="confirm-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        <Modal
+          open
+          title={
+            {
+              publish: 'Xác nhận xuất bản',
+              unpublish: 'Xác nhận gỡ xuất bản',
+              archive: 'Xác nhận lưu trữ',
+              unarchive: 'Xác nhận khôi phục',
+              delete: 'Xác nhận xóa công thức',
+            }[confirmDialog.type]
+          }
+          onClose={() => setConfirmDialog(null)}
+          busy={isPendingAction}
         >
-          <div className="w-full max-w-md border border-border bg-background p-6 shadow-xl space-y-4">
-            <h2 id="confirm-modal-title" className="font-serif text-2xl text-foreground">
-              {confirmDialog.type === 'publish' && 'Xác nhận xuất bản'}
-              {confirmDialog.type === 'unpublish' && 'Xác nhận gỡ xuất bản'}
-              {confirmDialog.type === 'archive' && 'Xác nhận lưu trữ'}
-              {confirmDialog.type === 'unarchive' && 'Xác nhận khôi phục'}
-              {confirmDialog.type === 'delete' && 'Xác nhận xóa công thức'}
-            </h2>
+          <div className="space-y-4">
+            {actionError && (
+              <p role="alert" className="border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {actionError}
+              </p>
+            )}
 
             <p className="text-sm text-muted-foreground leading-relaxed">
               {confirmDialog.type === 'publish' && (
@@ -763,7 +739,7 @@ export function MyRecipes() {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

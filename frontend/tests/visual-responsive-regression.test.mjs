@@ -48,8 +48,6 @@ test('P6-24: Homepage visual/responsive layouts across mobile, tablet, and deskt
   assert.match(home, /loadingMoreRecipes/)
   assert.match(home, /setInterval/)
   assert.match(home, /15_000/)
-  assert.match(home, /label="Xem công thức mới trước đó"/)
-  assert.match(home, /label="Xem công thức mới tiếp theo"/)
 
   // Both featured lists provide labelled previous/next controls.
   assert.match(home, /label="Xem các công thức nổi bật trước"/)

@@ -98,7 +98,7 @@ test('P6-18: semantic HTML, landmarks, heading hierarchy, and accessible names a
   assert.match(layout, /aria-label="Điều hướng chính"/, 'Header must declare navigation landmark label')
   assert.match(layout, /aria-label="Điều hướng di động"/, 'Mobile drawer must declare navigation label')
   assert.match(layout, /aria-label="Khám phá"/, 'Footer must declare Khám phá navigation landmark')
-  assert.match(layout, /aria-label="Kết nối"/, 'Footer must declare Kết nối navigation landmark')
+  assert.match(layout, /aria-label="Tài khoản"/, 'Footer must declare Tài khoản navigation landmark')
   assert.match(layout, /<NavLink to="\/" end/, 'Desktop navigation must expose an exact home tab')
   assert.doesNotMatch(layout, /to="\/search"/, 'Navigation must not expose the removed search page')
 

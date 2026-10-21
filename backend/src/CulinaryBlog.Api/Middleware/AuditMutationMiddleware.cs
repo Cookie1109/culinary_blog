@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using CulinaryBlog.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace CulinaryBlog.Api.Middleware;
 
@@ -7,7 +9,7 @@ public sealed partial class AuditMutationMiddleware(
     ILogger<AuditMutationMiddleware> logger,
     TimeProvider timeProvider)
 {
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, AppDbContext? dbContext = null)
     {
         await next(context).ConfigureAwait(false);
 
@@ -27,8 +29,11 @@ public sealed partial class AuditMutationMiddleware(
         }
 
         var resourceTailLength = segments.Length - resourceIndex - 1;
-        if (resourceTailLength > 2 ||
-            (resourceTailLength == 2 && segments[^1] is not ("publish" or "unpublish" or "archive" or "unarchive")))
+        var component = resourceTailLength >= 2 && segments[resourceIndex + 2] is "ingredients" or "steps" or "images"
+            ? segments[resourceIndex + 2]
+            : null;
+        if (resourceTailLength > 3 ||
+            (resourceTailLength >= 2 && component is null && segments[^1] is not ("publish" or "unpublish" or "archive" or "unarchive")))
         {
             return;
         }
@@ -39,7 +44,22 @@ public sealed partial class AuditMutationMiddleware(
         var userId = context.User.FindFirstValue("sub")
             ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? "system";
-        var auditEvent = $"{entityType}.{action}";
+        var userName = context.User.FindFirstValue("name") ?? context.User.FindFirstValue(ClaimTypes.Name);
+        string? entityName = null;
+        if (dbContext is not null)
+        {
+            var id = Guid.TryParse(entityId, out var parsedId) ? parsedId : Guid.Empty;
+            var entity = entityType == "recipe"
+                ? await dbContext.Recipes.IgnoreQueryFilters().AsNoTracking()
+                    .Where(recipe => recipe.Id == id || recipe.Slug == entityId)
+                    .Select(recipe => new { recipe.Id, Name = recipe.Title }).FirstOrDefaultAsync(context.RequestAborted).ConfigureAwait(false)
+                : await dbContext.Categories.IgnoreQueryFilters().AsNoTracking()
+                    .Where(category => category.Id == id || category.Slug == entityId)
+                    .Select(category => new { category.Id, category.Name }).FirstOrDefaultAsync(context.RequestAborted).ConfigureAwait(false);
+            entityName = entity?.Name;
+            if (entity is not null) entityId = entity.Id.ToString();
+        }
+        var auditEvent = component is null ? $"{entityType}.{action}" : $"{entityType}.{component}.{action}";
         var occurredAt = timeProvider.GetUtcNow();
 
         ContentAudit(
@@ -47,11 +67,14 @@ public sealed partial class AuditMutationMiddleware(
             auditEvent,
             entityType,
             entityId,
+            entityName,
             userId,
+            userName,
             occurredAt,
             context.TraceIdentifier,
             context.Request.Method,
-            path);
+            path,
+            context.Response.StatusCode);
     }
 
     private static bool IsSuccessfulContentMutation(HttpContext context) =>
@@ -106,15 +129,18 @@ public sealed partial class AuditMutationMiddleware(
         EventId = 4100,
         EventName = "ContentAudit",
         Level = LogLevel.Information,
-        Message = "Audit event {AuditEvent} for {EntityType} {EntityId} by user {UserId} at {OccurredAt} with correlation {CorrelationId}; {RequestMethod} {RequestPath}")]
+        Message = "Audit event {AuditEvent} for {EntityType} {EntityId} ({EntityName}) by user {UserId} ({UserName}) at {OccurredAt} with correlation {CorrelationId}; {RequestMethod} {RequestPath}; status {StatusCode}")]
     private static partial void ContentAudit(
         ILogger logger,
         string auditEvent,
         string entityType,
         string entityId,
+        string? entityName,
         string userId,
+        string? userName,
         DateTimeOffset occurredAt,
         string correlationId,
         string requestMethod,
-        string requestPath);
+        string requestPath,
+        int statusCode);
 }

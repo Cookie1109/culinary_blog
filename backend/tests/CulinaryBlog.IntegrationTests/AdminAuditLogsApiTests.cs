@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using CulinaryBlog.Application.Audit;
 using CulinaryBlog.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -74,6 +75,40 @@ public sealed class AdminAuditLogsApiTests(AuthApiFactory factory) : IClassFixtu
         Assert.False(string.IsNullOrWhiteSpace(auditEntry.UserId));
         Assert.Equal("POST", auditEntry.RequestMethod);
         Assert.Equal("/api/v1/categories", auditEntry.RequestPath);
+        Assert.Equal("Audit Test User", auditEntry.Properties!["UserName"]);
+        Assert.Contains("Audit Category", auditEntry.Properties["EntityName"], StringComparison.Ordinal);
+        Assert.Equal(201, auditEntry.StatusCode);
+
+        using var sameResponse = await _client.GetAsync($"/api/v1/admin/audit-logs?search={correlationId}");
+        var sameBody = await sameResponse.Content.ReadFromJsonAsync<AuditLogsEnvelope>();
+        Assert.Equal(auditEntry.Id, Assert.Single(sameBody!.Data, entry => entry.EventName == "category.created").Id);
+
+        using var searchResponse = await _client.GetAsync("/api/v1/admin/audit-logs?search=Audit%20Test%20User");
+        var searchBody = await searchResponse.Content.ReadFromJsonAsync<AuditLogsEnvelope>();
+        Assert.Contains(searchBody!.Data, entry => entry.CorrelationId == correlationId);
+
+        using var createdBody = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync());
+        var categoryId = createdBody.RootElement.GetProperty("data").GetProperty("id").GetGuid();
+        var updatedName = $"Changed audit category {Guid.NewGuid():N}";
+        using var updateResponse = await _client.PutAsJsonAsync($"/api/v1/categories/{categoryId}", new
+        {
+            name = updatedName,
+            description = "Updated in audit test",
+            imageUrl = (string?)null,
+            orderIndex = 2,
+        });
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        using var deleteResponse = await _client.DeleteAsync($"/api/v1/categories/{categoryId}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+        using var historyResponse = await _client.GetAsync($"/api/v1/admin/audit-logs?search={correlationId}");
+        var history = await historyResponse.Content.ReadFromJsonAsync<AuditLogsEnvelope>();
+        foreach (var action in new[] { "created", "updated", "deleted" })
+        {
+            var entry = Assert.Single(history!.Data, entry => entry.EventName == $"category.{action}");
+            Assert.Equal("Audit Test User", entry.Properties!["UserName"]);
+            Assert.Equal(categoryId.ToString(), entry.Properties["EntityId"]);
+            if (action != "created") Assert.Equal(updatedName, entry.Properties["EntityName"]);
+        }
 
         _client.DefaultRequestHeaders.Remove("X-Correlation-ID");
     }

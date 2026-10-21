@@ -14,6 +14,59 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
+    public async Task ManagedSearchFiltersBeforePagingAndPreservesOwnershipAndAdminScope()
+    {
+        var owner = await RegisterAsync($"search-owner-{Guid.NewGuid():N}@example.com");
+        var other = await RegisterAsync($"search-other-{Guid.NewGuid():N}@example.com");
+        var categoryId = await GetCategoryIdAsync();
+        var term = $"Needle{Guid.NewGuid():N}";
+        SetToken(owner.AccessToken);
+        foreach (var title in new[] { $"{term} Alpha", $"{term} Beta", "Other managed recipe" })
+        {
+            using var response = await _client.PostAsJsonAsync("/api/v1/recipes", RecipeBody(categoryId, title));
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+
+        SetToken(other.AccessToken);
+        using var otherCreate = await _client.PostAsJsonAsync("/api/v1/recipes", RecipeBody(categoryId, $"{term} Foreign"));
+        Assert.Equal(HttpStatusCode.Created, otherCreate.StatusCode);
+
+        SetToken(owner.AccessToken);
+        var first = await _client.GetFromJsonAsync<RecipePage>($"/api/v1/me/recipes?q={term.ToUpperInvariant()}&pageSize=1");
+        var second = await _client.GetFromJsonAsync<RecipePage>($"/api/v1/me/recipes?q=%20{term}%20&page=2&pageSize=1");
+        Assert.Equal(2, first!.Meta.Total);
+        Assert.Equal(2, first.Meta.TotalPages);
+        Assert.Single(first.Data);
+        Assert.Single(second!.Data);
+        Assert.NotEqual(first.Data[0].Id, second.Data[0].Id);
+
+        var categories = await _client.GetFromJsonAsync<DataEnvelope<CategoryResponse[]>>("/api/v1/categories");
+        var categoryName = categories!.Data.Single(category => category.Id == categoryId).Name;
+        var byCategory = await _client.GetFromJsonAsync<RecipePage>($"/api/v1/me/recipes?q={Uri.EscapeDataString(categoryName)}");
+        Assert.Equal(3, byCategory!.Meta.Total);
+        var literalWildcard = await _client.GetFromJsonAsync<RecipePage>("/api/v1/me/recipes?q=%25");
+        Assert.Equal(0, literalWildcard!.Meta.Total);
+        using var oversized = await _client.GetAsync($"/api/v1/me/recipes?q={new string('a', 101)}");
+        Assert.Equal(HttpStatusCode.BadRequest, oversized.StatusCode);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var manager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await manager.FindByEmailAsync(other.User.Email);
+            Assert.True((await manager.AddToRoleAsync(user!, "Admin")).Succeeded);
+        }
+
+        var admin = await LoginAsync(other.User.Email);
+        SetToken(admin.AccessToken);
+        var all = await _client.GetFromJsonAsync<RecipePage>($"/api/v1/admin/recipes?q={term}&pageSize=1");
+        Assert.Equal(3, all!.Meta.Total);
+        var scoped = await _client.GetFromJsonAsync<RecipePage>($"/api/v1/admin/recipes?q={term}&authorId={owner.User.Id}");
+        Assert.Equal(2, scoped!.Meta.Total);
+        var byAuthor = await _client.GetFromJsonAsync<RecipePage>($"/api/v1/admin/recipes?q=recipe%20test%20user&authorId={owner.User.Id}");
+        Assert.Equal(3, byAuthor!.Meta.Total);
+    }
+
+    [Fact]
     public async Task P7OwnershipRoleEscalationAndAdminOverrideAreEnforced()
     {
         var owner = await RegisterAsync($"owner-{Guid.NewGuid():N}@example.com");
@@ -239,11 +292,15 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
 
     private sealed record AuthSession(string AccessToken, AuthUser User);
 
-    private sealed record AuthUser(string Email);
+    private sealed record AuthUser(Guid Id, string Email);
 
     private sealed record RecipeResponse(Guid Id, string Slug, string Status);
 
-    private sealed record CategoryResponse(Guid Id, string Slug);
+    private sealed record CategoryResponse(Guid Id, string Slug, string Name);
+
+    private sealed record RecipePage(RecipeResponse[] Data, PageMeta Meta);
+
+    private sealed record PageMeta(int Total, int TotalPages);
 
     private sealed record Problem(string Code, string? CurrentETag = null);
 }

@@ -36,6 +36,7 @@ export function RecipesList({
   const [searchValue, setSearchValue] = useState(q)
   const [timeValue, setTimeValue] = useState(maxTime ? Math.min(maxTime, 180) : MAX_TIME_SLIDER_VALUE)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const selectedCategory = categories.find((item) => item.slug === category)
   const firstCategories = categories.slice(0, 4)
@@ -48,6 +49,7 @@ export function RecipesList({
   useEffect(() => setTimeValue(maxTime ? Math.min(maxTime, 180) : MAX_TIME_SLIDER_VALUE), [maxTime])
 
   const setFilter = (key: string, value: string) => {
+    setFiltersOpen(false)
     const next = new URLSearchParams(searchParams)
     if (value) next.set(key, value)
     else next.delete(key)
@@ -116,21 +118,49 @@ export function RecipesList({
         </form>
       </header>
 
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 lg:hidden">
+        <p className="text-sm" aria-live="polite">
+          {result.meta.total} công thức được tìm thấy
+        </p>
+        <button
+          type="button"
+          aria-expanded={filtersOpen}
+          aria-controls="recipes-filters"
+          onClick={() => setFiltersOpen((open) => !open)}
+          className="border border-border px-4 py-2 text-sm"
+        >
+          {filtersOpen ? 'Ẩn bộ lọc' : 'Bộ lọc'}
+        </button>
+      </div>
+      {(q || category || difficulty || maxTime || sort !== 'newest') && (
+        <button
+          type="button"
+          onClick={() => {
+            setFiltersOpen(false)
+            startTransition(() => setSearchParams(new URLSearchParams()))
+          }}
+          className="mb-6 text-sm text-primary underline"
+        >
+          Xóa tìm kiếm và bộ lọc
+        </button>
+      )}
+
       <div className="grid gap-10 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8 xl:gap-12">
         <aside
-          className="grid gap-8 border-y border-border py-6 sm:grid-cols-3 lg:sticky lg:top-24 lg:block lg:self-start lg:border-y-0 lg:py-0"
+          id="recipes-filters"
+          className={`${filtersOpen ? 'grid' : 'hidden'} gap-8 border-y border-border py-6 sm:grid-cols-3 lg:sticky lg:top-24 lg:block lg:self-start lg:border-y-0 lg:py-0`}
           aria-label="Bộ lọc công thức"
         >
-          <fieldset className="lg:mb-10">
-            <legend className="w-full border-b border-border pb-3 font-serif text-xs uppercase tracking-widest text-muted-foreground">
+          <fieldset className="lg:mb-6">
+            <legend className="w-full border-b border-border pb-3 font-serif text-xs uppercase tracking-widest text-muted-foreground lg:pb-2">
               Danh mục
             </legend>
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 lg:flex-col lg:items-start">
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 lg:mt-2 lg:flex-col lg:items-start lg:gap-y-0">
               <button
                 type="button"
                 aria-pressed={!category}
                 onClick={() => setFilter('category', '')}
-                className={`py-1.5 text-sm transition-colors ${!category ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+                className={`py-1.5 text-sm transition-colors lg:py-1 ${!category ? 'text-primary' : 'text-foreground hover:text-primary'}`}
               >
                 Tất cả
               </button>
@@ -140,7 +170,7 @@ export function RecipesList({
                   type="button"
                   aria-pressed={category === item.slug}
                   onClick={() => selectCategory(item.slug)}
-                  className={`py-1.5 text-left text-sm transition-colors ${category === item.slug ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+                  className={`py-1.5 text-left text-sm transition-colors lg:py-1 ${category === item.slug ? 'text-primary' : 'text-foreground hover:text-primary'}`}
                 >
                   {item.name}
                 </button>
@@ -150,7 +180,7 @@ export function RecipesList({
                   type="button"
                   onClick={() => setCategoryModalOpen(true)}
                   aria-haspopup="dialog"
-                  className="mt-1 border-b border-primary py-1 text-left text-sm font-medium text-primary transition-colors hover:text-foreground"
+                  className="mt-1 border-b border-primary py-1 text-left text-sm font-medium text-primary transition-colors hover:text-foreground lg:mt-0"
                 >
                   Xem thêm danh mục
                 </button>
@@ -158,16 +188,16 @@ export function RecipesList({
             </div>
           </fieldset>
 
-          <fieldset className="lg:mb-10">
-            <legend className="w-full border-b border-border pb-3 font-serif text-xs uppercase tracking-widest text-muted-foreground">
+          <fieldset className="lg:mb-6">
+            <legend className="w-full border-b border-border pb-3 font-serif text-xs uppercase tracking-widest text-muted-foreground lg:pb-2">
               Độ khó
             </legend>
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 lg:flex-col lg:items-start">
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 lg:mt-2 lg:flex-col lg:items-start lg:gap-y-0">
               <button
                 type="button"
                 aria-pressed={!difficulty}
                 onClick={() => setFilter('difficulty', '')}
-                className={`py-1.5 text-sm transition-colors ${!difficulty ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+                className={`py-1.5 text-sm transition-colors lg:py-1 ${!difficulty ? 'text-primary' : 'text-foreground hover:text-primary'}`}
               >
                 Tất cả
               </button>
@@ -177,7 +207,7 @@ export function RecipesList({
                   type="button"
                   aria-pressed={difficulty === item.value}
                   onClick={() => setFilter('difficulty', item.value)}
-                  className={`py-1.5 text-left text-sm transition-colors ${difficulty === item.value ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+                  className={`py-1.5 text-left text-sm transition-colors lg:py-1 ${difficulty === item.value ? 'text-primary' : 'text-foreground hover:text-primary'}`}
                 >
                   {item.label}
                 </button>
@@ -186,7 +216,7 @@ export function RecipesList({
           </fieldset>
 
           <fieldset>
-            <legend className="w-full border-b border-border pb-3 font-serif text-xs uppercase tracking-widest text-muted-foreground">
+            <legend className="w-full border-b border-border pb-3 font-serif text-xs uppercase tracking-widest text-muted-foreground lg:pb-2">
               Thời gian tối đa
             </legend>
             <label htmlFor="recipes-maxtime-range" className="sr-only">
@@ -203,7 +233,7 @@ export function RecipesList({
               onPointerUp={(event) => applyTimeFilter(Number(event.currentTarget.value))}
               onKeyUp={(event) => applyTimeFilter(Number(event.currentTarget.value))}
               onBlur={(event) => applyTimeFilter(Number(event.currentTarget.value))}
-              className="mt-5 w-full accent-primary"
+              className="mt-5 w-full accent-primary lg:mt-3"
             />
             <div className="mt-1 flex justify-between text-xs text-muted-foreground">
               <span>10 phút</span>
@@ -214,7 +244,7 @@ export function RecipesList({
 
         <section aria-label="Danh sách công thức">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground" aria-live="polite">
+            <p className="hidden text-sm text-muted-foreground lg:block" aria-live="polite">
               <span className="font-medium text-foreground">{result.meta.total}</span> công thức được tìm thấy
             </p>
             <label htmlFor="recipes-sort-select" className="sr-only">

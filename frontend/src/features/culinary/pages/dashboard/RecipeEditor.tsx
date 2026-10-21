@@ -18,8 +18,11 @@ import {
   Save,
   Trash2,
 } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { Modal } from '@/components/ui/modal'
+import { useUnsavedChanges } from '@/components/navigation-guard'
+import { useAuth } from '../../contexts/AuthContext'
 import { ApiProblem } from '@/lib/api/problem-details'
 import { computeRecipeValidation, type Stage, type WizardAllSteps } from './recipe-validation'
 import {
@@ -27,6 +30,7 @@ import {
   createRecipe,
   deleteRecipe,
   getMyRecipe,
+  getAdminRecipe,
   listCategories,
   publishRecipe,
   unarchiveRecipe,
@@ -137,6 +141,10 @@ export function RecipeEditor() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const fromSystem = user?.role === 'admin' && searchParams.get('from') === 'system'
+  const returnTo = fromSystem ? '/dashboard/system' : '/dashboard/recipes'
+  const originSuffix = fromSystem ? '?from=system' : ''
   const isEditing = Boolean(id)
 
   const urlStep = searchParams.get('step') as WizardAllSteps | null
@@ -163,18 +171,24 @@ export function RecipeEditor() {
   const [navGuardTarget, setNavGuardTarget] = useState<string | WizardAllSteps | null>(null)
   const [conflictModalOpen, setConflictModalOpen] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [compositionDirty, setCompositionDirty] = useState(false)
+  const basicDirtyRef = useRef(false)
+  const loadedRecipeIdRef = useRef<string | null>(null)
+  const saveBeforeLeavingRef = useRef(false)
 
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: listCategories })
   const recipeQuery = useQuery({
-    queryKey: ['my-recipe', id],
-    queryFn: () => getMyRecipe(id!),
-    enabled: isEditing,
+    queryKey: ['my-recipe', id, user?.role],
+    queryFn: () => (user?.role === 'admin' ? getAdminRecipe(id!) : getMyRecipe(id!)),
+    enabled: isEditing && Boolean(user),
   })
 
   // Sync loaded recipe into form
   useEffect(() => {
     const recipe = recipeQuery.data
     if (!recipe) return
+    setVersion(recipe.version)
+    if (loadedRecipeIdRef.current === recipe.id && basicDirtyRef.current) return
     const loadedForm: RecipeForm = {
       title: recipe.title,
       description: recipe.description,
@@ -188,30 +202,25 @@ export function RecipeEditor() {
     }
     setForm(loadedForm)
     initialSnapshotRef.current = JSON.stringify(loadedForm)
-    setVersion(recipe.version)
+    loadedRecipeIdRef.current = recipe.id
   }, [recipeQuery.data])
 
   // Select default category
   useEffect(() => {
-    if (!form.categoryId && categoriesQuery.data?.[0]) {
-      setForm((current) => ({ ...current, categoryId: categoriesQuery.data![0].id }))
+    if (!isEditing && !form.categoryId && categoriesQuery.data?.[0]) {
+      const categoryId = categoriesQuery.data[0].id
+      const initial = JSON.parse(initialSnapshotRef.current) as RecipeForm
+      initialSnapshotRef.current = JSON.stringify({ ...initial, categoryId })
+      setForm((current) => ({ ...current, categoryId }))
     }
-  }, [categoriesQuery.data, form.categoryId])
+  }, [categoriesQuery.data, form.categoryId, isEditing])
 
   // Calculate isDirty
   const isDirty = JSON.stringify(form) !== initialSnapshotRef.current
-
-  // P7-03 Navigation Guard (browser tab / window beforeunload)
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isDirty) {
-        event.preventDefault()
-        event.returnValue = ''
-      }
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [isDirty])
+  basicDirtyRef.current = isDirty
+  const hasUnsavedChanges = isDirty || compositionDirty
+  const onLeave = useCallback((target: string) => setNavGuardTarget(target), [])
+  const allowNavigation = useUnsavedChanges(hasUnsavedChanges, onLeave)
 
   const save = useMutation({
     mutationFn: (payload: RecipeWrite) =>
@@ -230,8 +239,10 @@ export function RecipeEditor() {
       setPublishError(null)
       setConflictModalOpen(false)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', recipe.id] })
-      if (!isEditing) {
+      if (!isEditing && !saveBeforeLeavingRef.current) {
+        allowNavigation()
         navigate(`/dashboard/recipes/${recipe.id}/edit?step=ingredients`)
       }
     },
@@ -252,6 +263,7 @@ export function RecipeEditor() {
       setSaved(false)
       setClientError(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
     },
     onError: (error) => {
@@ -279,6 +291,7 @@ export function RecipeEditor() {
       setSaved(false)
       setClientError(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
     },
     onError: (error) => {
@@ -300,6 +313,7 @@ export function RecipeEditor() {
       setPublishNotice('Công thức đã được đưa vào kho lưu trữ.')
       setPublishError(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
     },
     onError: (error) => {
@@ -320,6 +334,7 @@ export function RecipeEditor() {
       setPublishNotice('Đã khôi phục công thức về bản nháp.')
       setPublishError(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
     },
     onError: (error) => {
@@ -337,7 +352,8 @@ export function RecipeEditor() {
     onSuccess: async () => {
       setConfirmModal(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
-      navigate('/dashboard/recipes')
+      await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
+      navigate(returnTo)
     },
     onError: (error) => {
       setConfirmModal(null)
@@ -354,14 +370,24 @@ export function RecipeEditor() {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault()
+  const saveBasic = async () => {
+    if (save.isPending) return false
     if (form.title.trim().length < 5 || !form.description.trim() || !form.categoryId || form.prepTime < 1) {
       setClientError('Vui lòng điền tiêu đề (ít nhất 5 ký tự), mô tả, danh mục và thời gian chuẩn bị hợp lệ.')
-      return
+      return false
     }
     setClientError(null)
-    save.mutate(toPayload(form))
+    try {
+      await save.mutateAsync(toPayload(form))
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    void saveBasic()
   }
 
   const handleCompositionChanged = async (nextVersion: number) => {
@@ -373,7 +399,7 @@ export function RecipeEditor() {
 
   // Navigation guard helper
   const requestNavigation = (target: string | WizardAllSteps) => {
-    if (isDirty && activeStep === 'basic') {
+    if (hasUnsavedChanges && target.startsWith('/')) {
       setNavGuardTarget(target)
     } else {
       executeNavigation(target)
@@ -382,12 +408,17 @@ export function RecipeEditor() {
 
   const executeNavigation = (target: string | WizardAllSteps) => {
     setNavGuardTarget(null)
-    if (target === '/dashboard/recipes') {
-      navigate('/dashboard/recipes')
+    if (target.startsWith('/')) {
+      allowNavigation()
+      navigate(target)
     } else {
       const targetStep = target as WizardAllSteps
       setActiveStep(targetStep)
-      setSearchParams({ step: targetStep })
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current)
+        next.set('step', targetStep)
+        return next
+      })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
@@ -419,6 +450,12 @@ export function RecipeEditor() {
   const conflict =
     save.error instanceof ApiProblem && save.error.problem.code === 'RECIPE_CONCURRENCY_CONFLICT'
   const remoteError = save.error instanceof ApiProblem ? save.error.problem.detail : null
+  const isPendingAction =
+    publishMutation.isPending ||
+    unpublishMutation.isPending ||
+    archiveMutation.isPending ||
+    unarchiveMutation.isPending ||
+    deleteMutation.isPending
 
   const inputClass =
     'w-full border border-border bg-background px-4 py-3 text-sm transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -458,10 +495,10 @@ export function RecipeEditor() {
         <div>
           <button
             type="button"
-            onClick={() => requestNavigation('/dashboard/recipes')}
+            onClick={() => requestNavigation(returnTo)}
             className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-primary"
           >
-            <ChevronLeft size={14} /> Công thức của tôi
+            <ChevronLeft size={14} /> {fromSystem ? 'Tổng quan hệ thống' : 'Công thức của tôi'}
           </button>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-serif text-3xl lg:text-4xl text-foreground">
@@ -480,7 +517,7 @@ export function RecipeEditor() {
           {isEditing && recipeQuery.data && (
             <div className="mt-2 flex flex-wrap gap-4">
               <Link
-                to={`/dashboard/recipes/${recipeQuery.data.id}/preview`}
+                to={`/dashboard/recipes/${recipeQuery.data.id}/preview${originSuffix}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-muted-foreground underline hover:text-foreground"
@@ -509,7 +546,7 @@ export function RecipeEditor() {
                 <button
                   type="button"
                   onClick={() => setConfirmModal('publish')}
-                  disabled={publishMutation.isPending || save.isPending}
+                  disabled={publishMutation.isPending || save.isPending || hasUnsavedChanges}
                   className="flex items-center gap-1.5 border border-green-600 bg-green-50 px-3.5 py-2 text-xs uppercase tracking-widest text-green-700 hover:bg-green-100 disabled:opacity-60"
                 >
                   <Globe size={14} /> Xuất bản
@@ -573,14 +610,14 @@ export function RecipeEditor() {
 
       {/* P7-03 Save State & Status Notifications */}
       <div className="mb-6 space-y-2">
-        {isDirty && activeStep === 'basic' && (
+        {hasUnsavedChanges && (
           <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 text-amber-800 text-xs">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            Có thay đổi chưa lưu trong phần thông tin cơ bản. Hãy nhấn «Lưu bản nháp» để cập nhật.
+            Có thay đổi chưa lưu. Lưu thông tin cơ bản hoặc bấm Thêm/Lưu ở bước tương ứng để cập nhật.
           </div>
         )}
 
-        {saved && !isDirty && (
+        {saved && !hasUnsavedChanges && (
           <div
             role="status"
             className="flex items-center justify-between border border-green-200 bg-green-50 px-4 py-2 text-xs text-green-700"
@@ -714,222 +751,229 @@ export function RecipeEditor() {
       {/* Step 1: Basic Information Form */}
       {activeStep === 'basic' && (
         <form onSubmit={handleSubmit}>
-          <section className="space-y-6 border-b border-border pb-10" aria-labelledby="basic-heading">
-            <h2 id="basic-heading" className="font-serif text-2xl text-foreground">
-              Thông tin cơ bản của món ăn
-            </h2>
-
-            <div>
-              <label htmlFor="title" className={labelClass}>
-                Tên công thức <span className="text-red-600">*</span>
-              </label>
-              <input
-                id="title"
-                required
-                minLength={5}
-                maxLength={200}
-                placeholder="Ví dụ: Bánh Mì Men Tự Nhiên Sourdough"
-                value={form.title}
-                onChange={(event) => update('title', event.target.value)}
-                className={inputClass}
-              />
-              <span className="text-[11px] text-muted-foreground mt-1 block">Tối thiểu 5 ký tự.</span>
-            </div>
-
-            <div>
-              <label htmlFor="description" className={labelClass}>
-                Mô tả ngắn <span className="text-red-600">*</span>
-              </label>
-              <textarea
-                id="description"
-                required
-                maxLength={2000}
-                rows={4}
-                placeholder="Giới thiệu về hương vị, nguồn gốc hoặc cảm hứng của món ăn…"
-                value={form.description}
-                onChange={(event) => update('description', event.target.value)}
-                className={`${inputClass} resize-y`}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="instructions" className={labelClass}>
-                Ghi chú hướng dẫn chung (không bắt buộc)
-              </label>
-              <textarea
-                id="instructions"
-                rows={3}
-                placeholder="Mẹo nhỏ, lưu ý về nhiệt độ lò hoặc biến tấu nguyên liệu…"
-                value={form.instructions}
-                onChange={(event) => update('instructions', event.target.value)}
-                className={`${inputClass} resize-y`}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div>
-                <label htmlFor="category" className={labelClass}>
-                  Danh mục <span className="text-red-600">*</span>
-                </label>
-                <select
-                  id="category"
-                  required
-                  value={form.categoryId}
-                  onChange={(event) => update('categoryId', event.target.value)}
-                  className={inputClass}
-                  disabled={categoriesQuery.isPending}
-                >
-                  <option value="">Chọn danh mục</option>
-                  {categoriesQuery.data?.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <fieldset disabled={save.isPending} className="min-w-0">
+            <section className="space-y-6 border-b border-border pb-10" aria-labelledby="basic-heading">
+              <h2 id="basic-heading" className="font-serif text-2xl text-foreground">
+                Thông tin cơ bản của món ăn
+              </h2>
 
               <div>
-                <label htmlFor="difficulty" className={labelClass}>
-                  Độ khó
-                </label>
-                <select
-                  id="difficulty"
-                  value={form.difficulty}
-                  onChange={(event) => update('difficulty', event.target.value as RecipeDifficulty)}
-                  className={inputClass}
-                >
-                  <option value="easy">Dễ</option>
-                  <option value="medium">Trung bình</option>
-                  <option value="hard">Khó</option>
-                  <option value="expert">Chuyên gia</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="servings" className={labelClass}>
-                  Khẩu phần (người) <span className="text-red-600">*</span>
+                <label htmlFor="title" className={labelClass}>
+                  Tên công thức <span className="text-red-600">*</span>
                 </label>
                 <input
-                  id="servings"
-                  type="number"
-                  min={1}
+                  id="title"
                   required
-                  value={form.servings}
-                  onChange={(event) => update('servings', Number(event.target.value))}
+                  minLength={5}
+                  maxLength={200}
+                  placeholder="Ví dụ: Bánh Mì Men Tự Nhiên Sourdough"
+                  value={form.title}
+                  onChange={(event) => update('title', event.target.value)}
                   className={inputClass}
                 />
+                <span className="text-[11px] text-muted-foreground mt-1 block">Tối thiểu 5 ký tự.</span>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="prepTime" className={labelClass}>
-                  Chuẩn bị (phút) <span className="text-red-600">*</span>
+                <label htmlFor="description" className={labelClass}>
+                  Mô tả ngắn <span className="text-red-600">*</span>
                 </label>
-                <input
-                  id="prepTime"
-                  type="number"
-                  min={1}
+                <textarea
+                  id="description"
                   required
-                  value={form.prepTime}
-                  onChange={(event) => update('prepTime', Number(event.target.value))}
-                  className={inputClass}
+                  maxLength={2000}
+                  rows={4}
+                  placeholder="Giới thiệu về hương vị, nguồn gốc hoặc cảm hứng của món ăn…"
+                  value={form.description}
+                  onChange={(event) => update('description', event.target.value)}
+                  className={`${inputClass} resize-y`}
                 />
               </div>
 
               <div>
-                <label htmlFor="cookTime" className={labelClass}>
-                  Nấu / nướng (phút) <span className="text-red-600">*</span>
+                <label htmlFor="instructions" className={labelClass}>
+                  Ghi chú hướng dẫn chung (không bắt buộc)
                 </label>
-                <input
-                  id="cookTime"
-                  type="number"
-                  min={0}
-                  required
-                  value={form.cookTime}
-                  onChange={(event) => update('cookTime', Number(event.target.value))}
-                  className={inputClass}
+                <textarea
+                  id="instructions"
+                  rows={3}
+                  placeholder="Mẹo nhỏ, lưu ý về nhiệt độ lò hoặc biến tấu nguyên liệu…"
+                  value={form.instructions}
+                  onChange={(event) => update('instructions', event.target.value)}
+                  className={`${inputClass} resize-y`}
                 />
               </div>
-            </div>
-          </section>
 
-          {/* Nutrition Section */}
-          <section className="mt-10" aria-labelledby="nutrition-heading">
-            <h2 id="nutrition-heading" className="font-serif text-2xl text-foreground">
-              Dinh dưỡng mỗi khẩu phần
-            </h2>
-            <p className="mb-6 mt-1 text-sm text-muted-foreground">
-              Không bắt buộc; để trống nếu chưa có thông số dinh dưỡng chính xác.
-            </p>
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
-              {NUTRITION_FIELDS.map(({ key, label, unit }) => (
-                <div key={key}>
-                  <label htmlFor={key} className={labelClass}>
-                    {label}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                  <label htmlFor="category" className={labelClass}>
+                    Danh mục <span className="text-red-600">*</span>
                   </label>
-                  <div className="relative">
-                    <input
-                      id={key}
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={form.nutrition[key]}
-                      onChange={(event) =>
-                        update('nutrition', { ...form.nutrition, [key]: event.target.value })
-                      }
-                      className={`${inputClass} pr-14`}
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                      {unit}
-                    </span>
-                  </div>
+                  <select
+                    id="category"
+                    required
+                    value={form.categoryId}
+                    onChange={(event) => update('categoryId', event.target.value)}
+                    className={inputClass}
+                    disabled={categoriesQuery.isPending}
+                  >
+                    <option value="">Chọn danh mục</option>
+                    {categoriesQuery.data?.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ))}
-            </div>
-          </section>
 
-          {/* Stepper Navigation / Save Button */}
-          <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
-            <button
-              type="button"
-              onClick={() => requestNavigation('/dashboard/recipes')}
-              className="text-sm uppercase tracking-widest text-muted-foreground hover:text-primary"
-            >
-              Hủy thay đổi
-            </button>
-            <div className="flex items-center gap-3">
+                <div>
+                  <label htmlFor="difficulty" className={labelClass}>
+                    Độ khó
+                  </label>
+                  <select
+                    id="difficulty"
+                    value={form.difficulty}
+                    onChange={(event) => update('difficulty', event.target.value as RecipeDifficulty)}
+                    className={inputClass}
+                  >
+                    <option value="easy">Dễ</option>
+                    <option value="medium">Trung bình</option>
+                    <option value="hard">Khó</option>
+                    <option value="expert">Chuyên gia</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="servings" className={labelClass}>
+                    Khẩu phần (người) <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    id="servings"
+                    type="number"
+                    min={1}
+                    required
+                    value={form.servings}
+                    onChange={(event) => update('servings', Number(event.target.value))}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="prepTime" className={labelClass}>
+                    Chuẩn bị (phút) <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    id="prepTime"
+                    type="number"
+                    min={1}
+                    required
+                    value={form.prepTime}
+                    onChange={(event) => update('prepTime', Number(event.target.value))}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="cookTime" className={labelClass}>
+                    Nấu / nướng (phút) <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    id="cookTime"
+                    type="number"
+                    min={0}
+                    required
+                    value={form.cookTime}
+                    onChange={(event) => update('cookTime', Number(event.target.value))}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Nutrition Section */}
+            <section className="mt-10" aria-labelledby="nutrition-heading">
+              <h2 id="nutrition-heading" className="font-serif text-2xl text-foreground">
+                Dinh dưỡng mỗi khẩu phần
+              </h2>
+              <p className="mb-6 mt-1 text-sm text-muted-foreground">
+                Không bắt buộc; để trống nếu chưa có thông số dinh dưỡng chính xác.
+              </p>
+              <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+                {NUTRITION_FIELDS.map(({ key, label, unit }) => (
+                  <div key={key}>
+                    <label htmlFor={key} className={labelClass}>
+                      {label}
+                    </label>
+                    <div className="relative">
+                      <input
+                        id={key}
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={form.nutrition[key]}
+                        onChange={(event) =>
+                          update('nutrition', { ...form.nutrition, [key]: event.target.value })
+                        }
+                        className={`${inputClass} pr-14`}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                        {unit}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Stepper Navigation / Save Button */}
+            <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
               <button
-                type="submit"
-                disabled={save.isPending}
-                className="flex items-center gap-2 bg-primary px-6 py-2.5 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-60 hover:bg-primary/90 font-medium"
+                type="button"
+                onClick={() => requestNavigation(returnTo)}
+                className="text-sm uppercase tracking-widest text-muted-foreground hover:text-primary"
               >
-                <Save size={15} /> {save.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}
+                Quay lại danh sách
               </button>
-              {isEditing && (
+              <div className="flex items-center gap-3">
                 <button
-                  type="button"
-                  onClick={() => requestNavigation('ingredients')}
-                  className="flex items-center gap-1.5 border border-border px-5 py-2.5 text-sm uppercase tracking-widest hover:bg-secondary"
+                  type="submit"
+                  disabled={save.isPending}
+                  className="flex items-center gap-2 bg-primary px-6 py-2.5 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-60 hover:bg-primary/90 font-medium"
                 >
-                  Bước tiếp theo <ArrowRight size={14} />
+                  <Save size={15} /> {save.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}
                 </button>
-              )}
+                {isEditing && (
+                  <button
+                    type="button"
+                    onClick={() => requestNavigation('ingredients')}
+                    className="flex items-center gap-1.5 border border-border px-5 py-2.5 text-sm uppercase tracking-widest hover:bg-secondary"
+                  >
+                    Bước tiếp theo <ArrowRight size={14} />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          </fieldset>
         </form>
       )}
 
       {/* Steps 2-5: Composition Wizard */}
-      {isEditing && recipeQuery.data && activeStep !== 'basic' && (
-        <div>
+      {isEditing && recipeQuery.data && (
+        <div hidden={activeStep === 'basic'}>
           <RecipeCompositionWizard
             recipe={recipeQuery.data}
             version={version}
-            activeStage={activeStep as Stage}
+            activeStage={activeStep === 'basic' ? 'ingredients' : (activeStep as Stage)}
+            onDirtyChange={setCompositionDirty}
             onStageChange={(newStage) => {
               setActiveStep(newStage)
-              setSearchParams({ step: newStage })
+              setSearchParams((current) => {
+                const next = new URLSearchParams(current)
+                next.set('step', newStage)
+                return next
+              })
             }}
             onNavigateToStep={(step) => requestNavigation(step)}
             onChanged={handleCompositionChanged}
@@ -938,25 +982,28 @@ export function RecipeEditor() {
       )}
 
       {/* P7-03 In-App Navigation Guard Modal */}
-      {navGuardTarget && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="nav-guard-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      {navGuardTarget && !conflictModalOpen && (
+        <Modal
+          open
+          title={'Có thay đổi chưa lưu'}
+          onClose={() => setNavGuardTarget(null)}
+          busy={save.isPending}
         >
-          <div className="w-full max-w-md border border-border bg-background p-6 shadow-xl space-y-4">
-            <h3 id="nav-guard-title" className="font-serif text-2xl text-foreground">
-              Có thay đổi chưa lưu
-            </h3>
+          <div className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Bạn có các chỉnh sửa chưa lưu trong phần thông tin cơ bản. Nếu chuyển trang ngay bây giờ, các
-              thay đổi này sẽ bị mất.
+              Bạn có nội dung chưa lưu. Hãy lưu thông tin cơ bản và bấm thêm/lưu nguyên liệu, bước thực hiện
+              hoặc ảnh trước khi rời trang.
             </p>
+            {(clientError || save.isError) && (
+              <p role="alert" className="text-sm text-red-700">
+                {clientError ?? remoteError ?? 'Không thể lưu bản nháp. Nội dung của bạn vẫn được giữ lại.'}
+              </p>
+            )}
             <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-3 border-t border-border">
               <button
                 type="button"
                 onClick={() => setNavGuardTarget(null)}
+                disabled={save.isPending}
                 className="border border-border px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
               >
                 Ở lại tiếp tục sửa
@@ -964,40 +1011,36 @@ export function RecipeEditor() {
               <button
                 type="button"
                 onClick={() => executeNavigation(navGuardTarget)}
+                disabled={save.isPending}
                 className="border border-red-300 text-red-700 bg-red-50 hover:bg-red-100 px-4 py-2 text-xs uppercase tracking-wider"
               >
                 Rời đi không lưu
               </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  handleSubmit(e)
-                  executeNavigation(navGuardTarget)
-                }}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-xs uppercase tracking-wider"
-              >
-                Lưu và chuyển tiếp
-              </button>
+              {!compositionDirty && (
+                <button
+                  type="button"
+                  disabled={save.isPending}
+                  onClick={async () => {
+                    saveBeforeLeavingRef.current = true
+                    const target = navGuardTarget
+                    const success = await saveBasic()
+                    saveBeforeLeavingRef.current = false
+                    if (success) executeNavigation(target)
+                  }}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-xs uppercase tracking-wider"
+                >
+                  {save.isPending ? 'Đang lưu…' : 'Lưu và chuyển tiếp'}
+                </button>
+              )}
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* P7-06 Concurrency Conflict Modal (Stale Version UX) */}
       {conflictModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="conflict-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-        >
-          <div className="w-full max-w-lg border border-amber-300 bg-background p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-3">
-              <AlertCircle size={24} className="text-amber-600 shrink-0" />
-              <h3 id="conflict-title" className="font-serif text-2xl text-foreground">
-                Xung đột phiên bản dữ liệu
-              </h3>
-            </div>
+        <Modal open title="Xung đột phiên bản dữ liệu" onClose={() => setConflictModalOpen(false)}>
+          <div className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">
               Công thức này đã được chỉnh sửa từ một phiên làm việc khác (hoặc trên thiết bị khác). Phiên bản
               hiện tại trên máy chủ đã thay đổi, khiến việc ghi đè trực tiếp bị chặn để tránh mất dữ liệu.
@@ -1083,26 +1126,26 @@ export function RecipeEditor() {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* P7-04 Action Confirmation Modal */}
       {confirmModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="editor-confirm-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        <Modal
+          open
+          title={
+            {
+              publish: 'Xác nhận xuất bản công thức',
+              unpublish: 'Xác nhận gỡ xuất bản',
+              archive: 'Xác nhận lưu trữ',
+              unarchive: 'Xác nhận khôi phục',
+              delete: 'Xác nhận xóa công thức',
+            }[confirmModal]
+          }
+          onClose={() => setConfirmModal(null)}
+          busy={isPendingAction}
         >
-          <div className="w-full max-w-md border border-border bg-background p-6 shadow-xl space-y-4">
-            <h3 id="editor-confirm-title" className="font-serif text-2xl text-foreground">
-              {confirmModal === 'publish' && 'Xác nhận xuất bản công thức'}
-              {confirmModal === 'unpublish' && 'Xác nhận gỡ xuất bản'}
-              {confirmModal === 'archive' && 'Xác nhận lưu trữ'}
-              {confirmModal === 'unarchive' && 'Xác nhận khôi phục'}
-              {confirmModal === 'delete' && 'Xác nhận xóa công thức'}
-            </h3>
-
+          <div className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">
               {confirmModal === 'publish' && (
                 <>
@@ -1140,12 +1183,14 @@ export function RecipeEditor() {
               <button
                 type="button"
                 onClick={() => setConfirmModal(null)}
+                disabled={isPendingAction}
                 className="border border-border px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
               >
                 Hủy bỏ
               </button>
               <button
                 type="button"
+                disabled={isPendingAction}
                 onClick={() => {
                   if (confirmModal === 'publish') publishMutation.mutate()
                   else if (confirmModal === 'unpublish') unpublishMutation.mutate()
@@ -1161,11 +1206,11 @@ export function RecipeEditor() {
                       : 'bg-primary hover:bg-primary/90'
                 }`}
               >
-                Xác nhận
+                {isPendingAction ? 'Đang xử lý…' : 'Xác nhận'}
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )
