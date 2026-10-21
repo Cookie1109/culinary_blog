@@ -24,7 +24,16 @@
 
 ## Chạy với Docker
 
-Yêu cầu Docker Desktop đang chạy và các cổng trong [compose.yaml](compose.yaml) còn trống. Thực hiện tại thư mục gốc:
+Yêu cầu Git, Docker Desktop (Linux containers) hoặc Docker Engine kèm Compose, kết nối Internet để tải image/package và các cổng trong [compose.yaml](compose.yaml) còn trống. Khi chạy hoàn toàn bằng Docker, máy không cần cài sẵn Node.js hoặc .NET SDK.
+
+Lấy mã nguồn trên máy mới:
+
+```powershell
+git clone https://github.com/Cookie1109/culinary_blog.git
+Set-Location culinary_blog
+```
+
+Thực hiện tại thư mục gốc:
 
 ```powershell
 # Tạo cấu hình local nếu chưa có
@@ -42,6 +51,24 @@ docker compose up --detach --build --wait
 | Log hệ thống      | http://localhost:5341        |
 
 Dừng hệ thống bằng `docker compose down`; dữ liệu trong named volumes được giữ lại.
+
+Lần đầu, ứng dụng tự tạo schema, role và dữ liệu mẫu kèm ảnh. Admin không có tài khoản/mật khẩu mặc định: nếu cần quản trị, cấu hình `ADMIN_SEED_ENABLED=true`, `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong `.env` rồi chạy lại lệnh trên. Đăng nhập Google cần cấu hình OAuth riêng; có thể sử dụng đăng nhập email khi chưa bật Google.
+
+### Cập nhật mã nguồn và Docker local
+
+Sao lưu PostgreSQL và MinIO trước khi cập nhật dữ liệu quan trọng; xem [hướng dẫn vận hành](docs/operations/runbook.md#10-backup-và-restore-drill). Sau đó, tại checkout đang sử dụng:
+
+```powershell
+git pull --ff-only
+docker compose up --detach --build --wait
+docker compose ps
+```
+
+Giữ nguyên `.env` và tên Compose project. Không dùng `docker compose down --volumes` hoặc xóa named volumes khi cập nhật. Lệnh `up --build` build lại mã mới và thay container khi cần, đồng thời dùng lại các volume PostgreSQL, MinIO và nhật ký. Không cần gỡ Docker Desktop hay xóa database để cập nhật ứng dụng.
+
+Initializer chỉ bổ sung dữ liệu mẫu còn thiếu, không xóa công thức/danh mục do người dùng tạo, không ghi đè nội dung mẫu đã sửa và không khôi phục bản ghi đã xóa mềm. Migration local vẫn tự chạy khi API khởi động; quy trình production riêng ở mục Cấu hình.
+
+Git clone không sao chép `.env`, database, ảnh người dùng tải lên hoặc lịch sử đang lưu trên máy cũ. Nếu cần chuyển cả dữ liệu sang máy khác, phải sao lưu/khôi phục PostgreSQL và MinIO; khôi phục thêm volume nhật ký khi cần giữ lịch sử thao tác.
 
 ### Phát triển giao diện
 

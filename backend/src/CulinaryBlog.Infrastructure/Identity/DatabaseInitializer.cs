@@ -38,7 +38,6 @@ public sealed class DatabaseInitializer(
         }
 
         var authorIds = await SeedAuthorsAsync().ConfigureAwait(false);
-        await RemoveNonSeedDataAsync(cancellationToken).ConfigureAwait(false);
         var categoryIds = await SeedCategoriesAsync(cancellationToken).ConfigureAwait(false);
         await SeedRecipesAsync(categoryIds, authorIds, cancellationToken).ConfigureAwait(false);
         await cache.RemoveByTagAsync(PublicCacheKeys.RecipesTag, cancellationToken).ConfigureAwait(false);
@@ -69,16 +68,6 @@ public sealed class DatabaseInitializer(
                     await userManager.CreateAsync(author).ConfigureAwait(false),
                     $"create seed author {seed.Email}");
             }
-            else
-            {
-                author.DisplayName = seed.DisplayName;
-                author.Bio = seed.Bio;
-                author.EmailConfirmed = true;
-                author.IsActive = true;
-                EnsureSucceeded(
-                    await userManager.UpdateAsync(author).ConfigureAwait(false),
-                    $"update seed author {seed.Email}");
-            }
 
             if (!await userManager.IsInRoleAsync(author, "Author").ConfigureAwait(false))
             {
@@ -93,68 +82,21 @@ public sealed class DatabaseInitializer(
         return authorIds;
     }
 
-    private async Task RemoveNonSeedDataAsync(CancellationToken cancellationToken)
-    {
-        var seedSlugs = VietnameseSeedData.Recipes.Select(recipe => recipe.Slug)
-            .ToHashSet(StringComparer.Ordinal);
-        var recipes = await dbContext.Recipes.IgnoreQueryFilters()
-            .Where(recipe => !seedSlugs.Contains(recipe.Slug))
-            .Select(recipe => recipe.Id)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-        var nonSeedRecipeIds = recipes.ToArray();
-
-        var legacyImages = await dbContext.RecipeImages.IgnoreQueryFilters()
-            .Where(image => nonSeedRecipeIds.Contains(image.RecipeId))
-            .Select(image => new { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey })
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-        var objectKeys = legacyImages
-            .SelectMany(image => new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey })
-            .OfType<string>();
-
-        await dbContext.RecipeImages.IgnoreQueryFilters().Where(image => nonSeedRecipeIds.Contains(image.RecipeId))
-            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
-        await dbContext.RecipeIngredients.IgnoreQueryFilters().Where(item => nonSeedRecipeIds.Contains(item.RecipeId))
-            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
-        await dbContext.RecipeSteps.IgnoreQueryFilters().Where(item => nonSeedRecipeIds.Contains(item.RecipeId))
-            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
-        await dbContext.Recipes.IgnoreQueryFilters().Where(recipe => nonSeedRecipeIds.Contains(recipe.Id))
-            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
-        var seedCategorySlugs = VietnameseSeedData.Categories.Select(category => category.Slug).ToArray();
-        await dbContext.Categories.IgnoreQueryFilters()
-            .Where(category => !seedCategorySlugs.Contains(category.Slug))
-            .ExecuteDeleteAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        foreach (var objectKey in objectKeys.Distinct(StringComparer.Ordinal))
-        {
-            if (await fileStorage.ExistsAsync(objectKey, cancellationToken).ConfigureAwait(false))
-            {
-                await fileStorage.DeleteAsync(objectKey, cancellationToken).ConfigureAwait(false);
-            }
-        }
-
-        dbContext.ChangeTracker.Clear();
-    }
-
     private async Task<IReadOnlyDictionary<string, Guid>> SeedCategoriesAsync(CancellationToken cancellationToken)
     {
         var existing = await dbContext.Categories.IgnoreQueryFilters()
-            .Where(category => !category.IsDeleted)
             .ToDictionaryAsync(category => category.Slug, StringComparer.Ordinal, cancellationToken)
             .ConfigureAwait(false);
 
         for (var index = 0; index < VietnameseSeedData.Categories.Count; index++)
         {
             var seed = VietnameseSeedData.Categories[index];
-            if (existing.TryGetValue(seed.Slug, out var category))
+            if (existing.ContainsKey(seed.Slug))
             {
-                category.Update(seed.Name, seed.Description, null, index);
                 continue;
             }
 
-            category = Category.Create(
+            var category = Category.Create(
                 StableGuid($"category:{seed.Slug}"),
                 seed.Name,
                 seed.Slug,
@@ -167,7 +109,7 @@ public sealed class DatabaseInitializer(
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return existing
-            .Where(pair => VietnameseSeedData.Categories.Any(seed => seed.Slug == pair.Key))
+            .Where(pair => !pair.Value.IsDeleted && VietnameseSeedData.Categories.Any(seed => seed.Slug == pair.Key))
             .ToDictionary(pair => pair.Key, pair => pair.Value.Id, StringComparer.Ordinal);
     }
 
@@ -177,20 +119,6 @@ public sealed class DatabaseInitializer(
         CancellationToken cancellationToken)
     {
         var seedSlugs = VietnameseSeedData.Recipes.Select(recipe => recipe.Slug).ToArray();
-        var existingRecipeIds = await dbContext.Recipes.IgnoreQueryFilters()
-            .Where(recipe => seedSlugs.Contains(recipe.Slug))
-            .Select(recipe => recipe.Id)
-            .ToArrayAsync(cancellationToken)
-            .ConfigureAwait(false);
-        await dbContext.RecipeIngredients.IgnoreQueryFilters()
-            .Where(item => existingRecipeIds.Contains(item.RecipeId))
-            .ExecuteDeleteAsync(cancellationToken)
-            .ConfigureAwait(false);
-        await dbContext.RecipeSteps.IgnoreQueryFilters()
-            .Where(item => existingRecipeIds.Contains(item.RecipeId))
-            .ExecuteDeleteAsync(cancellationToken)
-            .ConfigureAwait(false);
-        dbContext.ChangeTracker.Clear();
         var existingRecipes = await dbContext.Recipes.IgnoreQueryFilters()
             .Where(recipe => seedSlugs.Contains(recipe.Slug))
             .ToDictionaryAsync(recipe => recipe.Slug, StringComparer.Ordinal, cancellationToken)
@@ -210,45 +138,32 @@ public sealed class DatabaseInitializer(
             var instructions = string.Join(
                 "\n\n",
                 seed.Steps.Select((step, index) => $"{index + 1}. {step.Title}: {step.Description}"));
-            var isNew = !existingRecipes.TryGetValue(seed.Slug, out var recipe);
-            if (isNew)
+            if (existingRecipes.ContainsKey(seed.Slug) || !categoryIds.TryGetValue(seed.CategorySlug, out var categoryId))
             {
-                recipe = Recipe.Create(
-                    StableGuid($"recipe:{seed.Slug}"),
-                    authorIds[recipeIndex % authorIds.Count],
-                    seed.Slug,
-                    seed.Title,
-                    seed.Description,
-                    categoryIds[seed.CategorySlug],
-                    seed.PrepTime,
-                    seed.CookTime,
-                    seed.Servings,
-                    seed.Difficulty,
-                    instructions,
-                    nutrition);
-                recipe.Publish(
-                    publishedAt.AddDays(recipeIndex),
-                    true,
-                    seed.Ingredients.Count,
-                    Enumerable.Range(1, seed.Steps.Count).ToArray());
-                dbContext.Recipes.Add(recipe);
-            }
-            else
-            {
-                recipe!.Update(
-                    seed.Slug,
-                    seed.Title,
-                    seed.Description,
-                    categoryIds[seed.CategorySlug],
-                    seed.PrepTime,
-                    seed.CookTime,
-                    seed.Servings,
-                    seed.Difficulty,
-                    instructions,
-                    nutrition);
+                continue;
             }
 
-            var recipeId = recipe!.Id;
+            var recipe = Recipe.Create(
+                StableGuid($"recipe:{seed.Slug}"),
+                authorIds[recipeIndex % authorIds.Count],
+                seed.Slug,
+                seed.Title,
+                seed.Description,
+                categoryId,
+                seed.PrepTime,
+                seed.CookTime,
+                seed.Servings,
+                seed.Difficulty,
+                instructions,
+                nutrition);
+            recipe.Publish(
+                publishedAt.AddDays(recipeIndex),
+                true,
+                seed.Ingredients.Count,
+                Enumerable.Range(1, seed.Steps.Count).ToArray());
+            dbContext.Recipes.Add(recipe);
+
+            var recipeId = recipe.Id;
 
             for (var ingredientIndex = 0; ingredientIndex < seed.Ingredients.Count; ingredientIndex++)
             {
