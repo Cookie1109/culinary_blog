@@ -1,0 +1,65 @@
+# Kết quả Phase 02 — Quyết định và mâu thuẫn SRS
+
+- **Trạng thái: Chờ quyết định.** Đã lập hồ sơ đối chiếu và đề xuất; chưa chấp thuận11 đề xuất mới, chưa đóng tiêu chí đo thống nhất của D0-04.
+- Ngày thực hiện:23/10/2026, Asia/Bangkok; Codex. Người dùng ghi “Phase01” nhưng liên kết file phase02; thực hiện theo file được liên kết như đã nêu đầu phiên, không chạy lại phase01 hay triển khai phase03.
+- HEAD trước: `b48d2465f6ad5c5b0bcdefac8981b57637d10535`, nhánh `main`, index trống. Có138 đường dẫn thay đổi/chưa tracked từ trước. Snapshot bytes/status tại `tmp/srs-decisions/before.json`, SHA256 `8fa747b4fcd10cb6b8d80ce9cdcfe7dc263f7992129bd8cd1da9feaf7d0797f0`.
+- Sau: commit chứa report truy bằng `git log -1 -- docs/specs/srs-completion-phases/reports/phase-02-result.md`; không chèn SHA tương lai/tự tham chiếu. Source được review là dirty worktree, không thể tái hiện chỉ bằng HEAD cũ.
+- Runtime thực tế: Windows PowerShell; Python3.13.7; Node22.18.0; .NET SDK10.0.402. Chỉ đọc file và nguồn chính thức trên web; không DB/container/provider login/SMTP thật, không đọc secrets từ `.env`.
+- Phụ thuộc đã đọc: [report01](phase-01-result.md), [inventory](../acceptance-inventory.md), README điều phối/progress/checklist/mẫu report; Conformance/Decision Log/Product Baseline/Data Dictionary/Error Catalog/Routes/Test Strategy và ADR. Runtime/provider/UAT của phase01 chưa được chứng nhận, không suy thành pass ở đây.
+- Áp dụng Postman API Engineer → API Documentation đã đọc trong phiên: tái dùng contract local, giữ rõ expected/source/proposal, không sửa OpenAPI hoặc publish Postman. PDF skill dùng đọc SRS; không sửa/tạo PDF.
+
+## Kết quả từng task
+
+| Task | Requirement/acceptance/nguồn | Kết quả | Evidence/điều kiện mở |
+|---|---|---|---|
+| D0-02 | GAP-001–033; SRS toàn bộ và baseline;12 INV-G của report01 | Đã rà đủ33 GAP, giữ baseline Accepted/Amended hiện có;12 nhóm đều có decision reference và owner | [Decision register](../decision-register.md):33 dòng review,25 mục DEC; INV-G05/07 đã có quyết định tại Conformance§3, không xin duyệt lại |
+| D0-03 | NFR-PERF-003,MAINT-001/002,SCALE-001,SEO-003;CT-HW-02 | Đã ghi riêng7 nhóm cache/ping/.NET analyzers/ESLint/frontend tests/browser/lock, có nguồn, phương án, lý do, tác động, cách kiểm và trạng thái | DEC-01–07;2 đề xuất ping/lock chờ duyệt; tool/ruleset nguyên văn chưa được miễn, acceptance triển khai vẫn mở |
+| D0-04 | NFR-REL-001/003,PERF-002,SCALE-001–003;tr.40/43–44 | Đã kiểm số học uptime và tìm baseline backup03:00UTC; có protocol SLA/load/scaling cụ thể, giữ production topology nguyên văn | DEC-08–12; **còn chờ duyệt DEC-09/11**, chưa chốt cửa sổ/tolerances, checkbox D0-04 giữ mở |
+
+## Thay đổi và quyết định
+
+- Tạo [decision-register.md](../decision-register.md), không thay trạng thái Accepted trong baseline cũ. Có nguồn, impact, acceptance/test owner và phương án ưu tiên;11 đề xuất được gom thành góiA/B/C để người có quyền review, chưa có chữ ký/approval mới.
+- Tạo [verify-decisions.py](../verify-decisions.py) để kiểm coverage33 GAP/25 DEC/12 INV-G, ID tham chiếu, status proposal, local links/bảng,3 hash baseline không đổi và phép tính SLA. Đây là kiểm tài liệu, không phê duyệt quyết định hoặc chứng minh ứng dụng đúng.
+- Bổ sung reference decision register và kết quả tìm lại baseline vào inventory; giữ347 acceptance/207 CT rows và mọi runtime status chưa kiểm. Không sửa report01 lịch sử. Nếu chỉ thêm reference mà expected/runtime không đổi thì không hạ trạng thái phase01.
+- Cập nhật đúng dòng02 của progress, task D0-02/D0-03 và handoff của file phase02; D0-04 còn mở. D0-03 đánh đóng **công việc ghi nhận/đối chiếu**, không đồng nghĩa ping/lock hoặc công cụ khác SRS đã được chấp thuận.
+- Không sửa code, API/status/schema, migration, CI hay môi trường. Bản file phase02 tồn tại nhưng chưa tracked từ trước; commit sẽ ghi file giao việc là mới, không có nghĩa nội dung chỉ dẫn gốc được tạo toàn bộ ở lượt này.
+
+## Những điểm đã có căn cứ, không cần duyệt lại
+
+- Conformance§3: public health aggregate-only và chưa bật VerifiedAuthor trongv1. Inventory trước đã ghi câu hỏi nhưng thiếu reference này; nay DEC-17/19 giải đáp phần quyết định, runtime vẫn cần test.
+- Test Strategy§4: backup hằng ngày03:00UTC/retention30 ngày. Scheduler hiện sleep86400 chưa chứng minh đúng lịch; phase34 thực hiện. UTC+7 tương ứng10:00 Bangkok.
+- GAP-013: Redis-backed Output Cache có yêu cầu cụ thể; cache-aside hiện tại không được gọi là đã đạt. Giữ yêu cầu theo baseline, chưa có waiver.
+- ADR-002/Error Catalog/GAP-007: làm rõ status theo từng cause và owner logout; không lấy OpenAPI skeleton mâu thuẫn làm quyền tự đảo baseline.
+- SRS static-analysis/test tools và production MinIO4+nodes/CDN vẫn bắt buộc nếu chưa có CR. Local/source/JSDOM/template không thay evidence tương ứng.
+
+## Kiểm tra thực tế
+
+Cwd chung **`D:\Culinary_Blog`**. Kết quả kiểm cấu trúc dưới đây đã chạy; phần commit/push được xác minh trong transcript và SHA của commit chứa report.
+
+| Runtime/cwd | Lệnh/thao tác thực tế | Loại evidence | Expected/actual | Exit code/kết quả |
+|---|---|---|---|---|
+| Git CLI/root | `git status --short --branch`, `git rev-parse HEAD`, `git diff --cached --stat` | Repo | HEAD/138 dirty paths/index trống như trên |0 |
+| Python3.13.7+pypdf6.21.1/root | `python -` đọc PdfReader và trích các trang13,37,39–45,47–48,55,60,63,65 | Source PDF |71 trang/hash giống inventory; excerpts tại tmp/srs-decisions/source.txt |0 |
+| PowerShell/rg/root | `Get-Content`, `rg -n` trên baseline/ADR/DTO/EF/config/jobs/backup/production topology | Static review | Tìm quyết định cũ và source mismatch; một lần dò sai thư mục reliability đã tìm lại infra/operations |0 ở các lượt đọc cuối; không coi lỗi dò path là lỗi nghiệp vụ |
+| Web primary sources | Đọc Google Search Central, Microsoft Learn, Hangfire, JSON Schema/OpenAPI;URLs/ngày ở W1–W5 register | External documentation | Ping retired; store cache khác nhau; lock có giới hạn; annotation khác runtime proof | Tools trả nội dung; không HTTP/provider test ứng dụng |
+| Python3.13.7/root | `python docs/specs/srs-completion-phases/verify-decisions.py` | Documentation regression |33 GAP,25 DEC,12 mappings,11 proposals,20 local links; bảng/hash/số học hợp lệ |0/PASS |
+| Python3.13.7/root | `python docs/specs/srs-completion-phases/verify-inventory.py` | Inventory regression |34FR/30NFR/10CONS;347 acceptance/207 contracts/45 operations/80 local links; giữ trạng thái runtime |0/PASS |
+| Git CLI/root | `git diff --check` phần tài liệu; staged diff check trước commit | Diff review | Chỉ file phase02/phần tham chiếu liên quan, không whitespace errors |0/PASS ở worktree và staged diff |
+| Python/hashlib/root | So snapshot trước/sau, loại đúng các file giao việc | Preservation |Trong138 dirty paths cũ, chỉ file giao việc phase02 đổi bytes;137 đường dẫn khác giữ nguyên;347 dòng acceptance và tiến độ01/03–38 không đổi |0/PASS |
+
+Số học đã chạy bằng Python:0,5%×365×24=43,8 giờ; năm366 ngày=43,92 giờ;30 ngày=216 phút; downtime3,65 giờ/năm tương ứng uptime99,958333…%. Script verifier kiểm lại bằng Decimal. Đây là phép tính, không phải số đo uptime.
+
+Không chạy unit/integration/frontend/build/browser/provider/production/benchmark/restore/CI: chỉ đổi tài liệu, không có runtime behavior được sửa. Các command có thật trong checklist mục6, package/project/scripts đã được đọc để handoff; không dùng lệnh dự kiến như kết quả test mới. Không ký UAT, gửi alert, provision hoặc deploy.
+
+## Cập nhật theo dõi và điều kiện còn mở
+
+- D0-02/D0-03 đóng ở phạm vi review/ghi nhận theo task; **D0-04 vẫn mở** vì tiêu chí SLA/load chưa thống nhất. Phase02=`Chờ quyết định`; phase03–38 không thay trạng thái.
+- 11 đề xuất còn chờ: DEC-02/07/09/11/13/15/18/20/21/22/25. GóiA là API/UI clarification;góiB là sai khác SRS/baseline;góiC là tiêu chí vận hành. Approval phải chỉ rõ phương án/ID/ngày/nguồn. Chưa có approval không cho phép owner sửa theo đề xuất hoặc đóng nguyên văn.
+- Người dùng đã yêu cầu commit/push tài liệu; điều đó không phải phê duyệt các waiver. Chưa chỉnh33 GAP, chưa âm thầm đổi key Identity/enum type/PUT semantics hoặc giảm topology production.
+- Handoff tới03/04/05/08–10/11/14–22/28–36 theo owner trong register. Các phần baseline rõ và công việc độc lập vẫn có thể được giao tiếp; không chạy chúng ngay lượt này.
+
+## Bàn giao
+
+Đọc decision register và góiA/B/C để chấp nhận/điều chỉnh từng ID. Sau approval, chỉ cập nhật trạng thái quyết định/acceptance reference cần thiết, ghi nguồn chấp thuận rồi chạy lại verifier; triển khai vẫn do các phase owner. Nếu không duyệt, giữ baseline và ghi tác động/phương án nguyên văn.
+
+Phần hồ sơ đã sẵn cho review; chưa tuyên bố hoàn tất mọi quyết định hoặc nghiệm thu SRS. Kiểm tài liệu đạt không thay approval, runtime/provider/production evidence.

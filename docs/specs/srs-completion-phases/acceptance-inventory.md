@@ -13,6 +13,10 @@ Ngày đối chiếu: **23/10/2026 (Asia/Bangkok)**. Phạm vi D0-01 và D0-05; 
 - `Chưa kiểm runtime` là trạng thái acceptance của mọi dòng lần này; source/test trong evidence chỉ là điểm vào có thật, không hàm ý test đó đã bao phủ đủ hoặc pass. Sai khác source đã nhìn thấy được ghi riêng ở cuối. `Chờ quyết định` nằm ở decision reference, không bị biến thành miễn yêu cầu.
 - API paths trong FR/CT-API mặc định tiền tố `/api/v1`; health và dashboard giữ root path. Mỗi IT phải có happy/error, actor Guest/owner/Author khác/Admin/inactive khi áp dụng, synthetic DB/container/SMTP/storage riêng. Không đổi stack người dùng.
 
+## Liên kết quyết định sau đối chiếu
+
+Ngày23/10/2026: [decision register](decision-register.md) rà lại33 GAP và12 INV-G. **INV-G05 (health)** đã có baseline aggregate-only tại Conformance§3 (DEC-17); **INV-G07 (VerifiedAuthor)** đã có baseline chưa bật trongv1 tại cùng phần (DEC-19). Test Strategy§4 đã ghi **backup03:00 UTC** (DEC-10), nên các chỗ ghi “chờ timezone” dưới đây được đọc cùng bổ sung này. Đây là tìm lại quyết định hiện có, không phải waiver mới. Mọi runtime acceptance vẫn chưa kiểm; các đề xuất khác trong register chưa có hiệu lực khi chưa được duyệt. Không sửa report01 lịch sử.
+
 ## Chỉ mục evidence hiện có
 
 Các đường dẫn này là artifact tái dùng/điểm bắt đầu review. Bằng chứng **mới của lượt này** là review source và kiểm cấu trúc inventory trong [report](reports/phase-01-result.md), không phải kết quả chạy bộ test ứng dụng.

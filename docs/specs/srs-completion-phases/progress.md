@@ -7,7 +7,7 @@ Agent thực hiện cập nhật đúng dòng phase được giao. Cột evidenc
 | Phase | Phạm vi | Trạng thái | Task còn mở / điều kiện chờ | Phiên bản/ngày chạy | Evidence đã tạo |
 |---|---|---|---|---|---|
 | 01 | [Lập inventory acceptance và contract](phase-01-acceptance-inventory.md) | Đạt | D0-01/D0-05 đóng ở phạm vi tài liệu; runtime chưa nghiệm thu; INV-G01–12 chuyển owner theo report | 23/10/2026; HEAD32e203e + dirty source, fingerprint trong report | [Report](reports/phase-01-result.md), [inventory](acceptance-inventory.md) |
-| 02 | [Chốt cách xử lý mâu thuẫn và sai khác](phase-02-decisions-and-conflicts.md) | Chưa bắt đầu | — | — | — |
+| 02 | [Chốt cách xử lý mâu thuẫn và sai khác](phase-02-decisions-and-conflicts.md) | Chờ quyết định | D0-02/D0-03 review/ghi nhận đạt; D0-04 mở;11 đề xuất gói A/B/C chưa duyệt | 23/10/2026; HEADb48d246 + dirty source, fingerprint trong report | [Report](reports/phase-02-result.md), [register](decision-register.md) |
 | 03 | [Chuẩn hóa môi trường, format và baseline test](phase-03-environment-and-baseline.md) | Chưa bắt đầu | — | — | — |
 | 04 | [Hoàn thiện handlers và validation pipeline](phase-04-cqrs-and-validation.md) | Chưa bắt đầu | — | — | — |
 | 05 | [Kiểm quyền và tính nguyên tử của command](phase-05-authorization-and-transactions.md) | Chưa bắt đầu | — | — | — |
@@ -144,3 +144,5 @@ Ngày23/10/2026: review inventory phát hiện **INV-G01–12**: PUT optional/re
 Runtime bổ sung cho phase03 D1-01: host Node22.18.0/.NET10.0.402; .mise.toml còn Node20.19.5/.NET10.0.401, khác Node22.23.3 của ADR-010/package engines. Chưa đổi cấu hình trong lượt tài liệu.
 
 Khi phát hiện tiếp: ghi mã/acceptance/nguồn, phase phụ trách, impact và link report; không coi khoảng trống là “không còn lỗi”.
+
+Ngày23/10/2026 — đối chiếu quyết định: [register](decision-register.md) giữ33 GAP, có25 DEC và mapping12 INV-G. INV-G05/07 đã có baseline tại Conformance§3; backup03:00 UTC đã có Test Strategy§4. Phần approval của11 đề xuất còn mở theo [report02](reports/phase-02-result.md); không thay trạng thái phase03–38 hoặc tự đóng runtime acceptance.
