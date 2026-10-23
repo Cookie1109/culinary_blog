@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "Checking backend formatting before push..."
+(cd backend && dotnet format CulinaryBlog.slnx --verify-no-changes --no-restore)
+
+echo "Checking frontend formatting before push..."
+(cd frontend && npm run format)

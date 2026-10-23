@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using CulinaryBlog.Application.Media;
 using CulinaryBlog.Application.Auth;
+using CulinaryBlog.Application.Media;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;

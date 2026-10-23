@@ -101,7 +101,7 @@ API sử dụng tiền tố `/api/v1`. [Scalar](http://localhost:8080/scalar) v�
 
 ## Kiểm tra chất lượng
 
-Để chạy kiểm tra trên máy, cần .NET SDK `10.0.401`, Node.js `22.23.3` và Docker Desktop:
+Để chạy kiểm tra trên máy, cần .NET SDK `10.0.402`, Node.js `22.23.3` và Docker Desktop:
 
 ```powershell
 ./scripts/verify.ps1
@@ -109,6 +109,23 @@ API sử dụng tiền tố `/api/v1`. [Scalar](http://localhost:8080/scalar) v�
 ```
 
 `verify.ps1` kiểm tra backend, frontend và cấu hình Compose. `smoke.ps1` build, khởi động stack và kiểm tra health, trang chủ cùng CSP.
+
+`verify.ps1` dừng ngay khi một lệnh thất bại. Sau khi clone và cài dependencies, bật kiểm tra định dạng trước mỗi lần push:
+
+```powershell
+git config --local core.hooksPath .githooks
+```
+
+Trên macOS/Linux, chạy thêm `chmod +x .githooks/pre-push` để Git có thể thực thi hook.
+
+Nếu kiểm tra định dạng báo lỗi, chạy hai lệnh sau tại thư mục gốc rồi xem lại diff và commit phần sửa:
+
+```powershell
+dotnet format backend/CulinaryBlog.slnx --no-restore
+npm --prefix frontend run format:write
+```
+
+Hook kiểm tra code trong thư mục làm việc. Chạy `./scripts/verify.ps1` để kiểm tra đầy đủ trước khi push.
 
 ## Cấu trúc dự án
 

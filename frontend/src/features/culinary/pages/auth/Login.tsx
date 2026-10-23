@@ -81,7 +81,10 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
 
           <form noValidate onSubmit={handleSubmit} className="space-y-5">
             {searchParams.get('passwordChanged') === '1' && (
-              <p role="status" className="border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+              <p
+                role="status"
+                className="border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+              >
                 Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại bằng mật khẩu mới.
               </p>
             )}
