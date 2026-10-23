@@ -17,6 +17,22 @@ Ngày đối chiếu: **23/10/2026 (Asia/Bangkok)**. Phạm vi D0-01 và D0-05; 
 
 Ngày23/10/2026: [decision register](decision-register.md) rà lại33 GAP và12 INV-G. **INV-G05 (health)** đã có baseline aggregate-only tại Conformance§3 (DEC-17); **INV-G07 (VerifiedAuthor)** đã có baseline chưa bật trongv1 tại cùng phần (DEC-19). Test Strategy§4 đã ghi **backup03:00 UTC** (DEC-10), nên các chỗ ghi “chờ timezone” dưới đây được đọc cùng bổ sung này. Đây là tìm lại quyết định hiện có, không phải waiver mới. Mọi runtime acceptance vẫn chưa kiểm; các đề xuất khác trong register chưa có hiệu lực khi chưa được duyệt. Không sửa report01 lịch sử.
 
+Ngày23/10/2026, sau phản hồi người dùng: cả ba góiA/B/C và11 quyết định đã được duyệt theo [APP-2026-10-23-ABC](approvals/2026-10-23-abc.md). Khi các dòng trích SRS/baseline cũ dưới đây khác phương án được duyệt, áp dụng amendment tương ứng trong register; các nhãn “chờ quyết định” trước approval được giữ để truy vết nguồn, **không còn là blocker quyết định** cho11 ID này. Mọi trạng thái runtime vẫn `Chưa kiểm runtime`.
+
+| Quyết định | Acceptance/contract chịu ảnh hưởng | Expected có hiệu lực sau duyệt |
+|---|---|---|
+| DEC-02 | FR-JOB-003/A06,NFR-SEO-003/A04,CT-EXT-07 | Sitemap/robots và hướng dẫn Search Console thay ping lỗi thời |
+| DEC-07 | NFR-SCALE-001/A03,FR-JOB-003/A05 | PostgreSQL lock kèm publication fencing/CAS/version bảo vệ artifact thay RedLock |
+| DEC-09 | NFR-REL-001/A01–04 | ≥99,5% trên30 ngày UTC; downtime budget216 phút, tính maintenance/missing interval |
+| DEC-11 | NFR-PERF-001/002,NFR-SCALE-002 | Protocol80/20,5+15 phút; unexpected errors≤1%, efficiency≥90% và giữ mọi SLO |
+| DEC-13 | CT-API-17/26/29 | PUT partial, omit giữ cũ/null chỉ clear nullable, validate sau merge |
+| DEC-15 | CT-QUERY-01/03,CT-API-09 | Giữ default12; thêm sortBy/sortOrder aliases, conflict400 |
+| DEC-18 | FR-SRCH-001/A05 | API data=[]+meta; gợi ý tại UI |
+| DEC-20 | CT-DATA-USER-01/RCP-11/RT-01 | Identity Guid/uuid và FK đồng kiểu thay string storage; JSON ID serialized string |
+| DEC-21 | CT-DATA-RCP-04/08/09 | Instructions nullable, enum integer storage; giữ values/checks/defaults/JSON |
+| DEC-22 | CT-DATA-IMAGE-02 | originalUrl nonnullable trong response hợp lệ; variants nullable, storage private |
+| DEC-25 | CT-UI-06/07/14,NFR-SEO-004/A03 | Auth alias307/search308; slug cũ301 riêng, giữ query/canonical đúng |
+
 ## Chỉ mục evidence hiện có
 
 Các đường dẫn này là artifact tái dùng/điểm bắt đầu review. Bằng chứng **mới của lượt này** là review source và kiểm cấu trúc inventory trong [report](reports/phase-01-result.md), không phải kết quả chạy bộ test ứng dụng.

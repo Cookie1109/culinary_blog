@@ -27,6 +27,7 @@ blocks = re.findall(r'^### (DEC-\d{2})[^\n]*\n(.*?)(?=^## |^### |\Z)',
 if {code for code, _ in blocks} != {f'DEC-{i:02}' for i in range(1, 26)} or len(blocks) != 25:
     errors.append('Expected 25 unique decision sections')
 pending = set()
+approved = set()
 for code, block in blocks:
     for field in ('Task/acceptance/nguồn:', 'Trạng thái:'):
         if field not in block:
@@ -36,11 +37,37 @@ for code, block in blocks:
     status = re.search(r'^- \*\*Trạng thái:\*\* (.+)', block, re.M)
     if status and 'Đề xuất — chờ duyệt' in status[1]:
         pending.add(code)
+    if status and 'Đã duyệt' in status[1]:
+        approved.add(code)
 
-expected_pending = {'DEC-02', 'DEC-07', 'DEC-09', 'DEC-11', 'DEC-13', 'DEC-15',
-                    'DEC-18', 'DEC-20', 'DEC-21', 'DEC-22', 'DEC-25'}
-if pending != expected_pending:
-    errors.append(f'Approval status changed; review approval evidence: {sorted(pending)}')
+expected_approved = {'DEC-02', 'DEC-07', 'DEC-09', 'DEC-11', 'DEC-13', 'DEC-15',
+                     'DEC-18', 'DEC-20', 'DEC-21', 'DEC-22', 'DEC-25'}
+approved_groups = {
+    'A': {'DEC-13', 'DEC-15', 'DEC-18', 'DEC-22', 'DEC-25'},
+    'B': {'DEC-02', 'DEC-07', 'DEC-20', 'DEC-21'},
+    'C': {'DEC-09', 'DEC-11'},
+}
+for group, expected_ids in approved_groups.items():
+    row = re.search(r'^\| ' + group + r' — .+$', register, re.M)
+    if (not row or set(re.findall(r'DEC-\d{2}', row[0])) != expected_ids
+            or f'APP-2026-10-23-ABC/gói{group}' not in row[0]):
+        errors.append(f'Approval package {group}: incorrect IDs or provenance label')
+    for code, block in blocks:
+        if code in expected_ids:
+            status = re.search(r'^- \*\*Trạng thái:\*\* (.+)', block, re.M)
+            if not status or f'gói{group}' not in status[1]:
+                errors.append(f'{code}: approval package mismatch')
+approval_path = HERE / 'approvals/2026-10-23-abc.md'
+approval = approval_path.read_text(encoding='utf-8')
+if pending or approved != expected_approved:
+    errors.append(f'Approval state differs from APP-2026-10-23-ABC: {sorted(approved)}')
+if set(re.findall(r'DEC-\d{2}', approval)) != expected_approved:
+    errors.append('Approval record must cover exactly the 11 authorized decisions')
+for evidence in ('Duyệt gói A', 'Duyệt gói B', 'Duyệt gói C',
+                 '23/10/2026', '7e3e42aa5c7e96c0f4688a7c8a274572401a707b',
+                 'call_bcb50555d6584349be3df31cec7a2070'):
+    if evidence not in approval:
+        errors.append(f'Missing approval provenance: {evidence}')
 mapped = re.findall(r'^\| (INV-G\d{2}) \| (DEC-\d{2}) \|', register, re.M)
 if {code for code, _ in mapped} != {f'INV-G{i:02}' for i in range(1, 13)} or len(mapped) != 12:
     errors.append('Expected complete mapping of 12 inventory handoff groups')
@@ -68,7 +95,7 @@ assert Decimal(30 * 24 * 60) * Decimal('0.005') == Decimal('216.000')
 assert (Decimal('3.65') / Decimal(365 * 24) * 100).quantize(Decimal('.000001')) == Decimal('.041667')
 
 links = 0
-for doc in (HERE / 'decision-register.md', HERE / 'reports/phase-02-result.md'):
+for doc in (HERE / 'decision-register.md', HERE / 'reports/phase-02-result.md', approval_path):
     if not doc.exists():
         errors.append(f'Missing {doc.name}')
         continue
@@ -95,7 +122,8 @@ for code, count in Counter(gaps + [code for code, _ in blocks]).items():
 for error in errors:
     print(f'FAIL: {error}')
 print(f'GAP reviews={len(gaps)}; decision sections={len(blocks)}; INV mappings={len(mapped)}')
-print(f'Pending proposals={len(pending)}; local links checked={links}; unchanged baseline hashes=3')
+print(f'Approved decisions={len(approved)}; pending proposals={len(pending)}; '
+      f'local links checked={links}; unchanged historical baseline hashes=3')
 print('SLA arithmetic: 43.8h/365d, 43.92h/366d, 216min/30d; backup baseline 03:00 UTC')
-print('PASS: decision documentation only; approvals/runtime unverified' if not errors else 'FAIL: decision documentation')
+print('PASS: decision documentation and approval references; runtime unverified' if not errors else 'FAIL: decision documentation')
 raise SystemExit(bool(errors))
