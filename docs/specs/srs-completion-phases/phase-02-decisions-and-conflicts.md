@@ -2,7 +2,7 @@
 
 > Đích giao việc: GPT 6.1 Sol. Trạng thái ban đầu: **Chưa bắt đầu**. Đây là tài liệu thực hiện, chưa phải bằng chứng công việc đã đạt.
 
-Kết quả sau xác nhận ngày23/10/2026: **Đạt trong phạm vi tài liệu/quyết định**. Người dùng duyệt đủ góiA/B/C,11 quyết định có hiệu lực theo [APP-2026-10-23-ABC](approvals/2026-10-23-abc.md). D0-02/D0-03/D0-04 đã đóng; xem [register](decision-register.md) và [report](reports/phase-02-result.md). Implementation/runtime vẫn thuộc các phase owner.
+Kết quả hiện tại sau đính chính A/B/C: **Chờ quyết định**. PDF là tiêu chuẩn; ngoại lệ A/B/C cũ hết hiệu lực theo [đính chính](approvals/2026-10-23-abc-correction.md). D0-02/D0-03 đóng phạm vi review/ghi nhận; D0-04 mở lại vì mâu thuẫn uptime và protocol đo còn chưa thống nhất. Xem [register](decision-register.md) và [report](reports/phase-02-result.md); chưa sửa runtime.
 
 ## Giao việc bằng prompt này
 
@@ -33,7 +33,7 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 - [x] **D0-02 · Quyết định:** rà đủ GAP-001–033; giữ các quyết định đã được chốt trong phiên làm việc, ghi rõ phần còn cần người nghiệm thu xác nhận. Bao gồm 400/422, 409/If-Match, soft delete, body refresh/logout, public/private split, token entropy, FTS, bigint version, API/schema và private bucket. Không tự đảo baseline trong lúc sửa.
 - [x] **D0-03 · Quyết định:** ghi riêng sai khác bổ sung: Output Cache hay cache-aside; ping sitemap Google; công cụ/ruleset SonarAnalyzer/StyleCop/Airbnb/Jest/Testing Library; browser minimum; lock singleton thay RedLock nếu có. Mỗi mục có nguyên văn, đề xuất, lý do, ảnh hưởng và trạng thái chấp thuận; chưa chốt thì chưa đánh đạt nguyên văn.
-- [x] **D0-04 · Quyết định:** làm rõ uptime 99,5% so với “3,65 giờ downtime/năm” không tương đương, khoảng thời gian đo, múi giờ backup 03:00 và cách nghiệm thu scaling/production. Lưu tiêu chí đo thống nhất trước khi D9 ghi kết quả.
+- [ ] **D0-04 · Quyết định:** làm rõ uptime 99,5% so với “3,65 giờ downtime/năm” không tương đương, khoảng thời gian đo, múi giờ backup 03:00 và cách nghiệm thu scaling/production. Lưu tiêu chí đo thống nhất trước khi D9 ghi kết quả.
 
 ## Trình tự thực hiện trong phase
 

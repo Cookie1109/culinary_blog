@@ -72,7 +72,7 @@ Nguồn: toàn SRS, đặc biệt trang 14–15, 17–52, 54–68. Đầu ra: ac
 - [x] **D0-01 · Kiểm chứng:** tách từng acceptance của 34 FR/30 NFR/10 CONS thành điều kiện kiểm tra được; ghi trang nguồn, mức Must/Should, API/job/screen, cách kiểm tra, hiện trạng và bằng chứng. Rà cả luồng thay thế/lỗi, không chỉ tiêu đề FR.
 - [x] **D0-02 · Quyết định:** rà đủ GAP-001–033; giữ các quyết định đã được chốt trong phiên làm việc, ghi rõ phần còn cần người nghiệm thu xác nhận. Bao gồm 400/422, 409/If-Match, soft delete, body refresh/logout, public/private split, token entropy, FTS, bigint version, API/schema và private bucket. Không tự đảo baseline trong lúc sửa.
 - [x] **D0-03 · Quyết định:** ghi riêng sai khác bổ sung: Output Cache hay cache-aside; ping sitemap Google; công cụ/ruleset SonarAnalyzer/StyleCop/Airbnb/Jest/Testing Library; browser minimum; lock singleton thay RedLock nếu có. Mỗi mục có nguyên văn, đề xuất, lý do, ảnh hưởng và trạng thái chấp thuận; chưa chốt thì chưa đánh đạt nguyên văn.
-- [x] **D0-04 · Quyết định:** làm rõ uptime 99,5% so với “3,65 giờ downtime/năm” không tương đương, khoảng thời gian đo, múi giờ backup 03:00 và cách nghiệm thu scaling/production. Lưu tiêu chí đo thống nhất trước khi D9 ghi kết quả.
+- [ ] **D0-04 · Quyết định:** làm rõ uptime 99,5% so với “3,65 giờ downtime/năm” không tương đương, khoảng thời gian đo, múi giờ backup 03:00 và cách nghiệm thu scaling/production. Lưu tiêu chí đo thống nhất trước khi D9 ghi kết quả.
 - [x] **D0-05 · Kiểm chứng:** lập danh sách contract UI/API/data Chương 5–8/phụ lục: routes/redirects, status/header, request/response/nullable/enum, giới hạn field, relationships/index/concurrency/audit/soft delete. Mỗi sai khác mới phát hiện được thêm vào đợt tương ứng, không coi báo cáo hiện tại là audit hết mọi chi tiết nhỏ.
 
 **Điều kiện đạt:** không còn acceptance bắt buộc bị bỏ khỏi inventory; mọi điểm mâu thuẫn có hướng xử lý và trạng thái rõ ràng. Việc đang chờ quyết định được ghi mở, không âm thầm miễn yêu cầu.
@@ -82,6 +82,8 @@ Bằng chứng D0-01/D0-05 ngày23/10/2026: [inventory](srs-completion-phases/ac
 Bằng chứng D0-02/D0-03 ngày23/10/2026: [decision register](srs-completion-phases/decision-register.md) review33 GAP/25 DEC/12 INV-G, phân biệt baseline hiện có và11 đề xuất chờ duyệt; [report](srs-completion-phases/reports/phase-02-result.md) ghi nguồn, lệnh kiểm và handoff. D0-03 đóng phần ghi nhận sai khác, **không miễn acceptance nguyên văn**. D0-04 vẫn mở vì DEC-09/11 (SLA window/load/scaling tolerances) chưa chốt; backup03:00 UTC đã có Test Strategy§4.
 
 Cập nhật sau xác nhận ngày23/10/2026: [APP-2026-10-23-ABC](srs-completion-phases/approvals/2026-10-23-abc.md) ghi người dùng duyệt đủ ba góiA/B/C.11 quyết định đã có hiệu lực; D0-04 đóng phần tiêu chí thống nhất. Số liệu và ghi chú “chờ” của checkpoint trước ở trên là lịch sử; các phép đo/implementation vẫn do owner và chưa được chứng nhận.
+
+Đính chính hiện tại: [SRS-2026-10-23-ABC-CORRECTION](srs-completion-phases/approvals/2026-10-23-abc-correction.md) thay hiệu lực A/B/C cũ theo yêu cầu lấy PDF làm chuẩn. Các kết luận duyệt/đóng ở checkpoint trước chỉ là lịch sử; D0-04 mở lại vì uptime và protocol đo chưa thống nhất. D0-02/D0-03 đóng phần review/ghi nhận, không miễn acceptance nguyên văn; tiến độ02=Chờ quyết định.
 
 ### D1. Khôi phục khả năng kiểm thử và chất lượng nền
 

@@ -7,7 +7,7 @@ Agent thực hiện cập nhật đúng dòng phase được giao. Cột evidenc
 | Phase | Phạm vi | Trạng thái | Task còn mở / điều kiện chờ | Phiên bản/ngày chạy | Evidence đã tạo |
 |---|---|---|---|---|---|
 | 01 | [Lập inventory acceptance và contract](phase-01-acceptance-inventory.md) | Đạt | D0-01/D0-05 đóng ở phạm vi tài liệu; runtime chưa nghiệm thu; INV-G01–12 chuyển owner theo report | 23/10/2026; HEAD32e203e + dirty source, fingerprint trong report | [Report](reports/phase-01-result.md), [inventory](acceptance-inventory.md) |
-| 02 | [Chốt cách xử lý mâu thuẫn và sai khác](phase-02-decisions-and-conflicts.md) | Đạt | D0-02/D0-03/D0-04 đóng; góiA/B/C và11 quyết định đã được người dùng duyệt; runtime còn theo owner | 23/10/2026; checkpoint7e3e42a + APP-2026-10-23-ABC | [Report](reports/phase-02-result.md), [register](decision-register.md), [approval](approvals/2026-10-23-abc.md) |
+| 02 | [Chốt cách xử lý mâu thuẫn và sai khác](phase-02-decisions-and-conflicts.md) | Chờ quyết định | D0-02/D0-03 đóng review; D0-04 mở lại; PDF là chuẩn, ngoại lệ A/B/C hết hiệu lực; ping/PUT/query/SLA/protocol còn mở | 23/10/2026; đính chính sau HEAD8663943 | [Report](reports/phase-02-result.md), [register](decision-register.md), [đính chính](approvals/2026-10-23-abc-correction.md) |
 | 03 | [Chuẩn hóa môi trường, format và baseline test](phase-03-environment-and-baseline.md) | Chưa bắt đầu | — | — | — |
 | 04 | [Hoàn thiện handlers và validation pipeline](phase-04-cqrs-and-validation.md) | Chưa bắt đầu | — | — | — |
 | 05 | [Kiểm quyền và tính nguyên tử của command](phase-05-authorization-and-transactions.md) | Chưa bắt đầu | — | — | — |
@@ -148,3 +148,5 @@ Khi phát hiện tiếp: ghi mã/acceptance/nguồn, phase phụ trách, impact 
 Ngày23/10/2026 — đối chiếu quyết định: [register](decision-register.md) giữ33 GAP, có25 DEC và mapping12 INV-G. INV-G05/07 đã có baseline tại Conformance§3; backup03:00 UTC đã có Test Strategy§4. Phần approval của11 đề xuất còn mở theo [report02](reports/phase-02-result.md); không thay trạng thái phase03–38 hoặc tự đóng runtime acceptance.
 
 Sau phản hồi ngày23/10/2026: người dùng xác nhận “Duyệt gói A”, “Duyệt gói B”, “Duyệt gói C”; [APP-2026-10-23-ABC](approvals/2026-10-23-abc.md) ghi đủ11 ID. D0-04 đã đóng và dòng02 chuyển Đạt ở phạm vi quyết định; checkpoint chờ trước đó giữ làm lịch sử. Không nâng trạng thái nghiệm thu runtime hoặc phase03–38.
+
+Đính chính theo chỉ dẫn mới “PDF là tiêu chuẩn” và “Thế chỉnh lại các gói ABC đi”: [SRS-2026-10-23-ABC-CORRECTION](approvals/2026-10-23-abc-correction.md) thay hiệu lực11 quyết định trong approval cũ. Các ghi chú duyệt/Đạt trước đó là lịch sử. D0-04 mở lại; dòng02 chuyển Chờ quyết định. Không dùng ngoại lệ cũ để đóng nguyên văn; runtime và tiến độ01/03–38 không đổi.

@@ -17,21 +17,21 @@ Ngày đối chiếu: **23/10/2026 (Asia/Bangkok)**. Phạm vi D0-01 và D0-05; 
 
 Ngày23/10/2026: [decision register](decision-register.md) rà lại33 GAP và12 INV-G. **INV-G05 (health)** đã có baseline aggregate-only tại Conformance§3 (DEC-17); **INV-G07 (VerifiedAuthor)** đã có baseline chưa bật trongv1 tại cùng phần (DEC-19). Test Strategy§4 đã ghi **backup03:00 UTC** (DEC-10), nên các chỗ ghi “chờ timezone” dưới đây được đọc cùng bổ sung này. Đây là tìm lại quyết định hiện có, không phải waiver mới. Mọi runtime acceptance vẫn chưa kiểm; các đề xuất khác trong register chưa có hiệu lực khi chưa được duyệt. Không sửa report01 lịch sử.
 
-Ngày23/10/2026, sau phản hồi người dùng: cả ba góiA/B/C và11 quyết định đã được duyệt theo [APP-2026-10-23-ABC](approvals/2026-10-23-abc.md). Khi các dòng trích SRS/baseline cũ dưới đây khác phương án được duyệt, áp dụng amendment tương ứng trong register; các nhãn “chờ quyết định” trước approval được giữ để truy vết nguồn, **không còn là blocker quyết định** cho11 ID này. Mọi trạng thái runtime vẫn `Chưa kiểm runtime`.
+Cập nhật theo [đính chính A/B/C](approvals/2026-10-23-abc-correction.md): PDF là tiêu chuẩn; hiệu lực ngoại lệ của [APP cũ](approvals/2026-10-23-abc.md) đã được thay thế. Bảng dưới thay bảng expected sau duyệt trước đây; các dòng trích nguồn bên dưới giữ nguyên để truy vết, phải đọc cùng register hiện tại. Không dùng baseline khác PDF để đóng acceptance nguyên văn. Mọi trạng thái runtime vẫn `Chưa kiểm runtime`.
 
-| Quyết định | Acceptance/contract chịu ảnh hưởng | Expected có hiệu lực sau duyệt |
+| Quyết định | Acceptance/contract chịu ảnh hưởng | Expected theo PDF / phần còn mở |
 |---|---|---|
-| DEC-02 | FR-JOB-003/A06,NFR-SEO-003/A04,CT-EXT-07 | Sitemap/robots và hướng dẫn Search Console thay ping lỗi thời |
-| DEC-07 | NFR-SCALE-001/A03,FR-JOB-003/A05 | PostgreSQL lock kèm publication fencing/CAS/version bảo vệ artifact thay RedLock |
-| DEC-09 | NFR-REL-001/A01–04 | ≥99,5% trên30 ngày UTC; downtime budget216 phút, tính maintenance/missing interval |
-| DEC-11 | NFR-PERF-001/002,NFR-SCALE-002 | Protocol80/20,5+15 phút; unexpected errors≤1%, efficiency≥90% và giữ mọi SLO |
-| DEC-13 | CT-API-17/26/29 | PUT partial, omit giữ cũ/null chỉ clear nullable, validate sau merge |
-| DEC-15 | CT-QUERY-01/03,CT-API-09 | Giữ default12; thêm sortBy/sortOrder aliases, conflict400 |
-| DEC-18 | FR-SRCH-001/A05 | API data=[]+meta; gợi ý tại UI |
-| DEC-20 | CT-DATA-USER-01/RCP-11/RT-01 | Identity Guid/uuid và FK đồng kiểu thay string storage; JSON ID serialized string |
-| DEC-21 | CT-DATA-RCP-04/08/09 | Instructions nullable, enum integer storage; giữ values/checks/defaults/JSON |
-| DEC-22 | CT-DATA-IMAGE-02 | originalUrl nonnullable trong response hợp lệ; variants nullable, storage private |
-| DEC-25 | CT-UI-06/07/14,NFR-SEO-004/A03 | Auth alias307/search308; slug cũ301 riêng, giữ query/canonical đúng |
+| DEC-02 | FR-JOB-003/A06,NFR-SEO-003/A04,CT-EXT-07 | Ping vẫn là yêu cầu; provider đã ngừng là vướng mắc, sitemap/robots không tự thay thế |
+| DEC-07 | NFR-SCALE-001/A03,FR-JOB-003/A05 | RedLock; lock PostgreSQL không thay yêu cầu |
+| DEC-09 | NFR-REL-001/A01–04 | Giữ mâu thuẫn99,5%/3,65h; kỳ đo/maintenance/missing evidence chưa chốt; bỏ protocol30 ngày |
+| DEC-11 | NFR-PERF-001/002,NFR-SCALE-002 | Giữ SLO/100users/2vCPU4GB/tuyến tính; bỏ error1%/efficiency90% và mix/thời lượng tự thêm |
+| DEC-13 | CT-API-17/26/29 | Optional theo tr.63/65; omit/null/empty/merge còn mở |
+| DEC-15 | CT-QUERY-01/03,CT-API-09 | Giữ sort/sortBy/sortOrder theo nguồn, default12; conflict policy chưa chốt |
+| DEC-18 | FR-SRCH-001/A05 | HTTP200, danh sách rỗng và message gợi ý trong API |
+| DEC-20 | CT-DATA-USER-01/RCP-11/RT-01 | `IdentityUser<string>`, khóa Identity/FK varchar450 |
+| DEC-21 | CT-DATA-RCP-04/08/09 | Instructions text NOT NULL; Difficulty/Status smallint |
+| DEC-22 | CT-DATA-IMAGE-02 | OriginalUrl varchar500 NOT NULL và response originalUrl string; đối chiếu cả DB/storage |
+| DEC-25 | CT-UI-06/07/14,NFR-SEO-004/A03 | Route gốc /auth/login,/auth/register,/search đúng rendering; slug cũ301 |
 
 ## Chỉ mục evidence hiện có
 
@@ -1189,7 +1189,7 @@ Các cột `?` là **nullable**, khác field JSON có thể omit. DB NOT NULL kh
 | CT-DATA-CAT-03 | 58 Description | text nullable, baseline≤2000 | Null/omit/2000/2001 + so source varchar length |
 | CT-DATA-CAT-04 | 58 ImageUrl | varchar500 nullable safe URL | Boundary/unsafe schemes/null |
 | CT-DATA-CAT-05 | 58 OrderIndex | integer NOT NULL default0, baseline≥0; navigation order khác list NameASC | DB/default + public vs admin sorting |
-| CT-DATA-USER-01 | 58–59 Id/Identity | PDF IdentityUser<string>,Id varchar450; inherited username/normalized/email/hash/stamp/phone/2FA/lockout fields | GAP-032 cũng chọn string nhưng source IdentityUser<Guid>; **INV-G08**, auth DTO string không chứng minh storage string |
+| CT-DATA-USER-01 | 58–59 Id/Identity | PDF `IdentityUser<string>`,Id varchar450; inherited username/normalized/email/hash/stamp/phone/2FA/lockout fields | GAP-032 cũng chọn string nhưng source IdentityUser<Guid>; **INV-G08**, auth DTO string không chứng minh storage string |
 | CT-DATA-USER-02 | 59 DisplayName | varchar100 NOT NULL,2–100 trim, không public username | GAP-004/020; boundary and Identity username=normalized email behavior |
 | CT-DATA-USER-03 | 59 AvatarUrl | varchar500 nullable, safe URL; Google profile nguồn avatar | Profile PATCH omit/null/clear + browser CSP |
 | CT-DATA-USER-04 | 59 Bio | text nullable; baseline≤2000 | Storage type/source max2000 review + boundary |

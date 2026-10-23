@@ -27,7 +27,7 @@ blocks = re.findall(r'^### (DEC-\d{2})[^\n]*\n(.*?)(?=^## |^### |\Z)',
 if {code for code, _ in blocks} != {f'DEC-{i:02}' for i in range(1, 26)} or len(blocks) != 25:
     errors.append('Expected 25 unique decision sections')
 pending = set()
-approved = set()
+superseded = set()
 for code, block in blocks:
     for field in ('Task/acceptance/nguồn:', 'Trạng thái:'):
         if field not in block:
@@ -35,12 +35,12 @@ for code, block in blocks:
     if 'kiểm tiếp' not in block.lower():
         errors.append(f'{code}: missing verification handoff')
     status = re.search(r'^- \*\*Trạng thái:\*\* (.+)', block, re.M)
-    if status and 'Đề xuất — chờ duyệt' in status[1]:
+    if status and 'Chờ làm rõ SRS' in status[1]:
         pending.add(code)
     if status and 'Đã duyệt' in status[1]:
-        approved.add(code)
+        errors.append(f'{code}: obsolete package approval remains active')
 
-expected_approved = {'DEC-02', 'DEC-07', 'DEC-09', 'DEC-11', 'DEC-13', 'DEC-15',
+expected_superseded = {'DEC-02', 'DEC-07', 'DEC-09', 'DEC-11', 'DEC-13', 'DEC-15',
                      'DEC-18', 'DEC-20', 'DEC-21', 'DEC-22', 'DEC-25'}
 approved_groups = {
     'A': {'DEC-13', 'DEC-15', 'DEC-18', 'DEC-22', 'DEC-25'},
@@ -50,24 +50,67 @@ approved_groups = {
 for group, expected_ids in approved_groups.items():
     row = re.search(r'^\| ' + group + r' — .+$', register, re.M)
     if (not row or set(re.findall(r'DEC-\d{2}', row[0])) != expected_ids
-            or f'APP-2026-10-23-ABC/gói{group}' not in row[0]):
-        errors.append(f'Approval package {group}: incorrect IDs or provenance label')
+            or f'SRS-2026-10-23-ABC-CORRECTION/gói{group}' not in row[0]):
+        errors.append(f'Corrected package {group}: incorrect IDs or provenance label')
     for code, block in blocks:
         if code in expected_ids:
             status = re.search(r'^- \*\*Trạng thái:\*\* (.+)', block, re.M)
             if not status or f'gói{group}' not in status[1]:
-                errors.append(f'{code}: approval package mismatch')
+                errors.append(f'{code}: corrected package mismatch')
+            else:
+                superseded.add(code)
 approval_path = HERE / 'approvals/2026-10-23-abc.md'
 approval = approval_path.read_text(encoding='utf-8')
-if pending or approved != expected_approved:
-    errors.append(f'Approval state differs from APP-2026-10-23-ABC: {sorted(approved)}')
-if set(re.findall(r'DEC-\d{2}', approval)) != expected_approved:
+correction_path = HERE / 'approvals/2026-10-23-abc-correction.md'
+correction = correction_path.read_text(encoding='utf-8')
+if superseded != expected_superseded:
+    errors.append('All 11 prior package decisions must be superseded')
+if pending != {'DEC-02', 'DEC-09', 'DEC-11', 'DEC-13', 'DEC-15'}:
+    errors.append(f'Unresolved source issues changed: {sorted(pending)}')
+if set(re.findall(r'DEC-\d{2}', correction)) != expected_superseded:
+    errors.append('Correction record must cover exactly the 11 prior decisions')
+if set(re.findall(r'DEC-\d{2}', approval)) != expected_superseded:
     errors.append('Approval record must cover exactly the 11 authorized decisions')
 for evidence in ('Duyệt gói A', 'Duyệt gói B', 'Duyệt gói C',
                  '23/10/2026', '7e3e42aa5c7e96c0f4688a7c8a274572401a707b',
                  'call_bcb50555d6584349be3df31cec7a2070'):
     if evidence not in approval:
         errors.append(f'Missing approval provenance: {evidence}')
+for evidence in ('ĐÃ ĐƯỢC THAY THẾ', '2026-10-23-abc-correction.md'):
+    if evidence not in approval:
+        errors.append(f'Historical approval lacks supersession notice: {evidence}')
+for evidence in ('là tiêu chuẩn rồi', 'Thế chỉnh lại các gói ABC đi',
+                 'SRS-2026-10-23-ABC-CORRECTION'):
+    if evidence not in correction:
+        errors.append(f'Missing correction provenance: {evidence}')
+
+# Prevent reintroducing the material waivers as current acceptance.
+source_guards = {
+    'DEC-07': ('dùng RedLock',),
+    'DEC-18': ('message gợi ý', 'trong API'),
+    'DEC-20': ('IdentityUser<string>', 'varchar(450)'),
+    'DEC-21': ('Instructions text NOT NULL', 'lưu smallint'),
+    'DEC-22': ('OriginalUrl NOT NULL', 'schema'),
+    'DEC-25': ('/auth/login', '/auth/register', '/search', '301'),
+}
+for code, phrases in source_guards.items():
+    block = dict(blocks)[code]
+    if not re.search(r'^- \*\*Trạng thái:\*\* Theo SRS', block, re.M):
+        errors.append(f'{code}: must retain original SRS acceptance')
+    for phrase in phrases:
+        if phrase not in block:
+            errors.append(f'{code}: missing SRS constraint {phrase}')
+for name in ('phase-02-decisions-and-conflicts.md', '../srs-completion-checklist.md'):
+    if not re.search(r'^- \[ \] \*\*D0-04', (HERE / name).read_text(encoding='utf-8'), re.M):
+        errors.append(f'{name}: D0-04 must remain open')
+progress = (HERE / 'progress.md').read_text(encoding='utf-8')
+if not re.search(r'^\| 02 \|.*\| Chờ quyết định \|', progress, re.M):
+    errors.append('Progress must report unresolved decisions')
+for stale in ('**Hiệu lực amendment:**', '## Gói quyết định đã được chấp thuận'):
+    if stale in register:
+        errors.append(f'Obsolete active amendment text: {stale}')
+if 'Expected có hiệu lực sau duyệt' in inventory:
+    errors.append('Inventory still uses obsolete approved expectations')
 mapped = re.findall(r'^\| (INV-G\d{2}) \| (DEC-\d{2}) \|', register, re.M)
 if {code for code, _ in mapped} != {f'INV-G{i:02}' for i in range(1, 13)} or len(mapped) != 12:
     errors.append('Expected complete mapping of 12 inventory handoff groups')
@@ -95,7 +138,9 @@ assert Decimal(30 * 24 * 60) * Decimal('0.005') == Decimal('216.000')
 assert (Decimal('3.65') / Decimal(365 * 24) * 100).quantize(Decimal('.000001')) == Decimal('.041667')
 
 links = 0
-for doc in (HERE / 'decision-register.md', HERE / 'reports/phase-02-result.md', approval_path):
+for doc in (HERE / 'decision-register.md', HERE / 'reports/phase-02-result.md',
+            HERE / 'README.md', HERE / 'progress.md',
+            HERE / 'phase-02-decisions-and-conflicts.md', approval_path, correction_path):
     if not doc.exists():
         errors.append(f'Missing {doc.name}')
         continue
@@ -122,8 +167,8 @@ for code, count in Counter(gaps + [code for code, _ in blocks]).items():
 for error in errors:
     print(f'FAIL: {error}')
 print(f'GAP reviews={len(gaps)}; decision sections={len(blocks)}; INV mappings={len(mapped)}')
-print(f'Approved decisions={len(approved)}; pending proposals={len(pending)}; '
+print(f'Superseded package decisions={len(superseded)}; unresolved source issues={len(pending)}; '
       f'local links checked={links}; unchanged historical baseline hashes=3')
-print('SLA arithmetic: 43.8h/365d, 43.92h/366d, 216min/30d; backup baseline 03:00 UTC')
-print('PASS: decision documentation and approval references; runtime unverified' if not errors else 'FAIL: decision documentation')
+print('SLA arithmetic only: 43.8h/365d, 43.92h/366d; no accepted measurement window')
+print('PASS: SRS correction and historical approval references; runtime unverified' if not errors else 'FAIL: decision documentation')
 raise SystemExit(bool(errors))

@@ -1,7 +1,7 @@
 # Kết quả Phase 02 — Quyết định và mâu thuẫn SRS
 
-- **Trạng thái hiện tại: Đạt trong phạm vi tài liệu/quyết định D0-02/D0-03/D0-04.** Ngày23/10/2026 người dùng duyệt đủ ba góiA/B/C và11 ID tại [APP-2026-10-23-ABC](../approvals/2026-10-23-abc.md). Không còn blocker chờ quyết định của phase02.
-- Source/acceptance/runtime vẫn phải được kiểm bởi các phase owner; chưa triển khai, migrate, benchmark, deploy hoặc chứng nhận SRS toàn hệ thống.
+- **Trạng thái hiện tại: Chờ quyết định; D0-04 mở lại.** Theo chỉ dẫn lấy PDF làm chuẩn và chỉnh A/B/C, [đính chính](../approvals/2026-10-23-abc-correction.md) thay hiệu lực11 quyết định đã duyệt trước đây. D0-02/D0-03 vẫn đóng công việc rà/ghi nhận.
+- Expected hiện tại ở register/inventory. Các checkpoint dưới đây là lịch sử, không còn cho phép miễn PDF hoặc dùng protocol cũ để nghiệm thu. Chưa sửa runtime, migration hay deployment.
 
 ## Checkpoint trước chấp thuận — commit7e3e42a
 
@@ -71,7 +71,7 @@ Không chạy unit/integration/frontend/build/browser/provider/production/benchm
 
 Phần hồ sơ đã sẵn cho review; chưa tuyên bố hoàn tất mọi quyết định hoặc nghiệm thu SRS. Kiểm tài liệu đạt không thay approval, runtime/provider/production evidence.
 
-## Cập nhật sau chấp thuận — 23/10/2026
+## Checkpoint lịch sử sau chấp thuận — 23/10/2026 (đã được thay thế)
 
 - Nguồn: người dùng trả lời trực tiếp “Duyệt gói A”, “Duyệt gói B”, “Duyệt gói C”; bản ghi approval lưu IDs/call/revision và phạm vi cụ thể. Phê duyệt này độc lập với yêu cầu commit/push đã có trước.
 - HEAD đầu lượt cập nhật: `7e3e42aa5c7e96c0f4688a7c8a274572401a707b`.137 đường dẫn thay đổi/chưa tracked có sẵn được snapshot tại `tmp/srs-approval/before.json`, SHA256 `1dad79bd7796220e5a8aca8513487e2f3548422fc92b6ec007d2778c04b42ac6`.
@@ -97,3 +97,29 @@ Cwd `D:\Culinary_Blog`, Python3.13.7/PowerShell; cùng môi trường đọc tà
 Verifier đã phát hiện một nhãn provenance góiC bị ghi thành góiB trong bảng tóm tắt (exit1); đã sửa đúng góiC, kiểm lại exit0. Kiểm tra này không thay nội dung approval của người dùng.
 
 Bàn giao: dùng11 quyết định đã chấp thuận làm expected cho các phase owner, đặc biệt17/18/19/20/21/22/30/35/36. Không tự chạy phase tiếp theo trong lượt xác nhận này. Application tests/provider/production/UAT chưa chạy vì không có code/runtime change; không đổi trạng thái các loại evidence đó thành pass.
+
+## Đính chính hiện tại — PDF là tiêu chuẩn, 23/10/2026
+
+- Người dùng xác định PDF là tiêu chuẩn, sau đó yêu cầu “Thế chỉnh lại các gói ABC đi”. [SRS-2026-10-23-ABC-CORRECTION](../approvals/2026-10-23-abc-correction.md) ghi nguồn/phạm vi và thay hiệu lực11 ID cũ. Không diễn giải thành phê duyệt một protocol mới.
+- HEAD đầu lượt `866394388c07371638364e5145c235bfcb0a2aca`, sau commit CI có sẵn của người dùng. Snapshot136 file thay đổi/chưa tracked: `tmp/srs-abc-correction/before.json`, SHA256 `8df5ef7e5ca8dd3fc882f20ec6c4b20b71ff1125146bfa3b52a7757cea099603`. Index trống trước stage; không đưa thay đổi có sẵn vào commit hồ sơ.
+- Đối chiếu trực tiếp PDF bằng pypdf các trang37/40/43–47/55/58–59/61/63/65; excerpts ở `tmp/srs-abc-correction/page-N.txt`. PDF71 trang/hash giữ nguyên. Kiểm lại nguồn chính thức Google W1: endpoint ping đã ngừng/404; không gọi provider endpoint hoặc tự cấp waiver.
+
+| Phần | Expected hiện tại / thay đổi | Điều kiện còn mở / owner |
+|---|---|---|
+| A: DEC-13/15/18/22/25 | Optional/query theo nguồn; API có message khi rỗng; OriginalUrl NOT NULL; route gốc và slug301. Rút quy tắc null/merge/conflict400/alias307–308 như tiêu chuẩn đã duyệt | Omit/null/empty/merge và query conflict chưa được PDF quy định đủ;17/18/22. Kiểm schema/storage URL và route/rendering thực;11/19/21/22 |
+| B: DEC-02/07/20/21 | Trả về RedLock, `IdentityUser<string>`/varchar450, Instructions text NOT NULL, enums smallint. Ping vẫn trong acceptance, không thay bằng sitemap/robots | Provider ping đã ngừng: ghi vướng mắc riêng, chưa đạt nguyên văn;20/21/38. Migration/upgrade dữ liệu và concurrency chưa thực thi;20/22/35 |
+| C: DEC-09/11 | Bỏ protocol30ngày/80–20/5+15phút/error1%/efficiency90%; giữ SLO,100users,2vCPU4GB và scaling tuyến tính trong PDF | Mâu thuẫn99,5% với3,65h/năm, kỳ đo/maintenance/missing data và protocol load/scaling chưa thống nhất;30/35/36/38 |
+| Theo dõi | D0-02/D0-03 đóng review/ghi nhận; **D0-04 mở lại**, tiến độ02=`Chờ quyết định` | Không tự đóng phần chưa rõ; tiến độ01/03–38 giữ nguyên |
+
+Sửa register, bảng expected inventory, README điều phối, checklist, file giao việc, progress và verifier; thêm bản đính chính và gắn nhãn lịch sử cho approval cũ. Nội dung approval cũ được giữ nguyên ngoài banner hết hiệu lực. Các checkpoint trước trong report là lịch sử, không phải chỉ dẫn hiện tại. Baseline ngoài A/B/C chưa được audit lại toàn bộ; không coi nhãn Accepted cũ là chứng nhận khớp nguyên văn PDF. Backup03:00UTC là quy ước T§4, PDF chỉ ghi03:00.
+
+Cwd `D:\Culinary_Blog`, PowerShell/Python3.13.7; áp dụng skill API Documentation và PDF để đối chiếu nguồn. Không sửa OpenAPI/types/backend/frontend/migration, không chạy deployment hoặc phase thực thi.
+
+| Lệnh/kiểm tra thực tế | Expected/actual | Kết quả |
+|---|---|---|
+| `python docs/specs/srs-completion-phases/verify-decisions.py` |33 GAP/25 DEC/12 INV mappings;11 quyết định cũ được thay hiệu lực,5 mục Chờ làm rõ SRS; package/provenance/source guards, trạng thái D0-04, Markdown/local links và3 hash baseline hợp lệ |0/PASS |
+| `python docs/specs/srs-completion-phases/verify-inventory.py` |34FR/30NFR/10CONS;347 acceptance/207 contracts/45 OpenAPI operations;82 local links; PDF hash không đổi |0/PASS |
+| Python/hashlib/subprocess so snapshot và `git show HEAD:<path>` |136 file có sẵn không đổi;347 acceptance rows/207 CT rows nguyên vẹn; progress01/03–38 không đổi; approval cũ chỉ thêm banner |0/PASS |
+| `git diff --check` với danh sách10 file hồ sơ; review diff và index trước commit | Chỉ hồ sơ A/B/C/theo dõi/verifier; không lỗi whitespace hoặc file ngoài scope |0/PASS |
+
+Không chạy unit/integration/frontend/browser/benchmark/restore vì chỉ sửa hồ sơ. Kiểm tài liệu không chứng minh hệ thống đạt SRS. Commit/push tiếp tục theo ủy quyền người dùng; commit chỉ mô tả công việc bằng tiếng Việt không dấu, không ghi đã hoàn thành phase.
