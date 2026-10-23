@@ -80,7 +80,9 @@ async function setup({ editing = true } = {}) {
       user,
       isLoading: false,
       updateProfile: async () => {},
-      logout: async () => {},
+      logout: async () => {
+        requests.push(['logout'])
+      },
       login: async () => {},
       register: async () => {},
     }),
@@ -158,14 +160,24 @@ async function setup({ editing = true } = {}) {
           ? name.slice(2)
           : path.relative(sourceRoot, path.resolve(path.dirname(filename), name))
         const extension = existsSync(path.resolve(sourceRoot, target + '.tsx')) ? '.tsx' : '.ts'
-        // HTTP/auth helpers are never called by these component tests.
-        if (name.endsWith('auth-client')) return { authenticatedBlobUrl: async () => '' }
+        if (name.endsWith('auth-client'))
+          return {
+            authenticatedBlobUrl: async () => '',
+            changePassword: (...args) => api.changePassword(...args),
+            forgotPassword: (...args) => api.forgotPassword(...args),
+            resetPassword: (...args) => api.resetPassword(...args),
+          }
         return load(target + extension)
       }
       return require(name)
     }
     const js = ts.transpileModule(readFileSync(filename, 'utf8'), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
+      compilerOptions: {
+        target: ts.ScriptTarget.ES2020,
+        module: ts.ModuleKind.CommonJS,
+        jsx: ts.JsxEmit.ReactJSX,
+        esModuleInterop: true,
+      },
     }).outputText
     vm.runInNewContext(`(function(require,exports){${js}\n})`, {
       console,
@@ -229,6 +241,144 @@ function button(label, container = document) {
   assert.ok(result, `Missing button: ${label}`)
   return result
 }
+
+test('password change rejects weak or mismatched passwords and preserves the form on server rejection', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setApi('changePassword', async (...args) => {
+      h.requests.push(['change', ...args])
+      throw new ApiProblem({ title: 'Invalid password', status: 400, code: 'AUTH_CURRENT_PASSWORD_INVALID' })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/auth/PasswordForm.tsx').PasswordForm, {
+        mode: 'change',
+      }),
+    )
+    await input(document.getElementById('change-current-password'), 'Old#Password1')
+    await input(document.getElementById('change-new-password'), 'weak')
+    await input(document.getElementById('change-confirm-password'), 'weak')
+    await click(button('Đổi mật khẩu'))
+    assert.match(document.querySelector('[role="alert"]').textContent, /8 đến 128/)
+    assert.equal(h.requests.length, 0)
+    await input(document.getElementById('change-new-password'), 'New#Password2')
+    await click(button('Đổi mật khẩu'))
+    assert.match(document.querySelector('[role="alert"]').textContent, /không khớp/)
+    assert.equal(h.requests.length, 0)
+    await input(document.getElementById('change-confirm-password'), 'New#Password2')
+    await click(button('Đổi mật khẩu'))
+    assert.deepEqual(h.requests, [['change', 'Old#Password1', 'New#Password2']])
+    assert.match(document.querySelector('[role="alert"]').textContent, /hiện tại không chính xác/)
+    assert.equal(document.getElementById('change-new-password').value, 'New#Password2')
+    assert.equal(h.navigations.length, 0)
+  } finally {
+    await h.close()
+  }
+})
+
+test('successful password change locks duplicate submissions and returns to login after logout', async () => {
+  const h = await setup()
+  let complete
+  try {
+    h.setApi('changePassword', (...args) => {
+      h.requests.push(['change', ...args])
+      return new Promise((resolve) => {
+        complete = resolve
+      })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/auth/PasswordForm.tsx').PasswordForm, {
+        mode: 'change',
+      }),
+    )
+    for (const [id, value] of [
+      ['change-current-password', 'Old#Password1'],
+      ['change-new-password', 'New#Password2'],
+      ['change-confirm-password', 'New#Password2'],
+    ]) {
+      await input(document.getElementById(id), value)
+    }
+    await click(button('Đổi mật khẩu'))
+    assert.equal(document.querySelector('fieldset').disabled, true)
+    await click(button('Đang xử lý…'))
+    assert.equal(h.requests.length, 1)
+    await act(async () => complete())
+    assert.deepEqual(h.requests.at(-1), ['logout'])
+    assert.deepEqual(h.navigations, ['/login?passwordChanged=1'])
+    assert.match(document.querySelector('[role="status"]').textContent, /đăng nhập lại/)
+  } finally {
+    await h.close()
+  }
+})
+
+test('forgot password sends the trimmed email and displays a neutral confirmation with resend', async () => {
+  const h = await setup()
+  try {
+    h.setApi('forgotPassword', async (...args) => h.requests.push(['forgot', ...args]))
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/auth/PasswordForm.tsx').PasswordForm, {
+        mode: 'forgot',
+      }),
+    )
+    await input(document.getElementById('forgot-email'), 'author@example.test')
+    await click(button('Gửi liên kết đặt lại mật khẩu'))
+    assert.deepEqual(h.requests, [['forgot', 'author@example.test']])
+    assert.match(document.querySelector('[role="status"]').textContent, /Nếu email.*30 phút/)
+    await click(button('Gửi lại yêu cầu'))
+    assert.ok(document.getElementById('forgot-email'))
+  } finally {
+    await h.close()
+  }
+})
+
+test('reset password rejects missing links and decodes fragment tokens without leaking them in navigation', async () => {
+  const h = await setup()
+  try {
+    const PasswordForm = h.load('features/culinary/pages/auth/PasswordForm.tsx').PasswordForm
+    await h.render(React.createElement(PasswordForm, { mode: 'reset', key: 'missing' }))
+    assert.equal(document.querySelector('form'), null)
+    assert.match(document.querySelector('[role="alert"]').textContent, /không hợp lệ/)
+    window.location.hash = 'email=author%2Btest%40example.test&token=a%2Bb%2Fc%3D'
+    h.setApi('resetPassword', async (...args) => h.requests.push(['reset', ...args]))
+    await h.render(React.createElement(PasswordForm, { mode: 'reset', key: 'valid' }))
+    await input(document.getElementById('reset-new-password'), 'New#Password2')
+    await input(document.getElementById('reset-confirm-password'), 'New#Password2')
+    await click(button('Đặt lại mật khẩu'))
+    assert.deepEqual(h.requests, [
+      ['reset', 'author+test@example.test', 'a+b/c=', 'New#Password2'],
+      ['logout'],
+    ])
+    assert.equal(window.location.hash, '')
+    assert.match(document.querySelector('[role="status"]').textContent, /đăng nhập lại/)
+    assert.equal(document.querySelector('a').getAttribute('href'), '/login')
+  } finally {
+    await h.close()
+  }
+})
+
+test('expired reset links show recovery guidance and do not log the user out', async () => {
+  const h = await setup()
+  try {
+    window.location.hash = 'email=author%40example.test&token=expired'
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setApi('resetPassword', async () => {
+      throw new ApiProblem({ title: 'Invalid token', status: 400, code: 'AUTH_RESET_TOKEN_INVALID' })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/auth/PasswordForm.tsx').PasswordForm, {
+        mode: 'reset',
+      }),
+    )
+    await input(document.getElementById('reset-new-password'), 'New#Password2')
+    await input(document.getElementById('reset-confirm-password'), 'New#Password2')
+    await click(button('Đặt lại mật khẩu'))
+    assert.match(document.querySelector('[role="alert"]').textContent, /hết hạn.*liên kết mới/)
+    assert.ok(document.querySelector('a[href="/forgot-password"]'))
+    assert.equal(h.requests.length, 0)
+  } finally {
+    await h.close()
+  }
+})
 async function click(element) {
   await act(async () => {
     element.click()

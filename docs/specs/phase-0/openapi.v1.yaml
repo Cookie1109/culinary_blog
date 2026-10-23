@@ -113,6 +113,53 @@ paths:
       responses:
         '204': {description: Refresh token đã được revoke hoặc vốn không còn hiệu lực}
         '400': {$ref: '#/components/responses/Problem'}
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      operationId: changePassword
+      description: Requires the current password. On success, all access and refresh sessions are revoked; sign in again.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChangePasswordRequest'}
+      responses:
+        '204': {description: Password changed and all sessions revoked}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/Problem'}
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      operationId: forgotPassword
+      security: []
+      description: Returns the same empty response for unknown, disabled and external-only accounts. Eligible accounts receive a link valid for 30 minutes. SMTP delivery failures are logged without disclosing account existence.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ForgotPasswordRequest'}
+      responses:
+        '202': {description: Request processed; check email if the account is eligible}
+        '400': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      operationId: resetPassword
+      security: []
+      description: A single-use token is bound to the account and expires after 30 minutes. On success, all access and refresh sessions are revoked. Invalid, expired and used tokens return AUTH_RESET_TOKEN_INVALID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ResetPasswordRequest'}
+      responses:
+        '204': {description: Password reset and all sessions revoked}
+        '400': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/Problem'}
   /auth/me:
     get:
       tags: [Auth]
@@ -777,6 +824,30 @@ components:
       properties:
         email: {type: string, format: email}
         password: {type: string, writeOnly: true}
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: {type: string, minLength: 1, maxLength: 128, writeOnly: true}
+        newPassword: {$ref: '#/components/schemas/NewPassword'}
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email: {type: string, format: email, maxLength: 256}
+    ResetPasswordRequest:
+      type: object
+      required: [email, token, newPassword]
+      properties:
+        email: {type: string, format: email, maxLength: 256}
+        token: {type: string, minLength: 1, maxLength: 4096, writeOnly: true}
+        newPassword: {$ref: '#/components/schemas/NewPassword'}
+    NewPassword:
+      type: string
+      minLength: 8
+      maxLength: 128
+      pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9])[\s\S]{8,128}$'
+      writeOnly: true
     RefreshTokenRequest:
       type: object
       required: [refreshToken]

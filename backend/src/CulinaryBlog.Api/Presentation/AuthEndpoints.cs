@@ -42,6 +42,17 @@ internal static class AuthEndpoints
         auth.MapPost("/logout", LogoutAsync).AllowAnonymous()
             .WithSummary("Revoke a refresh token")
             .Produces(StatusCodes.Status204NoContent);
+        auth.MapPost("/change-password", ChangePasswordAsync).RequireAuthorization("AuthorPolicy")
+            .WithSummary("Change the password and revoke all sessions")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+        auth.MapPost("/forgot-password", ForgotPasswordAsync).AllowAnonymous()
+            .WithSummary("Request a password reset email without disclosing account existence")
+            .Produces(StatusCodes.Status202Accepted)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+        auth.MapPost("/reset-password", ResetPasswordAsync).AllowAnonymous()
+            .WithSummary("Reset the password with a single-use token valid for 30 minutes and revoke all sessions")
+            .Produces(StatusCodes.Status204NoContent);
         auth.MapGet("/me", GetMeAsync).RequireAuthorization("AuthorPolicy")
             .WithSummary("View the current user profile")
             .Produces<DataEnvelope<UserDto>>()
@@ -61,6 +72,40 @@ internal static class AuthEndpoints
     }
 
     private sealed record ProfileUpdateBody(string? DisplayName = null, string? AvatarUrl = null, string? Bio = null);
+
+    private static async Task<IResult> ChangePasswordAsync(
+        ChangePasswordRequest request,
+        ClaimsPrincipal principal,
+        IValidator<ChangePasswordRequest> validator,
+        IAuthService authService,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        await authService.ChangePasswordAsync(GetUserId(principal), request, cancellationToken).ConfigureAwait(false);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> ForgotPasswordAsync(
+        ForgotPasswordRequest request,
+        IValidator<ForgotPasswordRequest> validator,
+        IAuthService authService,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        await authService.ForgotPasswordAsync(request, cancellationToken).ConfigureAwait(false);
+        return Results.Accepted();
+    }
+
+    private static async Task<IResult> ResetPasswordAsync(
+        ResetPasswordRequest request,
+        IValidator<ResetPasswordRequest> validator,
+        IAuthService authService,
+        CancellationToken cancellationToken)
+    {
+        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
+        await authService.ResetPasswordAsync(request, cancellationToken).ConfigureAwait(false);
+        return Results.NoContent();
+    }
 
     private static async Task<IResult> RegisterAsync(
         RegisterRequest request,

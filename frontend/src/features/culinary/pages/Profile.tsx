@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { Pencil, Check, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { PasswordForm } from './auth/PasswordForm'
 
 export function Profile() {
   const { user, updateProfile, logout } = useAuth()
@@ -228,6 +229,7 @@ export function Profile() {
               </div>
             )}
           </form>
+          <PasswordForm mode="change" />
         </div>
       </div>
     </div>

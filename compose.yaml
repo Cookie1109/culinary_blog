@@ -158,6 +158,7 @@ services:
     image: culinary-blog-api:local
     volumes:
       - api-logs:/app/logs
+      - api-data-protection:/app/data-protection
     build:
       context: ./backend
       dockerfile: src/CulinaryBlog.Api/Dockerfile
@@ -174,6 +175,7 @@ services:
       Telemetry__OtlpEndpoint: http://otel-collector:4317
       ReverseProxy__TrustForwardedHeaders: "true"
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-local-development-only-change-this-key-before-shared-use}
+      DataProtection__KeyPath: /app/data-protection
       Google__ClientId: ${AUTH_GOOGLE_ID:-}
       Database__ApplyMigrationsOnStartup: "true"
       Email__Enabled: "true"
@@ -261,6 +263,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  api-data-protection:
   api-logs:
   postgres-data:
   redis-data:

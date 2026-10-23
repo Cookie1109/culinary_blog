@@ -28,6 +28,42 @@ public sealed class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
+public sealed class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRequest>
+{
+    public ChangePasswordRequestValidator()
+    {
+        RuleFor(request => request.CurrentPassword).NotEmpty().MaximumLength(128);
+        RuleFor(request => request.NewPassword).NotEmpty().SetValidator(new NewPasswordValidator());
+    }
+}
+
+public sealed class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
+{
+    public ForgotPasswordRequestValidator()
+    {
+        RuleFor(request => request.Email).NotEmpty().EmailAddress().MaximumLength(256);
+    }
+}
+
+public sealed class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
+{
+    public ResetPasswordRequestValidator()
+    {
+        RuleFor(request => request.Email).NotEmpty().EmailAddress().MaximumLength(256);
+        RuleFor(request => request.Token).NotEmpty().MaximumLength(4096);
+        RuleFor(request => request.NewPassword).NotEmpty().SetValidator(new NewPasswordValidator());
+    }
+}
+
+internal sealed class NewPasswordValidator : AbstractValidator<string>
+{
+    public NewPasswordValidator()
+    {
+        RuleFor(password => password).NotEmpty().MinimumLength(8).MaximumLength(128)
+            .Matches("[a-z]").Matches("[A-Z]").Matches("[0-9]").Matches("[^a-zA-Z0-9]");
+    }
+}
+
 public sealed class RefreshTokenRequestValidator : AbstractValidator<RefreshTokenRequest>
 {
     public RefreshTokenRequestValidator()

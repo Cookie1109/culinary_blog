@@ -1,4 +1,6 @@
+using CulinaryBlog.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CulinaryBlog.Api.Presentation;
@@ -11,6 +13,17 @@ internal static class JwtProblemDetailsEvents
     {
         return new JwtBearerEvents
         {
+            OnTokenValidated = async context =>
+            {
+                var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+                var userId = context.Principal?.FindFirst("sub")?.Value;
+                var user = userId is null ? null : await userManager.FindByIdAsync(userId).ConfigureAwait(false);
+                var stamp = context.Principal?.FindFirst("security_stamp")?.Value;
+                if (user is null || string.IsNullOrEmpty(stamp) || stamp != user.SecurityStamp)
+                {
+                    context.Fail("The session is no longer valid.");
+                }
+            },
             OnAuthenticationFailed = context =>
             {
                 context.HttpContext.Items[AuthenticationFailureKey] = context.Exception;

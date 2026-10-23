@@ -1,6 +1,7 @@
 import { authenticatedAxios } from '@/lib/api/axios'
 import type { AuthUser, BackendSession } from '@/lib/api/auth-types'
 import { publicEnvironment } from '@/lib/env'
+import { readProblemDetails } from '@/lib/api/problem-details'
 
 export type { AuthUser } from '@/lib/api/auth-types'
 
@@ -79,4 +80,30 @@ export async function updateProfile(data: {
     body: JSON.stringify(data),
   })
   return response.data
+}
+
+export function changePassword(currentPassword: string, newPassword: string) {
+  return authenticatedApiRequest<void>('/auth/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
+}
+
+async function passwordRecoveryRequest(path: string, body: unknown) {
+  const response = await fetch(`${publicEnvironment.NEXT_PUBLIC_API_BASE_URL}/auth/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  })
+  if (!response.ok) throw await readProblemDetails(response)
+}
+
+export function forgotPassword(email: string) {
+  return passwordRecoveryRequest('forgot-password', { email })
+}
+
+export function resetPassword(email: string, token: string, newPassword: string) {
+  return passwordRecoveryRequest('reset-password', { email, token, newPassword })
 }

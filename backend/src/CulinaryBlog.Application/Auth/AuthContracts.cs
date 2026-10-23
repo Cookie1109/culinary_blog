@@ -8,6 +8,19 @@ public sealed record GoogleLoginRequest(string IdToken);
 
 public sealed record RefreshTokenRequest(string RefreshToken);
 
+public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
+
+public sealed record ForgotPasswordRequest(string Email);
+
+public sealed record ResetPasswordRequest(string Email, string Token, string NewPassword);
+
+public interface IPasswordResetEmailSender
+{
+    bool IsEnabled { get; }
+
+    Task SendAsync(string email, string token, CancellationToken cancellationToken);
+}
+
 public sealed record UpdateProfileRequest(
     string? DisplayName,
     string? AvatarUrl,
@@ -62,6 +75,12 @@ public interface IAuthService
         CancellationToken cancellationToken);
 
     Task LogoutAsync(string refreshToken, string? ipAddress, CancellationToken cancellationToken);
+
+    Task ChangePasswordAsync(string userId, ChangePasswordRequest request, CancellationToken cancellationToken);
+
+    Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken);
+
+    Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken);
 
     Task<UserDto> GetCurrentUserAsync(string userId, CancellationToken cancellationToken);
 

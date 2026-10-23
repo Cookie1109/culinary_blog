@@ -14,6 +14,12 @@ public sealed class EmailOptions
     [Range(1, 65535)]
     public int Port { get; init; } = 1025;
 
+    public bool EnableSsl { get; init; }
+
+    public string? Username { get; init; }
+
+    public string? Password { get; init; }
+
     [Required]
     [EmailAddress]
     public string FromAddress { get; init; } = "hello@culinaryblog.local";

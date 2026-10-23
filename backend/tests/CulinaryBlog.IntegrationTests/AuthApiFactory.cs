@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using CulinaryBlog.Application.Media;
+using CulinaryBlog.Application.Auth;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -13,6 +14,7 @@ namespace CulinaryBlog.IntegrationTests;
 
 public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    public ConcurrentQueue<(string Email, string Token)> PasswordResetEmails { get; } = new();
     private readonly PostgreSqlContainer _postgresSql = new PostgreSqlBuilder("postgres:16.10-bookworm")
         .WithDatabase("culinary_blog_auth_test")
         .WithUsername("culinary")
@@ -43,9 +45,23 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifet
         builder.UseSetting("Email:Enabled", "false");
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IPasswordResetEmailSender>();
+            services.AddSingleton<IPasswordResetEmailSender>(new CapturedPasswordResetEmailSender(PasswordResetEmails));
             services.RemoveAll<IFileStorageService>();
             services.AddSingleton<IFileStorageService, InMemoryFileStorage>();
         });
+    }
+
+    private sealed class CapturedPasswordResetEmailSender(ConcurrentQueue<(string Email, string Token)> messages)
+        : IPasswordResetEmailSender
+    {
+        public bool IsEnabled => true;
+
+        public Task SendAsync(string email, string token, CancellationToken cancellationToken)
+        {
+            messages.Enqueue((email, token));
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class InMemoryFileStorage : IFileStorageService

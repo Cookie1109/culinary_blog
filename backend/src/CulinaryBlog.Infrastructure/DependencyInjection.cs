@@ -17,6 +17,7 @@ using CulinaryBlog.Infrastructure.Persistence;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -81,7 +82,14 @@ public static class DependencyInjection
             })
             .AddRoles<IdentityRole<Guid>>()
             .AddSignInManager()
-            .AddEntityFrameworkStores<AppDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+        services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromMinutes(30));
+        var dataProtection = services.AddDataProtection().SetApplicationName("CulinaryBlog");
+        if (configuration["DataProtection:KeyPath"] is { Length: > 0 } keyPath)
+        {
+            dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keyPath));
+        }
         services.Configure<PasswordHasherOptions>(options =>
         {
             options.CompatibilityMode = PasswordHasherCompatibilityMode.IdentityV3;
@@ -92,6 +100,7 @@ public static class DependencyInjection
         services.AddScoped<IRecipeRepository, RecipeRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IPasswordResetEmailSender, PasswordResetEmailSender>();
         services.AddScoped<ContentService>();
         services.AddScoped<IContentService>(provider => provider.GetRequiredService<ContentService>());
         services.AddScoped<IRecipeSearchRepository>(provider => provider.GetRequiredService<ContentService>());

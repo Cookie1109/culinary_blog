@@ -7,6 +7,7 @@
 ## Chức năng chính
 
 - Đăng ký, đăng nhập, quản lý phiên và hồ sơ cá nhân.
+- Đổi mật khẩu trong hồ sơ và khôi phục mật khẩu qua email; liên kết đặt lại dùng một lần, hết hạn sau 30 phút.
 - Tạo, chỉnh sửa, xuất bản và quản lý công thức với nguyên liệu, các bước, ảnh và dinh dưỡng.
 - Tìm kiếm tiếng Việt, lọc, sắp xếp và phân trang công thức.
 - Quản trị danh mục, phân quyền Author/Admin và kiểm soát quyền sở hữu công thức.
@@ -86,6 +87,8 @@ Truy cập tại `http://localhost:8080`. Dừng môi trường này bằng `doc
 - Đăng nhập Google cần `AUTH_GOOGLE_ID` và `AUTH_GOOGLE_SECRET` tương ứng với cấu hình Google OAuth.
 - `SITE_URL` là địa chỉ công khai; `REVALIDATION_SECRET` bảo vệ callback cập nhật nội dung giữa backend và frontend.
 - Admin seed mặc định tắt. Khi cần, cấu hình `ADMIN_SEED_ENABLED`, `ADMIN_EMAIL` và `ADMIN_PASSWORD`.
+- Quên mật khẩu: chọn **Quên mật khẩu?** trên trang đăng nhập. Docker local gửi email vào [MailHog](http://localhost:8025); mở email và dùng liên kết để đặt mật khẩu mới. Khi chạy API trực tiếp, bật `Email:Enabled` và cấu hình SMTP. Production hỗ trợ `SMTP_ENABLE_SSL`, `SMTP_USERNAME`, `SMTP_PASSWORD` trong cấu hình release.
+- Đổi hoặc đặt lại mật khẩu thu hồi mọi phiên đăng nhập. Bản cập nhật này cũng yêu cầu các phiên JWT cũ đăng nhập lại một lần. Volume `api-data-protection` lưu khóa bảo vệ token đặt lại mật khẩu; giữ volume này khi khởi động lại hoặc cập nhật container.
 - Docker local tự áp migration khi API khởi động. Production áp migration theo [quy trình phát hành](docs/release/v1.0.0-release-notes.md).
 
 ## Tài liệu API

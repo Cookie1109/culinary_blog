@@ -23,6 +23,7 @@ public sealed class TokenService(IOptions<JwtOptions> options, TimeProvider time
             new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new("name", user.DisplayName),
+            new("security_stamp", user.SecurityStamp ?? string.Empty),
         };
         claims.AddRange(roles.Select(role => new Claim("role", role)));
 

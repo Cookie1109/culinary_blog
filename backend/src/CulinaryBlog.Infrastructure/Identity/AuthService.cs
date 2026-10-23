@@ -18,6 +18,7 @@ internal sealed class AuthService(
     TokenService tokenService,
     IOptions<JwtOptions> jwtOptions,
     IConfiguration configuration,
+    IPasswordResetEmailSender passwordResetEmailSender,
     TimeProvider timeProvider) : IAuthService
 {
     private const string AuthorRole = "Author";
@@ -85,12 +86,14 @@ internal sealed class AuthService(
         string? userAgent,
         CancellationToken cancellationToken)
     {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var user = await userManager.FindByEmailAsync(request.Email.Trim()).ConfigureAwait(false);
         if (user is null)
         {
             throw InvalidCredentials();
         }
 
+        await LockUserAsync(user, cancellationToken).ConfigureAwait(false);
         if (!user.IsActive)
         {
             throw new AuthProblemException("AUTH_ACCOUNT_DISABLED", "This account is disabled.");
@@ -103,6 +106,11 @@ internal sealed class AuthService(
 
         var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true)
             .ConfigureAwait(false);
+        if (!result.Succeeded)
+        {
+            // Failed-attempt counters must survive an unsuccessful login.
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
         if (result.IsLockedOut)
         {
             throw new AuthProblemException("AUTH_ACCOUNT_LOCKED", "This account is temporarily locked.");
@@ -113,12 +121,14 @@ internal sealed class AuthService(
             throw InvalidCredentials();
         }
 
-        return await CreateSessionAsync(
+        var session = await CreateSessionAsync(
             user,
             Guid.NewGuid(),
             ipAddress,
             userAgent,
             cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return session;
     }
 
     public async Task<AuthSessionDto> LoginWithGoogleAsync(
@@ -194,6 +204,7 @@ internal sealed class AuthService(
                 user, new UserLoginInfo("Google", payload.Subject, "Google")).ConfigureAwait(false));
         }
 
+        await LockUserAsync(user, cancellationToken).ConfigureAwait(false);
         if (!user.IsActive)
         {
             throw new AuthProblemException("AUTH_ACCOUNT_DISABLED", "This account is disabled.");
@@ -244,6 +255,7 @@ internal sealed class AuthService(
             throw new AuthProblemException("AUTH_REFRESH_TOKEN_INVALID", "The refresh token is invalid.");
         }
 
+        await LockUserAsync(user, cancellationToken).ConfigureAwait(false);
         if (!user.IsActive)
         {
             await RevokeFamilyAsync(storedToken.FamilyId, now, ipAddress, cancellationToken).ConfigureAwait(false);
@@ -295,6 +307,71 @@ internal sealed class AuthService(
                 cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async Task ChangePasswordAsync(
+        string userId, ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        var user = await FindActiveUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword).ConfigureAwait(false);
+        if (result.Errors.Any(error => error.Code == "PasswordMismatch"))
+        {
+            throw new AuthProblemException("AUTH_CURRENT_PASSWORD_INVALID", "The current password is incorrect.");
+        }
+
+        ThrowIfIdentityFailed(result);
+        await RevokeUserSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken)
+    {
+        if (!passwordResetEmailSender.IsEnabled)
+        {
+            throw new AuthProblemException("AUTH_EMAIL_UNAVAILABLE", "Password recovery email is not configured.");
+        }
+
+        var user = await userManager.FindByEmailAsync(request.Email.Trim()).ConfigureAwait(false);
+        // Keep the same response for unknown, disabled and external-only accounts.
+        if (user?.IsActive != true || !await userManager.HasPasswordAsync(user).ConfigureAwait(false)) return;
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user).ConfigureAwait(false);
+        await passwordResetEmailSender.SendAsync(user.Email!, token, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        var user = await userManager.FindByEmailAsync(request.Email.Trim()).ConfigureAwait(false);
+        if (user?.IsActive != true || !await userManager.HasPasswordAsync(user).ConfigureAwait(false))
+        {
+            throw InvalidResetToken();
+        }
+
+        var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword).ConfigureAwait(false);
+        if (result.Errors.Any(error => error.Code is "InvalidToken" or "ConcurrencyFailure")) throw InvalidResetToken();
+        ThrowIfIdentityFailed(result);
+        await RevokeUserSessionsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private Task<int> RevokeUserSessionsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        return dbContext.RefreshTokens.Where(token => token.UserId == userId && token.RevokedAt == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(token => token.RevokedAt, now), cancellationToken);
+    }
+
+    private async Task LockUserAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        // Serialize session issuance with credential changes so refresh cannot escape revocation.
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT 1 FROM \"AspNetUsers\" WHERE \"Id\" = {user.Id} FOR UPDATE", cancellationToken).ConfigureAwait(false);
+        await dbContext.Entry(user).ReloadAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static AuthProblemException InvalidResetToken() =>
+        new("AUTH_RESET_TOKEN_INVALID", "The password reset link is invalid or has expired.");
 
     public async Task<UserDto> GetCurrentUserAsync(string userId, CancellationToken cancellationToken)
     {
