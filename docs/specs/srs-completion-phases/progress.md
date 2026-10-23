@@ -2,7 +2,25 @@
 
 Mốc tạo: 23/10/2026. **Chưa phase nào được chạy trong lượt chia tài liệu.** Những kết quả test lịch sử ở checklist gốc không tự điền thành `Đạt` tại đây.
 
-Agent thực hiện cập nhật đúng dòng phase được giao. Cột evidence ghi đường dẫn report sau khi tạo thật; chưa có report để `—`, không tạo link PASS giả. Nếu cần chạy lại do source/artifact thay đổi, giữ log cũ và đánh `Cần kiểm tra lại`.
+Agent thực hiện cập nhật đúng các dòng phase đã xử lý trong gói hoặc phase được giao. Khi giao gói, evidence dẫn tới mục tương ứng của một report `reports/package-GNN-result.md` sau khi tạo thật; giữ report phase cũ làm lịch sử. Chưa có report để `—`, không tạo link PASS giả. Nếu cần chạy lại do source/artifact thay đổi, giữ log cũ và đánh `Cần kiểm tra lại`.
+
+## Tổng quan 7 gói giao việc
+
+Phạm vi/prompt ở [work-packages.md](work-packages.md), thay đổi và kiểm chứng trong [biên bản điều phối](reports/work-packages-setup.md). Bảng này tổng hợp các dòng phase bên dưới; không thay owner85 task. Ngày chuyển cách điều phối23/10/2026 chưa chạy thêm gói/phase nào, không tự nâng trạng thái. Sau khi thực hiện, cập nhật cả dòng gói và những phase/task đã xử lý; phase chưa đụng tới giữ nguyên.
+
+| Gói | Phase | Trạng thái hiện tại | Kết quả/điều kiện còn mở | Report gói |
+|---|---|---|---|---|
+| G01 | 01,02,03 | Chờ quyết định |01 đã có inventory/report;02 còn D0-04;03 chưa thực hiện, phần độc lập có thể bắt đầu | — |
+| G02 | 04,05,06,07,08,09 | Chưa bắt đầu | Cần đầu vào liên quan từ G01 | — |
+| G03 | 11,12,13,14,15,16 | Chưa bắt đầu | Cần đầu vào liên quan từ G01/G02 | — |
+| G04 | 17,18,19,20,21,22 | Chưa bắt đầu | Cần đầu vào liên quan từ G02/G03 | — |
+| G05 | 23,24,25,26,27,29 | Chưa bắt đầu | Cần contract G04 và auth G02 | — |
+| G06 | 30,31,32,33,34,35 | Chưa bắt đầu | Cần gates liên quan G05; protocol/môi trường thực kiểm khi giao | — |
+| G07 | 37,38 | Chưa bắt đầu | Tổng hợp evidence; nghiệm thu cuối gồm cả hàng chờ | — |
+
+Hàng chờ riêng: **10** (D3-05/07, Google thật), **28** (D8-10, browser/device/screen reader thật), **36** (D9-08, SLA/monitor/thời gian quan sát). Trạng thái vẫn theo các dòng phase gốc; chưa kiểm điều kiện thì không tự đổi sang Chờ môi trường. Các phần môi trường trong31/32/35/38 và các task khác vẫn nằm đúng owner gốc. Gói có task bắt buộc pending không được ghi Đạt.
+
+## Chi tiết 38 phase
 
 | Phase | Phạm vi | Trạng thái | Task còn mở / điều kiện chờ | Phiên bản/ngày chạy | Evidence đã tạo |
 |---|---|---|---|---|---|

@@ -2,16 +2,16 @@
 
 Cập nhật phạm vi ngày **23/10/2026** theo yêu cầu người dùng: bổ sung tất cả điểm thiếu, sai khác và mục chưa đủ bằng chứng trong [báo cáo trạng thái](../reports/srs-acceptance-status.md), thay cho checklist chỉ gồm sáu nhóm khắc phục ban đầu. **Đây là kế hoạch thực hiện; việc thêm một mục vào đây không có nghĩa đã triển khai hoặc nghiệm thu mục đó.**
 
-## 0. Giao từng phase nhỏ cho GPT 6.1 Sol
+## 0. Giao theo 7 gói cho GPT 6.1 Sol
 
-Kế hoạch D0–D10 bên dưới đã được chia thành **38 phase thực hiện**, mỗi phase sở hữu 1–4 task, phần lớn 1–3 task liên quan. Giữ file này làm nguồn yêu cầu và checkbox tổng; dùng các file phase để giao từng lượt, không đưa toàn bộ dự án vào một prompt.
+Kế hoạch D0–D10 được giao mặc định theo **7 gói**, giữ **38 phase chi tiết và 85 task** làm chỉ mục acceptance/owner. Giữ file này làm nguồn task và checkbox tổng; mỗi gói xử lý nhiều phase liên quan theo phụ thuộc, tái dùng evidence còn hợp lệ và ghi checkpoint khi đổi phiên.
 
 - [Điều phối, thứ tự và quy tắc thực hiện](srs-completion-phases/README.md).
-- [Phase 01 — Lập inventory acceptance và contract](srs-completion-phases/phase-01-acceptance-inventory.md): bắt đầu bằng prompt có sẵn trong file này.
+- [7 gói, phạm vi, hàng chờ và prompt dùng ngay](srs-completion-phases/work-packages.md): bắt đầu G01, tái dùng phần01 đã có.
 - [Tiến độ và owner của đủ 85 task](srs-completion-phases/progress.md).
-- [Mẫu report bàn giao mỗi phase](srs-completion-phases/reports/README.md).
+- [Mẫu report gói và checkpoint](srs-completion-phases/reports/README.md).
 
-Mỗi file phase có prompt cho GPT 6.1 Sol, đầu vào/phụ thuộc, task gốc, vùng mã cần đọc, trình tự, kiểm chứng và điều kiện hoàn thành. Chỉ giao **một phase mỗi lượt**; phase sau đọc report phase trước. Thiếu provider/thiết bị/staging thì giữ mục đó mở và làm phần độc lập; không tự chạy phase tiếp theo hoặc đánh đạt từ kết quả mô phỏng. Việc chia tài liệu chưa thực hiện các phase hay thay đổi chương trình.
+Mỗi file phase vẫn giữ task, nguồn, phụ thuộc và điều kiện kiểm chứng. Khi giao gói, agent tiếp tục phase đủ đầu vào bên trong gói mà không cần giao lại; một report chung ghi rõ kết quả từng phase/task. Phase10/28/36 theo hàng chờ điều kiện riêng; phần provider/thiết bị/staging chưa kiểm vẫn mở. Có thể giao riêng một phase khi cần. Việc gom gói không thay tiêu chuẩn PDF SRS, không tự chạy công việc ngoài gói và không đổi trạng thái nghiệm thu.
 
 ## 1. Nguồn, phạm vi và quy tắc hoàn thành
 

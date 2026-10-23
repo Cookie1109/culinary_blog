@@ -1,6 +1,60 @@
-# Mẫu report bàn giao phase
+# Mẫu report gói và phase
 
-Chưa có report thực thi ở thời điểm chia phase. Khi làm phase NN, tạo `phase-NN-result.md` trong thư mục này và cập nhật progress; không để mẫu trở thành bằng chứng đã chạy.
+Mặc định giao theo [7 gói](../work-packages.md): tạo/cập nhật **một** `package-GNN-result.md` trong thư mục này. Report chung có mục riêng cho mỗi phase đã xử lý và mapping task→evidence; các dòng phase trong progress dẫn tới report/mục đó. Giữ report cũ để truy vết, không sao chép log hoặc tạo report phase trùng nội dung. Chỉ tạo report khi thực sự bắt đầu gói; mẫu dưới không phải bằng chứng đã chạy.
+
+## Mẫu report gói
+
+```markdown
+# Kết quả gói GNN — Tên gói
+
+- Trạng thái tổng: Đang làm / Đạt / Chưa đạt / Chờ môi trường / Chờ quyết định / Cần kiểm tra lại.
+- Phạm vi phase/task đã xử lý; phần chưa bắt đầu:
+- Thời điểm/agent; HEAD + worktree fingerprint trước/sau; bảo toàn thay đổi có sẵn:
+- Runtime/config/dataset/artifact; dependency đã đủ và còn pending:
+- Evidence cũ tái dùng và lý do còn hợp lệ; phần đã kiểm lại do source đổi:
+
+## Kết quả theo phase/task
+
+Tạo mục `## Phase NN` cho mỗi phase đã xử lý; progress có thể trỏ vào mục đó.
+Phase chưa xử lý giữ nguyên trạng thái, không đánh Chưa đạt chỉ vì chưa đến lượt.
+
+| Phase | Task | Acceptance/trang PDF | Kết quả | Evidence ID / phần còn mở |
+|---|---|---|---|---|
+| NN | Dn-mm | ... | Pass/Fail/Pending | E01 / ... |
+
+## Thay đổi
+
+- File và thay đổi gắn với task; phần hiện có chỉ cần kiểm, không viết lại:
+- Contract/schema/migration ảnh hưởng và điểm cần quyết định; không tự thay PDF:
+
+## Evidence dùng chung
+
+| ID | Cwd/runtime/artifact/config | Lệnh/test thực tế | Loại evidence | Expected/actual/count/exit | Task được chứng minh / log |
+|---|---|---|---|---|---|
+| E01 | ... | ... | Unit/IT/HTTP/browser/provider/production | ... | ... |
+
+Một run chỉ dùng cho nhiều task khi cùng artifact/config và đủ assertions tương ứng.
+Ghi chưa chạy/skip, phân biệt lỗi môi trường với assertion fail. Source đổi sau run
+thì đánh dấu evidence bị ảnh hưởng và kiểm lại, không tái dùng để đóng task.
+
+## Điểm chặn và cập nhật tiến độ
+
+- Phase/task chờ; điều kiện cụ thể; ảnh hưởng dependency; phần độc lập đã tiếp tục:
+- Task gốc đóng/mở và lý do; dòng phase/gói trong progress đã cập nhật:
+- Phase/gói khác bị ảnh hưởng cần kiểm lại; không tự thực thi ngoài phạm vi:
+
+## Checkpoint tiếp tục
+
+- Đã xong và evidence còn phù hợp:
+- Đang làm; file/diff liên quan; lỗi mới nhất và trạng thái tài nguyên thử:
+- Bước tiếp theo cụ thể, cwd/lệnh cần chạy (chưa chạy thì ghi rõ):
+- Điều kiện cần người dùng/môi trường; không có thì phần nào vẫn tiếp tục được:
+- Kết luận đúng phạm vi; còn pending bắt buộc thì chưa ghi toàn gói/SRS Đạt.
+```
+
+## Khi chỉ giao riêng một phase
+
+Dùng `phase-NN-result.md` và mẫu bên dưới. Report phase01/02 đã có giữ làm lịch sử; khi làm gói chỉ dẫn chiếu phần cần dùng, không lập lại báo cáo cũ.
 
 ```markdown
 # Kết quả Phase NN — Tên phase

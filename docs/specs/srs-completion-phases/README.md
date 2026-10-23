@@ -1,25 +1,28 @@
 # Giao việc hoàn thiện SRS cho GPT 6.1 Sol
 
-**38 phase nhỏ, ánh xạ đủ 85 task D0–D10 trong [checklist gốc](../srs-completion-checklist.md).** Mỗi task có đúng một phase chịu trách nhiệm; phần lớn phase gồm 1–3 task, tối đa 4. Không có phase nào đã được thực hiện chỉ vì tài liệu này được tạo.
+**Giao việc theo [7 gói G01–G07](work-packages.md), giữ 38 phase để tra cứu đủ 85 task D0–D10 trong [checklist gốc](../srs-completion-checklist.md).** Mỗi task vẫn có đúng một phase chịu trách nhiệm. Việc gom gói không thay tiêu chuẩn SRS hoặc chứng nhận thêm kết quả thực thi.
 
 ## Cách dùng ngay
 
 1. Chọn GPT 6.1 Sol trong môi trường làm việc có repository `D:\Culinary_Blog`.
-2. Mở [phase 01](phase-01-acceptance-inventory.md) và gửi prompt trong file đó. Không cần dán cả checklist hơn 400 dòng vào một lượt.
-3. Sau mỗi phase, đọc report và [progress.md](progress.md). Giao tiếp một phase tiếp theo có đủ phụ thuộc kỹ thuật.
-4. Các phase Google thật/thiết bị/RUM/production/SLA có thể chờ điều kiện. Tiếp tục phase độc lập nhưng giữ các task chưa được xác minh ở trạng thái mở.
-5. Dùng [mẫu report](reports/README.md) để agent sau đọc được chính xác việc đã làm/chưa làm, không dựa vào lịch sử chat.
+2. Mở [work-packages.md](work-packages.md), chọn gói trong bảng và dùng prompt giao gói. Bắt đầu G01 bằng việc tái dùng inventory/report01 đã có, xử lý phần02 còn mở và chuẩn hóa môi trường03.
+3. Trong gói, agent tiếp tục các phase đủ đầu vào, không dừng để xin giao lại sau mỗi phase nhỏ. Khi đổi phiên, dùng checkpoint của cùng gói để tiếp tục.
+4. Đọc [progress.md](progress.md) và report gói trước khi giao gói kế tiếp. Phase10/28/36 theo hàng chờ điều kiện riêng; phần RUM/staging/production còn chờ vẫn ghi tại task gốc.
+5. Dùng [mẫu report gói](reports/README.md): một report chung, cập nhật kết quả từng phase/task; không viết lại evidence giống nhau trong nhiều report.
 
-Prompt dùng cho một phase bất kỳ:
+Prompt giao gói (thay `GNN` bằng G01–G07):
 
 ```text
-Thực hiện Phase NN trong docs/specs/srs-completion-phases/ theo file phase tương ứng.
-Đọc AGENTS.md, README điều phối, progress.md, checklist gốc và report các phase phụ thuộc.
-Chỉ làm phase được giao, sửa và kiểm chứng trong phạm vi đó; không tự làm toàn bộ dự án.
-Cập nhật report, tiến độ và checkbox gốc theo bằng chứng; báo rõ phần đang chờ môi trường/quyết định.
+Thực hiện gói GNN theo docs/specs/srs-completion-phases/work-packages.md.
+Đọc AGENTS.md, README điều phối, progress.md và checkpoint mới nhất của gói nếu có.
+PDF SRS là tiêu chuẩn; kiểm chứng phần đã có, chỉ sửa phần thiếu hoặc thất bại.
+Tiếp tục các phase thuộc gói khi đủ đầu vào, không cần giao lại từng phase.
+Ghi mở phần thiếu quyết định/môi trường và làm phần độc lập còn lại trong gói.
+Cập nhật một report gói, tiến độ từng phase và checkbox gốc theo bằng chứng.
+Không tự chạy gói khác hoặc phase thuộc hàng chờ ngoài phạm vi được giao.
 ```
 
-Thay `NN` bằng số phase/file cụ thể; mỗi file phase đã có prompt ghi đầy đủ đường dẫn.
+Prompt đầy đủ và prompt tiếp tục ở [work-packages.md](work-packages.md). Vẫn có thể giao riêng một phase bằng prompt cũ trong file phase đó. Khi người dùng giao gói, giới hạn “chỉ phase này/không chạy phase tiếp theo” trong các file phase được hiểu là **chỉ các phase thuộc gói được giao**, không chặn chuyển phase bên trong gói; yêu cầu an toàn, phụ thuộc và acceptance vẫn giữ.
 
 ## Quy tắc chung cho từng lượt thực hiện
 
@@ -34,12 +37,13 @@ Thay `NN` bằng số phase/file cụ thể; mỗi file phase đã có prompt gh
 - Không tự commit/push/deploy/publish/gửi thông báo nếu chưa có yêu cầu/ủy quyền phù hợp; nếu đã được yêu cầu áp dụng cho hành động đó thì thực hiện theo phạm vi được giao. Commit khi có yêu cầu dùng mô tả tiếng Việt không dấu.
 - Thiếu quyết định/credential/thiết bị: đọc quyết định và nguồn sẵn có trước, tiếp tục phần độc lập, ghi chính xác điều kiện cần từ người dùng khi thật sự cần. Không suy chấp thuận từ thời gian chờ, không tự ký UAT hoặc tạo số đo/CI URL/digest giả.
 - Bằng chứng cũ chỉ dùng tham khảo. Sửa source sau build/đo phải chạy lại phần bị ảnh hưởng; `--skip-build` chỉ dùng đúng build của mã hiện tại. Không dùng test count/checkbox count để suy phần trăm SRS.
-- Tạo `reports/phase-NN-result.md`, cập nhật dòng phase trong progress và checkbox gốc tương ứng. Chỉ đóng checkbox D khi toàn bộ điều kiện của nó đạt hoặc có điều chỉnh hợp lệ, không đóng từ riêng một phần local.
-- Dừng tại kết quả/handoff của phase được giao. Không tự chạy phase tiếp theo hoặc gọi sub-agent chỉ vì README liệt kê chúng.
+- Khi giao gói, tạo/cập nhật `reports/package-GNN-result.md` theo mẫu; mỗi dòng phase trong progress dẫn tới phần kết quả tương ứng của report chung. Giữ report phase cũ làm lịch sử, không cần tạo thêm report phase trùng nội dung. Khi giao riêng một phase, tiếp tục dùng `reports/phase-NN-result.md`. Chỉ đóng checkbox D khi toàn bộ điều kiện của nó đạt, không đóng từ riêng một phần local.
+- Kiểm tra phần hiện có trước sửa. Chạy kiểm tra liên quan sau thay đổi; gom regression chung tại checkpoint phù hợp, dùng chung evidence cho nhiều task khi đúng artifact/phạm vi. Không bỏ gate bắt buộc hoặc tái dùng build/test cũ sau khi source liên quan đã đổi.
+- Dừng tại kết quả/handoff của gói hoặc phase được giao; không tự mở gói kế tiếp. Không gọi sub-agent chỉ vì danh sách có nhiều phase. Phần chưa đủ đầu vào ghi mở, tiếp tục công việc độc lập trong phạm vi được giao.
 
 ## Thứ tự giao việc và phụ thuộc
 
-Các số phase là thứ tự mặc định; cột phụ thuộc là các đầu vào kỹ thuật cần đọc/đủ để sửa phần liên quan. Khi phase phụ thuộc có một phần provider/môi trường pending, report phải chỉ rõ phần code nào đã sẵn; chỉ làm phần độc lập của phase sau. Phase 38 có thể chuẩn bị gói handoff với mục pending, nhưng không chứng nhận toàn bộ SRS nếu còn điều kiện bắt buộc mở.
+Các số phase là chỉ mục chi tiết; [7 gói](work-packages.md) là cách giao việc mặc định. Cột phụ thuộc bên dưới vẫn là các đầu vào kỹ thuật cần đủ để sửa phần liên quan; gom gói không bỏ phụ thuộc. Khi phase phụ thuộc có phần pending, report phải chỉ rõ phần code nào đã sẵn; chỉ làm phần độc lập của phase sau. Phase38 có thể chuẩn bị handoff với mục pending, nhưng không chứng nhận toàn bộ SRS nếu còn điều kiện bắt buộc mở.
 
 | Phase | Phạm vi | Task gốc do phase sở hữu | Phụ thuộc | Loại công việc |
 |---|---|---|---|---|
