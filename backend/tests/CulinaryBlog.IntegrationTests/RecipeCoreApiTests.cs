@@ -232,6 +232,48 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
         Assert.Equal("CATEGORY_DELETE_HAS_RECIPES", problem?.Code);
     }
 
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(1, false)]
+    [InlineData(2, true)]
+    [InlineData(50, true)]
+    [InlineData(51, false)]
+    [InlineData(100, false)]
+    [InlineData(-1, false)]
+    public async Task CategoryNameBoundsApplyToCreateAndUpdateWithoutChangingStorage(int length, bool valid)
+    {
+        var email = $"category-name-{Guid.NewGuid():N}@example.com";
+        await RegisterAsync(email);
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await users.FindByEmailAsync(email);
+            Assert.NotNull(user);
+            Assert.True((await users.AddToRoleAsync(user, "Admin")).Succeeded);
+        }
+        SetToken((await LoginAsync(email)).AccessToken);
+        var name = length < 0 ? "<b>Món chay</b>" : length == 2 ? "QZ" : new string('x', length);
+        await using var checkScope = factory.Services.CreateAsyncScope();
+        var db = checkScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var before = await db.Categories.CountAsync();
+        using var create = await _client.PostAsJsonAsync("/api/v1/categories", new { name, orderIndex = 0 });
+        Assert.Equal(valid ? HttpStatusCode.Created : HttpStatusCode.BadRequest, create.StatusCode);
+        Assert.Equal(before + (valid ? 1 : 0), await db.Categories.CountAsync());
+
+        var originalName = $"Category {Guid.NewGuid():N}";
+        using var targetResponse = await _client.PostAsJsonAsync("/api/v1/categories", new { name = originalName, orderIndex = 0 });
+        targetResponse.EnsureSuccessStatusCode();
+        var target = (await targetResponse.Content.ReadFromJsonAsync<DataEnvelope<CategoryResponse>>())!.Data;
+        var updatedName = valid ? "Y" + name[1..] : name;
+        using var update = await _client.PutAsJsonAsync($"/api/v1/categories/{target.Id}", new { name = updatedName, orderIndex = 0 });
+        Assert.Equal(valid ? HttpStatusCode.OK : HttpStatusCode.BadRequest, update.StatusCode);
+        Assert.Equal(valid ? updatedName : originalName,
+            await db.Categories.AsNoTracking().Where(item => item.Id == target.Id).Select(item => item.Name).SingleAsync());
+        Assert.Equal(100, db.Model.FindEntityType(typeof(CulinaryBlog.Domain.Categories.Category))!
+            .FindProperty(nameof(CulinaryBlog.Domain.Categories.Category.Name))!.GetMaxLength());
+    }
+
+
     private async Task<Guid> GetCategoryIdAsync()
     {
         SetToken(null);

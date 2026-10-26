@@ -908,7 +908,7 @@ components:
       type: object
       required: [name]
       properties:
-        name: {type: string, minLength: 2, maxLength: 100}
+        name: {type: string, minLength: 2, maxLength: 50, description: "2–50 characters; HTML tags are not allowed."}
         description: {type: [string, 'null'], maxLength: 2000}
         imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
         orderIndex: {type: integer, minimum: 0}

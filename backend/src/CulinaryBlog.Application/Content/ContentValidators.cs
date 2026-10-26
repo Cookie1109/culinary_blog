@@ -6,7 +6,9 @@ internal sealed class CategoryWriteRequestValidator : AbstractValidator<Category
 {
     public CategoryWriteRequestValidator()
     {
-        RuleFor(request => request.Name).NotEmpty().MinimumLength(2).MaximumLength(100);
+        RuleFor(request => request.Name).Cascade(CascadeMode.Stop).NotEmpty().MinimumLength(2).MaximumLength(50)
+            .Must(name => !name.Contains('<') || name.IndexOf('>', name.IndexOf('<')) < 0)
+            .WithMessage("Category name must not contain HTML.");
         RuleFor(request => request.Description).MaximumLength(2000);
         RuleFor(request => request.ImageUrl)
             .MaximumLength(500)

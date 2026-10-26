@@ -89,7 +89,7 @@ public sealed class AdminAuditLogsApiTests(AuthApiFactory factory) : IClassFixtu
 
         using var createdBody = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync());
         var categoryId = createdBody.RootElement.GetProperty("data").GetProperty("id").GetGuid();
-        var updatedName = $"Changed audit category {Guid.NewGuid():N}";
+        var updatedName = $"Changed audit {Guid.NewGuid():N}";
         using var updateResponse = await _client.PutAsJsonAsync($"/api/v1/categories/{categoryId}", new
         {
             name = updatedName,

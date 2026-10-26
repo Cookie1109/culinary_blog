@@ -36,9 +36,14 @@ public sealed class Category : BaseEntity
     public void Update(string name, string? description, string? imageUrl, int orderIndex)
     {
         var trimmedName = name.Trim();
-        if (trimmedName.Length is < 2 or > 100)
+        if (trimmedName.Length is < 2 or > 50)
         {
-            throw new DomainException("CATEGORY_NAME_INVALID", "Category name must contain between 2 and 100 characters.");
+            throw new DomainException("CATEGORY_NAME_INVALID", "Category name must contain between 2 and 50 characters.");
+        }
+
+        if (trimmedName.Contains('<') && trimmedName.IndexOf('>', trimmedName.IndexOf('<')) >= 0)
+        {
+            throw new DomainException("CATEGORY_NAME_INVALID", "Category name must not contain HTML.");
         }
 
         if (orderIndex < 0)

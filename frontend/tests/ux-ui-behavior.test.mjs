@@ -1133,3 +1133,58 @@ test('recipe search recovers from an out-of-range page without discarding filter
     await h.close()
   }
 })
+
+test('category create and edit reject invalid names and accept the 50-character boundary', async () => {
+  for (const editing of [false, true]) {
+    const h = await setup()
+    try {
+      const category = {
+        ...fixture.category,
+        orderIndex: 0,
+        recipeCount: 0,
+        description: null,
+        imageUrl: null,
+      }
+      h.setApi('listCategories', async () => [category])
+      h.setApi('createCategory', async (payload) => {
+        h.requests.push(['create', payload])
+        return { ...category, ...payload }
+      })
+      h.setApi('updateCategory', async (id, payload) => {
+        h.requests.push(['update', id, payload])
+        return { ...category, ...payload }
+      })
+      await h.render(
+        React.createElement(h.load('features/culinary/pages/dashboard/CategoryAdmin.tsx').CategoryAdmin),
+      )
+      await click(editing ? document.querySelector('[aria-label="Sửa Món ăn"]') : button('Thêm danh mục'))
+      const dialog = document.querySelector('[role="dialog"]')
+      const field = dialog.querySelector('input')
+      assert.equal(field.maxLength, 50)
+      for (const name of ['x', 'x'.repeat(51), '<b>Món chay</b>']) {
+        await input(field, name)
+        await act(async () => {
+          dialog
+            .querySelector('form')
+            .dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }))
+          await new Promise((resolve) => setTimeout(resolve, 20))
+        })
+        assert.equal(h.requests.length, 0)
+        assert.match(dialog.textContent, /2 đến 50|HTML/)
+      }
+      await input(field, 'x'.repeat(50))
+      await act(async () => {
+        dialog
+          .querySelector('form')
+          .dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }))
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      })
+      assert.equal(h.requests.length, 1)
+      assert.equal(h.requests[0][0], editing ? 'update' : 'create')
+      assert.equal(h.requests[0].at(-1).name.length, 50)
+      assert.equal(document.querySelector('[role="dialog"]'), null)
+    } finally {
+      await h.close()
+    }
+  }
+})

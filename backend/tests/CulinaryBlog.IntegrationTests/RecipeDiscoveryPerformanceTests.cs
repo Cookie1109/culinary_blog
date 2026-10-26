@@ -41,7 +41,7 @@ public sealed class RecipeDiscoveryPerformanceTests(
         var category = Category.Create(
             Guid.NewGuid(), $"Performance {suffix}", $"performance-{suffix}", null, null, 0);
         var fillerCategory = Category.Create(
-            Guid.NewGuid(), $"Performance filler {suffix}", $"performance-filler-{suffix}", null, null, 1);
+            Guid.NewGuid(), $"Perf filler {suffix}", $"performance-filler-{suffix}", null, null, 1);
         dbContext.Categories.AddRange(category, fillerCategory);
         var publishedAt = DateTimeOffset.UtcNow;
         for (var index = 0; index < ApplicationSeedRecipeCount; index++)

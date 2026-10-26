@@ -708,6 +708,7 @@ export interface components {
             recipeCount: number;
         };
         CategoryWrite: {
+            /** @description 2–50 characters; HTML tags are not allowed. */
             name: string;
             description?: string | null;
             /** Format: uri */

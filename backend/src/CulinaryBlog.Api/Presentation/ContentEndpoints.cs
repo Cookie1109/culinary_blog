@@ -27,10 +27,12 @@ internal static class ContentEndpoints
             .Produces<CategoryDetailEnvelope>();
         categories.MapPost("/", CreateCategoryAsync).RequireAuthorization("AdminPolicy")
             .WithSummary("Create a category (Admin)")
+            .WithDescription("Category names must contain between 2 and 50 characters and must not contain HTML.")
             .Produces<DataEnvelope<CategoryDto>>(StatusCodes.Status201Created)
             .AddEndpointFilter<PublicCacheInvalidationFilter>();
         categories.MapPut("/{id:guid}", UpdateCategoryAsync).RequireAuthorization("AdminPolicy")
             .WithSummary("Update a category (Admin)")
+            .WithDescription("Category names must contain between 2 and 50 characters and must not contain HTML.")
             .Produces<DataEnvelope<CategoryDto>>()
             .AddEndpointFilter<PublicCacheInvalidationFilter>();
         categories.MapDelete("/{id:guid}", DeleteCategoryAsync).RequireAuthorization("AdminPolicy")

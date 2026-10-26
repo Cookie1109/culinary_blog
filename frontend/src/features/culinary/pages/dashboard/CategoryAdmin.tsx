@@ -122,6 +122,15 @@ export function CategoryAdmin() {
     event.preventDefault()
     setActionNotice(null)
     setActionError(null)
+    const name = form.name.trim()
+    if (name.length < 2 || name.length > 50) {
+      setActionError('Tên danh mục cần từ 2 đến 50 ký tự.')
+      return
+    }
+    if (/<[^>]*>/.test(name)) {
+      setActionError('Tên danh mục không được chứa HTML.')
+      return
+    }
     save.mutate()
   }
 
@@ -192,7 +201,7 @@ export function CategoryAdmin() {
                   <input
                     required
                     minLength={2}
-                    maxLength={100}
+                    maxLength={50}
                     value={form.name}
                     onChange={(event) => setForm({ ...form, name: event.target.value })}
                     className="mt-2 w-full border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
