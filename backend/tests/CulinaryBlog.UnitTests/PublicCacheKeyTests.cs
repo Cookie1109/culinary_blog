@@ -15,7 +15,7 @@ public sealed class PublicCacheKeyTests
             "phở bò", "món-việt", RecipeDifficulty.Easy, 45, "newest", 2, 24);
 
         Assert.Equal(first.CacheKey, second.CacheKey);
-        Assert.StartsWith("cb:v1:search:", first.CacheKey, StringComparison.Ordinal);
+        Assert.StartsWith("cb:v2:search:", first.CacheKey, StringComparison.Ordinal);
         Assert.Contains("q=ph%E1%BB%9F%20b%C3%B2", first.CacheKey, StringComparison.Ordinal);
         Assert.Contains("category=m%C3%B3n-vi%E1%BB%87t", first.CacheKey, StringComparison.Ordinal);
         Assert.Contains("difficulty=easy", first.CacheKey, StringComparison.Ordinal);

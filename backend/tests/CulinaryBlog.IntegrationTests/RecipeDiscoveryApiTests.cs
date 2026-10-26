@@ -47,14 +47,17 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
     [Fact]
     public async Task SearchIsAccentInsensitiveRankedAndNeverReturnsDrafts()
     {
-        await SeedDiscoveryDataAsync();
+        var data = await SeedDiscoveryDataAsync();
+        await using var scope = factory.Services.CreateAsyncScope();
+        var category = await scope.ServiceProvider.GetRequiredService<AppDbContext>().Categories
+            .Where(item => item.Id == data.VietnameseCategoryId).Select(item => item.Slug).SingleAsync();
 
         var unaccented = await _client.GetFromJsonAsync<RecipePage>(
-            "/api/v1/recipes/search?q=pho&page=1&pageSize=12");
+            $"/api/v1/recipes/search?q=pho&page=1&pageSize=12&category={category}");
         var prefix = await _client.GetFromJsonAsync<RecipePage>(
-            "/api/v1/recipes/search?q=ph&page=1&pageSize=12");
+            $"/api/v1/recipes/search?q=ph&page=1&pageSize=12&category={category}");
         var multiTerm = await _client.GetFromJsonAsync<RecipePage>(
-            "/api/v1/recipes/search?q=bun%20bo&page=1&pageSize=12");
+            $"/api/v1/recipes/search?q=bun%20bo&page=1&pageSize=12&category={category}");
 
         Assert.NotNull(unaccented);
         Assert.Contains(unaccented.Data, recipe => recipe.Title == "Phở bò truyền thống");
@@ -193,6 +196,60 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
         Assert.NotNull(prefix);
         Assert.Contains(prefix.Data, recipe => recipe.Title == "Phở bò truyền thống");
         Assert.DoesNotContain(prefix.Data, recipe => recipe.Status != "published");
+    }
+
+    [Theory]
+    [InlineData("ga nuong", 2, "Gà nướng muối ớt")]
+    [InlineData("  GÀ   NƯỚNG  ", 2, "Gà nướng muối ớt")]
+    [InlineData("gà nướng", 2, "Gà nướng muối ớt")]
+    [InlineData("ga nuon", 2, "Gà nướng muối ớt")]
+    [InlineData("ga nuongg", 1, "Gà nướng muối ớt")]
+    [InlineData("pho bo", 1, "Phở bò truyền thống")]
+    [InlineData("phở bò", 1, "Phở bò truyền thống")]
+    [InlineData("cá", 1, "Cá kho tộ")]
+    [InlineData("ca", 2, null)]
+    [InlineData("bò", 4, null)]
+    [InlineData("bơ", 1, "Bơ dầm")]
+    [InlineData("bo", 5, null)]
+    [InlineData("ga xyznotfound", 0, null)]
+    public async Task VietnameseSearchRequiresAllWordsAndPrefersAccurateMatches(
+        string search, int expectedTotal, string? expectedFirst)
+    {
+        var data = await SeedDiscoveryDataAsync();
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var category = await dbContext.Categories.SingleAsync(item => item.Id == data.VietnameseCategoryId);
+        var authorId = await dbContext.Recipes.Where(recipe => recipe.CategoryId == category.Id)
+            .Select(recipe => recipe.AuthorId).FirstAsync();
+        var examples = new[]
+        {
+            (Title: "Gà nướng muối ớt", Description: "Gà nướng cùng muối ớt."),
+            (Title: "Phở gà", Description: "Nước dùng có gừng nướng và gà xé."),
+            (Title: "Nem lụi Huế", Description: "Thịt nướng với sốt gan và đậu phộng."),
+            (Title: "Gỏi đu đủ khô bò", Description: "Gỏi bò với đậu phộng."),
+            (Title: "Cá kho tộ", Description: "Cá kho trong nồi đất."),
+            (Title: "Cà ri chay", Description: "Cà ri với rau củ."),
+            (Title: "Bò kho", Description: "Thịt bò hầm."),
+            (Title: "Bơ dầm", Description: "Bơ chín dầm sữa."),
+        };
+        foreach (var example in examples)
+        {
+            var recipe = Recipe.Create(Guid.NewGuid(), authorId, $"vietnamese-{Guid.NewGuid():N}",
+                example.Title, example.Description, category.Id, 10, 20, 4, RecipeDifficulty.Easy,
+                "Hướng dẫn", null);
+            recipe.Publish(DateTimeOffset.UtcNow, true, 1, [1]);
+            dbContext.Recipes.Add(recipe);
+        }
+        await dbContext.SaveChangesAsync();
+
+        var result = await _client.GetFromJsonAsync<RecipePage>(
+            $"/api/v1/recipes/search?q={Uri.EscapeDataString(search)}&category={category.Slug}&pageSize=50");
+        Assert.NotNull(result);
+        Assert.Equal(expectedTotal, result.Meta.Total);
+        Assert.All(result.Data, recipe => Assert.Equal("published", recipe.Status));
+        if (expectedFirst is not null) Assert.Equal(expectedFirst, result.Data[0].Title);
+        if (search.Contains("nu", StringComparison.OrdinalIgnoreCase))
+            Assert.DoesNotContain(result.Data, recipe => recipe.Title == "Nem lụi Huế");
     }
 
     [Fact]

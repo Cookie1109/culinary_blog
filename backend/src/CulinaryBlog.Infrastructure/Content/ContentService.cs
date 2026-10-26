@@ -412,30 +412,16 @@ internal sealed partial class ContentService(
         ValidatePage(page, pageSize);
         var stopwatch = Stopwatch.StartNew();
         var query = dbContext.Recipes.AsNoTracking().Where(recipe => recipe.Status == RecipeStatus.Published);
-        var terms = Regex.Matches(RemoveAccents(search ?? string.Empty), @"[\p{L}\p{N}]+")
-            .Select(match => match.Value)
-            .Take(20)
-            .ToArray();
+        var rawTerms = Regex.Matches((search ?? string.Empty).Normalize(NormalizationForm.FormKC), @"[\p{L}\p{N}]+")
+            .Select(match => match.Value).Take(20).ToArray();
+        var terms = rawTerms.Select(RemoveAccents).ToArray();
         if (!string.IsNullOrWhiteSpace(search) && terms.Length == 0)
         {
             return new PageEnvelope<RecipeDto>([], CreateMeta(page, pageSize, 0));
         }
 
         var normalizedSearch = string.Join(' ', terms);
-        // A known short word such as "ga" should not expand to "gao", "gac" or "gan".
-        // Keep prefix matching for incomplete terms such as "ph" and for multi-word searches.
-        var preferExactShortTerm = terms.Length == 1 && terms[0].Length == 2 &&
-            await query.AnyAsync(recipe => EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
-                .Matches(EF.Functions.ToTsQuery("simple", normalizedSearch)), cancellationToken).ConfigureAwait(false);
-        var tsQuery = preferExactShortTerm ? normalizedSearch : string.Join(" & ", terms.Select(term => term + ":*"));
-        if (terms.Length > 0)
-        {
-            query = query.Where(recipe =>
-                EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
-                    .Matches(EF.Functions.ToTsQuery("simple", tsQuery)) ||
-                (!preferExactShortTerm && EF.Functions.TrigramsAreSimilar(
-                    EF.Property<string>(recipe, "SearchTitle"), normalizedSearch)));
-        }
+        var tsQuery = string.Join(" & ", terms.Select(term => term + ":*"));
 
         if (!string.IsNullOrWhiteSpace(category))
         {
@@ -451,6 +437,68 @@ internal sealed partial class ContentService(
         if (maxTime.HasValue)
         {
             query = query.Where(recipe => recipe.PrepTime + recipe.CookTime <= maxTime.Value);
+        }
+
+        if (terms.Length > 0)
+        {
+            var exactQuery = string.Join(" & ", terms);
+            var exactMatches = query.Where(recipe => EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                .Matches(EF.Functions.ToTsQuery("simple", exactQuery)));
+            var accentedTerms = rawTerms.Where(term => !string.Equals(RemoveAccents(term), term, StringComparison.OrdinalIgnoreCase)).ToArray();
+            var accentedMatches = exactMatches;
+            foreach (var term in accentedTerms)
+            {
+                var pattern = @"\m" + Regex.Escape(term) + @"\M";
+                accentedMatches = accentedMatches.Where(recipe =>
+                    Regex.IsMatch(recipe.Title, pattern, RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(recipe.Description ?? string.Empty, pattern, RegexOptions.IgnoreCase));
+            }
+
+            if (accentedTerms.Length > 0 && await accentedMatches.AnyAsync(cancellationToken).ConfigureAwait(false))
+            {
+                query = accentedMatches;
+                tsQuery = exactQuery;
+            }
+            else if (await exactMatches.AnyAsync(cancellationToken).ConfigureAwait(false))
+            {
+                query = exactMatches;
+                tsQuery = exactQuery;
+            }
+            else
+            {
+                var prefixMatches = query.Where(recipe => EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                    .Matches(EF.Functions.ToTsQuery("simple", tsQuery)));
+                var knownShortTerms = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var term in terms.Where(term => term.Length <= 2).Distinct())
+                {
+                    if (await dbContext.Recipes.AnyAsync(recipe => recipe.Status == RecipeStatus.Published &&
+                        EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                            .Matches(EF.Functions.ToTsQuery("simple", term)), cancellationToken).ConfigureAwait(false))
+                    {
+                        knownShortTerms.Add(term);
+                        prefixMatches = prefixMatches.Where(recipe => EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                            .Matches(EF.Functions.ToTsQuery("simple", term)));
+                    }
+                }
+
+                if (await prefixMatches.AnyAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    query = prefixMatches;
+                }
+                else
+                {
+                    // Approximate names are a fallback, and every query word must still match.
+                    foreach (var term in terms)
+                    {
+                        var termQuery = knownShortTerms.Contains(term) ? term : term + ":*";
+                        var allowTypo = term.Length >= 4;
+                        query = query.Where(recipe => EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                            .Matches(EF.Functions.ToTsQuery("simple", termQuery)) ||
+                            (allowTypo && EF.Functions.TrigramsAreWordSimilar(term,
+                                EF.Property<string>(recipe, "SearchTitle"))));
+                    }
+                }
+            }
         }
 
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);

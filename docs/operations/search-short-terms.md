@@ -1,34 +1,49 @@
-# Tim kiem tu ngan tieng Viet
+# Tìm kiếm món ăn tiếng Việt và trải nghiệm sử dụng
 
-Ngay27/10/2026. Ban sua theo yeu cau tim "ga"/"gà" khong tra ve mon chi co
-"gao", "gac" hoac "gan" trong tieu de/mo ta.
+Cập nhật27/10/2026 theo yêu cầu tối ưu tìm kiếm trên Vercel. Đây là bản mở rộng
+của sửa từ ngắn trước đó, giữ PostgreSQL FTS/unaccent/pg_trgm, GIN, ts_rank,
+Published-only và các bộ lọc. Không đổi schema hoặc chạy migration/seed.
 
-- Voi mot tu don2 ky tu sau bo dau, neu co khop nguyen tu trong cong thuc Published,
-  dung khop nguyen tu va khong mo rong bang trigram cho truy van do.
-- Neu chua co khop nguyen tu, giu prefix/trigram de "ph" van tim duoc "pho".
-- Truy van dai hon va nhieu tu giu prefix, vi du `pho:* & bo:*` theo
-  FR-SRCH-001, SRS trang36-37. Giu unaccent, FTS/GIN, rank, filter, paging,
-  Published-only va cau hinh FTS hien co. Khong doi schema, seed hay credentials.
-- Kiem nguyen tu dung truy van EXISTS tren tap Published truoc cac bo loc khac;
-  mot tu da duoc nhan dien khong bi bien thanh tu khac khi doi category.
-- Xoi xeo co "mo ga" va sup cua co "ga xe" van la ket qua hop le.
+## Thứ tự khớp
 
-Regression PostgreSQL16/Redis7 trong Testcontainers rieng:
+1. Chuẩn hóa Unicode NFKC, khoảng trắng và hoa/thường; giữ chữ gốc để hiển thị.
+2. Khớp đủ mọi từ nguyên vẹn trong tiêu đề/mô tả. Nếu nhập dấu tiếng Việt và có
+   tập khớp đúng dấu trong các bộ lọc hiện tại, ưu tiên tập đó (cá khác cà, bò khác bơ).
+3. Nếu không có, tìm tiền tố. Từ ngắn đã được nhận diện như ga không mở rộng sang
+   gạo/gấc/gan, kể cả trong truy vấn nhiều từ. Vẫn hỗ trợ ph→phở và ví dụ prefix
+   pho:* & bo:* của FR-SRCH-001 trang36–37 PDF.
+4. Chỉ khi không có khớp tốt hơn mới tìm tên gần đúng. Từng từ đều phải khớp;
+   dung sai gõ sai chỉ áp dụng từ có ít nhất4 ký tự, qua pg_trgm word similarity.
+5. Mặc định tìm từ khóa theo độ phù hợp ts_rank; duyệt không từ khóa theo mới nhất.
+   Người dùng vẫn có thể chọn mới nhất, nấu nhanh nhất hoặc tên A–Z.
 
-- Truoc sua:2 test ga/gà that bai, mong3 nhung thuc te7 ket qua.
-- Sau sua:8/8 test RecipeDiscoveryApiTests tren source tach tu main;0 fail/skip.
-- Cung ban sua tren workspace G04:32/32 test cung class;0 fail/skip.
-- Test bao phu khong dau/co dau, loc category, mo ta, loai gao/gac/gan,
-  Draft privacy va prefix2 ky tu chua hoan chinh. Khong dung Neon de seed/test.
+Không trộn các món chỉ giống một phần vào tập đã khớp đủ. Phở bò không bị thêm
+bò kho chỉ vì có chữ bò. Món có từ khóa ở mô tả vẫn hợp lệ: xôi xéo có mỡ gà,
+súp cua có gà xé. Cache tìm kiếm dùng namespace v2, TTL/tag hiện có được giữ,
+không flush Redis hoặc thay dữ liệu.
 
-Lenh kiem ban chuan bi push:
+## Giao diện
 
-```powershell
-dotnet test backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj -c Release --no-restore --filter FullyQualifiedName~RecipeDiscoveryApiTests
-```
+- Gợi ý đúng phạm vi: tìm tên món và mô tả, hỗ trợ nhập không dấu.
+- Mặc định “Phù hợp nhất” khi có từ khóa, reset về trang1 khi đổi từ khóa/bộ lọc.
+- Tô từ khớp có/không dấu; nhãn Khớp mô tả/Khớp tên và mô tả/Gần đúng giúp hiểu
+  lý do xuất hiện. Đoạn mô tả dài lấy phần quanh từ khóa, không dùng HTML thô.
+- Xóa từ khóa riêng hoặc bỏ từng filter; xóa từ khóa giữ filter khác.
+- Không gửi yêu cầu khi đang ghép dấu IME; báo lỗi từ khóa1 ký tự/quá100/chỉ ký hiệu.
+- Giữ lịch sử Back/Forward, tránh cuộn trang khi đổi filter; về vùng kết quả khi
+  tìm hoặc chuyển trang. Chặn submit trùng và thông báo trạng thái tải.
+- Phân biệt không có kết quả với lỗi kết nối. Retry giữ URL/từ khóa/filter;
+  URL quá số trang có nút về trang đầu. Phân trang gọn với Trước/Sau và dấu lược.
+- Bộ lọc mobile có nút xem kết quả và vùng chạm rộng hơn; giữ phong cách hiện tại.
 
-Deploy frontend/backend thanh cong chua dong goi G04. Report workspace hien giu
-9/15 task dong; D6-01/02/03/04/09/13 con mo vi400/422, Category Name50/100 va
-Google sitemap ping da ngung. Source deploy tach rieng giu5 migration; cac thay
-doi G04 va6 migration pending trong workspace khong nam trong ban sua nay.
-Khong dung checkpoint local de chung nhan production SRS hoac mien gate CI.
+## Kiểm chứng và giới hạn
+
+Dùng PostgreSQL16/Redis7 Testcontainers cho đúng SQL, không ghi Neon/Upstash.
+Có regression cho ga/gà/GÀ/Unicode tổ hợp, gà nướng/phở bò, cá/cà, bò/bơ,
+prefix/typo/all-word AND, Published privacy/rank/filter/paging. Frontend kiểm
+DOM tương tác, SSR validation/error, lịch sử và IME; build/lint/typecheck/audit
+và các gate CI giữ nguyên. Bằng chứng cuối, commit/CI/runtime ghi ở report vận hành.
+
+Các con số8/32 của phiên bản sửa từ ngắn là checkpoint lịch sử. Không dùng deploy
+hoặc cải tiến này để đóng toàn G04: conflict400/422, Category Name50/100 và
+Google sitemap ping retired còn mở; source/migration G04 khác chưa rollout.

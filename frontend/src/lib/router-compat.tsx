@@ -46,6 +46,7 @@ export function useNavigate() {
 type SearchParamsInitializer = URLSearchParams | Record<string, string>
 type SearchParamsSetter = (
   next: SearchParamsInitializer | ((current: URLSearchParams) => SearchParamsInitializer),
+  options?: { replace?: boolean; scroll?: boolean },
 ) => void
 
 export function useSearchParams(): [URLSearchParams, SearchParamsSetter] {
@@ -55,12 +56,14 @@ export function useSearchParams(): [URLSearchParams, SearchParamsSetter] {
   const snapshot = useMemo(() => new URLSearchParams(current.toString()), [current])
 
   const setSearchParams = useCallback<SearchParamsSetter>(
-    (nextValue) => {
+    (nextValue, options) => {
       const currentValue = new URLSearchParams(current.toString())
       const resolved = typeof nextValue === 'function' ? nextValue(currentValue) : nextValue
       const next = resolved instanceof URLSearchParams ? resolved : new URLSearchParams(resolved)
       const query = next.toString()
-      router.replace(query ? `${pathname}?${query}` : pathname)
+      const href = query ? `${pathname}?${query}` : pathname
+      if (options?.replace === false) router.push(href, { scroll: options.scroll ?? true })
+      else router.replace(href, { scroll: options?.scroll ?? true })
     },
     [current, pathname, router],
   )

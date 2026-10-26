@@ -48,6 +48,7 @@ async function setup({ editing = true } = {}) {
     'Event',
     'MouseEvent',
     'KeyboardEvent',
+    'FormData',
   ]) {
     globalThis[key] = dom.window[key]
   }
@@ -144,7 +145,16 @@ async function setup({ editing = true } = {}) {
     cache.set(filename, exports)
     const customRequire = (name) => {
       if (name === 'react-router') return router
-      if (name === 'next/navigation') return { usePathname: () => dom.window.location.pathname }
+      if (name === 'next/navigation')
+        return {
+          usePathname: () => dom.window.location.pathname,
+          useSearchParams: () => search,
+          useRouter: () => ({
+            refresh: () => requests.push(['refresh']),
+            push: (href, options) => navigations.push(['push', href, options]),
+            replace: (href, options) => navigations.push(['replace', href, options]),
+          }),
+        }
       if (name === '@tanstack/react-query') return query
       if (name === 'next/image')
         return function TestImage({ src, alt }) {
@@ -219,6 +229,7 @@ async function setup({ editing = true } = {}) {
     setUser: (next) => {
       user = next
     },
+    getSearch: () => new URLSearchParams(search),
     setSearch: (next) => {
       search = new URLSearchParams(next)
     },
@@ -819,6 +830,13 @@ test('back and forward navigation restore the editor until unsaved changes are r
   const h = await setup()
   try {
     const targets = []
+    const waitForHistory = async (condition) => {
+      for (let attempt = 0; attempt < 100; attempt++) {
+        if (condition()) return
+        await new Promise((resolve) => setTimeout(resolve, 10))
+      }
+      assert.ok(condition(), 'History traversal and guard restoration must settle')
+    }
     const { useUnsavedChanges } = h.load('components/navigation-guard.tsx')
     function Guarded({ dirty }) {
       useUnsavedChanges(dirty, (target) => targets.push(target))
@@ -828,7 +846,7 @@ test('back and forward navigation restore the editor until unsaved changes are r
     window.history.pushState({}, '', '/first')
     window.history.pushState({}, '', '/second')
     window.history.back()
-    await new Promise((r) => setTimeout(r, 40))
+    await waitForHistory(() => targets[0] === '/first' && window.location.pathname === '/second')
     assert.deepEqual(targets, ['/first'])
     assert.equal(window.location.pathname, '/second')
     const unload = new window.Event('beforeunload', { cancelable: true })
@@ -836,11 +854,11 @@ test('back and forward navigation restore the editor until unsaved changes are r
     assert.equal(unload.defaultPrevented, true)
     await h.render(React.createElement(Guarded, { dirty: false }))
     window.history.back()
-    await new Promise((r) => setTimeout(r, 30))
+    await waitForHistory(() => window.location.pathname === '/first')
     assert.equal(window.location.pathname, '/first')
     await h.render(React.createElement(Guarded, { dirty: true }))
     window.history.forward()
-    await new Promise((r) => setTimeout(r, 40))
+    await waitForHistory(() => targets.at(-1) === '/second' && window.location.pathname === '/first')
     assert.equal(targets.at(-1), '/second')
     assert.equal(window.location.pathname, '/first')
   } finally {
@@ -944,6 +962,171 @@ test('carousel excludes hidden links, pauses on focus and hover, and respects re
     })
     assert.equal(timers.size, 0)
     assert.equal(document.getElementById('latest-recipes-carousel').style.transition, 'none')
+  } finally {
+    await h.close()
+  }
+})
+
+test('recipe search normalizes Vietnamese, validates short input, and defaults to relevance', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('q=ga&category=mon-an&difficulty=easy&page=2')
+    const { RecipesList } = h.load('features/culinary/pages/RecipesList.tsx')
+    const result = {
+      data: [{ ...fixture, slug: 'ga', status: 'published', title: 'Gà kho', description: 'Gà và gạo.' }],
+      meta: { page: 2, total: 18, totalPages: 2 },
+    }
+    await h.render(React.createElement(RecipesList, { result, categories: [fixture.category] }))
+    assert.equal(document.getElementById('recipes-sort-select').value, 'relevance')
+    await input(document.getElementById('recipes-search'), 'a')
+    await click(document.querySelector('form[role="search"] button[type="submit"]'))
+    assert.match(document.getElementById('recipes-search-error').textContent, /ít nhất 2/)
+    assert.equal(h.getSearch().get('q'), 'ga')
+    await input(document.getElementById('recipes-search'), '  gà   nướng  ')
+    await click(document.querySelector('form[role="search"] button[type="submit"]'))
+    assert.equal(h.getSearch().get('q'), 'gà nướng')
+    assert.equal(h.getSearch().get('category'), 'mon-an')
+    assert.equal(h.getSearch().get('difficulty'), 'easy')
+    assert.equal(h.getSearch().has('page'), false)
+    assert.equal(h.getSearch().get('sort'), null)
+    await click(document.querySelector('[aria-label="Xóa từ khóa"]'))
+    assert.equal(h.getSearch().has('q'), false)
+    assert.equal(h.getSearch().get('category'), 'mon-an')
+    assert.equal(document.activeElement.id, 'recipes-search')
+  } finally {
+    await h.close()
+  }
+})
+
+test('recipe search explains description matches and removes one filter without losing the query', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('q=ga&category=mon-an&difficulty=easy&maxTime=90&page=2')
+    const { RecipesList } = h.load('features/culinary/pages/RecipesList.tsx')
+    const result = {
+      data: [
+        {
+          ...fixture,
+          slug: 'xoi-xeo',
+          status: 'published',
+          title: 'Xôi xéo',
+          description: 'Gạo nếp cùng mỡ gà.',
+        },
+      ],
+      meta: { page: 2, total: 18, totalPages: 2 },
+    }
+    await h.render(React.createElement(RecipesList, { result, categories: [fixture.category] }))
+    assert.match(document.querySelector('article').textContent, /Khớp mô tả/)
+    assert.deepEqual(
+      [...document.querySelectorAll('article mark')].map((node) => node.textContent),
+      ['gà'],
+    )
+    await click(document.querySelector('[aria-label="Bỏ lọc danh mục"]'))
+    assert.equal(h.getSearch().has('category'), false)
+    assert.equal(h.getSearch().has('page'), false)
+    assert.equal(h.getSearch().get('q'), 'ga')
+    assert.equal(h.getSearch().get('difficulty'), 'easy')
+  } finally {
+    await h.close()
+  }
+})
+
+test('recipe search keeps empty and network error states distinct and retries the same query', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('q=ga&category=mon-an')
+    const { RecipesList } = h.load('features/culinary/pages/RecipesList.tsx')
+    const result = { data: [], meta: { page: 1, total: 0, totalPages: 0 } }
+    await h.render(
+      React.createElement(RecipesList, { result, categories: [fixture.category], loadError: true }),
+    )
+    assert.match(document.querySelector('[role="alert"]').textContent, /Chưa tải được kết quả/)
+    assert.doesNotMatch(document.querySelector('section').textContent, /Không có công thức phù hợp/)
+    await click(button('Thử lại'))
+    assert.deepEqual(h.requests, [['refresh']])
+    assert.equal(h.getSearch().get('q'), 'ga')
+    await h.render(React.createElement(RecipesList, { result, categories: [fixture.category] }))
+    assert.match(document.querySelector('section').textContent, /Không có công thức phù hợp/)
+    await click(button('Bỏ bộ lọc'))
+    assert.equal(h.getSearch().get('q'), 'ga')
+    assert.equal(h.getSearch().has('category'), false)
+  } finally {
+    await h.close()
+  }
+})
+
+test('search navigation can preserve browser history and scrolling without changing legacy defaults', async () => {
+  const h = await setup()
+  try {
+    const compat = h.load('lib/router-compat.tsx')
+    function Probe() {
+      const [, set] = compat.useSearchParams()
+      return React.createElement(
+        'div',
+        null,
+        React.createElement(
+          'button',
+          { onClick: () => set({ q: 'ga' }, { replace: false, scroll: false }) },
+          'push-search',
+        ),
+        React.createElement('button', { onClick: () => set({ q: 'pho' }) }, 'legacy-replace'),
+      )
+    }
+    await h.render(React.createElement(Probe))
+    await click(button('push-search'))
+    assert.equal(h.navigations[0][0], 'push')
+    assert.match(h.navigations[0][1], /\?q=ga$/)
+    assert.equal(h.navigations[0][2].scroll, false)
+    await click(button('legacy-replace'))
+    assert.equal(h.navigations[1][0], 'replace')
+    assert.equal(h.navigations[1][2].scroll, true)
+  } finally {
+    await h.close()
+  }
+})
+
+test('recipe search blocks Enter during Vietnamese IME composition', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('q=ga')
+    const { RecipesList } = h.load('features/culinary/pages/RecipesList.tsx')
+    await h.render(
+      React.createElement(RecipesList, {
+        result: { data: [], meta: { page: 1, total: 0, totalPages: 0 } },
+        categories: [],
+      }),
+    )
+    const input = document.getElementById('recipes-search')
+    const event = new window.KeyboardEvent('keydown', {
+      key: 'Enter',
+      isComposing: true,
+      bubbles: true,
+      cancelable: true,
+    })
+    await act(async () => input.dispatchEvent(event))
+    assert.equal(event.defaultPrevented, true)
+    assert.equal(h.getSearch().get('q'), 'ga')
+  } finally {
+    await h.close()
+  }
+})
+
+test('recipe search recovers from an out-of-range page without discarding filters', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('q=ga&category=mon-an&page=99')
+    const { RecipesList } = h.load('features/culinary/pages/RecipesList.tsx')
+    await h.render(
+      React.createElement(RecipesList, {
+        result: { data: [], meta: { page: 99, total: 18, totalPages: 2 } },
+        categories: [fixture.category],
+      }),
+    )
+    assert.match(document.querySelector('section').textContent, /Trang này không còn kết quả/)
+    await click(button('Về trang đầu'))
+    assert.equal(h.getSearch().get('page'), '1')
+    assert.equal(h.getSearch().get('q'), 'ga')
+    assert.equal(h.getSearch().get('category'), 'mon-an')
   } finally {
     await h.close()
   }

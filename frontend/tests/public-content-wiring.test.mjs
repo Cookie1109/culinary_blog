@@ -79,7 +79,8 @@ test('recipe listing submits search terms and route failures offer retry and off
   )
 
   assert.match(listing, /submitSearch/)
-  assert.match(listing, /setFilter\('q', searchValue\.trim\(\)\)/)
+  assert.match(listing, /const value = normalizeRecipeSearch\(searchValue\)/)
+  assert.match(listing, /setFilter\('q', value\)/)
   assert.match(routeError, /reset/)
   assert.match(networkStatus, /navigator\.onLine/)
   assert.match(networkStatus, /addEventListener\('offline'/)
