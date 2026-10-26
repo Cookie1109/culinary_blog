@@ -15,6 +15,19 @@ public sealed class ApiDocumentationTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task SemanticValidationAndCategoryBoundsAreDocumented()
+    {
+        using var document = JsonDocument.Parse(await _client.GetStringAsync("/openapi/v1.json"));
+        var root = document.RootElement;
+        var name = root.GetProperty("components").GetProperty("schemas").GetProperty("CategoryWriteRequest")
+            .GetProperty("properties").GetProperty("name");
+        Assert.Equal(2, name.GetProperty("minLength").GetInt32());
+        Assert.Equal(50, name.GetProperty("maxLength").GetInt32());
+        Assert.True(root.GetProperty("paths").GetProperty("/api/v1/categories").GetProperty("post")
+            .GetProperty("responses").TryGetProperty("422", out _));
+    }
+
+    [Fact]
     public async Task GeneratedDocumentIncludesVersionedEndpointsAndResponseSchemas()
     {
         using var document = JsonDocument.Parse(await _client.GetStringAsync("/openapi/v1.json"));

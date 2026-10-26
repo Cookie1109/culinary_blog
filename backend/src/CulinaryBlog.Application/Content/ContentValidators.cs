@@ -51,7 +51,7 @@ internal sealed class IngredientWriteRequestValidator : AbstractValidator<Ingred
 {
     public IngredientWriteRequestValidator()
     {
-        RuleFor(request => request.Name).NotEmpty().MaximumLength(200);
+        RuleFor(request => request.Name).NotEmpty().MaximumLength(100);
         RuleFor(request => request.Quantity).GreaterThan(0).When(request => request.Quantity.HasValue);
         RuleFor(request => request.Unit).MaximumLength(50);
         RuleFor(request => request.Notes).MaximumLength(500);

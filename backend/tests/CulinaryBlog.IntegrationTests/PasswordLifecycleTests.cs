@@ -52,7 +52,7 @@ public sealed class PasswordLifecycleTests(AuthApiFactory factory) : IClassFixtu
         using var tampered = await client.PostAsJsonAsync("/api/v1/auth/reset-password", new { email, token = token + "tampered", newPassword = NewPassword });
         Assert.Equal(HttpStatusCode.BadRequest, tampered.StatusCode);
         using var weak = await client.PostAsJsonAsync("/api/v1/auth/reset-password", new { email, token, newPassword = "weak" });
-        Assert.Equal(HttpStatusCode.BadRequest, weak.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, weak.StatusCode);
         using var reset = await client.PostAsJsonAsync("/api/v1/auth/reset-password", new { email, token, newPassword = NewPassword });
         Assert.Equal(HttpStatusCode.NoContent, reset.StatusCode);
         using var replay = await client.PostAsJsonAsync("/api/v1/auth/reset-password", new { email, token, newPassword = OldPassword });
@@ -83,9 +83,9 @@ public sealed class PasswordLifecycleTests(AuthApiFactory factory) : IClassFixtu
         using var change = await client.PostAsJsonAsync("/api/v1/auth/change-password", new { currentPassword = OldPassword, newPassword = NewPassword });
         Assert.Equal(HttpStatusCode.Unauthorized, change.StatusCode);
         using var invalid = await client.PostAsJsonAsync("/api/v1/auth/forgot-password", new { email = "invalid" });
-        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalid.StatusCode);
         using var missingPassword = await client.PostAsJsonAsync("/api/v1/auth/reset-password", new { email = "a@example.test", token = "token" });
-        Assert.Equal(HttpStatusCode.BadRequest, missingPassword.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, missingPassword.StatusCode);
     }
 
     private static async Task<Session> RegisterAsync(HttpClient client, string email)

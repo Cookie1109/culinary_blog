@@ -105,7 +105,7 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         using var incompleteRequest = CreateLifecyclePatch(recipe.Id, "publish", 1);
         using var incompleteResponse = await client.SendAsync(incompleteRequest);
         var incompleteProblem = await incompleteResponse.Content.ReadFromJsonAsync<Problem>();
-        Assert.Equal(HttpStatusCode.BadRequest, incompleteResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, incompleteResponse.StatusCode);
         Assert.Equal("RECIPE_PUBLISH_INCOMPLETE", incompleteProblem?.Code);
 
         using var ingredientResponse = await SendJsonAsync(

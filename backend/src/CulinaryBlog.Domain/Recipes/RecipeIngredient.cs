@@ -37,7 +37,7 @@ public sealed class RecipeIngredient : BaseEntity
     public void Update(string name, decimal? quantity, string? unit, string? notes, int orderIndex)
     {
         var trimmedName = name.Trim();
-        if (trimmedName.Length is < 1 or > 200 || quantity <= 0 || orderIndex < 0)
+        if (trimmedName.Length is < 1 or > 100 || quantity <= 0 || orderIndex < 0)
         {
             throw new DomainException("RECIPE_DATA_INVALID", "Ingredient data is invalid.");
         }

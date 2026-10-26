@@ -46,6 +46,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/RegisterRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '201': {$ref: '#/components/responses/AuthCreated'}
         '400': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
@@ -60,6 +61,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/LoginRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/AuthOk'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
@@ -80,6 +82,7 @@ paths:
               properties:
                 idToken: {type: string, minLength: 1, writeOnly: true}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/AuthOk'}
         '400': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
@@ -95,6 +98,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/RefreshTokenRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/AuthOk'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
@@ -111,6 +115,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/RefreshTokenRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '204': {description: Refresh token đã được revoke hoặc vốn không còn hiệu lực}
         '400': {$ref: '#/components/responses/Problem'}
   /auth/change-password:
@@ -124,6 +129,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/ChangePasswordRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '204': {description: Password changed and all sessions revoked}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
@@ -141,6 +147,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/ForgotPasswordRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '202': {description: Request processed; check email if the account is eligible}
         '400': {$ref: '#/components/responses/Problem'}
         '429': {$ref: '#/components/responses/Problem'}
@@ -157,6 +164,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/ResetPasswordRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '204': {description: Password reset and all sessions revoked}
         '400': {$ref: '#/components/responses/Problem'}
         '429': {$ref: '#/components/responses/Problem'}
@@ -181,6 +189,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/UpdateProfileRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200':
           description: Hồ sơ đã cập nhật
           content:
@@ -194,6 +203,7 @@ paths:
       operationId: listCategories
       security: []
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200':
           description: Danh sách category, sắp xếp name tăng dần
           content:
@@ -215,6 +225,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/CategoryWrite'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '201': {$ref: '#/components/responses/CategoryResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -248,6 +259,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/CategoryWrite'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/CategoryResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -278,6 +290,7 @@ paths:
           schema: {type: string, maxLength: 100}
         - {name: authorId, in: query, schema: {type: string}}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/RecipePage'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -288,6 +301,7 @@ paths:
       x-required-role: Admin
       parameters: [{$ref: '#/components/parameters/Id'}]
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -308,6 +322,7 @@ paths:
         - {name: level, in: query, schema: {type: string, enum: [all, Information, Warning, Error]}}
         - {name: search, in: query, description: Tìm theo người thực hiện, đối tượng, sự kiện hoặc mã tương quan., schema: {type: string}}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200':
           description: Nhật ký và trạng thái cấu hình giám sát.
           content:
@@ -343,6 +358,7 @@ paths:
         - {name: minPrepTime, in: query, schema: {type: integer, minimum: 1}}
         - {name: maxPrepTime, in: query, schema: {type: integer, minimum: 1}}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/RecipePage'}
         '400': {$ref: '#/components/responses/Problem'}
     post:
@@ -355,6 +371,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/CreateRecipeRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '201': {$ref: '#/components/responses/RecipeResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
@@ -378,6 +395,7 @@ paths:
         - {name: maxTime, in: query, description: Maximum preparation plus cooking time in minutes, schema: {type: integer, minimum: 1}}
         - {name: sort, in: query, schema: {type: string, enum: [relevance, newest, quickest, az], default: relevance}}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/RecipePage'}
         '400': {$ref: '#/components/responses/Problem'}
   /recipes/{slug}:
@@ -387,6 +405,7 @@ paths:
       security: []
       parameters: [{$ref: '#/components/parameters/Slug'}]
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '404': {$ref: '#/components/responses/Problem'}
   /recipes/{id}:
@@ -403,6 +422,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/UpdateRecipeRequest'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -490,6 +510,7 @@ paths:
           description: Tìm trong toàn bộ công thức của tài khoản theo tiêu đề hoặc danh mục trước khi phân trang.
           schema: {type: string, maxLength: 100}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/RecipePage'}
         '401': {$ref: '#/components/responses/Problem'}
   /me/recipes/{id}:
@@ -498,6 +519,7 @@ paths:
       operationId: getMyRecipe
       parameters: [{$ref: '#/components/parameters/Id'}]
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -522,6 +544,7 @@ paths:
                 altText: {type: [string, 'null'], maxLength: 200}
                 isPrimary: {type: boolean, default: false}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -548,6 +571,7 @@ paths:
                 isPrimary: {type: boolean}
                 orderIndex: {type: integer, minimum: 0}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -581,6 +605,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/StepWrite'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -601,6 +626,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/StepWrite'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -634,6 +660,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/IngredientWrite'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -654,6 +681,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/IngredientWrite'}
       responses:
+        '422': {$ref: '#/components/responses/Problem'}
         '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -980,17 +1008,21 @@ components:
       type: object
       required: [name]
       properties:
-        name: {type: string, minLength: 1, maxLength: 200}
+        name: {type: string, minLength: 1, maxLength: 100}
         quantity: {type: [number, 'null'], exclusiveMinimum: 0}
         unit: {type: [string, 'null'], maxLength: 50}
         notes: {type: [string, 'null'], maxLength: 500}
         orderIndex: {type: integer, minimum: 0, default: 0}
     Ingredient:
-      allOf:
-        - {$ref: '#/components/schemas/IngredientWrite'}
-        - type: object
-          required: [id]
-          properties: {id: {type: string, format: uuid}}
+      type: object
+      required: [id, name]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 200}
+        quantity: {type: [number, 'null'], exclusiveMinimum: 0, maximum: 9999999.999, multipleOf: 0.001}
+        unit: {type: [string, 'null'], maxLength: 50}
+        notes: {type: [string, 'null'], maxLength: 500}
+        orderIndex: {type: integer, minimum: 0, default: 0}
     RecipeImage:
       type: object
       required: [id, isPrimary, orderIndex]

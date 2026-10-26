@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -47,7 +48,7 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
         var literalWildcard = await _client.GetFromJsonAsync<RecipePage>("/api/v1/me/recipes?q=%25");
         Assert.Equal(0, literalWildcard!.Meta.Total);
         using var oversized = await _client.GetAsync($"/api/v1/me/recipes?q={new string('a', 101)}");
-        Assert.Equal(HttpStatusCode.BadRequest, oversized.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, oversized.StatusCode);
 
         await using (var scope = factory.Services.CreateAsyncScope())
         {
@@ -257,7 +258,7 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
         var db = checkScope.ServiceProvider.GetRequiredService<AppDbContext>();
         var before = await db.Categories.CountAsync();
         using var create = await _client.PostAsJsonAsync("/api/v1/categories", new { name, orderIndex = 0 });
-        Assert.Equal(valid ? HttpStatusCode.Created : HttpStatusCode.BadRequest, create.StatusCode);
+        Assert.Equal(valid ? HttpStatusCode.Created : HttpStatusCode.UnprocessableEntity, create.StatusCode);
         Assert.Equal(before + (valid ? 1 : 0), await db.Categories.CountAsync());
 
         var originalName = $"Category {Guid.NewGuid():N}";
@@ -266,13 +267,58 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
         var target = (await targetResponse.Content.ReadFromJsonAsync<DataEnvelope<CategoryResponse>>())!.Data;
         var updatedName = valid ? "Y" + name[1..] : name;
         using var update = await _client.PutAsJsonAsync($"/api/v1/categories/{target.Id}", new { name = updatedName, orderIndex = 0 });
-        Assert.Equal(valid ? HttpStatusCode.OK : HttpStatusCode.BadRequest, update.StatusCode);
+        Assert.Equal(valid ? HttpStatusCode.OK : HttpStatusCode.UnprocessableEntity, update.StatusCode);
         Assert.Equal(valid ? updatedName : originalName,
             await db.Categories.AsNoTracking().Where(item => item.Id == target.Id).Select(item => item.Name).SingleAsync());
         Assert.Equal(100, db.Model.FindEntityType(typeof(CulinaryBlog.Domain.Categories.Category))!
             .FindProperty(nameof(CulinaryBlog.Domain.Categories.Category.Name))!.GetMaxLength());
     }
 
+
+    [Fact]
+    public async Task MalformedRecipeJsonRemainsBadRequestAndDoesNotWrite()
+    {
+        var author = await RegisterAsync($"malformed-{Guid.NewGuid():N}@example.com");
+        SetToken(author.AccessToken);
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var before = await db.Recipes.CountAsync();
+        using var body = new StringContent("{", System.Text.Encoding.UTF8, "application/json");
+        using var response = await _client.PostAsync("/api/v1/recipes", body);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(before, await db.Recipes.CountAsync());
+    }
+
+    [Fact]
+    public async Task InvalidCategoryReferenceIs422WithoutPartialCreateOrUpdate()
+    {
+        var categoryId = await GetCategoryIdAsync();
+        var author = await RegisterAsync($"foreign-category-{Guid.NewGuid():N}@example.com");
+        SetToken(author.AccessToken);
+        var missingCategory = Guid.NewGuid();
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var count = await db.Recipes.CountAsync();
+        using var invalidCreate = await _client.PostAsJsonAsync("/api/v1/recipes", RecipeBody(missingCategory, "Invalid category recipe"));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalidCreate.StatusCode);
+        Assert.Equal(count, await db.Recipes.CountAsync());
+        using var problem = JsonDocument.Parse(await invalidCreate.Content.ReadAsStringAsync());
+        Assert.Contains(problem.RootElement.GetProperty("errors").EnumerateObject(), field =>
+            field.Name.Equals("CategoryId", StringComparison.OrdinalIgnoreCase));
+        using var createdResponse = await _client.PostAsJsonAsync("/api/v1/recipes", RecipeBody(categoryId, "Valid category recipe"));
+        createdResponse.EnsureSuccessStatusCode();
+        var created = (await createdResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        var before = await db.Recipes.AsNoTracking().Where(item => item.Id == created.Id)
+            .Select(item => new { item.Title, item.CategoryId, item.Version }).SingleAsync();
+        using var request = CreatePut(created.Id, 1, RecipeBody(missingCategory, "Rejected category update"));
+        using var invalidUpdate = await _client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalidUpdate.StatusCode);
+        var after = await db.Recipes.AsNoTracking().Where(item => item.Id == created.Id)
+            .Select(item => new { item.Title, item.CategoryId, item.Version }).SingleAsync();
+        Assert.Equal(before, after);
+        using var missingResource = await _client.GetAsync($"/api/v1/categories/missing-{missingCategory:N}");
+        Assert.Equal(HttpStatusCode.NotFound, missingResource.StatusCode);
+    }
 
     private async Task<Guid> GetCategoryIdAsync()
     {

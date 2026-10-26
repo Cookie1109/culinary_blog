@@ -204,7 +204,7 @@ internal static class ContentEndpoints
         {
             if (!Enum.TryParse<RecipeDifficulty>(difficulty, true, out var parsed) || !Enum.IsDefined(parsed))
             {
-                throw new ContentProblemException("VALIDATION_ERROR", "Difficulty is invalid.", ContentProblemKind.BadRequest);
+                throw new ContentProblemException("VALIDATION_ERROR", "Difficulty is invalid.", ContentProblemKind.Validation);
             }
 
             parsedDifficulty = parsed;
@@ -438,7 +438,7 @@ internal static class ContentEndpoints
             if (!Enum.TryParse<RecipeDifficulty>(difficulty, true, out var parsed) || !Enum.IsDefined(parsed))
             {
                 throw new ContentProblemException(
-                    "VALIDATION_ERROR", "difficulty is invalid.", ContentProblemKind.BadRequest);
+                    "VALIDATION_ERROR", "difficulty is invalid.", ContentProblemKind.Validation);
             }
 
             parsedDifficulty = parsed;
@@ -516,7 +516,7 @@ internal static class ContentEndpoints
         if (!Enum.TryParse<RecipeStatus>(status, true, out var parsed) || !Enum.IsDefined(parsed))
         {
             throw new ContentProblemException(
-                "VALIDATION_ERROR", "status is invalid.", ContentProblemKind.BadRequest);
+                "VALIDATION_ERROR", "status is invalid.", ContentProblemKind.Validation);
         }
 
         return parsed;

@@ -37,6 +37,14 @@ internal static class ApiDocumentation
                 var problemSchema = await context.GetOrCreateSchemaAsync(typeof(ProblemDetails), cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
                 operation.Responses ??= new OpenApiResponses();
+                operation.Responses["422"] = new OpenApiResponse
+                {
+                    Description = "Semantically invalid field/query data or incomplete recipe content. Field validation errors include errors; version conflicts use409, malformed requests and missing If-Match use400.",
+                    Content = new Dictionary<string, OpenApiMediaType>
+                    {
+                        ["application/problem+json"] = new OpenApiMediaType { Schema = problemSchema },
+                    },
+                };
                 operation.Responses["4XX"] = new OpenApiResponse
                 {
                     Description = "Validation, authentication, authorization, concurrency or rate-limit error. The body also includes code and traceId.",

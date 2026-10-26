@@ -18,8 +18,8 @@ Khi chỉnh sửa một tên cũ dài hơn50, người dùng cần đổi về t
 
 Quy tắc này thay cách hiểu category input trong GAP-019; phần cookTime và
 các quyết định khác của GAP-019 không thay đổi. PDF và đính chính A/B/C giữ
-nguyên. Mã lỗi validation hiện vẫn400; việc đối chiếu400/422 của G04 còn mở,
-không dùng thay đổi này để tự đóng toàn D6-01 hoặc D6-13.
+nguyên. Mã lỗi validation là422 theo [quy tắc HTTP đã chốt](content-validation-contract.md);
+JSON hỏng và thiếu/sai If-Match vẫn400.
 
 Kiểm chứng gồm mốc1/2/50/51/100, HTML, cả POST/PUT, rollback khi từ chối và
 metadata model xác nhận cột vẫn100. Các phép ghi thử chỉ chạy trên fixture

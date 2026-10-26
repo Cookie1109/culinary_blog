@@ -789,9 +789,15 @@ export interface components {
             /** @default 0 */
             orderIndex: number;
         };
-        Ingredient: components["schemas"]["IngredientWrite"] & {
+        Ingredient: {
             /** Format: uuid */
             id: string;
+            name: string;
+            quantity?: number | null;
+            unit?: string | null;
+            notes?: string | null;
+            /** @default 0 */
+            orderIndex: number;
         };
         RecipeImage: {
             /** Format: uuid */
@@ -978,6 +984,7 @@ export interface operations {
             201: components["responses"]["AuthCreated"];
             400: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     login: {
@@ -996,6 +1003,7 @@ export interface operations {
             200: components["responses"]["AuthOk"];
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             423: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
         };
@@ -1018,6 +1026,7 @@ export interface operations {
             200: components["responses"]["AuthOk"];
             400: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             502: components["responses"]["Problem"];
         };
     };
@@ -1037,6 +1046,7 @@ export interface operations {
             200: components["responses"]["AuthOk"];
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     logout: {
@@ -1060,6 +1070,7 @@ export interface operations {
                 content?: never;
             };
             400: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     changePassword: {
@@ -1085,6 +1096,7 @@ export interface operations {
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
         };
     };
@@ -1109,6 +1121,7 @@ export interface operations {
                 content?: never;
             };
             400: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
         };
@@ -1134,6 +1147,7 @@ export interface operations {
                 content?: never;
             };
             400: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
         };
     };
@@ -1183,6 +1197,7 @@ export interface operations {
             };
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listCategories: {
@@ -1205,6 +1220,7 @@ export interface operations {
                     };
                 };
             };
+            422: components["responses"]["Problem"];
         };
     };
     createCategory: {
@@ -1224,6 +1240,7 @@ export interface operations {
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getCategoryBySlug: {
@@ -1273,6 +1290,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     deleteCategory: {
@@ -1317,6 +1335,7 @@ export interface operations {
             200: components["responses"]["RecipePage"];
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getAnyRecipeForAdmin: {
@@ -1334,6 +1353,7 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listSystemHistory: {
@@ -1370,6 +1390,7 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listPublishedRecipes: {
@@ -1393,6 +1414,7 @@ export interface operations {
         responses: {
             200: components["responses"]["RecipePage"];
             400: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     createRecipe: {
@@ -1413,6 +1435,7 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     searchPublishedRecipes: {
@@ -1436,6 +1459,7 @@ export interface operations {
         responses: {
             200: components["responses"]["RecipePage"];
             400: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getPublishedRecipeBySlug: {
@@ -1451,6 +1475,7 @@ export interface operations {
         responses: {
             200: components["responses"]["RecipeResource"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     updateRecipe: {
@@ -1476,6 +1501,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     deleteRecipe: {
@@ -1606,6 +1632,7 @@ export interface operations {
         responses: {
             200: components["responses"]["RecipePage"];
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getMyRecipe: {
@@ -1623,6 +1650,7 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     uploadRecipeImage: {
@@ -1654,6 +1682,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
         };
     };
@@ -1713,6 +1742,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     createRecipeStep: {
@@ -1738,6 +1768,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     updateRecipeStep: {
@@ -1764,6 +1795,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     deleteRecipeStep: {
@@ -1817,6 +1849,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     updateRecipeIngredient: {
@@ -1843,6 +1876,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     deleteRecipeIngredient: {

@@ -278,7 +278,8 @@ export function RecipeCompositionWizard({
 
   const submitIngredient = (event: FormEvent) => {
     event.preventDefault()
-    if (!ingredientForm.name.trim()) return setClientError('Tên nguyên liệu là bắt buộc.')
+    if (!ingredientForm.name.trim() || ingredientForm.name.trim().length > 100)
+      return setClientError('Tên nguyên liệu cần từ 1 đến 100 ký tự.')
     setClientError(null)
     ingredientMutation.mutate()
   }
@@ -377,7 +378,7 @@ export function RecipeCompositionWizard({
               <input
                 aria-label="Tên nguyên liệu"
                 placeholder="Tên nguyên liệu (bắt buộc)"
-                maxLength={200}
+                maxLength={100}
                 className={inputClass}
                 value={ingredientForm.name}
                 onChange={(event) => setIngredientForm({ ...ingredientForm, name: event.target.value })}

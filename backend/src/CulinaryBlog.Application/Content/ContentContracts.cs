@@ -3,7 +3,7 @@ using CulinaryBlog.Domain.Recipes;
 namespace CulinaryBlog.Application.Content;
 
 public sealed record CategoryWriteRequest(
-    string Name,
+    [property: System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 2)] string Name,
     string? Description,
     string? ImageUrl,
     int OrderIndex = 0);
@@ -17,7 +17,7 @@ public sealed record NutritionDto(
     decimal? Sodium);
 
 public sealed record IngredientWriteRequest(
-    string Name,
+    [property: System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)] string Name,
     decimal? Quantity,
     string? Unit,
     string? Notes,

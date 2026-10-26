@@ -619,7 +619,7 @@ internal sealed partial class ContentService(
 
         if (term.Length > 100)
         {
-            throw new ContentProblemException("VALIDATION_ERROR", "q must not exceed 100 characters.", ContentProblemKind.BadRequest);
+            throw new ContentProblemException("VALIDATION_ERROR", "q must not exceed 100 characters.", ContentProblemKind.Validation);
         }
 
         var escaped = term.Replace("\\", "\\\\", StringComparison.Ordinal)
@@ -716,7 +716,7 @@ internal sealed partial class ContentService(
     {
         if (!await dbContext.Categories.AnyAsync(category => category.Id == categoryId, cancellationToken).ConfigureAwait(false))
         {
-            throw NotFound("CATEGORY_NOT_FOUND", "Category was not found.");
+            throw new FluentValidation.ValidationException([new FluentValidation.Results.ValidationFailure("CategoryId", "Category is invalid.")]);
         }
     }
 
@@ -994,7 +994,7 @@ internal sealed partial class ContentService(
             throw new ContentProblemException(
                 "VALIDATION_ERROR",
                 "page must be at least 1 and pageSize must be between 1 and 50.",
-                ContentProblemKind.BadRequest);
+                ContentProblemKind.Validation);
         }
     }
 

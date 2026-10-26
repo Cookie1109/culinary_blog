@@ -28,12 +28,12 @@ internal sealed class GlobalExceptionHandler(
     {
         var (status, code, title) = exception switch
         {
-            ValidationException => (StatusCodes.Status400BadRequest, "VALIDATION_ERROR", "Validation failed"),
+            ValidationException => (StatusCodes.Status422UnprocessableEntity, "VALIDATION_ERROR", "Validation failed"),
             AuthProblemException authException => MapAuthProblem(authException),
             ContentProblemException contentException => MapContentProblem(contentException),
             DomainException domainException =>
                 (domainException.Code.Contains("TRANSITION", StringComparison.Ordinal) ?
-                    StatusCodes.Status409Conflict : StatusCodes.Status400BadRequest,
+                    StatusCodes.Status409Conflict : StatusCodes.Status422UnprocessableEntity,
                     domainException.Code,
                     "Business rule violation"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "RESOURCE_NOT_FOUND", "Resource not found"),
@@ -118,6 +118,7 @@ internal sealed class GlobalExceptionHandler(
         var status = exception.Kind switch
         {
             ContentProblemKind.BadRequest => StatusCodes.Status400BadRequest,
+            ContentProblemKind.Validation => StatusCodes.Status422UnprocessableEntity,
             ContentProblemKind.Forbidden => StatusCodes.Status403Forbidden,
             ContentProblemKind.NotFound => StatusCodes.Status404NotFound,
             ContentProblemKind.Conflict => StatusCodes.Status409Conflict,

@@ -41,7 +41,7 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
         Assert.True(paged.Meta.HasNextPage);
 
         using var invalidSort = await _client.GetAsync("/api/v1/recipes?sort=title%3Bdrop%20table%20recipes");
-        Assert.Equal(HttpStatusCode.BadRequest, invalidSort.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalidSort.StatusCode);
     }
 
     [Fact]
