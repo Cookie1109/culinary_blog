@@ -145,6 +145,56 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
         Assert.DoesNotContain(guest.Data, recipe => recipe.Id == draftId);
     }
 
+    [Theory]
+    [InlineData("ga")]
+    [InlineData("gà")]
+    public async Task ShortSearchPrefersWholeWordsAndPreservesIncompletePrefixes(string search)
+    {
+        var data = await SeedDiscoveryDataAsync();
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var category = await dbContext.Categories.SingleAsync(item => item.Id == data.VietnameseCategoryId);
+        var authorId = await dbContext.Recipes.Where(recipe => recipe.CategoryId == category.Id)
+            .Select(recipe => recipe.AuthorId).FirstAsync();
+        var examples = new[]
+        {
+            (Title: "Gà kho gừng", Description: "Gà ta kho gừng."),
+            (Title: "Xôi xéo", Description: "Xôi đậu xanh với mỡ gà."),
+            (Title: "Súp cua", Description: "Thịt cua và gà xé."),
+            (Title: "Xôi gấc", Description: "Xôi nếp nấu cùng gấc."),
+            (Title: "Cháo lòng", Description: "Cháo gạo rang và lòng heo."),
+            (Title: "Nem lụi Huế", Description: "Thịt heo với sốt gan."),
+            (Title: "Bột chiên", Description: "Bột gạo chiên với trứng."),
+        };
+        foreach (var example in examples)
+        {
+            var recipe = Recipe.Create(Guid.NewGuid(), authorId, $"short-search-{Guid.NewGuid():N}",
+                example.Title, example.Description, category.Id, 10, 20, 4, RecipeDifficulty.Easy,
+                "Hướng dẫn", null);
+            recipe.Publish(DateTimeOffset.UtcNow, true, 1, [1]);
+            dbContext.Recipes.Add(recipe);
+        }
+        var draft = CreateRecipe(authorId, category.Id, $"draft-ga-{Guid.NewGuid():N}",
+            "Gà bí mật", 10, 20, 4, RecipeDifficulty.Easy);
+        dbContext.Recipes.Add(draft);
+        await dbContext.SaveChangesAsync();
+
+        var result = await _client.GetFromJsonAsync<RecipePage>(
+            $"/api/v1/recipes/search?q={Uri.EscapeDataString(search)}&category={category.Slug}&pageSize=50");
+
+        Assert.NotNull(result);
+        Assert.Equal(3, result.Meta.Total);
+        Assert.Equal(examples.Take(3).Select(example => example.Title).Order(),
+            result.Data.Select(recipe => recipe.Title).Order());
+        Assert.All(result.Data, recipe => Assert.Equal("published", recipe.Status));
+
+        var prefix = await _client.GetFromJsonAsync<RecipePage>(
+            $"/api/v1/recipes/search?q=ph&category={category.Slug}&pageSize=50");
+        Assert.NotNull(prefix);
+        Assert.Contains(prefix.Data, recipe => recipe.Title == "Phở bò truyền thống");
+        Assert.DoesNotContain(prefix.Data, recipe => recipe.Status != "published");
+    }
+
     [Fact]
     public async Task RedisOutageDoesNotCrashPublicReadApi()
     {

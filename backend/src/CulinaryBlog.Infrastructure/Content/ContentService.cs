@@ -421,15 +421,20 @@ internal sealed partial class ContentService(
             return new PageEnvelope<RecipeDto>([], CreateMeta(page, pageSize, 0));
         }
 
-        var tsQuery = string.Join(" & ", terms.Select(term => term + ":*"));
         var normalizedSearch = string.Join(' ', terms);
+        // A known short word such as "ga" should not expand to "gao", "gac" or "gan".
+        // Keep prefix matching for incomplete terms such as "ph" and for multi-word searches.
+        var preferExactShortTerm = terms.Length == 1 && terms[0].Length == 2 &&
+            await query.AnyAsync(recipe => EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
+                .Matches(EF.Functions.ToTsQuery("simple", normalizedSearch)), cancellationToken).ConfigureAwait(false);
+        var tsQuery = preferExactShortTerm ? normalizedSearch : string.Join(" & ", terms.Select(term => term + ":*"));
         if (terms.Length > 0)
         {
             query = query.Where(recipe =>
                 EF.Property<NpgsqlTsVector>(recipe, "SearchVector")
                     .Matches(EF.Functions.ToTsQuery("simple", tsQuery)) ||
-                EF.Functions.TrigramsAreSimilar(
-                    EF.Property<string>(recipe, "SearchTitle"), normalizedSearch));
+                (!preferExactShortTerm && EF.Functions.TrigramsAreSimilar(
+                    EF.Property<string>(recipe, "SearchTitle"), normalizedSearch)));
         }
 
         if (!string.IsNullOrWhiteSpace(category))
