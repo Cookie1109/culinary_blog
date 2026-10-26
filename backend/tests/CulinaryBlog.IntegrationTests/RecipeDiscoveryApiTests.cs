@@ -186,8 +186,8 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
             $"/api/v1/recipes/search?q={Uri.EscapeDataString(search)}&category={category.Slug}&pageSize=50");
 
         Assert.NotNull(result);
-        Assert.Equal(3, result.Meta.Total);
-        Assert.Equal(examples.Take(3).Select(example => example.Title).Order(),
+        Assert.Equal(1, result.Meta.Total);
+        Assert.Equal(examples.Take(1).Select(example => example.Title).Order(),
             result.Data.Select(recipe => recipe.Title).Order());
         Assert.All(result.Data, recipe => Assert.Equal("published", recipe.Status));
 
@@ -199,10 +199,10 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
     }
 
     [Theory]
-    [InlineData("ga nuong", 2, "Gà nướng muối ớt")]
-    [InlineData("  GÀ   NƯỚNG  ", 2, "Gà nướng muối ớt")]
-    [InlineData("gà nướng", 2, "Gà nướng muối ớt")]
-    [InlineData("ga nuon", 2, "Gà nướng muối ớt")]
+    [InlineData("ga nuong", 1, "Gà nướng muối ớt")]
+    [InlineData("  GÀ   NƯỚNG  ", 1, "Gà nướng muối ớt")]
+    [InlineData("gà nướng", 1, "Gà nướng muối ớt")]
+    [InlineData("ga nuon", 1, "Gà nướng muối ớt")]
     [InlineData("ga nuongg", 1, "Gà nướng muối ớt")]
     [InlineData("pho bo", 1, "Phở bò truyền thống")]
     [InlineData("phở bò", 1, "Phở bò truyền thống")]
@@ -212,6 +212,8 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
     [InlineData("bơ", 1, "Bơ dầm")]
     [InlineData("bo", 5, null)]
     [InlineData("ga xyznotfound", 0, null)]
+    [InlineData("ingredientonly", 0, null)]
+    [InlineData("ingredien", 0, null)]
     public async Task VietnameseSearchRequiresAllWordsAndPrefersAccurateMatches(
         string search, int expectedTotal, string? expectedFirst)
     {
@@ -225,7 +227,7 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
         {
             (Title: "Gà nướng muối ớt", Description: "Gà nướng cùng muối ớt."),
             (Title: "Phở gà", Description: "Nước dùng có gừng nướng và gà xé."),
-            (Title: "Nem lụi Huế", Description: "Thịt nướng với sốt gan và đậu phộng."),
+            (Title: "Nem lụi Huế", Description: "Thịt nướng với sốt gan và đậu phộng ingredientonly."),
             (Title: "Gỏi đu đủ khô bò", Description: "Gỏi bò với đậu phộng."),
             (Title: "Cá kho tộ", Description: "Cá kho trong nồi đất."),
             (Title: "Cà ri chay", Description: "Cà ri với rau củ."),

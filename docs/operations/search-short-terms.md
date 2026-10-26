@@ -7,7 +7,7 @@ Published-only và các bộ lọc. Không đổi schema hoặc chạy migration
 ## Thứ tự khớp
 
 1. Chuẩn hóa Unicode NFKC, khoảng trắng và hoa/thường; giữ chữ gốc để hiển thị.
-2. Khớp đủ mọi từ nguyên vẹn trong tiêu đề/mô tả. Nếu nhập dấu tiếng Việt và có
+2. Khớp đủ mọi từ nguyên vẹn trong tên món. Nếu nhập dấu tiếng Việt và có
    tập khớp đúng dấu trong các bộ lọc hiện tại, ưu tiên tập đó (cá khác cà, bò khác bơ).
 3. Nếu không có, tìm tiền tố. Từ ngắn đã được nhận diện như ga không mở rộng sang
    gạo/gấc/gan, kể cả trong truy vấn nhiều từ. Vẫn hỗ trợ ph→phở và ví dụ prefix
@@ -18,13 +18,17 @@ Published-only và các bộ lọc. Không đổi schema hoặc chạy migration
    Người dùng vẫn có thể chọn mới nhất, nấu nhanh nhất hoặc tên A–Z.
 
 Không trộn các món chỉ giống một phần vào tập đã khớp đủ. Phở bò không bị thêm
-bò kho chỉ vì có chữ bò. Món có từ khóa ở mô tả vẫn hợp lệ: xôi xéo có mỡ gà,
-súp cua có gà xé. Cache tìm kiếm dùng namespace v2, TTL/tag hiện có được giữ,
-không flush Redis hoặc thay dữ liệu.
+bò kho chỉ vì có chữ bò. Theo yêu cầu mới của người dùng, chỉ tên món quyết định
+kết quả; xôi xéo/súp cua có gà trong mô tả không được tính là món khớp “gà”.
+Truy vấn FTS giới hạn weight A (Title), gồm cả prefix và kiểm từ ngắn; trigram
+vẫn chỉ xét SearchTitle. Rank dùng truy vấn giới hạn tên món. Giữ trigger/vector
+Title+Description hiện tại, GIN và dữ liệu; không chạy migration. Đây là thu hẹp
+phạm vi theo yêu cầu trực tiếp, không dùng làm bằng chứng đóng FR-SRCH/D6-04
+vốn còn khác biệt PDF. Cache dùng namespace v3 với TTL/tag giữ nguyên, không flush Redis.
 
 ## Giao diện
 
-- Gợi ý đúng phạm vi: tìm tên món và mô tả, hỗ trợ nhập không dấu.
+- Gợi ý đúng phạm vi: chỉ tìm theo tên món, hỗ trợ nhập không dấu.
 - Mặc định “Phù hợp nhất” khi có từ khóa, reset về trang1 khi đổi từ khóa/bộ lọc.
 - Hiển thị tên và mô tả dạng văn bản thường, không tô từ khóa hoặc thêm nhãn giải thích.
   Đoạn mô tả dài vẫn lấy phần quanh từ khóa, không dùng HTML thô.

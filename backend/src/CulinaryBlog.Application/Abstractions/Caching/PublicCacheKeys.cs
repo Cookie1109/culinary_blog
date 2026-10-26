@@ -50,7 +50,7 @@ public static class PublicCacheKeys
         string? sort,
         int page,
         int pageSize) =>
-        "cb:v2:search:" + JoinParameters(
+        "cb:v3:search:" + JoinParameters(
             ("q", search),
             ("category", category),
             ("difficulty", difficulty?.ToString()),

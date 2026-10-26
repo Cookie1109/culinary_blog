@@ -48,7 +48,7 @@ internal static class ContentEndpoints
             .Produces<PageEnvelope<RecipeDto>>();
         recipes.MapGet("/search", SearchPublishedRecipesAsync).AllowAnonymous()
             .WithSummary("Search published recipes")
-            .WithDescription("Searches title and description with every word required. Prefers exact words and supplied Vietnamese accents; prefixes and approximate names are fallbacks. Default keyword order is relevance.")
+            .WithDescription("Searches recipe titles only with every word required. Description-only matches are excluded. Prefers exact words and supplied Vietnamese accents; prefixes and approximate names are fallbacks. Default keyword order is relevance.")
             .Produces<PageEnvelope<RecipeDto>>();
         recipes.MapGet("/{slug}", GetPublishedRecipeAsync).AllowAnonymous()
             .WithSummary("View a published recipe")

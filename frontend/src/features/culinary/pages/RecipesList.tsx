@@ -232,7 +232,7 @@ export function RecipesList({
           </button>
         </form>
         <p id="recipes-search-hint" className="mt-3 text-sm text-muted-foreground">
-          Tìm trong tên món và mô tả. Bạn có thể gõ tiếng Việt không dấu.
+          Tìm theo tên món. Bạn có thể gõ tiếng Việt không dấu.
         </p>
         <FieldError id="recipes-search-error" message={searchError} />
       </header>

@@ -287,7 +287,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Search title and description with every word required. Prefer exact words and supplied Vietnamese accents; use prefixes, then approximate names only when stronger matches are absent. Default keyword order is relevance. Empty and failed requests remain distinct in the UI. */
+        /** @description Search recipe titles only with every word required. Exclude description-only matches. Prefer exact words and supplied Vietnamese accents; use prefixes, then approximate names only when stronger matches are absent. Default keyword order is relevance. Empty and failed requests remain distinct in the UI. */
         get: operations["searchPublishedRecipes"];
         put?: never;
         post?: never;
