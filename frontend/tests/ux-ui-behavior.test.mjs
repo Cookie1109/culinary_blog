@@ -998,7 +998,7 @@ test('recipe search normalizes Vietnamese, validates short input, and defaults t
   }
 })
 
-test('recipe search explains description matches and removes one filter without losing the query', async () => {
+test('recipe search shows plain cards and removes one filter without losing the query', async () => {
   const h = await setup()
   try {
     h.setSearch('q=ga&category=mon-an&difficulty=easy&maxTime=90&page=2')
@@ -1016,11 +1016,13 @@ test('recipe search explains description matches and removes one filter without 
       meta: { page: 2, total: 18, totalPages: 2 },
     }
     await h.render(React.createElement(RecipesList, { result, categories: [fixture.category] }))
-    assert.match(document.querySelector('article').textContent, /Khớp mô tả/)
-    assert.deepEqual(
-      [...document.querySelectorAll('article mark')].map((node) => node.textContent),
-      ['gà'],
+    assert.equal(document.querySelector('article h2').textContent, 'Xôi xéo')
+    assert.match(document.querySelector('article').textContent, /Gạo nếp cùng mỡ gà\./)
+    assert.doesNotMatch(
+      document.querySelector('article').textContent,
+      /Khớp mô tả|Khớp không dấu|Khớp tên và mô tả|Tên món gần đúng/,
     )
+    assert.equal(document.querySelectorAll('article mark').length, 0)
     await click(document.querySelector('[aria-label="Bỏ lọc danh mục"]'))
     assert.equal(h.getSearch().has('category'), false)
     assert.equal(h.getSearch().has('page'), false)

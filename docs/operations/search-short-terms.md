@@ -26,8 +26,8 @@ không flush Redis hoặc thay dữ liệu.
 
 - Gợi ý đúng phạm vi: tìm tên món và mô tả, hỗ trợ nhập không dấu.
 - Mặc định “Phù hợp nhất” khi có từ khóa, reset về trang1 khi đổi từ khóa/bộ lọc.
-- Tô từ khớp có/không dấu; nhãn Khớp mô tả/Khớp tên và mô tả/Gần đúng giúp hiểu
-  lý do xuất hiện. Đoạn mô tả dài lấy phần quanh từ khóa, không dùng HTML thô.
+- Hiển thị tên và mô tả dạng văn bản thường, không tô từ khóa hoặc thêm nhãn giải thích.
+  Đoạn mô tả dài vẫn lấy phần quanh từ khóa, không dùng HTML thô.
 - Xóa từ khóa riêng hoặc bỏ từng filter; xóa từ khóa giữ filter khác.
 - Không gửi yêu cầu khi đang ghép dấu IME; báo lỗi từ khóa1 ký tự/quá100/chỉ ký hiệu.
 - Giữ lịch sử Back/Forward, tránh cuộn trang khi đổi filter; về vùng kết quả khi

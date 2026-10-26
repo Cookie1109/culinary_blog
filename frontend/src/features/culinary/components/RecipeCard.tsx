@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import type { Recipe } from '@/lib/api/content-client'
 import { publicMediaUrl } from '@/lib/media-url'
-import { recipeSearchMatch, recipeSearchParts, recipeSearchSnippet } from '@/lib/recipe-search'
+import { recipeSearchSnippet } from '@/lib/recipe-search'
 
 const IMAGE_PLACEHOLDER =
   'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="16" height="16"%3E%3Crect width="16" height="16" fill="%23eee9e2"/%3E%3C/svg%3E'
@@ -20,20 +20,6 @@ export function RecipeCard({
   headingLevel?: 'h2' | 'h3'
   searchQuery?: string
 }) {
-  const matchReason = recipeSearchMatch(recipe.title, recipe.description, searchQuery)
-  const context = `${recipe.title} ${recipe.description}`
-  const highlight = (text: string) =>
-    searchQuery
-      ? recipeSearchParts(text, searchQuery, context).map((part, index) =>
-          part.matched ? (
-            <mark key={index} className="rounded-sm bg-primary/10 text-inherit">
-              {part.value}
-            </mark>
-          ) : (
-            part.value
-          ),
-        )
-      : text
   const Heading = headingLevel
   const [opening, setOpening] = useState(false)
   const primaryImage = recipe.images.find((image) => image.isPrimary)
@@ -85,14 +71,13 @@ export function RecipeCard({
       </div>
       <Heading className="font-serif text-2xl transition-colors group-hover:text-primary">
         <Link to={`/recipes/${recipe.slug}`} onClick={() => setOpening(true)}>
-          {highlight(recipe.title)}
+          {recipe.title}
         </Link>
       </Heading>
-      {matchReason && <p className="mt-2 text-xs font-medium text-primary">{matchReason}</p>}
       <p
         className={`mt-2 ${searchQuery ? 'line-clamp-3' : 'line-clamp-2'} text-sm leading-relaxed text-muted-foreground`}
       >
-        {highlight(recipeSearchSnippet(recipe.description, searchQuery))}
+        {recipeSearchSnippet(recipe.description, searchQuery)}
       </p>
     </article>
   )

@@ -31,34 +31,6 @@ test('Vietnamese keyword normalization handles combining marks, spaces, uppercas
   assert.equal(search.foldVietnamese('PHỞ BÒ'), 'pho bo')
 })
 
-test('highlights retain the original accents without highlighting gạo when gà is present', () => {
-  const parts = search.recipeSearchParts('Gạo nếp và mỡ gà.', 'ga')
-  assert.equal(
-    parts
-      .filter((part) => part.matched)
-      .map((part) => part.value)
-      .join('|'),
-    'gà',
-  )
-  assert.equal(parts.map((part) => part.value).join(''), 'Gạo nếp và mỡ gà.')
-  assert.equal(
-    search
-      .recipeSearchParts('Phở bò', 'ph')
-      .filter((part) => part.matched)
-      .map((part) => part.value)
-      .join('|'),
-    'Phở',
-  )
-})
-
-test('match labels explain description, combined fields and approximate results', () => {
-  assert.equal(search.recipeSearchMatch('Gà kho', 'Gà ta kho gừng.', 'ga'), '')
-  assert.equal(search.recipeSearchMatch('Xôi xéo', 'Mỡ gà.', 'ga'), 'Khớp mô tả')
-  assert.equal(search.recipeSearchMatch('Phở gà', 'Nước dùng gừng nướng.', 'ga nuong'), 'Khớp tên và mô tả')
-  assert.equal(search.recipeSearchMatch('Gà nướng', 'Gà ta.', 'ga nuongg'), 'Tên món gần đúng')
-  assert.equal(search.recipeSearchMatch('Cà ri', 'Rau củ.', 'cá'), 'Khớp không dấu')
-})
-
 test('description snippets expose a keyword near the end of long content', () => {
   const text = `${'Món ăn thơm ngon. '.repeat(16)}Có mỡ gà ở cuối.`
   const snippet = search.recipeSearchSnippet(text, 'ga')

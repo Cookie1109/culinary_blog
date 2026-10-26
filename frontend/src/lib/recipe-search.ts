@@ -18,9 +18,9 @@ function words(value: string) {
   return value.match(/[\p{L}\p{N}\p{M}]+/gu) ?? []
 }
 
-export function recipeSearchParts(text: string, query: string, context = text) {
+function recipeSearchParts(text: string, query: string) {
   const terms = words(normalizeRecipeSearch(query)).map(foldVietnamese)
-  const known = new Set(words(context).map(foldVietnamese))
+  const known = new Set(words(text).map(foldVietnamese))
   return text.split(/([\p{L}\p{N}\p{M}]+)/gu).map((value) => {
     const folded = foldVietnamese(value)
     const matched = terms.some((term) =>
@@ -28,29 +28,6 @@ export function recipeSearchParts(text: string, query: string, context = text) {
     )
     return { value, matched }
   })
-}
-
-export function recipeSearchMatch(title: string, description: string, query: string) {
-  if (!query) return ''
-  const terms = words(query).map(foldVietnamese)
-  if (!terms.length) return ''
-  const titleWords = words(title).map(foldVietnamese)
-  const descriptionWords = words(description).map(foldVietnamese)
-  const known = new Set([...titleWords, ...descriptionWords])
-  const matches = (tokens: string[]) =>
-    terms.every((term) =>
-      tokens.some((token) => (term.length <= 2 && known.has(term) ? token === term : token.startsWith(term))),
-    )
-  if (matches(titleWords)) {
-    const accented = words(query).filter((term) => foldVietnamese(term) !== term.toLowerCase())
-    const rawTitleWords = words(title.normalize('NFKC')).map((word) => word.toLowerCase())
-    return accented.some((term) => !rawTitleWords.some((word) => word.startsWith(term.toLowerCase())))
-      ? 'Khớp không dấu'
-      : ''
-  }
-  if (matches(descriptionWords)) return 'Khớp mô tả'
-  if (matches([...titleWords, ...descriptionWords])) return 'Khớp tên và mô tả'
-  return 'Tên món gần đúng'
 }
 
 export function recipeSearchSnippet(text: string, query: string) {
