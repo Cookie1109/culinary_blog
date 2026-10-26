@@ -74,11 +74,11 @@ public sealed class SitemapGenerationJobTests(AuthApiFactory factory) : IClassFi
     {
         var retry = typeof(SitemapGenerationJob)
             .GetMethod(nameof(SitemapGenerationJob.GenerateAsync))!
-            .GetCustomAttributes(typeof(AutomaticRetryAttribute), inherit: false)
-            .Cast<AutomaticRetryAttribute>()
-            .Single();
+            .GetCustomAttributesData()
+            .Single(attribute => attribute.AttributeType == typeof(AutomaticRetryAttribute));
+        var attempts = retry.NamedArguments.Single(argument => argument.MemberName == nameof(AutomaticRetryAttribute.Attempts));
 
-        Assert.Equal(2, retry.Attempts);
+        Assert.Equal(2, Assert.IsType<int>(attempts.TypedValue.Value));
     }
 
     private static Recipe CreateRecipe(Guid authorId, Guid categoryId, string slug) =>
