@@ -24,21 +24,7 @@ public static class ProductionConfigurationGuard
         RequireDeploymentValue(configuration["Jwt:SigningKey"], "Jwt:SigningKey", failures);
         RequireDeploymentValue(configuration["ObjectStorage:AccessKey"], "ObjectStorage:AccessKey", failures);
         RequireDeploymentValue(configuration["ObjectStorage:SecretKey"], "ObjectStorage:SecretKey", failures);
-        RequirePattern(
-            configuration["Release:CommitSha"],
-            "Release:CommitSha",
-            "^[0-9a-f]{40}$",
-            failures);
-        RequirePattern(
-            configuration["Release:ApiImageDigest"],
-            "Release:ApiImageDigest",
-            "^sha256:[0-9a-f]{64}$",
-            failures);
-        RequirePattern(
-            configuration["Release:WebImageDigest"],
-            "Release:WebImageDigest",
-            "^sha256:[0-9a-f]{64}$",
-            failures);
+        ReleaseMetadata.Validate(configuration, failures);
 
         if (string.IsNullOrWhiteSpace(configuration["AllowedHosts"])
             || string.Equals(configuration["AllowedHosts"], "*", StringComparison.Ordinal))
@@ -76,15 +62,6 @@ public static class ProductionConfigurationGuard
             || uri.Scheme != Uri.UriSchemeHttps)
         {
             failures.Add($"{key} must contain an absolute HTTPS URL");
-        }
-    }
-
-    private static void RequirePattern(string? value, string key, string pattern, List<string> failures)
-    {
-        if (string.IsNullOrWhiteSpace(value)
-            || !System.Text.RegularExpressions.Regex.IsMatch(value, pattern))
-        {
-            failures.Add($"{key} must identify the immutable deployed artifact");
         }
     }
 

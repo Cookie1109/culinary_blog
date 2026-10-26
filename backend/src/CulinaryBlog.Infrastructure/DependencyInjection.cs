@@ -121,7 +121,8 @@ public static class DependencyInjection
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
-            .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(databaseConnection)));
+            .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(databaseConnection),
+                new PostgreSqlStorageOptions { PrepareSchemaIfNecessary = backgroundJobsEnabled }));
         if (backgroundJobsEnabled)
         {
             services.AddHostedService<MediaOutboxDispatcher>();

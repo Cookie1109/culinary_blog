@@ -92,6 +92,31 @@ public sealed class SecurityHardeningTests
     }
 
     [Fact]
+    public async Task RenderReleaseEndpointReportsSourceAndInstanceIdentityWithNullImageDigests()
+    {
+        using var original = new SecurityApiFactory();
+        using var factory = original.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Release:Provider", "Render");
+            builder.UseSetting("Release:CommitSha", "");
+            builder.UseSetting("RENDER", "true");
+            builder.UseSetting("RENDER_GIT_COMMIT", new string('b', 40));
+            builder.UseSetting("RENDER_SERVICE_ID", "srv-test123");
+            builder.UseSetting("RENDER_INSTANCE_ID", "instance-test123");
+        });
+        using var client = factory.CreateClient();
+        var response = await client.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/v1/release");
+        var data = response.GetProperty("data");
+        Assert.Equal("Render", data.GetProperty("provider").GetString());
+        Assert.Equal(new string('b', 40), data.GetProperty("commitSha").GetString());
+        Assert.Equal("srv-test123", data.GetProperty("apiServiceId").GetString());
+        Assert.Equal("instance-test123", data.GetProperty("apiInstanceId").GetString());
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, data.GetProperty("apiImageDigest").ValueKind);
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, data.GetProperty("webImageDigest").ValueKind);
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, data.GetProperty("webDeploymentId").ValueKind);
+    }
+
+    [Fact]
     public async Task MaintenanceEndpointExposesRuntimeAnnouncement()
     {
         using var factory = new SecurityApiFactory();

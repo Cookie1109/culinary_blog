@@ -136,12 +136,7 @@ try
     }));
     app.MapGet("/api/v1/release", (IConfiguration configuration) => Results.Ok(new
     {
-        data = new
-        {
-            commitSha = configuration["Release:CommitSha"],
-            apiImageDigest = configuration["Release:ApiImageDigest"],
-            webImageDigest = configuration["Release:WebImageDigest"],
-        },
+        data = ReleaseMetadata.FromConfiguration(configuration),
         meta = new { },
     }));
     app.MapGet("/api/v1/operations/maintenance", (IConfiguration configuration) =>

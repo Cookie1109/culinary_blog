@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GET /api/v1/release response",
+  "description": "Runtime metadata; provider-specific startup requirements are enforced in Production. Missing Development or optional frontend metadata is null.",
+  "type": "object",
+  "required": ["data", "meta"],
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "commitSha", "apiImageDigest", "webImageDigest", "apiServiceId", "apiInstanceId", "webDeploymentId"],
+      "properties": {
+        "provider": { "enum": ["Docker", "Render"] },
+        "commitSha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
+        "apiImageDigest": { "type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$" },
+        "webImageDigest": { "type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$" },
+        "apiServiceId": { "type": ["string", "null"] },
+        "apiInstanceId": { "type": ["string", "null"] },
+        "webDeploymentId": { "type": ["string", "null"], "pattern": "^dpl_[A-Za-z0-9]+$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "provider": { "const": "Render" } } },
+          "then": { "properties": { "apiImageDigest": { "type": "null" }, "webImageDigest": { "type": "null" } } },
+          "else": { "properties": { "apiServiceId": { "type": "null" }, "apiInstanceId": { "type": "null" }, "webDeploymentId": { "type": "null" } } }
+        }
+      ]
+    },
+    "meta": { "type": "object", "additionalProperties": false }
+  }
+}
