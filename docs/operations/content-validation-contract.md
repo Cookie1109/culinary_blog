@@ -16,7 +16,7 @@ Xung đột sort/sortBy vẫn400 theo quyết định đã có. Các AuthProblem
 mã riêng giữ mapping; shared FluentValidation trả422 theo FR tương ứng.
 
 Tên danh mục nhập2–50 ký tự, không HTML; cột vẫn varchar(100).
-Tên nguyên liệu nhập1–100 ký tự theo FR-RCP-009, trang34; cột vẫn varchar(200).
+Tên nguyên liệu nhập1–100 ký tự theo FR-RCP-009, trang35; cột vẫn varchar(200).
 OpenAPI phân biệt giới hạn input và sức chứa response cũ. Không cắt hoặc sửa
 dữ liệu cũ, không có migration mới. Khi sửa tên cũ quá dài phải nhập tên hợp lệ.
 
