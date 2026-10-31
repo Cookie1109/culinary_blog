@@ -10,8 +10,11 @@ using CulinaryBlog.Application;
 using CulinaryBlog.Infrastructure;
 using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Jobs;
+using CulinaryBlog.Infrastructure.Persistence;
 using Hangfire;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
@@ -102,6 +105,19 @@ try
         await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>()
             .InitializeAsync(CancellationToken.None)
             .ConfigureAwait(false);
+    }
+
+    if (builder.Configuration.GetValue("DataProtection:PersistKeysToDatabase", false))
+    {
+        await using var keyScope = app.Services.CreateAsyncScope();
+        var keys = keyScope.ServiceProvider.GetRequiredService<DataProtectionKeyDbContext>().DataProtectionKeys;
+        _ = await keys.AnyAsync().ConfigureAwait(false);
+        var protector = app.Services.GetRequiredService<IDataProtectionProvider>().CreateProtector("CulinaryBlog.StartupKeyringCheck");
+        _ = protector.Unprotect(protector.Protect("keyring-ready"));
+        if (!await keys.AnyAsync().ConfigureAwait(false))
+        {
+            throw new InvalidOperationException("Database Data Protection keyring did not persist a key.");
+        }
     }
 
     app.MapAuthEndpoints();

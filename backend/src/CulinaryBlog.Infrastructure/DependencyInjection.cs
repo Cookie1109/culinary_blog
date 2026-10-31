@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Audit;
@@ -68,6 +69,8 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>((serviceProvider, options) => options
             .UseNpgsql(databaseConnection)
             .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));
+        services.AddDbContext<DataProtectionKeyDbContext>(options => options.UseNpgsql(
+            databaseConnection, provider => provider.MigrationsHistoryTable("__DataProtectionMigrations").CommandTimeout(30)));
         services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -87,10 +90,31 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
         services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromMinutes(30));
         var dataProtection = services.AddDataProtection().SetApplicationName("CulinaryBlog");
-        if (configuration["DataProtection:KeyPath"] is { Length: > 0 } keyPath)
+        if (configuration.GetValue("DataProtection:PersistKeysToDatabase", false))
+        {
+            var certificateBase64 = configuration["DataProtection:CertificateBase64"];
+            if (string.IsNullOrWhiteSpace(certificateBase64))
+            {
+                throw new InvalidOperationException("Database key storage requires DataProtection:CertificateBase64 from secret configuration.");
+            }
+
+            // Data Protection options retain this certificate for the host lifetime.
+            var certificate = X509CertificateLoader.LoadPkcs12(
+                Convert.FromBase64String(certificateBase64), password: null, X509KeyStorageFlags.EphemeralKeySet);
+            using var rsa = certificate.GetRSAPublicKey();
+            if (!certificate.HasPrivateKey || rsa is null)
+            {
+                certificate.Dispose();
+                throw new InvalidOperationException("DataProtection:CertificateBase64 must contain an RSA certificate with its private key.");
+            }
+
+            dataProtection.PersistKeysToDbContext<DataProtectionKeyDbContext>().ProtectKeysWithCertificate(certificate);
+        }
+        else if (configuration["DataProtection:KeyPath"] is { Length: > 0 } keyPath)
         {
             dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keyPath));
         }
+
         services.Configure<PasswordHasherOptions>(options =>
         {
             options.CompatibilityMode = PasswordHasherCompatibilityMode.IdentityV3;
