@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application;
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Behaviors;
@@ -8,8 +10,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for application behavior tests.</summary>
 public sealed class ApplicationBehaviorTests
 {
+    /// <summary>Verifies that validation behavior runs next when valid and throws when invalid.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ValidationBehaviorRunsNextWhenValidAndThrowsWhenInvalid()
     {
@@ -17,11 +22,13 @@ public sealed class ApplicationBehaviorTests
         var withoutValidators = new ValidationBehavior<TestRequest, string>([]);
 
         Assert.Equal("ok", await valid.Handle(new TestRequest("value"), _ => Task.FromResult("ok"), default));
-        Assert.Equal("ok", await withoutValidators.Handle(new TestRequest(""), _ => Task.FromResult("ok"), default));
+        Assert.Equal("ok", await withoutValidators.Handle(new TestRequest(string.Empty), _ => Task.FromResult("ok"), default));
         await Assert.ThrowsAsync<ValidationException>(() =>
             valid.Handle(new TestRequest(string.Empty), _ => Task.FromResult("unreachable"), default));
     }
 
+    /// <summary>Verifies that caching behavior uses cached value or stores handler result.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task CachingBehaviorUsesCachedValueOrStoresHandlerResult()
     {
@@ -53,18 +60,23 @@ public sealed class ApplicationBehaviorTests
         Assert.Equal(["test-tag"], cache.LastTags);
     }
 
+    /// <summary>Verifies that caching behavior bypasses non cacheable requests.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task CachingBehaviorBypassesNonCacheableRequests()
     {
         var cache = new StubCache { Value = "cached" };
         var behavior = new CachingBehavior<TestRequest, string>(cache);
 
-        Assert.Equal("fresh", await behavior.Handle(
+        var response = await behavior.Handle(
             new TestRequest("value"),
             _ => Task.FromResult("fresh"),
-            default));
+            default);
+        Assert.Equal("fresh", response);
     }
 
+    /// <summary>Verifies that logging behavior returns responses and rethrows failures.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task LoggingBehaviorReturnsResponsesAndRethrowsFailures()
     {
@@ -78,6 +90,8 @@ public sealed class ApplicationBehaviorTests
             default));
     }
 
+    /// <summary>Verifies that performance behavior returns handler response.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task PerformanceBehaviorReturnsHandlerResponse()
     {
@@ -87,6 +101,36 @@ public sealed class ApplicationBehaviorTests
         Assert.Equal("ok", await behavior.Handle(new TestRequest("value"), _ => Task.FromResult("ok"), default));
     }
 
+    /// <summary>Verifies that sensitive requests are not serialized and slow pipeline warns.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Fact]
+    public async Task SensitiveRequestsAreNotSerializedAndSlowPipelineWarns()
+    {
+        var log = new CapturingLogger<CulinaryBlog.Application.Auth.LoginCommand>();
+        var request = new CulinaryBlog.Application.Auth.LoginCommand(new CulinaryBlog.Application.Auth.LoginRequest("private@example.test", "DoNotLog#Password1"), null, null);
+        var logging = new LoggingBehavior<CulinaryBlog.Application.Auth.LoginCommand, string>(log);
+        var performance = new PerformanceBehavior<CulinaryBlog.Application.Auth.LoginCommand, string>(log);
+        var response = await logging.Handle(
+            request,
+            cancellationToken => performance.Handle(
+                request,
+                async _ =>
+                {
+                    await Task.Delay(550, cancellationToken);
+                    return "ok";
+                },
+                cancellationToken),
+            default);
+        Assert.Equal("ok", response);
+        Assert.Contains(log.Messages, item => item.Level == Microsoft.Extensions.Logging.LogLevel.Warning && item.Message.Contains("Slow application request", StringComparison.Ordinal));
+        Assert.All(log.Messages, item =>
+        {
+            Assert.DoesNotContain("DoNotLog", item.Message, StringComparison.Ordinal);
+            Assert.DoesNotContain("private@example.test", item.Message, StringComparison.Ordinal);
+        });
+    }
+
+    /// <summary>Verifies that application services register validators and pipeline behaviors.</summary>
     [Fact]
     public void ApplicationServicesRegisterValidatorsAndPipelineBehaviors()
     {
@@ -97,6 +141,20 @@ public sealed class ApplicationBehaviorTests
         Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IPipelineBehavior<,>));
         Assert.Contains(services, descriptor => descriptor.ServiceType.IsGenericType &&
             descriptor.ServiceType.GetGenericTypeDefinition() == typeof(IValidator<>));
+    }
+
+    private sealed class CapturingLogger<T> : Microsoft.Extensions.Logging.ILogger<LoggingBehavior<T, string>>, Microsoft.Extensions.Logging.ILogger<PerformanceBehavior<T, string>>
+        where T : notnull
+    {
+        public List<(Microsoft.Extensions.Logging.LogLevel Level, string Message)> Messages { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+            => null;
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) => this.Messages.Add((logLevel, formatter(state, exception)));
     }
 
     private sealed record TestRequest(string Value);
@@ -114,7 +172,7 @@ public sealed class ApplicationBehaviorTests
     {
         public TestRequestValidator()
         {
-            RuleFor(request => request.Value).NotEmpty();
+            this.RuleFor(request => request.Value).NotEmpty();
         }
     }
 
@@ -127,7 +185,7 @@ public sealed class ApplicationBehaviorTests
         public IReadOnlyCollection<string> LastTags { get; private set; } = [];
 
         public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) =>
-            Task.FromResult((T?)Value);
+            Task.FromResult((T?)this.Value);
 
         public Task SetAsync<T>(
             string key,
@@ -136,21 +194,21 @@ public sealed class ApplicationBehaviorTests
             IReadOnlyCollection<string> tags,
             CancellationToken cancellationToken = default)
         {
-            Value = value;
-            SetCalls++;
-            LastTags = tags;
+            this.Value = value;
+            this.SetCalls++;
+            this.LastTags = tags;
             return Task.CompletedTask;
         }
 
         public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
         {
-            Value = null;
+            this.Value = null;
             return Task.CompletedTask;
         }
 
         public Task RemoveByTagAsync(string tag, CancellationToken cancellationToken = default)
         {
-            Value = null;
+            this.Value = null;
             return Task.CompletedTask;
         }
     }

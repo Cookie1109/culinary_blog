@@ -1,49 +1,47 @@
-import { useState, type FormEvent } from 'react'
+import Image from 'next/image'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router'
 import { Eye, EyeOff, ChefHat, ArrowRight } from 'lucide-react'
+import { ApiProblem, authErrorMessage } from '@/lib/api/problem-details'
+import { useToast } from '@/components/ui/toast'
+import type { RegisterValues } from '../../forms/auth-schemas'
 import { useAuth } from '../../contexts/AuthContext'
+import { setServerFieldErrors } from '../../forms/server-errors'
+import { formMessages } from '../../forms/messages'
 
 export function Register() {
-  const { register, isLoading } = useAuth()
+  const { showToast } = useToast()
+  const { register: createAccount, isLoading } = useAuth()
   const navigate = useNavigate()
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const {
+    register,
+    handleSubmit,
+    setError: setFieldError,
+    formState: { errors: fieldErrors, isSubmitting },
+  } = useForm<RegisterValues>({
+    resolver: async (...args) => (await import('../../forms/deferred-resolvers')).registerResolver(...args),
+    defaultValues: { name: '', email: '', password: '', confirm: '' },
+  })
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    const errors: Record<string, string> = {}
-    if (name.trim().length < 2 || name.trim().length > 100)
-      errors.name = 'Họ và tên cần có từ 2 đến 100 ký tự.'
-    if (!email.trim()) errors.email = 'Vui lòng nhập email.'
-    else if ((document.getElementById('email') as HTMLInputElement).validity.typeMismatch)
-      errors.email = 'Địa chỉ email chưa hợp lệ.'
-    if (
-      password.length < 8 ||
-      !/[a-z]/.test(password) ||
-      !/[A-Z]/.test(password) ||
-      !/[0-9]/.test(password) ||
-      !/[^a-zA-Z0-9]/.test(password)
-    ) {
-      errors.password = 'Mật khẩu cần tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.'
-    }
-    if (!confirm || password !== confirm) errors.confirm = 'Mật khẩu xác nhận không khớp.'
-    setFieldErrors(errors)
-    if (Object.keys(errors).length) {
-      setError('Vui lòng kiểm tra các trường được đánh dấu.')
-      document.getElementById(Object.keys(errors)[0])?.focus()
-      return
-    }
+  const submit = async ({ name, email, password }: RegisterValues) => {
     try {
       setError('')
-      await register(name.trim(), email.trim(), password)
+      await createAccount(name, email, password)
+      showToast('Đăng ký thành công.')
       navigate('/dashboard')
-    } catch {
-      setError('Đăng ký thất bại. Vui lòng thử lại.')
+    } catch (failure) {
+      showToast(authErrorMessage(failure))
+      setServerFieldErrors(failure, setFieldError, {
+        Email: ['email', formMessages.emailInvalid],
+        DisplayName: ['name', formMessages.displayName],
+        Password: ['password', formMessages.passwordStrength],
+      })
+      if (failure instanceof ApiProblem && failure.problem.code === 'AUTH_EMAIL_EXISTS') {
+        setFieldError('email', { type: 'server', message: authErrorMessage(failure) })
+      } else setError(authErrorMessage(failure))
     }
   }
 
@@ -51,7 +49,10 @@ export function Register() {
     <div className="min-h-[calc(100vh-160px)] grid grid-cols-1 lg:grid-cols-2">
       {/* Left: editorial panel */}
       <div className="hidden lg:block relative overflow-hidden bg-foreground">
-        <img
+        <Image
+          fill
+          sizes="50vw"
+          unoptimized
           src="https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=900&h=1200&fit=crop"
           alt="Nguyên liệu và dụng cụ nấu nướng trên mặt bàn gỗ"
           className="absolute inset-0 w-full h-full object-cover opacity-55"
@@ -94,7 +95,11 @@ export function Register() {
             <p className="text-muted-foreground">Bắt đầu chia sẻ công thức nấu ăn của bạn ngay hôm nay.</p>
           </div>
 
-          <form noValidate onSubmit={handleSubmit} className="space-y-5">
+          <form
+            noValidate
+            onSubmit={handleSubmit(submit, () => setError('Vui lòng kiểm tra các trường được đánh dấu.'))}
+            className="space-y-5"
+          >
             {error && (
               <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
                 {error}
@@ -115,14 +120,13 @@ export function Register() {
                 aria-describedby={fieldErrors.name ? 'name-error' : undefined}
                 type="text"
                 autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...register('name')}
                 placeholder="Họ và tên của bạn"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
               {fieldErrors.name && (
                 <p id="name-error" className="mt-2 text-sm text-red-700">
-                  {fieldErrors.name}
+                  {fieldErrors.name.message}
                 </p>
               )}
             </div>
@@ -141,14 +145,13 @@ export function Register() {
                 aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                 type="email"
                 autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email')}
                 placeholder="your@email.com"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
               {fieldErrors.email && (
                 <p id="email-error" className="mt-2 text-sm text-red-700">
-                  {fieldErrors.email}
+                  {fieldErrors.email.message}
                 </p>
               )}
             </div>
@@ -165,17 +168,16 @@ export function Register() {
                   id="password"
                   required
                   aria-invalid={Boolean(fieldErrors.password)}
-                  aria-describedby={'password-help' + (fieldErrors.password ? ' password-error' : '')}
+                  aria-describedby={`password-help${fieldErrors.password ? ' password-error' : ''}`}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register('password')}
                   placeholder="Tạo mật khẩu"
                   className="w-full border border-border bg-background px-4 py-3 pr-12 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
                 />
                 {fieldErrors.password && (
                   <p id="password-error" className="mt-2 text-sm text-red-700">
-                    {fieldErrors.password}
+                    {fieldErrors.password.message}
                   </p>
                 )}
                 <button
@@ -207,21 +209,20 @@ export function Register() {
                 aria-describedby={fieldErrors.confirm ? 'confirm-error' : undefined}
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
+                {...register('confirm')}
                 placeholder="Nhập lại mật khẩu"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
               {fieldErrors.confirm && (
                 <p id="confirm-error" className="mt-2 text-sm text-red-700">
-                  {fieldErrors.confirm}
+                  {fieldErrors.confirm.message}
                 </p>
               )}
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isSubmitting}
               className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 text-sm font-medium uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
               {isLoading ? (

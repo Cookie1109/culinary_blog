@@ -1,4 +1,5 @@
-using System.Net;
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Net.Mail;
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Infrastructure.Configuration;
@@ -7,16 +8,27 @@ using Microsoft.Extensions.Options;
 
 namespace CulinaryBlog.Infrastructure.Email;
 
+/// <summary>Represents the password reset email sender.</summary>
+/// <param name="emailOptions">The email options supplied to this operation.</param>
+/// <param name="siteOptions">The site options supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
 internal sealed partial class PasswordResetEmailSender(
     IOptions<EmailOptions> emailOptions,
     IOptions<SitemapOptions> siteOptions,
     ILogger<PasswordResetEmailSender> logger) : IPasswordResetEmailSender
 {
+    /// <summary>Gets a value indicating whether is enabled.</summary>
     public bool IsEnabled => emailOptions.Value.Enabled;
 
+    /// <summary>Performs the send operation.</summary>
+    /// <param name="email">The email supplied to this operation.</param>
+    /// <param name="token">The token supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task SendAsync(string email, string token, CancellationToken cancellationToken)
     {
         var options = emailOptions.Value;
+
         // The fragment keeps the token out of HTTP access logs and referrer headers.
         var link = siteOptions.Value.PublicBaseUrl.TrimEnd('/') + "/reset-password#email=" +
             Uri.EscapeDataString(email) + "&token=" + Uri.EscapeDataString(token);
@@ -27,13 +39,7 @@ internal sealed partial class PasswordResetEmailSender(
             Body = $"Bạn đã yêu cầu đặt lại mật khẩu Culinary Blog.\n\nMở liên kết sau trong vòng 30 phút:\n{link}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.",
         };
         message.To.Add(email);
-        using var client = new SmtpClient(options.Host, options.Port)
-        {
-            EnableSsl = options.EnableSsl,
-            UseDefaultCredentials = false,
-            Credentials = string.IsNullOrWhiteSpace(options.Username)
-                ? null : new NetworkCredential(options.Username, options.Password),
-        };
+        using var client = SmtpClientFactory.Create(options);
         try
         {
             await client.SendMailAsync(message, cancellationToken).ConfigureAwait(false);

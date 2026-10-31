@@ -12,7 +12,7 @@ async function exchangeSession(path: string, body: unknown): Promise<BackendSess
     body: JSON.stringify(body),
     cache: 'no-store',
   })
-  if (!response.ok) throw new Error('Authentication failed.')
+  if (!response.ok) throw await readProblemDetails(response)
   return ((await response.json()) as { data: BackendSession }).data
 }
 
@@ -55,7 +55,7 @@ export async function authenticatedUpload<T>(
   version: number,
 ): Promise<T> {
   const response = await authenticatedAxios.post<T>(path, body, {
-    headers: { 'If-Match': '"' + version + '"' },
+    headers: { 'If-Match': `"${version}"` },
     onUploadProgress: (event) => {
       if (event.total) onProgress(Math.round((event.loaded / event.total) * 100))
     },

@@ -6,17 +6,23 @@ const source = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8'
 
 test('public revalidated caches use the agreed TTLs and shared public-content tag', async () => {
   const [home, categories, category, recipe, serverClient] = await Promise.all([
-    source('src/app/(public)/page.tsx'),
-    source('src/app/(public)/categories/page.tsx'),
+    source('src/app/(public)/render-public/home/[key]/page.tsx'),
+    source('src/app/(public)/render-public/categories/[key]/page.tsx'),
     source('src/app/(public)/categories/[slug]/page.tsx'),
     source('src/app/(public)/recipes/[slug]/page.tsx'),
     source('src/lib/api/public-content-server.ts'),
   ])
 
   assert.match(home, /export const revalidate = 3600/)
-  assert.match(home, /await connection\(\)/)
+  assert.match(home, /export function generateStaticParams\(\)/)
+  assert.match(home, /return \[\]/)
+  assert.doesNotMatch(home, /connection\(/)
+  assert.match(home, /key !== 'index'\) notFound\(\)/)
   assert.match(categories, /export const revalidate = 3600/)
-  assert.match(categories, /await connection\(\)/)
+  assert.match(categories, /export function generateStaticParams\(\)/)
+  assert.match(categories, /return \[\]/)
+  assert.doesNotMatch(categories, /connection\(/)
+  assert.match(categories, /key !== 'index'\) notFound\(\)/)
   assert.match(category, /export const revalidate = 600/)
   assert.match(recipe, /export const revalidate = 300/)
   assert.match(serverClient, /PUBLIC_CONTENT_TAG = 'public-content'/)

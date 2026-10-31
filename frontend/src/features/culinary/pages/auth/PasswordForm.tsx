@@ -1,86 +1,98 @@
 'use client'
 
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { FieldError } from '@/components/ui/field-error'
 import { Link, useNavigate } from 'react-router'
 import { changePassword, forgotPassword, resetPassword } from '@/lib/api/auth-client'
-import { ApiProblem } from '@/lib/api/problem-details'
+import { ApiProblem, apiErrorMessage } from '@/lib/api/problem-details'
+import { useToast } from '@/components/ui/toast'
+import type { PasswordValues } from '../../forms/auth-schemas'
+import { setServerFieldErrors } from '../../forms/server-errors'
+import { formMessages } from '../../forms/messages'
 import { useAuth } from '../../contexts/AuthContext'
 
 export function PasswordForm({ mode }: { mode: 'change' | 'forgot' | 'reset' }) {
+  const { showToast } = useToast()
   const { logout } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
   const [token, setToken] = useState('')
   const [ready, setReady] = useState(mode !== 'reset')
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [busy, setBusy] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    resetField,
+    setValue,
+    setError: setFieldError,
+    formState: { errors, isSubmitting: busy },
+  } = useForm<PasswordValues>({
+    resolver: async (...args) =>
+      (await import('../../forms/deferred-resolvers')).passwordResolver(mode)(...args),
+    defaultValues: { email: '', currentPassword: '', newPassword: '', confirmPassword: '' },
+  })
+  const [linkEmail, setLinkEmail] = useState('')
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
-  const title = mode === 'change' ? 'Đổi mật khẩu' : mode === 'forgot' ? 'Quên mật khẩu' : 'Đặt lại mật khẩu'
-  const invalidLink = ready && mode === 'reset' && (!email || !token)
+  const { title, instructions, submitLabel } = {
+    change: {
+      title: 'Đổi mật khẩu',
+      instructions: 'Nhập mật khẩu hiện tại và mật khẩu mới. Sau khi lưu, bạn cần đăng nhập lại.',
+      submitLabel: 'Đổi mật khẩu',
+    },
+    forgot: {
+      title: 'Quên mật khẩu',
+      instructions: 'Nhập email đăng ký để nhận liên kết đặt lại mật khẩu.',
+      submitLabel: 'Gửi liên kết đặt lại mật khẩu',
+    },
+    reset: {
+      title: 'Đặt lại mật khẩu',
+      instructions: 'Nhập mật khẩu mới cho tài khoản của bạn.',
+      submitLabel: 'Đặt lại mật khẩu',
+    },
+  }[mode]
+  const invalidLink = ready && mode === 'reset' && (!linkEmail || !token)
   const inputClass =
     'w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary'
 
   useEffect(() => {
     if (mode !== 'reset') return
     const parameters = new URLSearchParams(window.location.hash.slice(1))
-    setEmail(parameters.get('email') ?? '')
+    const email = parameters.get('email') ?? ''
+    setLinkEmail(email)
+    setValue('email', email)
     setToken(parameters.get('token') ?? '')
     setReady(true)
-  }, [mode])
+  }, [mode, setValue])
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault()
-    if (busy || !ready || invalidLink) return
+  const submit = async ({ email, currentPassword, newPassword }: PasswordValues) => {
+    if (!ready || invalidLink) return
     setError('')
-    if (mode !== 'forgot') {
-      if (
-        newPassword.length < 8 ||
-        newPassword.length > 128 ||
-        !/[a-z]/.test(newPassword) ||
-        !/[A-Z]/.test(newPassword) ||
-        !/[0-9]/.test(newPassword) ||
-        !/[^a-zA-Z0-9]/.test(newPassword)
-      ) {
-        setError('Mật khẩu cần từ 8 đến 128 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.')
-        document.getElementById(`${mode}-new-password`)?.focus()
-        return
-      }
-      if (newPassword !== confirmPassword) {
-        setError('Mật khẩu xác nhận không khớp.')
-        document.getElementById(`${mode}-confirm-password`)?.focus()
-        return
-      }
-    }
-    setBusy(true)
     try {
       if (mode === 'forgot') await forgotPassword(email.trim())
       else if (mode === 'change') await changePassword(currentPassword, newPassword)
       else await resetPassword(email, token, newPassword)
       setSuccess(true)
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
+      showToast(
+        mode === 'forgot'
+          ? 'Đã tiếp nhận yêu cầu. Vui lòng kiểm tra email nếu tài khoản hợp lệ.'
+          : 'Mật khẩu đã được cập nhật.',
+      )
+      resetField('currentPassword')
+      resetField('newPassword')
+      resetField('confirmPassword')
       if (mode === 'reset') window.history.replaceState(null, '', window.location.pathname)
       if (mode !== 'forgot') await logout().catch(() => {})
       if (mode === 'change') navigate('/login?passwordChanged=1')
     } catch (failure) {
-      const code = failure instanceof ApiProblem ? failure.problem.code : ''
-      setError(
-        code === 'AUTH_CURRENT_PASSWORD_INVALID'
-          ? 'Mật khẩu hiện tại không chính xác.'
-          : code === 'AUTH_RESET_TOKEN_INVALID'
-            ? 'Liên kết không hợp lệ, đã hết hạn hoặc đã được sử dụng. Vui lòng yêu cầu liên kết mới.'
-            : code === 'AUTH_EMAIL_UNAVAILABLE'
-              ? 'Dịch vụ gửi email chưa sẵn sàng. Vui lòng thử lại sau.'
-              : failure instanceof ApiProblem && failure.problem.status === 429
-                ? 'Bạn thao tác quá nhiều lần. Vui lòng chờ một phút rồi thử lại.'
-                : 'Không thể thực hiện yêu cầu. Vui lòng thử lại.',
-      )
-    } finally {
-      setBusy(false)
+      if (failure instanceof ApiProblem && failure.problem.code === 'AUTH_CURRENT_PASSWORD_INVALID')
+        setFieldError('currentPassword', { type: 'server', message: apiErrorMessage(failure) })
+      setServerFieldErrors(failure, setFieldError, {
+        Email: ['email', formMessages.emailInvalid],
+        CurrentPassword: ['currentPassword', formMessages.passwordRequired],
+        NewPassword: ['newPassword', formMessages.passwordStrength],
+      })
+      setError(apiErrorMessage(failure, 'PASSWORD_REQUEST_FAILED'))
+      showToast(apiErrorMessage(failure, 'PASSWORD_REQUEST_FAILED'))
     }
   }
 
@@ -122,13 +134,7 @@ export function PasswordForm({ mode }: { mode: 'change' | 'forgot' | 'reset' }) 
         </div>
       ) : (
         <>
-          <p className="mb-6 text-sm text-muted-foreground">
-            {mode === 'forgot'
-              ? 'Nhập email đăng ký để nhận liên kết đặt lại mật khẩu.'
-              : mode === 'change'
-                ? 'Nhập mật khẩu hiện tại và mật khẩu mới. Sau khi lưu, bạn cần đăng nhập lại.'
-                : 'Nhập mật khẩu mới cho tài khoản của bạn.'}
-          </p>
+          <p className="mb-6 text-sm text-muted-foreground">{instructions}</p>
           {(error || invalidLink) && (
             <p
               id={`${mode}-error`}
@@ -139,7 +145,11 @@ export function PasswordForm({ mode }: { mode: 'change' | 'forgot' | 'reset' }) 
             </p>
           )}
           {ready && !invalidLink && (
-            <form onSubmit={handleSubmit} aria-describedby={error ? `${mode}-error` : undefined}>
+            <form
+              noValidate
+              onSubmit={handleSubmit(submit)}
+              aria-describedby={error ? `${mode}-error` : undefined}
+            >
               <fieldset disabled={busy} className="space-y-5">
                 {mode === 'forgot' && (
                   <div>
@@ -152,10 +162,12 @@ export function PasswordForm({ mode }: { mode: 'change' | 'forgot' | 'reset' }) 
                       autoComplete="email"
                       required
                       maxLength={256}
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
+                      {...register('email')}
+                      aria-invalid={Boolean(errors.email)}
+                      aria-describedby={errors.email ? 'forgot-email-error' : undefined}
                       className={inputClass}
                     />
+                    <FieldError id="forgot-email-error" message={errors.email?.message} />
                   </div>
                 )}
                 {mode === 'change' && (
@@ -169,9 +181,14 @@ export function PasswordForm({ mode }: { mode: 'change' | 'forgot' | 'reset' }) 
                       autoComplete="current-password"
                       required
                       maxLength={128}
-                      value={currentPassword}
-                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      {...register('currentPassword')}
+                      aria-invalid={Boolean(errors.currentPassword)}
+                      aria-describedby={errors.currentPassword ? 'change-current-password-error' : undefined}
                       className={inputClass}
+                    />
+                    <FieldError
+                      id="change-current-password-error"
+                      message={errors.currentPassword?.message}
                     />
                   </div>
                 )}
@@ -187,11 +204,12 @@ export function PasswordForm({ mode }: { mode: 'change' | 'forgot' | 'reset' }) 
                         autoComplete="new-password"
                         required
                         maxLength={128}
-                        aria-describedby={`${mode}-password-help`}
-                        value={newPassword}
-                        onChange={(event) => setNewPassword(event.target.value)}
+                        aria-describedby={`${mode}-password-help${errors.newPassword ? ` ${mode}-new-password-error` : ''}`}
+                        {...register('newPassword')}
+                        aria-invalid={Boolean(errors.newPassword)}
                         className={inputClass}
                       />
+                      <FieldError id={`${mode}-new-password-error`} message={errors.newPassword?.message} />
                       <p id={`${mode}-password-help`} className="mt-2 text-sm text-muted-foreground">
                         Từ 8 đến 128 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.
                       </p>
@@ -206,9 +224,16 @@ export function PasswordForm({ mode }: { mode: 'change' | 'forgot' | 'reset' }) 
                         autoComplete="new-password"
                         required
                         maxLength={128}
-                        value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
+                        {...register('confirmPassword')}
+                        aria-invalid={Boolean(errors.confirmPassword)}
+                        aria-describedby={
+                          errors.confirmPassword ? `${mode}-confirm-password-error` : undefined
+                        }
                         className={inputClass}
+                      />
+                      <FieldError
+                        id={`${mode}-confirm-password-error`}
+                        message={errors.confirmPassword?.message}
                       />
                     </div>
                   </>
@@ -217,7 +242,7 @@ export function PasswordForm({ mode }: { mode: 'change' | 'forgot' | 'reset' }) 
                   type="submit"
                   className="w-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
-                  {busy ? 'Đang xử lý…' : mode === 'forgot' ? 'Gửi liên kết đặt lại mật khẩu' : title}
+                  {busy ? 'Đang xử lý…' : submitLabel}
                 </button>
               </fieldset>
             </form>

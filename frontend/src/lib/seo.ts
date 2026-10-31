@@ -3,7 +3,8 @@ import type { Recipe } from '@/lib/api/content-client'
 import { publicMediaUrl } from '@/lib/media-url'
 
 export const SITE_NAME = 'Culinary Blog'
-export const SITE_DESCRIPTION = 'Công thức nấu ăn được tuyển chọn và chia sẻ bởi cộng đồng.'
+export const SITE_DESCRIPTION =
+  'Khám phá công thức nấu ăn từ cộng đồng Culinary Blog, xem nguyên liệu và từng bước chế biến, lọc theo thời gian và độ khó để chọn món phù hợp cho bữa ăn hằng ngày.'
 export const SITE_URL = new URL(process.env.SITE_URL ?? 'http://localhost:8080')
 export const DEFAULT_SOCIAL_IMAGE = new URL('/opengraph-image', SITE_URL).toString()
 
@@ -39,12 +40,22 @@ export function summarize(value: string, maximumLength = 160) {
 export function createPageMetadata(options: PageMetadataOptions): Metadata {
   const canonical = absoluteUrl(options.path)
   const image = publicImageUrl(options.image)
-  const title = options.absoluteTitle ? { absolute: options.title } : options.title
+  const suffix = options.absoluteTitle ? '' : ` | ${SITE_NAME}`
+  const pagination = options.title.match(/ – Trang \d+$/)?.[0] ?? ''
+  const pageTitle = pagination ? options.title.slice(0, -pagination.length) : options.title
+  const fullTitle = `${summarize(pageTitle, 60 - suffix.length - pagination.length)}${pagination}${suffix}`
+  const title = { absolute: fullTitle }
+  const normalizedDescription = options.description.replace(/\s+/g, ' ').trim()
+  const description = summarize(
+    normalizedDescription.length < 150
+      ? `${normalizedDescription} ${SITE_DESCRIPTION}`
+      : normalizedDescription,
+  )
   const index = options.index ?? true
   const follow = options.follow ?? index
   const sharedOpenGraph = {
-    title: options.title,
-    description: options.description,
+    title: fullTitle,
+    description,
     url: canonical,
     siteName: SITE_NAME,
     locale: 'vi_VN',
@@ -62,14 +73,14 @@ export function createPageMetadata(options: PageMetadataOptions): Metadata {
 
   return {
     title,
-    description: options.description,
+    description,
     alternates: { canonical },
     robots: { index, follow },
     openGraph,
     twitter: {
       card: 'summary_large_image',
-      title: options.title,
-      description: options.description,
+      title: fullTitle,
+      description,
       images: [{ url: image, alt: options.imageAlt ?? options.title }],
     },
   }
@@ -114,7 +125,6 @@ export function recipeImages(recipe: Recipe) {
   const candidates = [
     recipe.primaryImageUrl,
     ...recipe.images
-      .filter((image) => image.processingStatus === 'ready')
       .sort(
         (left, right) =>
           Number(right.isPrimary) - Number(left.isPrimary) || left.orderIndex - right.orderIndex,

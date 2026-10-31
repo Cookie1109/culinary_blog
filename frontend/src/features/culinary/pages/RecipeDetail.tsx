@@ -32,11 +32,9 @@ export function RecipeDetail({
 }) {
   const ingredients = [...recipe.ingredients].sort((left, right) => left.orderIndex - right.orderIndex)
   const steps = [...recipe.steps].sort((left, right) => left.stepNumber - right.stepNumber)
-  const images = recipe.images
-    .filter((image) => image.processingStatus === 'ready')
-    .sort(
-      (left, right) => Number(right.isPrimary) - Number(left.isPrimary) || left.orderIndex - right.orderIndex,
-    )
+  const images = [...recipe.images].sort(
+    (left, right) => Number(right.isPrimary) - Number(left.isPrimary) || left.orderIndex - right.orderIndex,
+  )
   const primaryImage = images.find((image) => image.isPrimary)
   const heroImage = primaryImage?.originalUrl ?? primaryImage?.mediumUrl ?? recipe.primaryImageUrl
   const imageSource = privatePreview ? privateMediaUrl : publicMediaUrl
@@ -204,15 +202,15 @@ export function RecipeDetail({
             <h2 id="steps-title" className="mb-8 border-b border-border pb-3 font-serif text-3xl">
               Các bước thực hiện
             </h2>
-            {steps.length === 0 ? (
-              recipe.instructions ? (
-                <p className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
-                  {recipe.instructions}
-                </p>
-              ) : (
-                <p className="text-muted-foreground">Tác giả chưa bổ sung các bước thực hiện.</p>
-              )
-            ) : (
+            {steps.length === 0 && recipe.instructions && (
+              <p className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
+                {recipe.instructions}
+              </p>
+            )}
+            {steps.length === 0 && !recipe.instructions && (
+              <p className="text-muted-foreground">Tác giả chưa bổ sung các bước thực hiện.</p>
+            )}
+            {!(steps.length === 0) && (
               <ol className="space-y-10">
                 {steps.map((step) => (
                   <li key={step.id} className="grid gap-5 sm:grid-cols-[4rem_1fr]">

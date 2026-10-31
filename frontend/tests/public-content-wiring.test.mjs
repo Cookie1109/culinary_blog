@@ -3,9 +3,9 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 const publicPages = [
-  ['src/app/(public)/page.tsx', 'getPublishedRecipes'],
+  ['src/app/(public)/render-public/home/[key]/page.tsx', 'getPublishedRecipes'],
   ['src/app/(public)/recipes/page.tsx', 'searchPublishedRecipesOnServer'],
-  ['src/app/(public)/categories/page.tsx', 'getPublicCategories'],
+  ['src/app/(public)/render-public/categories/[key]/page.tsx', 'getPublicCategories'],
 ]
 
 test('public pages use API data instead of bundled recipe fixtures', async () => {
@@ -79,7 +79,8 @@ test('recipe listing submits search terms and route failures offer retry and off
   )
 
   assert.match(listing, /submitSearch/)
-  assert.match(listing, /setFilter\('q', searchValue\.trim\(\)\)/)
+  assert.match(listing, /const value = normalizeRecipeSearch\(searchValue\)/)
+  assert.match(listing, /setFilter\('q', value\)/)
   assert.match(routeError, /reset/)
   assert.match(networkStatus, /navigator\.onLine/)
   assert.match(networkStatus, /addEventListener\('offline'/)

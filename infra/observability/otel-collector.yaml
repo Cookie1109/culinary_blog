@@ -12,6 +12,8 @@ processors:
 exporters:
   prometheus:
     endpoint: 0.0.0.0:9464
+  otlphttp/traces:
+    endpoint: ${env:OTEL_TRACE_BACKEND_ENDPOINT:-http://seq/ingest/otlp}
   debug:
     verbosity: basic
 
@@ -27,4 +29,4 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]
+      exporters: [otlphttp/traces]

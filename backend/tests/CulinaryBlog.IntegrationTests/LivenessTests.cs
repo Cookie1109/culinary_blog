@@ -1,22 +1,29 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Net;
 using System.Text.Json;
 using CulinaryBlog.Api.Middleware;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for liveness tests.</summary>
 public sealed class LivenessTests : IClassFixture<ApiFactory>
 {
-    private readonly HttpClient _client;
+    private readonly HttpClient client;
 
+    /// <summary>Initializes a new instance of the <see cref="LivenessTests"/> class.</summary>
+    /// <param name="factory">The factory supplied to this operation.</param>
     public LivenessTests(ApiFactory factory)
     {
-        _client = factory.CreateClient();
+        this.client = factory.CreateClient();
     }
 
+    /// <summary>Verifies that liveness returns aggregate status and correlation id.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task LivenessReturnsAggregateStatusAndCorrelationId()
     {
-        using var response = await _client.GetAsync(new Uri("/health/live", UriKind.Relative));
+        using var response = await this.client.GetAsync(new Uri("/health/live", UriKind.Relative));
         var payload = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -25,13 +32,16 @@ public sealed class LivenessTests : IClassFixture<ApiFactory>
         Assert.DoesNotContain("entries", payload, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that public health endpoints never expose dependency details.</summary>
+    /// <param name="path">The path supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [Theory]
     [InlineData("/health/live")]
     [InlineData("/health/ready")]
     [InlineData("/health")]
     public async Task PublicHealthEndpointsNeverExposeDependencyDetails(string path)
     {
-        using var response = await _client.GetAsync(new Uri(path, UriKind.Relative));
+        using var response = await this.client.GetAsync(new Uri(path, UriKind.Relative));
         var payload = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(payload);
 

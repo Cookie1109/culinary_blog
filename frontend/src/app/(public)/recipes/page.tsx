@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { RecipesList } from '@/features/culinary/pages/RecipesList'
 import { getPublicCategories, searchPublishedRecipesOnServer } from '@/lib/api/public-content-server'
 import { createPageMetadata } from '@/lib/seo'
+import { normalizeRecipeSearch, recipeSearchValidation } from '@/lib/recipe-search'
+import type { Category, PageEnvelope, Recipe } from '@/lib/api/content-client'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,16 +14,28 @@ function first(value: string | string[] | undefined) {
 }
 
 function positiveInteger(value: string, fallback: number) {
-  const parsed = Number.parseInt(value, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+  const parsed = Number(value)
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
 export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
   const query = await searchParams
   const page = positiveInteger(first(query.page), 1)
-  const hasFilters = ['q', 'category', 'difficulty', 'maxTime', 'sort'].some((key) =>
-    Boolean(first(query[key])),
-  )
+  const hasFilters = [
+    'q',
+    'category',
+    'categoryId',
+    'difficulty',
+    'maxTime',
+    'maxCookTime',
+    'minServings',
+    'minPrepTime',
+    'maxPrepTime',
+    'sort',
+    'sortBy',
+    'sortOrder',
+    'pageSize',
+  ].some((key) => Boolean(first(query[key])))
   const suffix = page > 1 ? ` – Trang ${page}` : ''
 
   return createPageMetadata({
@@ -38,20 +52,50 @@ export default async function RecipesPage({ searchParams }: { searchParams: Sear
   const category = first(query.category)
   const difficulty = first(query.difficulty)
   const maxTime = positiveInteger(first(query.maxTime), 0)
-  const sort = first(query.sort) || 'newest'
+  const q = normalizeRecipeSearch(first(query.q))
+  const defaultSort = q ? 'relevance' : 'newest'
+  const sort = first(query.sort) || (query.sortBy || query.sortOrder ? '' : defaultSort)
   const page = positiveInteger(first(query.page), 1)
-  const [result, categories] = await Promise.all([
-    searchPublishedRecipesOnServer({
-      q: first(query.q).trim(),
-      category,
-      difficulty,
-      maxTime,
-      sort,
-      page,
-      pageSize: 12,
-    }),
-    getPublicCategories(1800),
-  ])
+  const initialSearchError = recipeSearchValidation(q)
+  let result: PageEnvelope<Recipe> = {
+    data: [],
+    meta: { page, pageSize: 12, total: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false },
+  }
+  let categories: Category[] = []
+  let loadError = false
+  try {
+    ;[result, categories] = await Promise.all([
+      initialSearchError
+        ? Promise.resolve(result)
+        : searchPublishedRecipesOnServer({
+            q,
+            category,
+            difficulty,
+            maxTime,
+            sort,
+            sortBy: query.sortBy === undefined ? undefined : first(query.sortBy),
+            sortOrder: query.sortOrder === undefined ? undefined : first(query.sortOrder),
+            page,
+            pageSize: positiveInteger(first(query.pageSize), 12),
+            categoryId: first(query.categoryId) || undefined,
+            maxCookTime: first(query.maxCookTime) === '' ? undefined : Number(first(query.maxCookTime)),
+            minServings: first(query.minServings) === '' ? undefined : Number(first(query.minServings)),
+            minPrepTime: first(query.minPrepTime) === '' ? undefined : Number(first(query.minPrepTime)),
+            maxPrepTime: first(query.maxPrepTime) === '' ? undefined : Number(first(query.maxPrepTime)),
+          }),
+      getPublicCategories(1800),
+    ])
+  } catch {
+    console.error('PUBLIC_RECIPE_SEARCH_FAILED')
+    loadError = true
+  }
 
-  return <RecipesList result={result} categories={categories} />
+  return (
+    <RecipesList
+      result={result}
+      categories={categories}
+      initialSearchError={initialSearchError}
+      loadError={loadError}
+    />
+  )
 }

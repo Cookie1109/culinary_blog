@@ -49,9 +49,9 @@ export const options = {
   scenarios: { [profile]: profiles[profile] },
   summaryTrendStats: ['avg', 'min', 'med', 'p(50)', 'p(95)', 'p(99)', 'max'],
   thresholds: {
-    api_failures: ['rate<0.01'],
-    api_warm_duration: ['p(50)<150', 'p(95)<500', 'p(99)<1000'],
-    api_cold_duration: ['p(95)<500', 'p(99)<1000'],
+    api_failures: ['rate==0'],
+    api_warm_duration: ['p(50)<=150', 'p(95)<=500', 'p(99)<=1000'],
+    api_cold_duration: ['p(95)<=500', 'p(99)<=1000'],
     cache_hit_rate: ['value>=0.80'],
   },
 }
@@ -86,8 +86,8 @@ function queryPrometheus(metricName) {
 
 function readCacheCounters() {
   return {
-    hits: queryPrometheus('cache_hits_total'),
-    misses: queryPrometheus('cache_misses_total'),
+    hits: queryPrometheus('output_cache_hits_total'),
+    misses: queryPrometheus('output_cache_misses_total'),
   }
 }
 
@@ -97,7 +97,7 @@ function buildWarmPaths(categories, recipes) {
     '/api/v1/recipes?page=1&pageSize=12',
     '/api/v1/recipes?page=2&pageSize=12',
     `/api/v1/recipes/search?q=${encodeURIComponent('phở')}&page=1&pageSize=12&sort=relevance`,
-    '/api/v1/recipes/search?page=1&pageSize=12&sort=newest',
+    '/api/v1/recipes?page=1&pageSize=12&sort=newest',
   ]
 
   if (categories[0]?.slug) {

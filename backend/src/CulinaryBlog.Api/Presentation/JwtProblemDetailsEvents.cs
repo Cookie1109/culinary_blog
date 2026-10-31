@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -5,10 +7,13 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace CulinaryBlog.Api.Presentation;
 
+/// <summary>Represents the jwt problem details events.</summary>
 internal static class JwtProblemDetailsEvents
 {
     private const string AuthenticationFailureKey = "JwtAuthenticationFailure";
 
+    /// <summary>Creates the jwt problem details events.</summary>
+    /// <returns>The create result.</returns>
     public static JwtBearerEvents Create()
     {
         return new JwtBearerEvents
@@ -33,8 +38,8 @@ internal static class JwtProblemDetailsEvents
             {
                 context.HandleResponse();
                 var failure = context.HttpContext.Items[AuthenticationFailureKey] as Exception;
-                var code = failure is SecurityTokenExpiredException ? "AUTH_TOKEN_EXPIRED" :
-                    string.IsNullOrWhiteSpace(context.Request.Headers.Authorization) ? "AUTH_TOKEN_MISSING" : "AUTH_TOKEN_INVALID";
+                var missingTokenCode = string.IsNullOrWhiteSpace(context.Request.Headers.Authorization) ? "AUTH_TOKEN_MISSING" : "AUTH_TOKEN_INVALID";
+                var code = failure is SecurityTokenExpiredException ? "AUTH_TOKEN_EXPIRED" : missingTokenCode;
                 await WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, code, "Authentication required")
                     .ConfigureAwait(false);
             },
@@ -50,14 +55,16 @@ internal static class JwtProblemDetailsEvents
     {
         context.Response.StatusCode = status;
         context.Response.ContentType = "application/problem+json";
-        return context.Response.WriteAsJsonAsync(new
-        {
-            type = $"https://culinaryblog.local/problems/{code}",
-            title,
-            status,
-            code,
-            correlationId = context.TraceIdentifier,
-            traceId = context.TraceIdentifier,
-        });
+        return context.Response.WriteAsJsonAsync(
+            new
+            {
+                type = $"https://culinaryblog.local/problems/{code}",
+                title,
+                status,
+                code,
+                correlationId = context.TraceIdentifier,
+                traceId = context.TraceIdentifier,
+            },
+            cancellationToken: context.RequestAborted);
     }
 }

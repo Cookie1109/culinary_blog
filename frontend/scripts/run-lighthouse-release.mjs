@@ -1,3 +1,4 @@
+import { format as formatCliOutput } from 'node:util'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
@@ -9,10 +10,11 @@ import desktopConfig from 'lighthouse/core/config/desktop-config.js'
 
 const require = createRequire(import.meta.url)
 const config = require('../lighthouserc.release.cjs')
+
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
 const outputDirectory = path.resolve(currentDirectory, '..', config.ci.upload.outputDir)
 const runs = config.ci.collect.numberOfRuns ?? 3
-const assertions = config.ci.assert.assertions
+const { assertions } = config.ci.assert
 const chromeFlags = config.ci.collect.settings.chromeFlags.split(/\s+/).filter(Boolean)
 
 const slugFor = (url) => {
@@ -42,14 +44,13 @@ const evaluate = (url, reports) => {
     const values = reports.map((report) => measuredValue(report, name))
     if (values.some((value) => typeof value !== 'number')) {
       results.push({ name, severity: 'error', passed: false, reason: 'metric unavailable' })
-      continue
+    } else {
+      const value = median(values)
+      const passed =
+        (expectation.minScore === undefined || value >= expectation.minScore) &&
+        (expectation.maxNumericValue === undefined || value <= expectation.maxNumericValue)
+      results.push({ name, severity, passed, value, expectation })
     }
-
-    const value = median(values)
-    const passed =
-      (expectation.minScore === undefined || value >= expectation.minScore) &&
-      (expectation.maxNumericValue === undefined || value <= expectation.maxNumericValue)
-    results.push({ name, severity, passed, value, expectation })
   }
 
   return { url, results }
@@ -107,7 +108,7 @@ for (const summary of summaries) {
     } else if (!assertion.passed) {
       console.warn(message)
     } else {
-      console.log(message)
+      process.stdout.write(`${formatCliOutput(message)}\n`)
     }
   }
 }

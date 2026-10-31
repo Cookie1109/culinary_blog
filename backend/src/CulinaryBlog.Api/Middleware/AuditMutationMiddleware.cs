@@ -1,14 +1,24 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Security.Claims;
 using CulinaryBlog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace CulinaryBlog.Api.Middleware;
 
+/// <summary>Represents the audit mutation middleware.</summary>
+/// <param name="next">The next supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
+/// <param name="timeProvider">The time provider supplied to this operation.</param>
 public sealed partial class AuditMutationMiddleware(
     RequestDelegate next,
     ILogger<AuditMutationMiddleware> logger,
     TimeProvider timeProvider)
 {
+    /// <summary>Performs the invoke operation.</summary>
+    /// <param name="context">The context supplied to this operation.</param>
+    /// <param name="dbContext">The db context supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task InvokeAsync(HttpContext context, AppDbContext? dbContext = null)
     {
         await next(context).ConfigureAwait(false);
@@ -57,8 +67,12 @@ public sealed partial class AuditMutationMiddleware(
                     .Where(category => category.Id == id || category.Slug == entityId)
                     .Select(category => new { category.Id, category.Name }).FirstOrDefaultAsync(context.RequestAborted).ConfigureAwait(false);
             entityName = entity?.Name;
-            if (entity is not null) entityId = entity.Id.ToString();
+            if (entity is not null)
+            {
+                entityId = entity.Id.ToString();
+            }
         }
+
         var auditEvent = component is null ? $"{entityType}.{action}" : $"{entityType}.{component}.{action}";
         var occurredAt = timeProvider.GetUtcNow();
 

@@ -25,7 +25,7 @@ async function exchange(path: string, body: unknown): Promise<BackendSession> {
 }
 
 async function revoke(refreshToken: string) {
-  await fetch(backendUrl + '/auth/logout', {
+  await fetch(`${backendUrl}/auth/logout`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
@@ -34,8 +34,8 @@ async function revoke(refreshToken: string) {
 }
 
 async function readBackendUser(accessToken: string): Promise<AuthUser> {
-  const response = await fetch(backendUrl + '/auth/me', {
-    headers: { Authorization: 'Bearer ' + accessToken },
+  const response = await fetch(`${backendUrl}/auth/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
     cache: 'no-store',
   })
   if (!response.ok) throw new Error('Backend access token validation failed.')
@@ -85,46 +85,50 @@ if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
 export const { handlers, auth } = NextAuth({
   providers,
   session: { strategy: 'jwt', maxAge: 7 * 24 * 60 * 60 },
-  pages: { signIn: '/login' },
+  pages: { signIn: '/auth/login' },
   callbacks: {
     async jwt({ token, user, account, trigger }) {
+      let { backend } = token
       if (account?.provider === 'google') {
         if (!account.id_token) throw new Error('Google ID token is missing.')
         const backendSession = await exchange('/auth/google', { idToken: account.id_token })
-        token.backend = withoutRefreshToken(backendSession)
+        backend = withoutRefreshToken(backendSession)
         await revoke(backendSession.refreshToken)
       } else if (user?.backendSession) {
-        token.backend = user.backendSession
+        backend = user.backendSession
       }
 
-      if (!token.backend) return token
+      if (!backend) return token
 
       if (trigger === 'update') {
         try {
-          const response = await fetch(backendUrl + '/auth/me', {
-            headers: { Authorization: 'Bearer ' + token.backend.accessToken },
+          const response = await fetch(`${backendUrl}/auth/me`, {
+            headers: { Authorization: `Bearer ${backend.accessToken}` },
             cache: 'no-store',
           })
           if (response.ok) {
-            token.backend.user = ((await response.json()) as { data: BackendSession['user'] }).data
+            backend = { ...backend, user: ((await response.json()) as { data: BackendSession['user'] }).data }
           }
         } catch {
           // A profile sync failure does not invalidate a working session.
         }
       }
 
-      return token
+      return { ...token, backend }
     },
     async session({ session, token }) {
       if (token.backend) {
-        session.backendUser = token.backend.user
-        session.accessToken = token.backend.accessToken
-        session.accessTokenExpiresAt = token.backend.expiresAt
+        return {
+          ...session,
+          backendUser: token.backend.user,
+          accessToken: token.backend.accessToken,
+          accessTokenExpiresAt: token.backend.expiresAt,
+        }
       }
       return session
     },
-    authorized({ auth }) {
-      return Boolean(auth?.backendUser)
+    authorized({ auth: sessionAuth }) {
+      return Boolean(sessionAuth?.backendUser)
     },
   },
 })

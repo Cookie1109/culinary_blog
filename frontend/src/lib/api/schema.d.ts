@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getApiMetadata"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReleaseMetadata"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sitemap.xml": {
         parameters: {
             query?: never;
@@ -93,6 +125,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Bearer is optional. A valid bearer must own the refresh token (403 otherwise). A correctly signed expired bearer is allowed; malformed or invalid bearers return 401. Repeated logout returns 204. */
         post: operations["logout"];
         delete?: never;
         options?: never;
@@ -271,6 +304,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Duyệt Published theo bộ lọc AND; không cần từ khóa. newest là -createdAt, quickest là tổng thời gian tăng dần. */
         get: operations["listPublishedRecipes"];
         put?: never;
         post: operations["createRecipe"];
@@ -287,6 +321,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Ưu tiên khớp đủ mọi từ và dấu tiếng Việt đã nhập; tiền tố và tên gần đúng chỉ là nhánh dự phòng. Không ghép kết quả chỉ khớp một phần từ khóa vào tập khớp đủ từ. Tìm không dấu theo tiêu đề và mô tả, kết hợp mọi bộ lọc bằng AND. q bắt buộc có từ 2 đến 100 ký tự sau khi bỏ khoảng trắng đầu/cuối. Mặc định xếp theo ts_rank giảm dần và trả relevanceScore. Duyệt không có từ khóa dùng GET /recipes. sort=newest tương đương -createdAt; quickest là tổng thời gian chuẩn bị và nấu tăng dần. category là slug; categoryId là UUID. Khi gửi cả hai, công thức phải khớp cả hai. */
         get: operations["searchPublishedRecipes"];
         put?: never;
         post?: never;
@@ -707,6 +742,7 @@ export interface components {
             recipeCount: number;
         };
         CategoryWrite: {
+            /** @description 2–50 characters; HTML tags are not allowed. */
             name: string;
             description?: string | null;
             /** Format: uri */
@@ -737,17 +773,29 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             publishedAt?: string | null;
+            /**
+             * Format: float
+             * @description ts_rank for keyword search; null for browsing or non-search resources.
+             */
+            relevanceScore?: number | null;
             /** Format: int64 */
             version: number;
         };
         RecipeDetail: components["schemas"]["RecipeSummary"] & {
-            instructions?: string | null;
-            nutrition?: {
-                [key: string]: unknown;
-            } | null;
+            /** @description Empty when no legacy instructions are supplied */
+            instructions: string;
+            nutrition?: components["schemas"]["Nutrition"] | null;
             ingredients: components["schemas"]["Ingredient"][];
             steps: components["schemas"]["Step"][];
             images: components["schemas"]["RecipeImage"][];
+        };
+        Nutrition: {
+            calories?: number | null;
+            protein?: number | null;
+            carbohydrates?: number | null;
+            fat?: number | null;
+            fiber?: number | null;
+            sodium?: number | null;
         };
         CreateRecipeRequest: {
             title: string;
@@ -759,13 +807,32 @@ export interface components {
             servings: number;
             difficulty: components["schemas"]["RecipeDifficulty"];
             instructions?: string | null;
-            nutrition?: {
-                [key: string]: unknown;
-            } | null;
+            nutrition?: components["schemas"]["Nutrition"] | null;
             steps?: components["schemas"]["StepWrite"][];
             ingredients?: components["schemas"]["IngredientWrite"][];
         };
-        UpdateRecipeRequest: components["schemas"]["CreateRecipeRequest"];
+        /** @description Omitted fields retain their values. Null clears optional content; nutrition merges its supplied fields. Empty object is a no-op. */
+        UpdateRecipeRequest: {
+            title?: string;
+            description?: string;
+            /** Format: uuid */
+            categoryId?: string;
+            prepTime?: number;
+            cookTime?: number;
+            servings?: number;
+            difficulty?: components["schemas"]["RecipeDifficulty"];
+            instructions?: string | null;
+            nutrition?: components["schemas"]["Nutrition"] | null;
+        };
+        StepUpdateRequest: {
+            title?: string;
+            description?: string;
+            timerMinutes?: number | null;
+            /** Format: uri */
+            imageUrl?: string | null;
+            /** @description Chỉ dùng khi PUT để đổi vị trí */
+            stepNumber?: number;
+        };
         StepWrite: {
             title: string;
             description: string;
@@ -779,6 +846,13 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        IngredientUpdateRequest: {
+            name?: string;
+            quantity?: number | null;
+            unit?: string | null;
+            notes?: string | null;
+            orderIndex?: number;
+        };
         IngredientWrite: {
             name: string;
             quantity?: number | null;
@@ -787,15 +861,21 @@ export interface components {
             /** @default 0 */
             orderIndex: number;
         };
-        Ingredient: components["schemas"]["IngredientWrite"] & {
+        Ingredient: {
             /** Format: uuid */
             id: string;
+            name: string;
+            quantity?: number | null;
+            unit?: string | null;
+            notes?: string | null;
+            /** @default 0 */
+            orderIndex: number;
         };
         RecipeImage: {
             /** Format: uuid */
             id: string;
             /** @description Controlled API media path */
-            originalUrl?: string | null;
+            originalUrl: string;
             /** @description Controlled API media path when ready */
             mediumUrl?: string | null;
             /** @description Controlled API media path when ready */
@@ -823,6 +903,8 @@ export interface components {
         };
         RecipePage: {
             data: components["schemas"]["RecipeSummary"][];
+            /** @description Suggested keyword or filter changes when a search page is empty */
+            message?: string;
             meta: components["schemas"]["PageMeta"];
         };
         CategoryDetailEnvelope: {
@@ -848,6 +930,19 @@ export interface components {
         };
     };
     responses: {
+        /** @description Shared IP quota exceeded. Health endpoints are exempt. */
+        RateLimitExceeded: {
+            headers: {
+                "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "X-RateLimit-Reset": components["headers"]["RateLimitReset"];
+                "Retry-After": components["headers"]["RetryAfter"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetails"];
+            };
+        };
         /** @description RFC 7807 Problem Details */
         Problem: {
             headers: {
@@ -860,6 +955,9 @@ export interface components {
         /** @description Account created and session issued */
         AuthCreated: {
             headers: {
+                "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "X-RateLimit-Reset": components["headers"]["RateLimitReset"];
                 [name: string]: unknown;
             };
             content: {
@@ -869,6 +967,9 @@ export interface components {
         /** @description Session issued */
         AuthOk: {
             headers: {
+                "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "X-RateLimit-Reset": components["headers"]["RateLimitReset"];
                 [name: string]: unknown;
             };
             content: {
@@ -878,6 +979,9 @@ export interface components {
         /** @description Category resource */
         CategoryResource: {
             headers: {
+                "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "X-RateLimit-Reset": components["headers"]["RateLimitReset"];
                 [name: string]: unknown;
             };
             content: {
@@ -889,6 +993,9 @@ export interface components {
         /** @description Recipe resource */
         RecipeResource: {
             headers: {
+                "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "X-RateLimit-Reset": components["headers"]["RateLimitReset"];
                 ETag?: string;
                 [name: string]: unknown;
             };
@@ -901,6 +1008,9 @@ export interface components {
         /** @description Paged recipe results; public operations constrain data to Published */
         RecipePage: {
             headers: {
+                "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "X-RateLimit-Reset": components["headers"]["RateLimitReset"];
                 [name: string]: unknown;
             };
             content: {
@@ -910,6 +1020,9 @@ export interface components {
         /** @description Recipe child resource created or updated */
         ChildMutation: {
             headers: {
+                "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "X-RateLimit-Reset": components["headers"]["RateLimitReset"];
                 ETag?: string;
                 [name: string]: unknown;
             };
@@ -923,16 +1036,83 @@ export interface components {
         Slug: string;
         Page: number;
         PageSize: number;
-        Sort: string;
+        Sort: "newest" | "oldest" | "quickest" | "az" | "za" | "createdAt" | "-createdAt" | "title" | "-title" | "cookTime" | "-cookTime" | "prepTime" | "-prepTime" | "servings" | "-servings";
+        /** @description Field form of sort. Direction defaults to asc for a supplied field (relevance desc); without a field, createdAt desc. Equivalent forms may coexist; conflicting forms return 400. */
+        SortBy: "createdAt" | "title" | "cookTime" | "prepTime" | "servings" | "relevance";
+        SortOrder: "asc" | "desc";
         /** @description Quoted aggregate version ETag */
         IfMatch: string;
     };
     requestBodies: never;
-    headers: never;
+    headers: {
+        /** @description Binding shared per-IP quota (global fixed 100/minute, auth sliding 10/minute, upload fixed 5/minute). */
+        RateLimitLimit: number;
+        /** @description Requests remaining in the binding window. Auth/upload also consume the global quota. */
+        RateLimitRemaining: number;
+        /** @description Unix timestamp in seconds when the binding window next admits a request (shared PostgreSQL clock). PostgreSQL quota remains enforced when Redis is unavailable. */
+        RateLimitReset: number;
+        /** @description Seconds until retry when HTTP 429. */
+        RetryAfter: number;
+    };
     pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getApiMetadata: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API service and version */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            service: string;
+                            version: string;
+                        };
+                        meta: Record<string, never>;
+                    };
+                };
+            };
+            429: components["responses"]["RateLimitExceeded"];
+        };
+    };
+    getReleaseMetadata: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Release provenance configured for the running instance */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            commitSha?: string | null;
+                            apiImageDigest?: string | null;
+                            webImageDigest?: string | null;
+                        };
+                        meta: Record<string, never>;
+                    };
+                };
+            };
+            429: components["responses"]["RateLimitExceeded"];
+        };
+    };
     getSitemap: {
         parameters: {
             query?: never;
@@ -958,6 +1138,7 @@ export interface operations {
                 };
                 content?: never;
             };
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     register: {
@@ -976,6 +1157,8 @@ export interface operations {
             201: components["responses"]["AuthCreated"];
             400: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     login: {
@@ -994,8 +1177,9 @@ export interface operations {
             200: components["responses"]["AuthOk"];
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             423: components["responses"]["Problem"];
-            429: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     googleLogin: {
@@ -1015,8 +1199,11 @@ export interface operations {
         responses: {
             200: components["responses"]["AuthOk"];
             400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
-            502: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
+            503: components["responses"]["Problem"];
         };
     };
     refreshSession: {
@@ -1035,6 +1222,8 @@ export interface operations {
             200: components["responses"]["AuthOk"];
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     logout: {
@@ -1058,6 +1247,10 @@ export interface operations {
                 content?: never;
             };
             400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     changePassword: {
@@ -1083,7 +1276,8 @@ export interface operations {
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
-            429: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     forgotPassword: {
@@ -1107,7 +1301,8 @@ export interface operations {
                 content?: never;
             };
             400: components["responses"]["Problem"];
-            429: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
             503: components["responses"]["Problem"];
         };
     };
@@ -1132,7 +1327,8 @@ export interface operations {
                 content?: never;
             };
             400: components["responses"]["Problem"];
-            429: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     getCurrentUser: {
@@ -1155,6 +1351,7 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     updateCurrentUser: {
@@ -1181,6 +1378,8 @@ export interface operations {
             };
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     listCategories: {
@@ -1203,6 +1402,8 @@ export interface operations {
                     };
                 };
             };
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     createCategory: {
@@ -1222,6 +1423,8 @@ export interface operations {
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     getCategoryBySlug: {
@@ -1229,6 +1432,10 @@ export interface operations {
             query?: {
                 page?: components["parameters"]["Page"];
                 pageSize?: components["parameters"]["PageSize"];
+                sort?: components["parameters"]["Sort"];
+                /** @description Field form of sort. Direction defaults to asc for a supplied field (relevance desc); without a field, createdAt desc. Equivalent forms may coexist; conflicting forms return 400. */
+                sortBy?: components["parameters"]["SortBy"];
+                sortOrder?: components["parameters"]["SortOrder"];
             };
             header?: never;
             path: {
@@ -1249,6 +1456,7 @@ export interface operations {
             };
             400: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     updateCategory: {
@@ -1271,6 +1479,8 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     deleteCategory: {
@@ -1294,6 +1504,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     listAllRecipesForAdmin: {
@@ -1315,6 +1526,8 @@ export interface operations {
             200: components["responses"]["RecipePage"];
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     getAnyRecipeForAdmin: {
@@ -1332,6 +1545,8 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     listSystemHistory: {
@@ -1368,6 +1583,8 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     listPublishedRecipes: {
@@ -1376,12 +1593,19 @@ export interface operations {
                 page?: components["parameters"]["Page"];
                 pageSize?: components["parameters"]["PageSize"];
                 sort?: components["parameters"]["Sort"];
+                /** @description Category slug; kết hợp AND với categoryId nếu gửi cả hai. */
+                category?: string;
+                /** @description Maximum total preparation and cooking time. */
+                maxTime?: number;
                 categoryId?: string;
                 difficulty?: components["schemas"]["RecipeDifficulty"];
                 maxCookTime?: number;
                 minServings?: number;
                 minPrepTime?: number;
                 maxPrepTime?: number;
+                /** @description Field form of sort. Direction defaults to asc for a supplied field (relevance desc); without a field, createdAt desc. Equivalent forms may coexist; conflicting forms return 400. */
+                sortBy?: components["parameters"]["SortBy"];
+                sortOrder?: components["parameters"]["SortOrder"];
             };
             header?: never;
             path?: never;
@@ -1391,6 +1615,8 @@ export interface operations {
         responses: {
             200: components["responses"]["RecipePage"];
             400: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     createRecipe: {
@@ -1411,12 +1637,14 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     searchPublishedRecipes: {
         parameters: {
-            query?: {
-                q?: string;
+            query: {
+                q: string;
                 page?: components["parameters"]["Page"];
                 pageSize?: components["parameters"]["PageSize"];
                 /** @description Category slug */
@@ -1424,7 +1652,16 @@ export interface operations {
                 difficulty?: components["schemas"]["RecipeDifficulty"];
                 /** @description Maximum preparation plus cooking time in minutes */
                 maxTime?: number;
-                sort?: "relevance" | "newest" | "quickest" | "az";
+                categoryId?: string;
+                maxCookTime?: number;
+                minServings?: number;
+                minPrepTime?: number;
+                /** @description Must be greater than or equal to minPrepTime when both are provided. */
+                maxPrepTime?: number;
+                sort?: "relevance" | "newest" | "oldest" | "quickest" | "az" | "za" | "createdAt" | "-createdAt" | "title" | "-title" | "cookTime" | "-cookTime" | "prepTime" | "-prepTime" | "servings" | "-servings";
+                /** @description Field form of sort. Direction defaults to asc for a supplied field (relevance desc); without a field, createdAt desc. Equivalent forms may coexist; conflicting forms return 400. */
+                sortBy?: components["parameters"]["SortBy"];
+                sortOrder?: components["parameters"]["SortOrder"];
             };
             header?: never;
             path?: never;
@@ -1434,6 +1671,8 @@ export interface operations {
         responses: {
             200: components["responses"]["RecipePage"];
             400: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     getPublishedRecipeBySlug: {
@@ -1448,7 +1687,17 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["RecipeResource"];
+            /** @description Historical published slug redirects directly to its current slug */
+            301: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     updateRecipe: {
@@ -1474,6 +1723,8 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     deleteRecipe: {
@@ -1501,6 +1752,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     publishRecipe: {
@@ -1522,6 +1774,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     unpublishRecipe: {
@@ -1543,6 +1796,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     archiveRecipe: {
@@ -1564,6 +1818,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     unarchiveRecipe: {
@@ -1585,6 +1840,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     listMyRecipes: {
@@ -1604,6 +1860,8 @@ export interface operations {
         responses: {
             200: components["responses"]["RecipePage"];
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     getMyRecipe: {
@@ -1621,6 +1879,8 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     uploadRecipeImage: {
@@ -1652,6 +1912,8 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
             503: components["responses"]["Problem"];
         };
     };
@@ -1681,6 +1943,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     updateRecipeImage: {
@@ -1711,6 +1974,8 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     createRecipeStep: {
@@ -1736,6 +2001,8 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     updateRecipeStep: {
@@ -1753,7 +2020,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StepWrite"];
+                "application/json": components["schemas"]["StepUpdateRequest"];
             };
         };
         responses: {
@@ -1762,6 +2029,8 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     deleteRecipeStep: {
@@ -1790,6 +2059,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     createRecipeIngredient: {
@@ -1815,6 +2085,8 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     updateRecipeIngredient: {
@@ -1832,7 +2104,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IngredientWrite"];
+                "application/json": components["schemas"]["IngredientUpdateRequest"];
             };
         };
         responses: {
@@ -1841,6 +2113,8 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     deleteRecipeIngredient: {
@@ -1869,6 +2143,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     getRecipeImageVariant: {
@@ -1892,9 +2167,11 @@ export interface operations {
                     "image/jpeg": string;
                     "image/png": string;
                     "image/webp": string;
+                    "image/avif": string;
                 };
             };
             404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
             503: components["responses"]["Problem"];
         };
     };
@@ -1941,6 +2218,7 @@ export interface operations {
                     "application/json": components["schemas"]["MaintenanceEnvelope"];
                 };
             };
+            429: components["responses"]["RateLimitExceeded"];
         };
     };
     liveness: {

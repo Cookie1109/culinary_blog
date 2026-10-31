@@ -7,14 +7,15 @@ const source = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8'
 test('P6-24: Homepage visual/responsive layouts across mobile, tablet, and desktop', async () => {
   const [home, homeRoute, categories, categoryCard] = await Promise.all([
     source('src/features/culinary/pages/Home.tsx'),
-    source('src/app/(public)/page.tsx'),
+    source('src/app/(public)/render-public/home/[key]/page.tsx'),
     source('src/features/culinary/pages/Categories.tsx'),
     source('src/features/culinary/components/CategoryCard.tsx'),
   ])
 
   // Hero section is a full-bleed layout with the active recipe image and text overlay.
   assert.match(home, /relative w-full overflow-hidden/, 'Homepage hero must be full-bleed with overlay copy')
-  assert.match(home, /featuredImage/)
+  assert.match(home, /const image = recipeImage\(recipe\)/)
+  assert.match(home, /src=\{`\$\{publicMediaUrl\(image\)\}/)
   assert.match(home, /<Image/)
 
   // Fluid typography on hero title

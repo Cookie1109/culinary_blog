@@ -27,15 +27,16 @@ function SystemStat({ status, label, icon: Icon, color }: (typeof STATUSES)[numb
     queryKey: ['admin-recipes', 'count', status],
     queryFn: () => listAdminRecipes(status, undefined, 1, 1),
   })
+  let value: string | number = '—'
+  if (query.isPending) value = '…'
+  else if (query.isSuccess) value = query.data.meta.total
   return (
     <div className="border border-border bg-background p-5 lg:p-6">
       <div className="mb-3 flex items-start justify-between gap-2">
         <span className="text-xs uppercase tracking-widest text-muted-foreground">{label}</span>
         <Icon size={18} strokeWidth={1.5} className={color} aria-hidden="true" />
       </div>
-      <p className="font-serif text-3xl text-foreground">
-        {query.isPending ? '…' : query.isError ? '—' : query.data.meta.total}
-      </p>
+      <p className="font-serif text-3xl text-foreground">{value}</p>
       {query.isError && <span className="text-xs text-red-700">Không thể tải thống kê</span>}
     </div>
   )
@@ -63,7 +64,13 @@ function SystemContent() {
         aria-label="Thống kê công thức toàn hệ thống"
       >
         {STATUSES.map((stat) => (
-          <SystemStat key={stat.label} {...stat} />
+          <SystemStat
+            key={stat.label}
+            status={stat.status}
+            label={stat.label}
+            icon={stat.icon}
+            color={stat.color}
+          />
         ))}
       </div>
       <MyRecipes systemOverview />

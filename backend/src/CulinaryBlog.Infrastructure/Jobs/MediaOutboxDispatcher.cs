@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Text.Json;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -7,21 +9,47 @@ using Microsoft.Extensions.Logging;
 
 namespace CulinaryBlog.Infrastructure.Jobs;
 
+/// <summary>Represents the media outbox dispatcher.</summary>
+/// <param name="scopeFactory">The scope factory supplied to this operation.</param>
+/// <param name="timeProvider">The time provider supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
 internal sealed class MediaOutboxDispatcher(
     IServiceScopeFactory scopeFactory,
     TimeProvider timeProvider,
     ILogger<MediaOutboxDispatcher> logger) : BackgroundService
 {
     private static readonly Action<ILogger, Guid, Exception?> DispatchFailed =
-        LoggerMessage.Define<Guid>(LogLevel.Error, new EventId(4301, nameof(DispatchFailed)),
+        LoggerMessage.Define<Guid>(
+            LogLevel.Error,
+            new EventId(4301, nameof(DispatchFailed)),
             "Failed to dispatch media outbox message {OutboxId}");
 
+    private static readonly Action<ILogger, Exception?> BatchFailed =
+        LoggerMessage.Define(
+            LogLevel.Error,
+            new EventId(4302, nameof(BatchFailed)),
+            "Media outbox batch dispatch failed");
+
+    /// <summary>Executes the media outbox dispatcher.</summary>
+    /// <param name="stoppingToken">The stopping token supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
         do
         {
-            await DispatchBatchAsync(stoppingToken).ConfigureAwait(false);
+            try
+            {
+                await this.DispatchBatchAsync(stoppingToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception exception)
+            {
+                BatchFailed(logger, exception);
+            }
         }
         while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
     }
@@ -41,6 +69,7 @@ internal sealed class MediaOutboxDispatcher(
 
         foreach (var message in messages)
         {
+            using var trace = JobTraceContext.Start("outbox.media", System.Diagnostics.ActivityKind.Producer, message.TraceParent, message.CorrelationId);
             try
             {
                 if (message.Type == MediaOutboxTypes.ResizeImage)
@@ -77,13 +106,3 @@ internal sealed class MediaOutboxDispatcher(
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }
-
-internal static class MediaOutboxTypes
-{
-    public const string ResizeImage = "image.resize";
-    public const string DeleteObjects = "objects.delete";
-}
-
-internal sealed record ResizeImagePayload(Guid ImageId);
-
-internal sealed record DeleteObjectsPayload(string[] ObjectKeys);

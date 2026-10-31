@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -5,9 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CulinaryBlog.Api.Presentation;
 
+/// <summary>Represents the recipe ownership filter.</summary>
+/// <param name="dbContext">The db context supplied to this operation.</param>
+/// <param name="authorizationService">The authorization service supplied to this operation.</param>
 internal sealed class RecipeOwnershipFilter(AppDbContext dbContext, IAuthorizationService authorizationService)
     : IEndpointFilter
 {
+    /// <summary>Performs the invoke operation.</summary>
+    /// <param name="context">The context supplied to this operation.</param>
+    /// <param name="next">The next supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var id = Guid.Parse(context.HttpContext.Request.RouteValues["id"]!.ToString()!);

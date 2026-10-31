@@ -1,7 +1,12 @@
+import { format as formatCliOutput } from 'node:util'
+
 const webBaseUrl = 'http://127.0.0.1:3000'
 const apiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? 'http://api:8080/api/v1'
 
-const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds))
+const wait = (milliseconds) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, milliseconds)
+  })
 
 async function waitForDevServer() {
   for (let attempt = 0; attempt < 120; attempt += 1) {
@@ -21,7 +26,7 @@ async function warmRoute(path) {
   const response = await fetch(`${webBaseUrl}${path}`)
   if (!response.ok) throw new Error(`Unable to warm ${path}: HTTP ${response.status}`)
   await response.arrayBuffer()
-  console.log(`[dev-warmup] ${path}`)
+  process.stdout.write(`${formatCliOutput(`[dev-warmup] ${path}`)}\n`)
 }
 
 async function main() {

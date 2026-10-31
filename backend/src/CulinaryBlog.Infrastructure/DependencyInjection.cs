@@ -1,3 +1,6 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
+using System.Security.Cryptography.X509Certificates;
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Audit;
@@ -14,21 +17,31 @@ using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Jobs;
 using CulinaryBlog.Infrastructure.Media;
 using CulinaryBlog.Infrastructure.Persistence;
+using CulinaryBlog.Infrastructure.RateLimiting;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Minio;
+using RedLockNet;
+using RedLockNet.SERedis;
+using RedLockNet.SERedis.Configuration;
 using StackExchange.Redis;
 
 namespace CulinaryBlog.Infrastructure;
 
+/// <summary>Represents the dependency injection.</summary>
 public static class DependencyInjection
 {
+    /// <summary>Adds infrastructure.</summary>
+    /// <param name="services">The services supplied to this operation.</param>
+    /// <param name="configuration">The configuration supplied to this operation.</param>
+    /// <returns>The add infrastructure result.</returns>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -53,6 +66,7 @@ public static class DependencyInjection
         services.AddOptions<EmailOptions>()
             .Bind(configuration.GetSection(EmailOptions.SectionName))
             .ValidateDataAnnotations()
+            .Validate(options => !options.Enabled || SmtpClientFactory.IsTransportAllowed(options), "SMTP requires TLS except for local capture.")
             .ValidateOnStart();
         services.AddOptions<SitemapOptions>()
             .Bind(configuration.GetSection(SitemapOptions.SectionName))
@@ -64,9 +78,12 @@ public static class DependencyInjection
             .ValidateOnStart();
 
         services.AddScoped<AuditSaveChangesInterceptor>();
+        services.AddScoped<SlowQueryInterceptor>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) => options
-            .UseNpgsql(databaseConnection)
-            .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));
+            .UseNpgsql(databaseConnection, provider => provider.CommandTimeout(30))
+            .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(), serviceProvider.GetRequiredService<SlowQueryInterceptor>()));
+        services.AddDbContext<DataProtectionKeyDbContext>(options => options.UseNpgsql(
+            databaseConnection, provider => provider.MigrationsHistoryTable("__DataProtectionMigrations").CommandTimeout(30)));
         services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -80,16 +97,37 @@ public static class DependencyInjection
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
-            .AddRoles<IdentityRole<Guid>>()
+            .AddRoles<IdentityRole>()
             .AddSignInManager()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
         services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromMinutes(30));
         var dataProtection = services.AddDataProtection().SetApplicationName("CulinaryBlog");
-        if (configuration["DataProtection:KeyPath"] is { Length: > 0 } keyPath)
+        if (configuration.GetValue("DataProtection:PersistKeysToDatabase", false))
+        {
+            var certificateBase64 = configuration["DataProtection:CertificateBase64"];
+            if (string.IsNullOrWhiteSpace(certificateBase64))
+            {
+                throw new InvalidOperationException("Database key storage requires DataProtection:CertificateBase64 from secret configuration.");
+            }
+
+            // Data Protection options retain this certificate for the host lifetime.
+            var certificate = X509CertificateLoader.LoadPkcs12(
+                Convert.FromBase64String(certificateBase64), password: null, X509KeyStorageFlags.EphemeralKeySet);
+            using var rsa = certificate.GetRSAPublicKey();
+            if (!certificate.HasPrivateKey || rsa is null)
+            {
+                certificate.Dispose();
+                throw new InvalidOperationException("DataProtection:CertificateBase64 must contain an RSA certificate with its private key.");
+            }
+
+            dataProtection.PersistKeysToDbContext<DataProtectionKeyDbContext>().ProtectKeysWithCertificate(certificate);
+        }
+        else if (configuration["DataProtection:KeyPath"] is { Length: > 0 } keyPath)
         {
             dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keyPath));
         }
+
         services.Configure<PasswordHasherOptions>(options =>
         {
             options.CompatibilityMode = PasswordHasherCompatibilityMode.IdentityV3;
@@ -100,30 +138,40 @@ public static class DependencyInjection
         services.AddScoped<IRecipeRepository, RecipeRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IApplicationActor, HttpApplicationActor>();
         services.AddScoped<IPasswordResetEmailSender, PasswordResetEmailSender>();
         services.AddScoped<ContentService>();
         services.AddScoped<IContentService>(provider => provider.GetRequiredService<ContentService>());
         services.AddScoped<IRecipeSearchRepository>(provider => provider.GetRequiredService<ContentService>());
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddSingleton<ISitemapLocation, SitemapLocation>();
         services.AddSingleton<IFileStorageService, MinioFileStorageService>();
         services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
         services.AddScoped<IAuthorizationHandler, RecipeAuthorizationHandler>();
         services.AddScoped<DatabaseInitializer>();
-        services.AddHostedService<WelcomeEmailWorker>();
+        services.AddTransient<WelcomeEmailJob>();
         services.AddTransient<ImageProcessingJob>();
         services.AddTransient<ObjectDeletionJob>();
         services.AddTransient<ImageReconciliationJob>();
         services.AddTransient<SitemapGenerationJob>();
         services.AddTransient<PublicContentRefreshJob>();
         services.AddTransient<PublicContentRefreshScheduler>();
+        services.AddSingleton<PostgresRateLimitCounter>();
+        services.AddTransient<RateLimitStateCleanupJob>();
+        services.AddTransient<IPublicContentRefresh>(provider => provider.GetRequiredService<PublicContentRefreshScheduler>());
 
-        services.AddHangfire(configurationBuilder => configurationBuilder
+        services.AddSingleton<JobLogContextFilter>();
+        services.AddHangfire((provider, configurationBuilder) => configurationBuilder
+            .UseFilter(provider.GetRequiredService<JobLogContextFilter>())
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
-            .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(databaseConnection)));
+            .UsePostgreSqlStorage(
+                options => options.UseNpgsqlConnection(databaseConnection),
+                new PostgreSqlStorageOptions { PrepareSchemaIfNecessary = backgroundJobsEnabled }));
         if (backgroundJobsEnabled)
         {
+            services.AddHostedService<WelcomeEmailWorker>();
             services.AddHostedService<MediaOutboxDispatcher>();
             services.AddHangfireServer(options => options.WorkerCount = Math.Max(1, Environment.ProcessorCount / 2));
         }
@@ -139,7 +187,22 @@ public static class DependencyInjection
             options.AbortOnConnectFail = false;
             return ConnectionMultiplexer.Connect(options);
         });
-        services.AddSingleton<IApplicationCache, RedisApplicationCache>();
+        services.AddScoped<IPublicCacheVersion, DatabasePublicCacheVersion>();
+        services.AddSingleton<IDistributedLockFactory>(provider => RedLockFactory.Create(
+            [new RedLockMultiplexer(provider.GetRequiredService<IConnectionMultiplexer>())]));
+        services.AddScoped<IApplicationCache, RedisApplicationCache>();
+        services.AddStackExchangeRedisOutputCache(options =>
+        {
+            options.Configuration = redisConnection;
+            options.InstanceName = "culinary:output:v1:";
+        });
+        var outputStore = services.Last(descriptor => descriptor.ServiceType == typeof(IOutputCacheStore));
+        services.Remove(outputStore);
+        services.AddSingleton<IOutputCacheStore>(provider => new ResilientOutputCacheStore(
+            (IOutputCacheStore)(outputStore.ImplementationFactory?.Invoke(provider) ??
+                ActivatorUtilities.CreateInstance(provider, outputStore.ImplementationType!)),
+            provider.GetRequiredService<IConnectionMultiplexer>(),
+            provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResilientOutputCacheStore>>()));
 
         services.AddSingleton<IMinioClient>(serviceProvider =>
         {

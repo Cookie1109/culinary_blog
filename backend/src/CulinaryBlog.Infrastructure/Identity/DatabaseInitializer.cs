@@ -1,6 +1,9 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Bogus;
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Media;
 using CulinaryBlog.Domain.Categories;
@@ -13,9 +16,16 @@ using Microsoft.Extensions.Options;
 
 namespace CulinaryBlog.Infrastructure.Identity;
 
+/// <summary>Represents the database initializer.</summary>
+/// <param name="dbContext">The db context supplied to this operation.</param>
+/// <param name="roleManager">The role manager supplied to this operation.</param>
+/// <param name="userManager">The user manager supplied to this operation.</param>
+/// <param name="fileStorage">The file storage supplied to this operation.</param>
+/// <param name="cache">The cache supplied to this operation.</param>
+/// <param name="adminOptions">The admin options supplied to this operation.</param>
 public sealed class DatabaseInitializer(
     AppDbContext dbContext,
-    RoleManager<IdentityRole<Guid>> roleManager,
+    RoleManager<IdentityRole> roleManager,
     UserManager<ApplicationUser> userManager,
     IFileStorageService fileStorage,
     IApplicationCache cache,
@@ -23,6 +33,9 @@ public sealed class DatabaseInitializer(
 {
     private static readonly string[] Roles = ["Author", "Admin"];
 
+    /// <summary>Performs the initialize operation.</summary>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
         await dbContext.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
@@ -32,22 +45,39 @@ public sealed class DatabaseInitializer(
             if (!await roleManager.RoleExistsAsync(role).ConfigureAwait(false))
             {
                 EnsureSucceeded(
-                    await roleManager.CreateAsync(new IdentityRole<Guid>(role)).ConfigureAwait(false),
+                    await roleManager.CreateAsync(new IdentityRole(role)).ConfigureAwait(false),
                     $"create the {role} role");
             }
         }
 
-        var authorIds = await SeedAuthorsAsync().ConfigureAwait(false);
-        var categoryIds = await SeedCategoriesAsync(cancellationToken).ConfigureAwait(false);
-        await SeedRecipesAsync(categoryIds, authorIds, cancellationToken).ConfigureAwait(false);
+        var authorIds = await this.SeedAuthorsAsync().ConfigureAwait(false);
+        var categoryIds = await this.SeedCategoriesAsync(cancellationToken).ConfigureAwait(false);
+        await this.SeedRecipesAsync(categoryIds, authorIds, cancellationToken).ConfigureAwait(false);
         await cache.RemoveByTagAsync(PublicCacheKeys.RecipesTag, cancellationToken).ConfigureAwait(false);
         await cache.RemoveByTagAsync(PublicCacheKeys.CategoriesTag, cancellationToken).ConfigureAwait(false);
-        await SeedAdminAsync().ConfigureAwait(false);
+        await this.SeedAdminAsync().ConfigureAwait(false);
     }
 
-    private async Task<List<Guid>> SeedAuthorsAsync()
+    private static Guid StableGuid(string value)
     {
-        var authorIds = new List<Guid>(VietnameseSeedData.Authors.Count);
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"culinary-blog-seed:{value}"));
+        hash[7] = (byte)((hash[7] & 0x0f) | 0x40);
+        hash[8] = (byte)((hash[8] & 0x3f) | 0x80);
+        return new Guid(hash.AsSpan(0, 16));
+    }
+
+    private static void EnsureSucceeded(IdentityResult result, string operation)
+    {
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(
+                $"Failed to {operation}: {string.Join(", ", result.Errors.Select(error => error.Code))}");
+        }
+    }
+
+    private async Task<List<string>> SeedAuthorsAsync()
+    {
+        var authorIds = new List<string>(VietnameseSeedData.Authors.Count);
         foreach (var seed in VietnameseSeedData.Authors)
         {
             var author = await userManager.FindByEmailAsync(seed.Email).ConfigureAwait(false);
@@ -55,7 +85,7 @@ public sealed class DatabaseInitializer(
             {
                 author = new ApplicationUser
                 {
-                    Id = StableGuid($"author:{seed.Email}"),
+                    Id = StableGuid($"author:{seed.Email}").ToString(),
                     UserName = seed.Email,
                     Email = seed.Email,
                     EmailConfirmed = true,
@@ -115,19 +145,22 @@ public sealed class DatabaseInitializer(
 
     private async Task SeedRecipesAsync(
         IReadOnlyDictionary<string, Guid> categoryIds,
-        List<Guid> authorIds,
+        List<string> authorIds,
         CancellationToken cancellationToken)
     {
-        var seedSlugs = VietnameseSeedData.Recipes.Select(recipe => recipe.Slug).ToArray();
+        // Bogus generates a repeatable 50-recipe fixture from the curated Vietnamese templates.
+        // Existing installations, including the earlier 100-recipe fixture, are never pruned or overwritten.
+        var seedRecipes = new Randomizer(20261025).Shuffle(VietnameseSeedData.Recipes).Take(50).ToArray();
+        var seedSlugs = seedRecipes.Select(recipe => recipe.Slug).ToArray();
         var existingRecipes = await dbContext.Recipes.IgnoreQueryFilters()
             .Where(recipe => seedSlugs.Contains(recipe.Slug))
             .ToDictionaryAsync(recipe => recipe.Slug, StringComparer.Ordinal, cancellationToken)
             .ConfigureAwait(false);
-        var publishedAt = DateTimeOffset.UtcNow.AddDays(-VietnameseSeedData.Recipes.Count);
+        var publishedAt = DateTimeOffset.UtcNow.AddDays(-seedRecipes.Length);
 
-        for (var recipeIndex = 0; recipeIndex < VietnameseSeedData.Recipes.Count; recipeIndex++)
+        for (var recipeIndex = 0; recipeIndex < seedRecipes.Length; recipeIndex++)
         {
-            var seed = VietnameseSeedData.Recipes[recipeIndex];
+            var seed = seedRecipes[recipeIndex];
             var nutrition = RecipeNutrition.Create(
                 seed.Nutrition.Calories,
                 seed.Nutrition.Protein,
@@ -191,7 +224,7 @@ public sealed class DatabaseInitializer(
                     null));
             }
 
-            await EnsureRecipeImageAsync(recipeId, seed, cancellationToken).ConfigureAwait(false);
+            await this.EnsureRecipeImageAsync(recipeId, seed, cancellationToken).ConfigureAwait(false);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -275,7 +308,7 @@ public sealed class DatabaseInitializer(
         {
             admin = new ApplicationUser
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 UserName = options.Email,
                 Email = options.Email,
                 DisplayName = options.DisplayName,
@@ -292,21 +325,6 @@ public sealed class DatabaseInitializer(
             EnsureSucceeded(
                 await userManager.AddToRoleAsync(admin, "Admin").ConfigureAwait(false),
                 "assign the Admin role");
-        }
-    }
-
-    private static Guid StableGuid(string value)
-    {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"culinary-blog-seed:{value}"));
-        return new Guid(hash.AsSpan(0, 16));
-    }
-
-    private static void EnsureSucceeded(IdentityResult result, string operation)
-    {
-        if (!result.Succeeded)
-        {
-            throw new InvalidOperationException(
-                $"Failed to {operation}: {string.Join(", ", result.Errors.Select(error => error.Code))}");
         }
     }
 }

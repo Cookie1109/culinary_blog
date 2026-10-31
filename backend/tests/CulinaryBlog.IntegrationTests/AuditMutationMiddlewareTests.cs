@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Security.Claims;
 using CulinaryBlog.Api.Middleware;
 using Microsoft.AspNetCore.Http;
@@ -5,8 +7,11 @@ using Microsoft.Extensions.Logging;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for audit mutation middleware tests.</summary>
 public sealed class AuditMutationMiddlewareTests
 {
+    /// <summary>Verifies that successful mutation writes structured audit fields.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task SuccessfulMutationWritesStructuredAuditFields()
     {
@@ -46,6 +51,12 @@ public sealed class AuditMutationMiddlewareTests
         Assert.IsType<DateTimeOffset>(entry["OccurredAt"]);
     }
 
+    /// <summary>Verifies that nested recipe changes are recorded.</summary>
+    /// <param name="method">The method supplied to this operation.</param>
+    /// <param name="component">The component supplied to this operation.</param>
+    /// <param name="action">The action supplied to this operation.</param>
+    /// <param name="statusCode">The status code supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [Theory]
     [InlineData("PUT", "ingredients", "updated", 200)]
     [InlineData("POST", "steps", "created", 201)]
@@ -54,11 +65,14 @@ public sealed class AuditMutationMiddlewareTests
     {
         var provider = new CapturingLoggerProvider();
         using var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(provider));
-        var middleware = new AuditMutationMiddleware(context =>
-        {
-            context.Response.StatusCode = statusCode;
-            return Task.CompletedTask;
-        }, loggerFactory.CreateLogger<AuditMutationMiddleware>(), TimeProvider.System);
+        var middleware = new AuditMutationMiddleware(
+            context =>
+            {
+                context.Response.StatusCode = statusCode;
+                return Task.CompletedTask;
+            },
+            loggerFactory.CreateLogger<AuditMutationMiddleware>(),
+            TimeProvider.System);
         var recipeId = Guid.NewGuid();
         var context = new DefaultHttpContext();
         context.Request.Method = method;
@@ -69,16 +83,21 @@ public sealed class AuditMutationMiddlewareTests
         Assert.Equal(recipeId.ToString(), entry["EntityId"]);
     }
 
+    /// <summary>Verifies that failed changes do not appear as successful audit events.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task FailedChangesDoNotAppearAsSuccessfulAuditEvents()
     {
         var provider = new CapturingLoggerProvider();
         using var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(provider));
-        var middleware = new AuditMutationMiddleware(context =>
-        {
-            context.Response.StatusCode = 403;
-            return Task.CompletedTask;
-        }, loggerFactory.CreateLogger<AuditMutationMiddleware>(), TimeProvider.System);
+        var middleware = new AuditMutationMiddleware(
+            context =>
+            {
+                context.Response.StatusCode = 403;
+                return Task.CompletedTask;
+            },
+            loggerFactory.CreateLogger<AuditMutationMiddleware>(),
+            TimeProvider.System);
         var context = new DefaultHttpContext();
         context.Request.Method = "DELETE";
         context.Request.Path = $"/api/v1/recipes/{Guid.NewGuid()}";
@@ -90,7 +109,7 @@ public sealed class AuditMutationMiddlewareTests
     {
         public List<IReadOnlyDictionary<string, object?>> Entries { get; } = [];
 
-        public ILogger CreateLogger(string categoryName) => new CapturingLogger(Entries);
+        public ILogger CreateLogger(string categoryName) => new CapturingLogger(this.Entries);
 
         public void Dispose()
         {
@@ -99,7 +118,9 @@ public sealed class AuditMutationMiddlewareTests
 
     private sealed class CapturingLogger(List<IReadOnlyDictionary<string, object?>> entries) : ILogger
     {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+            => null;
 
         public bool IsEnabled(LogLevel logLevel) => true;
 

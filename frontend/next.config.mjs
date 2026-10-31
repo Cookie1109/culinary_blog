@@ -16,7 +16,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://images.unsplash.com",
+  "img-src 'self' data: blob: https: http:",
   "font-src 'self'",
   `connect-src 'self'${process.env.NODE_ENV === 'development' ? ' ws: wss:' : ''}`,
 ].join('; ')
@@ -62,29 +62,45 @@ const nextConfig = {
         source: '/register',
         headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
       },
-    ]
-  },
-  async redirects() {
-    return [
-      { source: '/auth/login', destination: '/login', permanent: false },
-      { source: '/auth/register', destination: '/register', permanent: false },
-      { source: '/search', destination: '/recipes', permanent: true },
+      {
+        source: '/auth/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
     ]
   },
   async rewrites() {
-    return process.env.NODE_ENV === 'development'
-      ? [
-          {
-            source: '/api/v1/:path*',
-            destination: `${process.env.INTERNAL_API_BASE_URL ?? 'http://localhost:5000/api/v1'}/:path*`,
-          },
-        ]
-      : []
+    return {
+      beforeFiles: [
+        {
+          source: '/categories/:slug',
+          has: [{ type: 'query', key: 'page', value: '(?<page>[1-9][0-9]*)' }],
+          destination: '/render-public/category/:slug/:page',
+        },
+        { source: '/', destination: '/render-public/home/index' },
+        { source: '/categories', destination: '/render-public/categories/index' },
+        ...(process.env.NODE_ENV === 'development'
+          ? [
+              {
+                source: '/api/v1/:path*',
+                destination: `${process.env.INTERNAL_API_BASE_URL ?? 'http://localhost:5000/api/v1'}/:path*`,
+              },
+            ]
+          : []),
+      ],
+    }
   },
   webpack(config) {
-    config.resolve.modules = [path.join(currentDirectory, 'node_modules'), ...config.resolve.modules]
-    config.resolve.alias['react-router'] = path.join(currentDirectory, 'src/lib/router-compat.tsx')
-    return config
+    return {
+      ...config,
+      resolve: {
+        ...config.resolve,
+        modules: [path.join(currentDirectory, 'node_modules'), ...config.resolve.modules],
+        alias: {
+          ...config.resolve.alias,
+          'react-router': path.join(currentDirectory, 'src/lib/router-compat.tsx'),
+        },
+      },
+    }
   },
 }
 

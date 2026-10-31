@@ -1,6 +1,7 @@
-using System.Net;
-using System.Net.Mail;
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Infrastructure.Persistence;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,28 +10,47 @@ using Microsoft.Extensions.Options;
 
 namespace CulinaryBlog.Infrastructure.Email;
 
-internal sealed class WelcomeEmailWorker(
+/// <summary>Represents the welcome email worker.</summary>
+/// <param name="scopeFactory">The scope factory supplied to this operation.</param>
+/// <param name="options">The options supplied to this operation.</param>
+/// <param name="timeProvider">The time provider supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
+internal sealed partial class WelcomeEmailWorker(
     IServiceScopeFactory scopeFactory,
     IOptions<EmailOptions> options,
     TimeProvider timeProvider,
     ILogger<WelcomeEmailWorker> logger) : BackgroundService
 {
-    private static readonly Action<ILogger, Exception?> ProcessingFailed =
-        LoggerMessage.Define(LogLevel.Error, new EventId(3001, nameof(ProcessingFailed)), "Welcome email outbox processing failed");
+    /// <summary>Performs the dispatch operation.</summary>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
+    internal async Task DispatchAsync(CancellationToken cancellationToken)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var jobs = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        var now = timeProvider.GetUtcNow();
+        var messages = await db.WelcomeEmailOutbox.FromSqlInterpolated(
+            $"""
+            SELECT * FROM "WelcomeEmailOutbox"
+            WHERE "SentAt" IS NULL AND "JobId" IS NULL AND "Attempts" < 4 AND "NextAttemptAt" <= {now}
+            ORDER BY "CreatedAt" LIMIT 20 FOR UPDATE SKIP LOCKED
+            """)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var message in messages)
+        {
+            using var trace = Jobs.JobTraceContext.Start("outbox.welcome", System.Diagnostics.ActivityKind.Producer, message.TraceParent, message.CorrelationId);
+            message.JobId = jobs.Enqueue<WelcomeEmailJob>(job => job.SendAsync(message.Id, CancellationToken.None));
+        }
 
-    private static readonly Action<ILogger, Guid, int, Exception?> DeliveryFailed =
-        LoggerMessage.Define<Guid, int>(
-            LogLevel.Warning,
-            new EventId(3002, nameof(DeliveryFailed)),
-            "Welcome email delivery failed for outbox message {MessageId} on attempt {Attempt}");
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
 
-    private static readonly TimeSpan[] RetryDelays =
-    [
-        TimeSpan.FromMinutes(1),
-        TimeSpan.FromMinutes(5),
-        TimeSpan.FromMinutes(30),
-    ];
-
+    /// <summary>Executes the welcome email worker.</summary>
+    /// <param name="stoppingToken">The stopping token supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (!options.Value.Enabled)
@@ -41,71 +61,22 @@ internal sealed class WelcomeEmailWorker(
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(15), timeProvider);
         do
         {
-            await ProcessBatchAsync(stoppingToken).ConfigureAwait(false);
+            try
+            {
+                await this.DispatchAsync(stoppingToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception exception)
+            {
+                ProcessingFailed(logger, exception);
+            }
         }
         while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
     }
 
-    private async Task ProcessBatchAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await using var scope = scopeFactory.CreateAsyncScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var now = timeProvider.GetUtcNow();
-            var messages = await dbContext.WelcomeEmailOutbox
-                .Where(message => message.SentAt == null && message.Attempts < 4 && message.NextAttemptAt <= now)
-                .OrderBy(message => message.CreatedAt)
-                .Take(20)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            foreach (var message in messages)
-            {
-                await SendAsync(message, cancellationToken).ConfigureAwait(false);
-            }
-
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-        catch (Exception exception)
-        {
-            ProcessingFailed(logger, exception);
-        }
-    }
-
-    private async Task SendAsync(WelcomeEmailOutbox message, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var emailOptions = options.Value;
-            using var mailMessage = new MailMessage
-            {
-                From = new MailAddress(emailOptions.FromAddress, emailOptions.FromName),
-                Subject = "Welcome to Culinary Blog",
-                Body = $"Hello {message.DisplayName},\n\nWelcome to Culinary Blog!",
-                IsBodyHtml = false,
-            };
-            mailMessage.To.Add(message.Recipient);
-
-            using var smtpClient = new SmtpClient(emailOptions.Host, emailOptions.Port)
-            {
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = true,
-            };
-            await smtpClient.SendMailAsync(mailMessage, cancellationToken).ConfigureAwait(false);
-            message.SentAt = timeProvider.GetUtcNow();
-            message.LastError = null;
-        }
-        catch (Exception exception) when (exception is SmtpException or InvalidOperationException)
-        {
-            message.Attempts++;
-            message.LastError = exception.Message[..Math.Min(exception.Message.Length, 1000)];
-            var retryIndex = Math.Min(message.Attempts - 1, RetryDelays.Length - 1);
-            message.NextAttemptAt = timeProvider.GetUtcNow().Add(RetryDelays[retryIndex]);
-            DeliveryFailed(logger, message.Id, message.Attempts, exception);
-        }
-    }
+    [LoggerMessage(EventId = 3001, Level = LogLevel.Error, Message = "Welcome email outbox dispatch failed")]
+    private static partial void ProcessingFailed(ILogger logger, Exception exception);
 }

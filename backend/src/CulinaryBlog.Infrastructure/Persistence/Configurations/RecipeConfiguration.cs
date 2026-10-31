@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Domain.Categories;
 using CulinaryBlog.Domain.Recipes;
 using CulinaryBlog.Infrastructure.Identity;
@@ -7,8 +9,11 @@ using NpgsqlTypes;
 
 namespace CulinaryBlog.Infrastructure.Persistence.Configurations;
 
+/// <summary>Represents the recipe configuration.</summary>
 internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
 {
+    /// <summary>Configures the recipe configuration.</summary>
+    /// <param name="builder">The builder supplied to this operation.</param>
     public void Configure(EntityTypeBuilder<Recipe> builder)
     {
         builder.ToTable("Recipes", table =>
@@ -20,26 +25,27 @@ internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
             table.HasCheckConstraint("CK_Recipes_Status", "\"Status\" BETWEEN 0 AND 2");
             table.HasCheckConstraint("CK_Recipes_Title", "char_length(btrim(\"Title\")) BETWEEN 5 AND 200");
             table.HasCheckConstraint("CK_Recipes_Description", "char_length(btrim(\"Description\")) BETWEEN 1 AND 2000");
-            table.HasCheckConstraint(
-                "CK_Recipes_Nutrition",
-                "(\"Nutrition_Calories\" IS NULL OR \"Nutrition_Calories\" >= 0) AND " +
+            const string nutritionConstraint = "(\"Nutrition_Calories\" IS NULL OR \"Nutrition_Calories\" >= 0) AND " +
                 "(\"Nutrition_Protein\" IS NULL OR \"Nutrition_Protein\" >= 0) AND " +
                 "(\"Nutrition_Carbohydrates\" IS NULL OR \"Nutrition_Carbohydrates\" >= 0) AND " +
                 "(\"Nutrition_Fat\" IS NULL OR \"Nutrition_Fat\" >= 0) AND " +
                 "(\"Nutrition_Fiber\" IS NULL OR \"Nutrition_Fiber\" >= 0) AND " +
-                "(\"Nutrition_Sodium\" IS NULL OR \"Nutrition_Sodium\" >= 0)");
+                "(\"Nutrition_Sodium\" IS NULL OR \"Nutrition_Sodium\" >= 0)";
+            table.HasCheckConstraint("CK_Recipes_Nutrition", nutritionConstraint);
             table.HasCheckConstraint("CK_Recipes_Version", "\"Version\" >= 1");
         });
         builder.HasKey(recipe => recipe.Id);
         builder.Property(recipe => recipe.Title).HasMaxLength(200).IsRequired();
         builder.Property(recipe => recipe.Slug).HasMaxLength(220).IsRequired();
-        builder.Property(recipe => recipe.Description).HasMaxLength(2000).IsRequired();
-        builder.Property(recipe => recipe.Instructions).HasMaxLength(10000);
-        builder.Property(recipe => recipe.Difficulty).HasConversion<int>();
-        builder.Property(recipe => recipe.Status).HasConversion<int>();
+        builder.Property(recipe => recipe.Description).HasColumnType("text").HasMaxLength(2000).IsRequired();
+        builder.Property(recipe => recipe.Instructions).HasColumnType("text").IsRequired();
+        builder.Property(recipe => recipe.AuthorId).HasMaxLength(450).IsRequired();
+        builder.Property(recipe => recipe.Difficulty).HasConversion<short>().HasDefaultValue(RecipeDifficulty.Easy);
+        builder.Property(recipe => recipe.Status).HasConversion<short>().HasDefaultValue(RecipeStatus.Draft);
         builder.Property(recipe => recipe.Version).HasDefaultValue(1).IsConcurrencyToken();
         builder.Property<NpgsqlTsVector>("SearchVector")
             .HasColumnType("tsvector")
+            .IsRequired(false)
             .ValueGeneratedOnAddOrUpdate();
         builder.Property<string>("SearchTitle")
             .HasColumnType("text")
@@ -60,11 +66,14 @@ internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
         builder.HasIndex("SearchVector").HasMethod("GIN");
         builder.HasIndex("SearchTitle").HasMethod("GIN").HasOperators("gin_trgm_ops");
         builder.HasIndex(recipe => recipe.Status);
+        builder.HasIndex(recipe => recipe.Difficulty);
+        builder.HasIndex(recipe => recipe.IsDeleted).HasFilter("\"IsDeleted\" = FALSE");
         builder.HasIndex(recipe => recipe.CategoryId);
         builder.HasIndex(recipe => recipe.AuthorId);
         builder.HasIndex(recipe => recipe.PublishedAt);
         builder.HasIndex(recipe => new { recipe.Status, recipe.PublishedAt });
         builder.HasIndex(recipe => new { recipe.Status, recipe.CreatedAt });
+        builder.HasIndex(recipe => new { recipe.Status, recipe.Title, recipe.Id });
         builder.HasIndex(recipe => new { recipe.Status, recipe.CategoryId, recipe.Difficulty, recipe.PublishedAt });
         builder.HasIndex(recipe => new { recipe.Status, recipe.CookTime });
         builder.HasIndex(recipe => new { recipe.Status, recipe.Servings });

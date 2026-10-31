@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Common;
@@ -8,6 +10,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CulinaryBlog.Api.Errors;
 
+/// <summary>Represents the global exception handler.</summary>
+/// <param name="problemDetailsService">The problem details service supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
 internal sealed class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,
     ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
@@ -21,6 +26,11 @@ internal sealed class GlobalExceptionHandler(
             new EventId(2002, nameof(RequestFailed)),
             "Request failed with {ErrorCode}");
 
+    /// <summary>Performs the try handle operation.</summary>
+    /// <param name="httpContext">The http context supplied to this operation.</param>
+    /// <param name="exception">The exception supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
@@ -28,12 +38,11 @@ internal sealed class GlobalExceptionHandler(
     {
         var (status, code, title) = exception switch
         {
-            ValidationException => (StatusCodes.Status400BadRequest, "VALIDATION_ERROR", "Validation failed"),
+            ValidationException => (StatusCodes.Status422UnprocessableEntity, "VALIDATION_ERROR", "Validation failed"),
             AuthProblemException authException => MapAuthProblem(authException),
             ContentProblemException contentException => MapContentProblem(contentException),
             DomainException domainException =>
-                (domainException.Code.Contains("TRANSITION", StringComparison.Ordinal) ?
-                    StatusCodes.Status409Conflict : StatusCodes.Status400BadRequest,
+                (domainException.Code.Contains("TRANSITION", StringComparison.Ordinal) ? StatusCodes.Status409Conflict : StatusCodes.Status422UnprocessableEntity,
                     domainException.Code,
                     "Business rule violation"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "RESOURCE_NOT_FOUND", "Resource not found"),
@@ -118,6 +127,7 @@ internal sealed class GlobalExceptionHandler(
         var status = exception.Kind switch
         {
             ContentProblemKind.BadRequest => StatusCodes.Status400BadRequest,
+            ContentProblemKind.Validation => StatusCodes.Status422UnprocessableEntity,
             ContentProblemKind.Forbidden => StatusCodes.Status403Forbidden,
             ContentProblemKind.NotFound => StatusCodes.Status404NotFound,
             ContentProblemKind.Conflict => StatusCodes.Status409Conflict,

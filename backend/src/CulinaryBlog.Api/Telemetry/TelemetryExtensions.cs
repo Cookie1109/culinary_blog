@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Api.Health;
 using CulinaryBlog.Infrastructure.Caching;
 using CulinaryBlog.Infrastructure.Content;
@@ -8,8 +10,13 @@ using OpenTelemetry.Trace;
 
 namespace CulinaryBlog.Api.Telemetry;
 
+/// <summary>Represents the telemetry extensions.</summary>
 internal static class TelemetryExtensions
 {
+    /// <summary>Adds culinary telemetry.</summary>
+    /// <param name="services">The services supplied to this operation.</param>
+    /// <param name="configuration">The configuration supplied to this operation.</param>
+    /// <returns>The add culinary telemetry result.</returns>
     public static IServiceCollection AddCulinaryTelemetry(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -21,6 +28,7 @@ internal static class TelemetryExtensions
         openTelemetry.WithTracing(tracing =>
         {
             tracing
+                .AddSource(JobTraceContext.SourceName)
                 .AddAspNetCoreInstrumentation(options =>
                     options.Filter = context => !context.Request.Path.StartsWithSegments("/health"))
                 .AddHttpClientInstrumentation()

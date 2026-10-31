@@ -1,9 +1,13 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Reflection;
 
 namespace CulinaryBlog.ArchitectureTests;
 
+/// <summary>Contains regression checks for dependency direction tests.</summary>
 public sealed class DependencyDirectionTests
 {
+    /// <summary>Verifies that domain has no project or third party dependencies.</summary>
     [Fact]
     public void DomainHasNoProjectOrThirdPartyDependencies()
     {
@@ -12,6 +16,7 @@ public sealed class DependencyDirectionTests
         Assert.Empty(disallowed);
     }
 
+    /// <summary>Verifies that application does not reference infrastructure or api.</summary>
     [Fact]
     public void ApplicationDoesNotReferenceInfrastructureOrApi()
     {
@@ -21,6 +26,7 @@ public sealed class DependencyDirectionTests
         Assert.DoesNotContain("CulinaryBlog.Api", references);
     }
 
+    /// <summary>Verifies that infrastructure does not reference api.</summary>
     [Fact]
     public void InfrastructureDoesNotReferenceApi()
     {
@@ -34,7 +40,7 @@ public sealed class DependencyDirectionTests
             .Select(reference => reference.Name ?? string.Empty)
             .Where(name =>
                 !name.StartsWith("System", StringComparison.Ordinal) &&
-                !name.StartsWith("Microsoft", StringComparison.Ordinal) &&
+                !name.Equals("Microsoft.CSharp", StringComparison.Ordinal) &&
                 !name.Equals("netstandard", StringComparison.Ordinal))
             .ToArray();
 

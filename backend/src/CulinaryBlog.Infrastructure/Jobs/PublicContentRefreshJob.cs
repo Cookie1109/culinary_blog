@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Net.Http.Json;
 using CulinaryBlog.Infrastructure.Configuration;
 using Hangfire;
@@ -7,6 +9,12 @@ using StackExchange.Redis;
 
 namespace CulinaryBlog.Infrastructure.Jobs;
 
+/// <summary>Represents the public content refresh job.</summary>
+/// <param name="sitemapGeneration">The sitemap generation supplied to this operation.</param>
+/// <param name="redis">The redis supplied to this operation.</param>
+/// <param name="httpClientFactory">The http client factory supplied to this operation.</param>
+/// <param name="options">The options supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
 public sealed class PublicContentRefreshJob(
     SitemapGenerationJob sitemapGeneration,
     IConnectionMultiplexer redis,
@@ -26,11 +34,15 @@ public sealed class PublicContentRefreshJob(
             new EventId(4505, nameof(RevalidationSkipped)),
             "Frontend revalidation is not configured; sitemap generation completed without a callback");
 
+    /// <summary>Performs the run operation.</summary>
+    /// <param name="debounceToken">The debounce token supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [AutomaticRetry(Attempts = 2, DelaysInSeconds = [60, 300])]
     [DisableConcurrentExecution(timeoutInSeconds: 300)]
     public async Task RunAsync(string debounceToken, CancellationToken cancellationToken)
     {
-        if (!await IsLatestAsync(debounceToken, cancellationToken).ConfigureAwait(false))
+        if (!await this.IsLatestAsync(debounceToken, cancellationToken).ConfigureAwait(false))
         {
             return;
         }

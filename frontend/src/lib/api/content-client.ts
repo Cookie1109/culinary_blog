@@ -1,5 +1,6 @@
 import { authenticatedApiRequest, authenticatedUpload } from '@/lib/api/auth-client'
 import { apiRequest } from '@/lib/api/client'
+import type { components } from './schema'
 
 export type RecipeStatus = 'draft' | 'published' | 'archived'
 export type RecipeDifficulty = 'easy' | 'medium' | 'hard' | 'expert'
@@ -38,8 +39,9 @@ export interface Recipe {
   author: { id: string; displayName: string }
   createdAt: string
   publishedAt: string | null
+  relevanceScore?: number | null
   version: number
-  instructions: string | null
+  instructions: string
   nutrition: Nutrition | null
   ingredients: Ingredient[]
   steps: RecipeStep[]
@@ -99,6 +101,7 @@ export interface RecipeWrite {
 
 export interface PageEnvelope<T> {
   data: T[]
+  message?: string
   meta: {
     page: number
     pageSize: number
@@ -234,7 +237,7 @@ export function listAuditLogs(params?: {
   return authenticatedApiRequest<AuditLogsEnvelope>(`/admin/audit-logs${query}`)
 }
 
-export async function createRecipe(data: RecipeWrite) {
+export async function createRecipe(data: components['schemas']['CreateRecipeRequest']) {
   return (
     await authenticatedApiRequest<DataEnvelope<Recipe>>('/recipes', {
       method: 'POST',
@@ -244,7 +247,11 @@ export async function createRecipe(data: RecipeWrite) {
   ).data
 }
 
-export async function updateRecipe(id: string, version: number, data: RecipeWrite) {
+export async function updateRecipe(
+  id: string,
+  version: number,
+  data: components['schemas']['UpdateRecipeRequest'],
+) {
   return (
     await authenticatedApiRequest<DataEnvelope<Recipe>>(`/recipes/${id}`, {
       method: 'PUT',
@@ -302,7 +309,11 @@ const versionHeaders = (version: number) => ({
   'If-Match': `"${version}"`,
 })
 
-export function createIngredient(recipeId: string, version: number, data: IngredientWrite) {
+export function createIngredient(
+  recipeId: string,
+  version: number,
+  data: components['schemas']['IngredientWrite'],
+) {
   return authenticatedApiRequest<MutationEnvelope<Ingredient>>(`/recipes/${recipeId}/ingredients`, {
     method: 'POST',
     headers: versionHeaders(version),
@@ -314,7 +325,7 @@ export function updateIngredient(
   recipeId: string,
   ingredientId: string,
   version: number,
-  data: IngredientWrite,
+  data: components['schemas']['IngredientUpdateRequest'],
 ) {
   return authenticatedApiRequest<MutationEnvelope<Ingredient>>(
     `/recipes/${recipeId}/ingredients/${ingredientId}`,
@@ -333,7 +344,7 @@ export function deleteIngredient(recipeId: string, ingredientId: string, version
   })
 }
 
-export function createStep(recipeId: string, version: number, data: StepWrite) {
+export function createStep(recipeId: string, version: number, data: components['schemas']['StepWrite']) {
   return authenticatedApiRequest<MutationEnvelope<RecipeStep>>(`/recipes/${recipeId}/steps`, {
     method: 'POST',
     headers: versionHeaders(version),
@@ -341,7 +352,12 @@ export function createStep(recipeId: string, version: number, data: StepWrite) {
   })
 }
 
-export function updateStep(recipeId: string, stepId: string, version: number, data: StepWrite) {
+export function updateStep(
+  recipeId: string,
+  stepId: string,
+  version: number,
+  data: components['schemas']['StepUpdateRequest'],
+) {
   return authenticatedApiRequest<MutationEnvelope<RecipeStep>>(`/recipes/${recipeId}/steps/${stepId}`, {
     method: 'PUT',
     headers: versionHeaders(version),

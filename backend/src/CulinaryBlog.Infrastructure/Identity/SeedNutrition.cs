@@ -1,0 +1,20 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
+using CulinaryBlog.Domain.Recipes;
+
+namespace CulinaryBlog.Infrastructure.Identity;
+
+/// <summary>Carries seed nutrition data.</summary>
+/// <param name="Calories">The calories supplied to this operation.</param>
+/// <param name="Protein">The protein supplied to this operation.</param>
+/// <param name="Carbohydrates">The carbohydrates supplied to this operation.</param>
+/// <param name="Fat">The fat supplied to this operation.</param>
+/// <param name="Fiber">The fiber supplied to this operation.</param>
+/// <param name="Sodium">The sodium supplied to this operation.</param>
+internal sealed record SeedNutrition(
+    decimal Calories,
+    decimal Protein,
+    decimal Carbohydrates,
+    decimal Fat,
+    decimal Fiber,
+    decimal Sodium);

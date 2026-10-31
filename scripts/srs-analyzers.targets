@@ -1,0 +1,17 @@
+<Project>
+  <!-- Restore tools/QualityAnalyzers first. Keep analyzer dependencies out of runtime layers. -->
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(IntermediateOutputPath)$(TargetName).xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Analyzer Include="$(NuGetPackageRoot)sonaranalyzer.csharp/10.35.0.4138/analyzers/SonarAnalyzer.CSharp.dll" />
+    <Analyzer Include="$(NuGetPackageRoot)stylecop.analyzers/1.3.151-beta/analyzers/dotnet/cs/StyleCop.Analyzers.dll" />
+    <Analyzer Include="$(NuGetPackageRoot)stylecop.analyzers/1.3.151-beta/analyzers/dotnet/cs/StyleCop.Analyzers.CodeFixes.dll" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../tools/QualityAnalyzers/stylecop.json" />
+  </ItemGroup>
+  <Target Name="RequireSrsAnalyzers" BeforeTargets="CoreCompile">
+    <Error Condition="!Exists('$(NuGetPackageRoot)sonaranalyzer.csharp/10.35.0.4138/analyzers/SonarAnalyzer.CSharp.dll')" Text="Restore tools/QualityAnalyzers before the SRS analysis gate." />
+    <Error Condition="!Exists('$(NuGetPackageRoot)stylecop.analyzers/1.3.151-beta/analyzers/dotnet/cs/StyleCop.Analyzers.dll')" Text="Restore tools/QualityAnalyzers before the SRS analysis gate." />
+  </Target>
+</Project>

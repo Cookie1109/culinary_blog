@@ -2,6 +2,13 @@
 
 @source '../features/culinary/**/*.{ts,tsx}';
 
+/* Form boundaries need 3:1 contrast; decorative separators keep the border token. */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not(:disabled):not(:focus),
+select:not(:disabled):not(:focus),
+textarea:not(:disabled):not(:focus) {
+  border-color: var(--color-muted-foreground);
+}
+
 @theme inline {
   --font-sans: var(--font-inter), sans-serif;
   --font-serif: var(--font-playfair-display), serif;

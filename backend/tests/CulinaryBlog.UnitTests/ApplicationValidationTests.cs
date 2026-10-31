@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Features.Recipes.Queries;
@@ -5,8 +7,35 @@ using CulinaryBlog.Domain.Recipes;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for application validation tests.</summary>
 public sealed class ApplicationValidationTests
 {
+    /// <summary>Verifies that nutrition rejects values that cannot be stored without overflow or rounding.</summary>
+    /// <param name="input">The input supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Theory]
+    [InlineData("1000000")]
+    [InlineData("1.001")]
+    public async Task NutritionRejectsValuesThatCannotBeStoredWithoutOverflowOrRounding(string input)
+    {
+        var value = decimal.Parse(input, System.Globalization.CultureInfo.InvariantCulture);
+        var request = new RecipeWriteRequest(
+            "Valid title",
+            "Description",
+            Guid.NewGuid(),
+            1,
+            0,
+            1,
+            Domain.Recipes.RecipeDifficulty.Easy,
+            null,
+            new NutritionDto(Calories: value));
+        var result = await new RecipeWriteRequestValidator().ValidateAsync(request);
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.PropertyName == "Nutrition.Calories");
+    }
+
+    /// <summary>Verifies that auth validators accept valid requests.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task AuthValidatorsAcceptValidRequests()
     {
@@ -22,6 +51,8 @@ public sealed class ApplicationValidationTests
             new UpdateProfileRequest("Updated Author", "https://example.com/avatar.png", "Bio", true, true, true))).IsValid);
     }
 
+    /// <summary>Verifies that auth validators reject invalid requests.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task AuthValidatorsRejectInvalidRequests()
     {
@@ -34,6 +65,40 @@ public sealed class ApplicationValidationTests
             new UpdateProfileRequest(null, "javascript:alert(1)", null, false, true))).IsValid);
     }
 
+    /// <summary>Verifies that search accepts advanced filter boundaries and rejects invalid ranges.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Fact]
+    public async Task SearchAcceptsAdvancedFilterBoundariesAndRejectsInvalidRanges()
+    {
+        var validator = new SearchPublishedRecipesQueryValidator();
+        var valid = new SearchPublishedRecipesQuery(
+            "pho",
+            null,
+            RecipeDifficulty.Easy,
+            30,
+            "-cookTime",
+            1,
+            50,
+            Guid.NewGuid(),
+            0,
+            1,
+            1,
+            1);
+        Assert.True((await validator.ValidateAsync(valid)).IsValid);
+        SearchPublishedRecipesQuery[] invalid = [
+            valid with { Search = null }, valid with { Search = " " },
+            valid with { CategoryId = Guid.Empty }, valid with { MaxCookTime = -1 },
+            valid with { MinServings = 0 }, valid with { MinPrepTime = 0 }, valid with { MaxPrepTime = 0 },
+            valid with { MinPrepTime = 20, MaxPrepTime = 10 }, valid with { Difficulty = (RecipeDifficulty)999 },
+        ];
+        foreach (var request in invalid)
+        {
+            Assert.False((await validator.ValidateAsync(request)).IsValid);
+        }
+    }
+
+    /// <summary>Verifies that search query rejects invalid page and filters.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task SearchQueryRejectsInvalidPageAndFilters()
     {
@@ -44,6 +109,8 @@ public sealed class ApplicationValidationTests
             new SearchPublishedRecipesQuery("x", null, null, 0, "random", 0, 51))).IsValid);
     }
 
+    /// <summary>Verifies that published recipe list query validates filters sort and pagination.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task PublishedRecipeListQueryValidatesFiltersSortAndPagination()
     {
@@ -52,8 +119,14 @@ public sealed class ApplicationValidationTests
             Guid.NewGuid(), RecipeDifficulty.Easy, 30, 4, 5, 20, "-createdAt", 1, 12))).IsValid);
         Assert.False((await validator.ValidateAsync(new ListPublishedRecipesQuery(
             Guid.Empty, null, -1, 0, 20, 10, "title;drop table recipes", 0, 51))).IsValid);
+        Assert.True((await validator.ValidateAsync(new ListPublishedRecipesQuery(
+            null, null, null, null, null, null, "quickest", 1, 12, "mon-viet", 30))).IsValid);
+        Assert.False((await validator.ValidateAsync(new ListPublishedRecipesQuery(
+            null, null, null, null, null, null, null, 1, 12, new string('x', 121), 0))).IsValid);
     }
 
+    /// <summary>Verifies that content validators accept valid requests.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ContentValidatorsAcceptValidRequests()
     {
@@ -73,6 +146,21 @@ public sealed class ApplicationValidationTests
         Assert.True((await new RecipeWriteRequestValidator().ValidateAsync(recipe)).IsValid);
     }
 
+    /// <summary>Verifies that category names reject html.</summary>
+    /// <param name="name">The name supplied to this operation.</param>
+    /// <param name="valid">The valid supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Theory]
+    [InlineData("<b>Category</b>", false)]
+    [InlineData("Plain category", true)]
+    public async Task CategoryNamesRejectHtml(string name, bool valid)
+    {
+        var result = await new CategoryWriteRequestValidator().ValidateAsync(new CategoryWriteRequest(name));
+        Assert.Equal(valid, result.IsValid);
+    }
+
+    /// <summary>Verifies that content validators reject unsafe or invalid requests.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ContentValidatorsRejectUnsafeOrInvalidRequests()
     {
@@ -92,6 +180,7 @@ public sealed class ApplicationValidationTests
         Assert.False((await new RecipeWriteRequestValidator().ValidateAsync(recipe)).IsValid);
     }
 
+    /// <summary>Verifies that problem exceptions preserve contract fields.</summary>
     [Fact]
     public void ProblemExceptionsPreserveContractFields()
     {
@@ -105,6 +194,7 @@ public sealed class ApplicationValidationTests
         Assert.Equal(3, content.CurrentVersion);
     }
 
+    /// <summary>Verifies that contract records preserve payloads.</summary>
     [Fact]
     public void ContractRecordsPreservePayloads()
     {

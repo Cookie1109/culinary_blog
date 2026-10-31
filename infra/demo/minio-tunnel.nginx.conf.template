@@ -1,0 +1,42 @@
+worker_processes 1;
+pid /tmp/nginx.pid;
+error_log /dev/null crit;
+events { worker_connections 128; }
+http {
+    access_log off;
+    client_body_temp_path /tmp/client;
+    proxy_temp_path /tmp/proxy;
+    fastcgi_temp_path /tmp/fastcgi;
+    uwsgi_temp_path /tmp/uwsgi;
+    scgi_temp_path /tmp/scgi;
+    map $http_authorization $demo_authorized {
+        default 0;
+        "~^AWS4-HMAC-SHA256 Credential=__ACCESS_KEY__/" 1;
+    }
+    server {
+        listen 8080;
+        server_tokens off;
+        client_max_body_size 6m;
+        add_header Cache-Control "no-store" always;
+        location = /minio/health/live {
+            proxy_set_header Host $http_host;
+            proxy_pass http://host.docker.internal:__API_PORT__;
+        }
+        location ~ ^/__BUCKET__(/|$) {
+            if ($demo_authorized = 0) { return 403; }
+            # MinIO Community unsigned-trailer auth bypass (CVE-2026-40344/41145).
+            # This gateway does not accept that upload mode; normal signed payloads pass through.
+            if ($http_x_amz_content_sha256 ~* "UNSIGNED-PAYLOAD-TRAILER") { return 403; }
+            # Preserve the signed host, path, body and headers for S3 SigV4.
+            proxy_set_header Host $http_host;
+            proxy_set_header Connection "";
+            proxy_http_version 1.1;
+            proxy_request_buffering off;
+            proxy_buffering off;
+            proxy_read_timeout 120s;
+            proxy_pass http://host.docker.internal:__API_PORT__;
+        }
+        # Includes Console, MinIO Admin API, other buckets and anonymous reads.
+        location / { return 403; }
+    }
+}

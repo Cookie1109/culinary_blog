@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Outlet, Link, useNavigate, useSearchParams } from 'react-router'
 import { usePathname } from 'next/navigation'
 import {
@@ -32,7 +33,7 @@ export function DashboardLayout() {
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
       isActive
-        ? 'bg-primary/10 text-primary border-l-2 border-primary'
+        ? 'bg-primary/10 text-foreground border-l-2 border-primary'
         : 'text-foreground hover:bg-secondary hover:text-primary border-l-2 border-transparent'
     }`
 
@@ -62,16 +63,11 @@ export function DashboardLayout() {
         (pathname === '/dashboard/audit' || (pathname.startsWith('/dashboard/recipes') && systemRecipe)))
     )
   }
-  const currentPage =
-    pathname === '/dashboard/audit'
-      ? 'Lịch sử hệ thống'
-      : pathname.endsWith('/new')
-        ? 'Tạo công thức mới'
-        : pathname.endsWith('/preview')
-          ? 'Xem trước công thức'
-          : pathname.endsWith('/edit')
-            ? 'Chỉnh sửa công thức'
-            : (navigationItems.find((item) => isActive(item.to, item.end))?.label ?? 'Bảng điều khiển')
+  let currentPage = navigationItems.find((item) => isActive(item.to, item.end))?.label ?? 'Bảng điều khiển'
+  if (pathname === '/dashboard/audit') currentPage = 'Lịch sử hệ thống'
+  else if (pathname.endsWith('/new')) currentPage = 'Tạo công thức mới'
+  else if (pathname.endsWith('/preview')) currentPage = 'Xem trước công thức'
+  else if (pathname.endsWith('/edit')) currentPage = 'Chỉnh sửa công thức'
 
   return (
     <div className="flex min-h-[calc(100vh-80px)]">
@@ -86,7 +82,10 @@ export function DashboardLayout() {
               className="flex items-center gap-3 hover:text-primary transition-colors"
             >
               {user.avatar ? (
-                <img
+                <Image
+                  width={40}
+                  height={40}
+                  unoptimized
                   src={user.avatar}
                   alt={user.name}
                   className="w-10 h-10 rounded-full object-cover border border-border"
@@ -159,6 +158,7 @@ export function DashboardLayout() {
         {/* Sign out */}
         <div className="border-t border-border px-4 py-4">
           <button
+            type="button"
             onClick={handleLogout}
             className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors w-full py-2"
           >
@@ -170,12 +170,7 @@ export function DashboardLayout() {
 
       {/* Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <details
-          className="border-b border-border bg-background md:hidden"
-          onClick={(event) => {
-            if ((event.target as HTMLElement).closest('a')) event.currentTarget.open = false
-          }}
-        >
+        <details className="border-b border-border bg-background md:hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
             <span>{currentPage}</span>
             <ChevronDown size={16} aria-hidden="true" />
@@ -191,8 +186,12 @@ export function DashboardLayout() {
                     <li key={to}>
                       <Link
                         to={to}
+                        onClick={(event) => {
+                          const navigation = event.currentTarget.closest('details')
+                          if (navigation) navigation.open = false
+                        }}
                         aria-current={isActive(to, end) ? 'page' : undefined}
-                        className={`block border px-3 py-2 text-sm ${isActive(to, end) ? 'border-primary text-primary bg-primary/5' : 'border-border hover:bg-secondary'}`}
+                        className={`block border px-3 py-2 text-sm ${isActive(to, end) ? 'border-primary text-foreground bg-primary/5' : 'border-border hover:bg-secondary'}`}
                       >
                         {label}
                       </Link>

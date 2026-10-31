@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Text;
 using CulinaryBlog.Application.Media;
 using CulinaryBlog.Domain.Categories;
@@ -14,8 +16,37 @@ using Microsoft.Extensions.Options;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for sitemap generation job tests.</summary>
+/// <param name="factory">The factory supplied to this operation.</param>
 public sealed class SitemapGenerationJobTests(AuthApiFactory factory) : IClassFixture<AuthApiFactory>
 {
+    /// <summary>Verifies that separate red lock factories prevent sitemap upload while another lease is held.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Fact]
+    public async Task SeparateRedLockFactoriesPreventSitemapUploadWhileAnotherLeaseIsHeld()
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        using var competing = RedLockNet.SERedis.RedLockFactory.Create(
+            [new RedLockNet.SERedis.Configuration.RedLockMultiplexer(factory.Services.GetRequiredService<StackExchange.Redis.IConnectionMultiplexer>())]);
+        await using (var lease = await competing.CreateLockAsync("culinary:sitemap", TimeSpan.FromMinutes(1)))
+        {
+            Assert.True(lease.IsAcquired);
+            var storage = new RecordingFileStorage();
+            var job = new SitemapGenerationJob(
+                scope.ServiceProvider.GetRequiredService<AppDbContext>(),
+                storage,
+                Options.Create(new SitemapOptions()),
+                NullLogger<SitemapGenerationJob>.Instance,
+                scope.ServiceProvider.GetRequiredService<RedLockNet.IDistributedLockFactory>());
+            await Assert.ThrowsAsync<TimeoutException>(() => job.GenerateAsync(CancellationToken.None));
+            Assert.Null(storage.Content);
+        }
+
+        await scope.ServiceProvider.GetRequiredService<SitemapGenerationJob>().GenerateAsync(CancellationToken.None);
+    }
+
+    /// <summary>Verifies that generate includes only public content and retains previous artifact when upload fails.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task GenerateIncludesOnlyPublicContentAndRetainsPreviousArtifactWhenUploadFails()
     {
@@ -25,7 +56,7 @@ public sealed class SitemapGenerationJobTests(AuthApiFactory factory) : IClassFi
         var suffix = Guid.NewGuid().ToString("N");
         var author = new ApplicationUser
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.NewGuid().ToString(),
             UserName = $"sitemap-{suffix}@example.com",
             Email = $"sitemap-{suffix}@example.com",
             DisplayName = "Sitemap Author",
@@ -52,7 +83,8 @@ public sealed class SitemapGenerationJobTests(AuthApiFactory factory) : IClassFi
             dbContext,
             storage,
             options,
-            NullLogger<SitemapGenerationJob>.Instance);
+            NullLogger<SitemapGenerationJob>.Instance,
+            scope.ServiceProvider.GetRequiredService<RedLockNet.IDistributedLockFactory>());
 
         await job.GenerateAsync(CancellationToken.None);
 
@@ -62,6 +94,9 @@ public sealed class SitemapGenerationJobTests(AuthApiFactory factory) : IClassFi
         Assert.Contains($"https://food.example/categories/danh-muc-{suffix}", xml, StringComparison.Ordinal);
         Assert.Contains($"https://food.example/recipes/published-{suffix}", xml, StringComparison.Ordinal);
         Assert.DoesNotContain($"draft-{suffix}", xml, StringComparison.Ordinal);
+        Assert.Contains("<lastmod>", xml, StringComparison.Ordinal);
+        Assert.Contains("<changefreq>", xml, StringComparison.Ordinal);
+        Assert.Contains("<priority>", xml, StringComparison.Ordinal);
 
         var retained = storage.Content;
         storage.FailUploads = true;
@@ -69,19 +104,20 @@ public sealed class SitemapGenerationJobTests(AuthApiFactory factory) : IClassFi
         Assert.Same(retained, storage.Content);
     }
 
+    /// <summary>Verifies that generate retries exactly twice.</summary>
     [Fact]
     public void GenerateRetriesExactlyTwice()
     {
         var retry = typeof(SitemapGenerationJob)
             .GetMethod(nameof(SitemapGenerationJob.GenerateAsync))!
-            .GetCustomAttributes(typeof(AutomaticRetryAttribute), inherit: false)
-            .Cast<AutomaticRetryAttribute>()
-            .Single();
+            .GetCustomAttributesData()
+            .Single(attribute => attribute.AttributeType == typeof(AutomaticRetryAttribute));
+        var attempts = retry.NamedArguments.Single(argument => argument.MemberName == nameof(AutomaticRetryAttribute.Attempts));
 
-        Assert.Equal(2, retry.Attempts);
+        Assert.Equal(2, Assert.IsType<int>(attempts.TypedValue.Value));
     }
 
-    private static Recipe CreateRecipe(Guid authorId, Guid categoryId, string slug) =>
+    private static Recipe CreateRecipe(string authorId, Guid categoryId, string slug) =>
         Recipe.Create(
             Guid.NewGuid(),
             authorId,
@@ -111,24 +147,24 @@ public sealed class SitemapGenerationJobTests(AuthApiFactory factory) : IClassFi
             string contentType,
             CancellationToken cancellationToken)
         {
-            if (FailUploads)
+            if (this.FailUploads)
             {
                 throw new IOException("Simulated upload failure.");
             }
 
             using var copy = new MemoryStream();
             await content.CopyToAsync(copy, cancellationToken);
-            ObjectKey = objectKey;
-            Content = copy.ToArray();
+            this.ObjectKey = objectKey;
+            this.Content = copy.ToArray();
         }
 
         public Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken) =>
-            Task.FromResult<Stream>(new MemoryStream(Content ?? []));
+            Task.FromResult<Stream>(new MemoryStream(this.Content ?? []));
 
         public Task DeleteAsync(string objectKey, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public Task<bool> ExistsAsync(string objectKey, CancellationToken cancellationToken) =>
-            Task.FromResult(Content is not null);
+            Task.FromResult(this.Content is not null);
 
         public async IAsyncEnumerable<string> ListKeysAsync(
             string prefix,

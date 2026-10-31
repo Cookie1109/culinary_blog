@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,10 +12,20 @@ using Microsoft.Extensions.Configuration;
 
 namespace CulinaryBlog.Infrastructure.Audit;
 
+/// <summary>Represents the audit log service.</summary>
+/// <param name="dbContext">The db context supplied to this operation.</param>
+/// <param name="configuration">The configuration supplied to this operation.</param>
 public sealed class AuditLogService(
     AppDbContext dbContext,
     IConfiguration configuration) : IAuditLogService
 {
+    /// <summary>Lists audit logs.</summary>
+    /// <param name="level">The level supplied to this operation.</param>
+    /// <param name="search">The search supplied to this operation.</param>
+    /// <param name="page">The page supplied to this operation.</param>
+    /// <param name="pageSize">The page size supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<AuditLogsEnvelope> ListAuditLogsAsync(
         string? level,
         string? search,
@@ -46,7 +58,7 @@ public sealed class AuditLogService(
         }
 
         // 2. Synthesize audit entries from entity change tracking in database
-        var dbEntries = await GetDatabaseAuditEntriesAsync(cancellationToken).ConfigureAwait(false);
+        var dbEntries = await this.GetDatabaseAuditEntriesAsync(cancellationToken).ConfigureAwait(false);
         entries.AddRange(dbEntries.Where(snapshot => !entries.Any(entry =>
             entry.EventName == snapshot.EventName &&
             Math.Abs((entry.Timestamp - snapshot.Timestamp).TotalSeconds) < 1 &&
@@ -54,8 +66,8 @@ public sealed class AuditLogService(
             (snapshot.Properties?.GetValueOrDefault("RecipeId") == entityId ||
              snapshot.Properties?.GetValueOrDefault("CategoryId") == entityId))));
 
-        var userIds = entries.Select(entry => Guid.TryParse(entry.UserId, out var id) ? id : Guid.Empty)
-            .Where(id => id != Guid.Empty).Distinct().ToArray();
+        var userIds = entries.Select(entry => entry.UserId)
+            .Where(id => id != null).Distinct().ToArray();
         var userNames = await dbContext.Users.AsNoTracking().Where(user => userIds.Contains(user.Id))
             .ToDictionaryAsync(user => user.Id.ToString(), user => user.DisplayName, cancellationToken).ConfigureAwait(false);
         entries = entries.Select(entry =>
@@ -67,6 +79,7 @@ public sealed class AuditLogService(
             {
                 properties["UserName"] = name;
             }
+
             return entry with { Properties = properties };
         }).ToList();
 
@@ -90,7 +103,7 @@ public sealed class AuditLogService(
                 (e.UserId?.Contains(term, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.RequestPath?.Contains(term, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.Properties?.Values.Any(value => value.Contains(term, StringComparison.OrdinalIgnoreCase)) == true) ||
-                (e.EventName.Contains(term, StringComparison.OrdinalIgnoreCase)));
+                e.EventName.Contains(term, StringComparison.OrdinalIgnoreCase));
         }
 
         var ordered = query.OrderByDescending(e => e.Timestamp).ToList();
@@ -126,13 +139,11 @@ public sealed class AuditLogService(
             Path.Combine(AppContext.BaseDirectory, "logs"),
         };
 
-        foreach (var dir in logDirs)
+        var dir = logDirs.FirstOrDefault(Directory.Exists);
+        if (dir is not null)
         {
-            if (Directory.Exists(dir))
-            {
-                return Directory.GetFiles(dir, "api-*.json")
-                    .OrderByDescending(File.GetLastWriteTimeUtc);
-            }
+            return Directory.GetFiles(dir, "api-*.json")
+                .OrderByDescending(File.GetLastWriteTimeUtc);
         }
 
         return [];
@@ -147,7 +158,10 @@ public sealed class AuditLogService(
         string? line;
         while ((line = reader.ReadLine()) is not null)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
 
             try
             {
@@ -162,9 +176,15 @@ public sealed class AuditLogService(
                     ? lProp.GetString() ?? "Information"
                     : "Information";
 
-                var message = root.TryGetProperty("@m", out var mProp)
-                    ? mProp.GetString() ?? string.Empty
-                    : (root.TryGetProperty("@mt", out var mtProp) ? mtProp.GetString() ?? string.Empty : string.Empty);
+                var message = string.Empty;
+                if (root.TryGetProperty("@m", out var mProp))
+                {
+                    message = mProp.GetString() ?? string.Empty;
+                }
+                else if (root.TryGetProperty("@mt", out var mtProp))
+                {
+                    message = mtProp.GetString() ?? string.Empty;
+                }
 
                 var correlationId = root.TryGetProperty("CorrelationId", out var cProp) ? cProp.GetString() : null;
                 var userId = root.TryGetProperty("UserId", out var uProp) ? uProp.GetString() : null;
@@ -203,12 +223,9 @@ public sealed class AuditLogService(
                 }
 
                 var properties = new Dictionary<string, string>();
-                foreach (var prop in root.EnumerateObject())
+                foreach (var prop in root.EnumerateObject().Where(prop => !prop.Name.StartsWith('@')))
                 {
-                    if (!prop.Name.StartsWith('@'))
-                    {
-                        properties[prop.Name] = prop.Value.ToString();
-                    }
+                    properties[prop.Name] = prop.Value.ToString();
                 }
 
                 result.Add(new AuditLogEntryDto(

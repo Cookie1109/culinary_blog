@@ -21,7 +21,7 @@ test('public routes expose canonical, Open Graph, Twitter, and index directives'
   assert.match(category, /export async function generateMetadata/)
   assert.match(recipes, /index: !hasFilters/)
   assert.match(recipes, /follow: true/)
-  assert.match(config, /source: '\/search', destination: '\/recipes', permanent: true/)
+  assert.doesNotMatch(config, /source: '\/search', destination: '\/recipes'/)
   assert.match(config, /htmlLimitedBots:\s*\/\.\*\//)
 })
 

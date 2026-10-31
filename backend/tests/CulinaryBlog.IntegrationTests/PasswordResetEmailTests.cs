@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Text;
 using System.Text.Json;
 using CulinaryBlog.Application.Auth;
@@ -8,8 +10,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for password reset email tests.</summary>
 public sealed class PasswordResetEmailTests
 {
+    /// <summary>Verifies that smtp delivery contains an encoded reset link on the configured site.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task SmtpDeliveryContainsAnEncodedResetLinkOnTheConfiguredSite()
     {

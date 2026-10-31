@@ -1,12 +1,17 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
+using System.Diagnostics;
 using System.Text.Json;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Recipes;
 using CulinaryBlog.Infrastructure.Jobs;
+using CulinaryBlog.Infrastructure.Media;
 using Microsoft.EntityFrameworkCore;
 using SkiaSharp;
 
 namespace CulinaryBlog.Infrastructure.Content;
 
+/// <content>Contains ingredient, step and image mutations for recipes.</content>
 internal sealed partial class ContentService
 {
     private const long MaximumImageBytes = 5 * 1024 * 1024;
@@ -17,11 +22,20 @@ internal sealed partial class ContentService
             ["image/jpeg"] = ".jpg",
             ["image/png"] = ".png",
             ["image/webp"] = ".webp",
+            ["image/avif"] = ".avif",
         };
 
+    /// <summary>Creates ingredient.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="request">The request supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<ChildMutationDto<IngredientDto>> CreateIngredientAsync(
         Guid recipeId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
         IngredientWriteRequest request,
@@ -29,7 +43,7 @@ internal sealed partial class ContentService
     {
         try
         {
-            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             recipe.MarkCompositionChanged();
             var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
@@ -42,8 +56,9 @@ internal sealed partial class ContentService
             {
                 ingredients[index].MoveTo(index);
             }
+
             dbContext.RecipeIngredients.Add(ingredient);
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
         }
         catch (ContentProblemException)
@@ -53,7 +68,8 @@ internal sealed partial class ContentService
         catch (DbUpdateConcurrencyException)
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
@@ -63,38 +79,59 @@ internal sealed partial class ContentService
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
     }
 
+    /// <summary>Updates ingredient.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="ingredientId">The ingredient id supplied to this operation.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="request">The request supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<ChildMutationDto<IngredientDto>> UpdateIngredientAsync(
         Guid recipeId,
         Guid ingredientId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
-        IngredientWriteRequest request,
+        IngredientUpdateRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
                 .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
             var ingredient = ingredients.SingleOrDefault(item => item.Id == ingredientId)
                 ?? throw NotFound("INGREDIENT_NOT_FOUND", "Ingredient was not found.");
-            var targetIndex = Math.Min(request.OrderIndex, ingredients.Count - 1);
-            ingredient.Update(request.Name, request.Quantity, request.Unit, request.Notes, targetIndex);
+            if (request == new IngredientUpdateRequest())
+            {
+                return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
+            }
+
+            var targetIndex = Math.Min(request.OrderIndex.Or(ingredient.OrderIndex)!.Value, ingredients.Count - 1);
+            ingredient.Update(
+                request.Name.Or(ingredient.Name)!,
+                request.Quantity.Or(ingredient.Quantity),
+                request.Unit.Or(ingredient.Unit),
+                request.Notes.Or(ingredient.Notes),
+                targetIndex);
             ingredients.Remove(ingredient);
             ingredients.Insert(targetIndex, ingredient);
             for (var index = 0; index < ingredients.Count; index++)
             {
                 ingredients[index].MoveTo(index);
             }
+
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
         }
         catch (ContentProblemException)
@@ -104,7 +141,8 @@ internal sealed partial class ContentService
         catch (DbUpdateConcurrencyException)
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
@@ -114,22 +152,31 @@ internal sealed partial class ContentService
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
     }
 
+    /// <summary>Deletes ingredient.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="ingredientId">The ingredient id supplied to this operation.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<long> DeleteIngredientAsync(
         Guid recipeId,
         Guid ingredientId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
         CancellationToken cancellationToken)
     {
         try
         {
-            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             var ingredients = await dbContext.RecipeIngredients.Where(item => item.RecipeId == recipeId)
                 .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -146,8 +193,9 @@ internal sealed partial class ContentService
             {
                 remaining[index].MoveTo(index);
             }
+
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             return recipe.Version;
         }
         catch (ContentProblemException)
@@ -157,7 +205,8 @@ internal sealed partial class ContentService
         catch (DbUpdateConcurrencyException)
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
@@ -167,14 +216,23 @@ internal sealed partial class ContentService
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
     }
 
+    /// <summary>Creates step.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="request">The request supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<ChildMutationDto<StepDto>> CreateStepAsync(
         Guid recipeId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
         StepWriteRequest request,
@@ -182,13 +240,13 @@ internal sealed partial class ContentService
     {
         try
         {
-            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             var number = await dbContext.RecipeSteps.CountAsync(item => item.RecipeId == recipeId, cancellationToken).ConfigureAwait(false) + 1;
             var step = RecipeStep.Create(Guid.NewGuid(), recipeId, number, request.Title, request.Description, request.TimerMinutes, request.ImageUrl);
             dbContext.RecipeSteps.Add(step);
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
         }
         catch (ContentProblemException)
@@ -198,7 +256,8 @@ internal sealed partial class ContentService
         catch (DbUpdateConcurrencyException)
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
@@ -208,36 +267,56 @@ internal sealed partial class ContentService
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
     }
 
+    /// <summary>Updates step.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="stepId">The step id supplied to this operation.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="request">The request supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<ChildMutationDto<StepDto>> UpdateStepAsync(
         Guid recipeId,
         Guid stepId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
-        StepWriteRequest request,
+        StepUpdateRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             var steps = await dbContext.RecipeSteps.Where(item => item.RecipeId == recipeId)
                 .OrderBy(item => item.StepNumber).ToListAsync(cancellationToken).ConfigureAwait(false);
             var step = steps.SingleOrDefault(item => item.Id == stepId)
                 ?? throw NotFound("STEP_NOT_FOUND", "Recipe step was not found.");
-            var targetNumber = request.StepNumber ?? step.StepNumber;
+            if (request == new StepUpdateRequest())
+            {
+                return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
+            }
+
+            var targetNumber = request.StepNumber.Or(step.StepNumber)!.Value;
             if (targetNumber > steps.Count)
             {
                 throw new ContentProblemException("VALIDATION_ERROR", "stepNumber must be within the current step range.", ContentProblemKind.BadRequest);
             }
 
-            step.Update(step.StepNumber, request.Title, request.Description, request.TimerMinutes, request.ImageUrl);
+            step.Update(
+                step.StepNumber,
+                request.Title.Or(step.Title)!,
+                request.Description.Or(step.Description)!,
+                request.TimerMinutes.Or(step.TimerMinutes),
+                request.ImageUrl.Or(step.ImageUrl));
             if (targetNumber != step.StepNumber)
             {
                 foreach (var item in steps)
@@ -255,7 +334,7 @@ internal sealed partial class ContentService
             }
 
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
         }
@@ -266,7 +345,8 @@ internal sealed partial class ContentService
         catch (DbUpdateConcurrencyException)
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
@@ -276,15 +356,24 @@ internal sealed partial class ContentService
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
     }
 
+    /// <summary>Deletes step.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="stepId">The step id supplied to this operation.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<long> DeleteStepAsync(
         Guid recipeId,
         Guid stepId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
         CancellationToken cancellationToken)
@@ -292,7 +381,7 @@ internal sealed partial class ContentService
         try
         {
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             var steps = await dbContext.RecipeSteps.Where(item => item.RecipeId == recipeId)
                 .OrderBy(item => item.StepNumber).ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -318,7 +407,7 @@ internal sealed partial class ContentService
             }
 
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return recipe.Version;
         }
@@ -329,7 +418,8 @@ internal sealed partial class ContentService
         catch (DbUpdateConcurrencyException)
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeSteps") || IsUniqueViolation(exception, "StepNumber"))
@@ -339,14 +429,27 @@ internal sealed partial class ContentService
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
     }
 
+    /// <summary>Uploads image.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="content">The content supplied to this operation.</param>
+    /// <param name="length">The length supplied to this operation.</param>
+    /// <param name="contentType">The content type supplied to this operation.</param>
+    /// <param name="altText">The alt text supplied to this operation.</param>
+    /// <param name="isPrimary">The is primary supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<ChildMutationDto<RecipeImageDto>> UploadImageAsync(
         Guid recipeId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
         Stream content,
@@ -361,16 +464,12 @@ internal sealed partial class ContentService
             throw new ContentProblemException("FILE_SIZE_EXCEEDED", "Image size must be between 1 byte and 5 MB.", ContentProblemKind.BadRequest);
         }
 
-        if (!ImageExtensions.ContainsKey(contentType))
-        {
-            throw new ContentProblemException("FILE_MIME_INVALID", "Only JPEG, PNG and WebP images are accepted.", ContentProblemKind.BadRequest);
-        }
-
-        var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+        var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
         recipe.MarkCompositionChanged();
 
-        var temporaryPath = Path.GetTempFileName();
+        var temporaryDirectory = Directory.CreateTempSubdirectory("culinary-image-");
+        var temporaryPath = Path.Combine(temporaryDirectory.FullName, "content");
         string? objectKey = null;
         try
         {
@@ -398,13 +497,14 @@ internal sealed partial class ContentService
                 {
                     current.UpdateMetadata(current.AltText, false, current.OrderIndex);
                 }
+
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
 
             var image = RecipeImage.Create(imageId, recipeId, objectKey, detectedContentType, altText, makePrimary, existingImages.Count);
             dbContext.RecipeImages.Add(image);
-            dbContext.MediaOutbox.Add(CreateOutbox(MediaOutboxTypes.ResizeImage, new ResizeImagePayload(imageId)));
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            dbContext.MediaOutbox.Add(this.CreateOutbox(MediaOutboxTypes.ResizeImage, new ResizeImagePayload(imageId)));
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<RecipeImageDto>(ToImageDto(image), recipe.Version);
         }
@@ -412,56 +512,73 @@ internal sealed partial class ContentService
         {
             if (objectKey is not null)
             {
-                await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
+                await this.TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
             }
+
             throw;
         }
         catch (DbUpdateConcurrencyException)
         {
             if (objectKey is not null)
             {
-                await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
+                await this.TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
             }
+
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeImages"))
         {
             if (objectKey is not null)
             {
-                await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
+                await this.TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
             }
+
             throw Conflict("IMAGE_PRIMARY_CONFLICT", "Choose another primary image before clearing the current primary.");
         }
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             if (objectKey is not null)
             {
-                await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
+                await this.TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
             }
+
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception)
         {
             if (objectKey is not null)
             {
-                await TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
+                await this.TryDeleteCompensationAsync(objectKey).ConfigureAwait(false);
             }
+
             throw new ContentProblemException("FILE_UPLOAD_FAILED", "The image could not be stored.", ContentProblemKind.ServiceUnavailable);
         }
         finally
         {
             File.Delete(temporaryPath);
+            temporaryDirectory.Delete();
         }
     }
 
+    /// <summary>Updates image.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="imageId">The image id supplied to this operation.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="request">The request supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<ChildMutationDto<RecipeImageDto>> UpdateImageAsync(
         Guid recipeId,
         Guid imageId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
         ImageMetadataRequest request,
@@ -470,7 +587,7 @@ internal sealed partial class ContentService
         try
         {
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             var images = await dbContext.RecipeImages.Where(item => item.RecipeId == recipeId)
                 .OrderBy(item => item.OrderIndex).ThenBy(item => item.CreatedAt).ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -499,8 +616,9 @@ internal sealed partial class ContentService
                 var item = images[index];
                 item.UpdateMetadata(item.Id == imageId ? request.AltText : item.AltText, item.Id == imageId ? makePrimary : item.IsPrimary, index);
             }
+
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<RecipeImageDto>(ToImageDto(image), recipe.Version);
         }
@@ -511,7 +629,8 @@ internal sealed partial class ContentService
         catch (DbUpdateConcurrencyException)
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeImages"))
@@ -521,15 +640,24 @@ internal sealed partial class ContentService
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
     }
 
+    /// <summary>Deletes image.</summary>
+    /// <param name="recipeId">The identifier of the recipe being accessed.</param>
+    /// <param name="imageId">The image id supplied to this operation.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="expectedVersion">The recipe version used to reject concurrent changes.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<long> DeleteImageAsync(
         Guid recipeId,
         Guid imageId,
-        Guid userId,
+        string userId,
         bool isAdmin,
         long expectedVersion,
         CancellationToken cancellationToken)
@@ -537,7 +665,7 @@ internal sealed partial class ContentService
         try
         {
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
+            var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             var image = await dbContext.RecipeImages.IgnoreQueryFilters().SingleOrDefaultAsync(
                 item => item.Id == imageId && item.RecipeId == recipeId, cancellationToken).ConfigureAwait(false)
@@ -546,6 +674,7 @@ internal sealed partial class ContentService
             {
                 return recipe.Version;
             }
+
             var wasPrimary = image.IsPrimary;
             image.Delete();
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -564,11 +693,11 @@ internal sealed partial class ContentService
                 item.UpdateMetadata(item.AltText, item.IsPrimary, index);
             }
 
-            dbContext.MediaOutbox.Add(CreateOutbox(
+            dbContext.MediaOutbox.Add(this.CreateOutbox(
                 MediaOutboxTypes.DeleteObjects,
                 new DeleteObjectsPayload(new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey }.OfType<string>().ToArray())));
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return recipe.Version;
         }
@@ -579,7 +708,8 @@ internal sealed partial class ContentService
         catch (DbUpdateConcurrencyException)
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
         catch (Exception exception) when (IsUniqueViolation(exception, "RecipeImages"))
@@ -589,15 +719,23 @@ internal sealed partial class ContentService
         catch (Exception exception) when (IsDeadlockOrSerialization(exception))
         {
             throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe was changed by another request.",
+                "RECIPE_CONCURRENCY_CONFLICT",
+                "The recipe was changed by another request.",
                 ContentProblemKind.Conflict);
         }
     }
 
+    /// <summary>Performs the open media operation.</summary>
+    /// <param name="imageId">The image id supplied to this operation.</param>
+    /// <param name="variant">The variant supplied to this operation.</param>
+    /// <param name="userId">The identifier of the user performing or owning the operation.</param>
+    /// <param name="isAdmin">The is admin supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<MediaFileDto> OpenMediaAsync(
         Guid imageId,
         string variant,
-        Guid? userId,
+        string? userId,
         bool isAdmin,
         CancellationToken cancellationToken)
     {
@@ -635,22 +773,13 @@ internal sealed partial class ContentService
 
     private static RecipeImageDto ToImageDto(RecipeImage item) => new(
         item.Id,
-        MediaUrl(item.Id, "original"),
-        item.MediumObjectKey is null ? null : MediaUrl(item.Id, "medium"),
-        item.ThumbnailObjectKey is null ? null : MediaUrl(item.Id, "thumbnail"),
+        item.OriginalUrl,
+        item.MediumUrl,
+        item.ThumbnailUrl,
         item.AltText,
         item.IsPrimary,
         item.OrderIndex,
         item.ProcessingStatus.ToString().ToLowerInvariant());
-
-    private MediaOutboxMessage CreateOutbox<T>(string type, T payload) => new()
-    {
-        Id = Guid.NewGuid(),
-        Type = type,
-        Payload = JsonSerializer.Serialize(payload),
-        CreatedAt = timeProvider.GetUtcNow(),
-        NextAttemptAt = timeProvider.GetUtcNow(),
-    };
 
     private static async Task CopyToLimitedFileAsync(Stream source, string path, CancellationToken cancellationToken)
     {
@@ -665,6 +794,7 @@ internal sealed partial class ContentService
             {
                 throw new ContentProblemException("FILE_SIZE_EXCEEDED", "Image size cannot exceed 5 MB.", ContentProblemKind.BadRequest);
             }
+
             await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
         }
     }
@@ -675,6 +805,12 @@ internal sealed partial class ContentService
         {
             using var input = File.OpenRead(path);
             cancellationToken.ThrowIfCancellationRequested();
+            if (AvifImage.HasSignature(input))
+            {
+                using var avif = AvifImage.Decode(input);
+                return Task.FromResult("image/avif");
+            }
+
             using var codec = SKCodec.Create(input);
             if (codec is null || codec.Info.Width <= 0 || codec.Info.Height <= 0 ||
                 (long)codec.Info.Width * codec.Info.Height > 40_000_000)
@@ -682,6 +818,7 @@ internal sealed partial class ContentService
                 throw new ContentProblemException(
                     "FILE_SIGNATURE_INVALID", "The uploaded image dimensions are invalid or too large.", ContentProblemKind.BadRequest);
             }
+
             var contentType = codec?.EncodedFormat switch
             {
                 SKEncodedImageFormat.Jpeg => "image/jpeg",
@@ -696,6 +833,7 @@ internal sealed partial class ContentService
                 throw new ContentProblemException(
                     "FILE_SIGNATURE_INVALID", "The uploaded file cannot be decoded as an image.", ContentProblemKind.BadRequest);
             }
+
             return Task.FromResult(contentType ?? throw new ContentProblemException(
                 "FILE_SIGNATURE_INVALID", "The uploaded file is not a supported image.", ContentProblemKind.BadRequest));
         }
@@ -708,6 +846,17 @@ internal sealed partial class ContentService
             throw new ContentProblemException("FILE_SIGNATURE_INVALID", "The uploaded file is not a valid image.", ContentProblemKind.BadRequest);
         }
     }
+
+    private MediaOutboxMessage CreateOutbox<T>(string type, T payload) => new()
+    {
+        TraceParent = Activity.Current?.Id,
+        CorrelationId = Activity.Current?.GetBaggageItem("correlation.id"),
+        Id = Guid.NewGuid(),
+        Type = type,
+        Payload = JsonSerializer.Serialize(payload),
+        CreatedAt = timeProvider.GetUtcNow(),
+        NextAttemptAt = timeProvider.GetUtcNow(),
+    };
 
     private async Task TryDeleteCompensationAsync(string objectKey)
     {

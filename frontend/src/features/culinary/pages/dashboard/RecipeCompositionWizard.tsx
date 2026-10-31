@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMutation } from '@tanstack/react-query'
 import {
   AlertCircle,
@@ -17,6 +18,10 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useToast } from '@/components/ui/toast'
+import { FieldError } from '@/components/ui/field-error'
 import { authenticatedBlobUrl } from '@/lib/api/auth-client'
 import {
   createIngredient,
@@ -38,7 +43,10 @@ import {
   type StepWrite,
 } from '@/lib/api/content-client'
 import { Modal } from '@/components/ui/modal'
-import { ApiProblem } from '@/lib/api/problem-details'
+import { ApiProblem, apiErrorMessage } from '@/lib/api/problem-details'
+import { formMessages } from '../../forms/messages'
+import { setServerFieldErrors } from '../../forms/server-errors'
+import { ingredientSchema, stepSchema } from '../../forms/content-schemas'
 import { computeRecipeValidation, type Stage, type WizardAllSteps } from './recipe-validation'
 
 const EMPTY_INGREDIENT: IngredientWrite = { name: '', quantity: null, unit: null, notes: null, orderIndex: 0 }
@@ -55,9 +63,7 @@ interface Props {
 }
 
 function errorMessage(error: unknown) {
-  return error instanceof ApiProblem
-    ? (error.problem.detail ?? error.problem.title)
-    : 'Không thể lưu thay đổi.'
+  return apiErrorMessage(error, 'COMPOSITION_SAVE_FAILED')
 }
 
 function PrivateImage({ image }: { image: RecipeImage }) {
@@ -103,9 +109,12 @@ function PrivateImage({ image }: { image: RecipeImage }) {
   }, [path, shouldLoad])
 
   return (
-    <div ref={containerRef} className="h-32 w-full bg-muted">
+    <div ref={containerRef} className="relative h-32 w-full bg-muted">
       {source ? (
-        <img
+        <Image
+          fill
+          sizes="(min-width: 768px) 50vw, 100vw"
+          unoptimized
           src={source}
           alt={image.altText ?? ''}
           loading="lazy"
@@ -125,11 +134,12 @@ export function RecipeCompositionWizard({
   recipe,
   version,
   onChanged,
-  activeStage,
-  onStageChange,
-  onNavigateToStep,
-  onDirtyChange,
+  activeStage = undefined,
+  onStageChange = undefined,
+  onNavigateToStep = undefined,
+  onDirtyChange = undefined,
 }: Props) {
+  const { showToast } = useToast()
   const [internalStage, setInternalStage] = useState<Stage>('ingredients')
   const stage = activeStage ?? internalStage
 
@@ -138,15 +148,28 @@ export function RecipeCompositionWizard({
     onStageChange?.(next)
   }
 
-  const [ingredientForm, setIngredientForm] = useState<IngredientWrite>(EMPTY_INGREDIENT)
+  const ingredientFields = useForm<IngredientWrite>({
+    resolver: zodResolver(ingredientSchema),
+    defaultValues: EMPTY_INGREDIENT,
+  })
+  const ingredientForm = useWatch({ control: ingredientFields.control, compute: (values) => values })
+  const setIngredientForm = ingredientFields.reset
   const [editingIngredient, setEditingIngredient] = useState<string | null>(null)
-  const [stepForm, setStepForm] = useState<StepWrite>(EMPTY_STEP)
+  const stepFields = useForm<StepWrite>({ resolver: zodResolver(stepSchema), defaultValues: EMPTY_STEP })
+  const stepForm = useWatch({ control: stepFields.control, compute: (values) => values })
+  const setStepForm = stepFields.reset
   const [editingStep, setEditingStep] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imageAlt, setImageAlt] = useState('')
   const [imagePrimary, setImagePrimary] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [clientError, setClientError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string
+    kind: 'ingredient' | 'step' | 'image'
+    label: string
+  } | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const originalIngredient = recipe.ingredients.find((item) => item.id === editingIngredient)
   const ingredientBaseline = originalIngredient
@@ -181,32 +204,52 @@ export function RecipeCompositionWizard({
   const [confirmModal, setConfirmModal] = useState<'publish' | 'unpublish' | null>(null)
 
   const ingredientMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (values: IngredientWrite) =>
       editingIngredient
-        ? updateIngredient(recipe.id, editingIngredient, version, ingredientForm)
-        : createIngredient(recipe.id, version, { ...ingredientForm, orderIndex: recipe.ingredients.length }),
+        ? updateIngredient(recipe.id, editingIngredient, version, values)
+        : createIngredient(recipe.id, version, { ...values, orderIndex: recipe.ingredients.length }),
     onSuccess: async (result) => {
       setIngredientForm(EMPTY_INGREDIENT)
       setEditingIngredient(null)
       await onChanged(result.meta.recipeVersion)
+      showToast('Đã lưu nguyên liệu.')
+    },
+    onError: (error) => {
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
+      setServerFieldErrors(error, ingredientFields.setError, {
+        Name: ['name', formMessages.ingredientNameRequired],
+        Quantity: ['quantity', formMessages.quantity],
+        Unit: ['unit', formMessages.unitLength],
+        Notes: ['notes', formMessages.notesLength],
+      })
     },
   })
 
   const stepMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (values: StepWrite) =>
       editingStep
-        ? updateStep(recipe.id, editingStep, version, stepForm)
-        : createStep(recipe.id, version, stepForm),
+        ? updateStep(recipe.id, editingStep, version, values)
+        : createStep(recipe.id, version, values),
     onSuccess: async (result) => {
       setStepForm(EMPTY_STEP)
       setEditingStep(null)
       await onChanged(result.meta.recipeVersion)
+      showToast('Đã lưu bước thực hiện.')
+    },
+    onError: (error) => {
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
+      setServerFieldErrors(error, stepFields.setError, {
+        Title: ['title', formMessages.stepTitleRequired],
+        Description: ['description', formMessages.stepDescription],
+        TimerMinutes: ['timerMinutes', formMessages.timeMinimum],
+        ImageUrl: ['imageUrl', formMessages.imageUrlInvalid],
+      })
     },
   })
 
   const imageMutation = useMutation({
     mutationFn: async () => {
-      if (!imageFile) throw new Error('Vui lòng chọn ảnh.')
+      if (!imageFile) throw new Error(formMessages.uploadRequired)
       return uploadRecipeImage(recipe.id, version, imageFile, imageAlt, imagePrimary, setUploadProgress)
     },
     onSuccess: async (result) => {
@@ -215,7 +258,9 @@ export function RecipeCompositionWizard({
       setImagePrimary(false)
       setUploadProgress(0)
       await onChanged(result.meta.recipeVersion)
+      showToast('Đã tải ảnh lên.')
     },
+    onError: (error) => showToast(errorMessage(error)),
   })
 
   const publishMutation = useMutation({
@@ -224,11 +269,13 @@ export function RecipeCompositionWizard({
       setConfirmModal(null)
       setClientError(null)
       await onChanged(updated.version)
+      showToast('Công thức đã được xuất bản thành công.')
     },
     onError: (error) => {
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
       setConfirmModal(null)
       if (error instanceof ApiProblem && error.problem.code === 'RECIPE_PUBLISH_INCOMPLETE') {
-        setClientError('Công thức cần ít nhất 1 nguyên liệu và 1 bước thực hiện để xuất bản.')
+        setClientError(apiErrorMessage(error))
       } else {
         setClientError(errorMessage(error))
       }
@@ -241,8 +288,10 @@ export function RecipeCompositionWizard({
       setConfirmModal(null)
       setClientError(null)
       await onChanged(updated.version)
+      showToast('Đã gỡ xuất bản công thức (chuyển về bản nháp).')
     },
     onError: (error) => {
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
       setConfirmModal(null)
       setClientError(errorMessage(error))
     },
@@ -253,51 +302,68 @@ export function RecipeCompositionWizard({
     try {
       const nextVersion = await action()
       await onChanged(nextVersion ?? version + 1)
+      showToast('Đã cập nhật nội dung công thức.')
     } catch (error) {
       setClientError(errorMessage(error))
+      showToast(errorMessage(error))
     }
   }
 
   const moveIngredient = (item: Ingredient, direction: -1 | 1) => {
     const target = item.orderIndex + direction
     if (target < 0 || target >= recipe.ingredients.length) return
-    void run(async () => {
+    run(async () => {
       const result = await updateIngredient(recipe.id, item.id, version, { ...item, orderIndex: target })
       return result.meta.recipeVersion
     })
   }
 
+  const confirmDelete = async () => {
+    if (!deleteTarget || deleting) return
+    setDeleting(true)
+    try {
+      const remove = { ingredient: deleteIngredient, step: deleteStep, image: deleteRecipeImage }[
+        deleteTarget.kind
+      ]
+      await run(() => remove(recipe.id, deleteTarget.id, version))
+      setDeleteTarget(null)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const moveStep = (item: RecipeStep, direction: -1 | 1) => {
     const target = item.stepNumber + direction
     if (target < 1 || target > recipe.steps.length) return
-    void run(async () => {
+    run(async () => {
       const result = await updateStep(recipe.id, item.id, version, { ...item, stepNumber: target })
       return result.meta.recipeVersion
     })
   }
 
-  const submitIngredient = (event: FormEvent) => {
-    event.preventDefault()
-    if (!ingredientForm.name.trim()) return setClientError('Tên nguyên liệu là bắt buộc.')
+  const submitIngredient = (values: IngredientWrite) => {
     setClientError(null)
-    ingredientMutation.mutate()
+    ingredientMutation.mutate(values)
   }
 
-  const submitStep = (event: FormEvent) => {
-    event.preventDefault()
-    if (!stepForm.title.trim() || !stepForm.description.trim()) {
-      return setClientError('Tiêu đề và mô tả bước là bắt buộc.')
-    }
+  const submitStep = (values: StepWrite) => {
     setClientError(null)
-    stepMutation.mutate()
+    stepMutation.mutate(values)
   }
 
   const submitImage = (event: FormEvent) => {
     event.preventDefault()
-    if (!imageFile) return setClientError('Vui lòng chọn ảnh.')
-    if (imageFile.size > 5 * 1024 * 1024) return setClientError('Ảnh không được vượt quá 5 MB.')
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(imageFile.type)) {
-      return setClientError('Chỉ chấp nhận JPEG, PNG hoặc WebP.')
+    if (!imageFile) {
+      setClientError(formMessages.uploadRequired)
+      return
+    }
+    if (imageFile.size > 5 * 1024 * 1024) {
+      setClientError(formMessages.uploadSize)
+      return
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(imageFile.type)) {
+      setClientError(formMessages.uploadType)
+      return
     }
     setClientError(null)
     imageMutation.mutate()
@@ -370,17 +436,28 @@ export function RecipeCompositionWizard({
       {stage === 'ingredients' && (
         <div className="mt-6 space-y-6">
           <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-            <form onSubmit={submitIngredient} className="space-y-3 border border-border p-4 bg-background">
+            <form
+              noValidate
+              onSubmit={ingredientFields.handleSubmit(submitIngredient)}
+              className="space-y-3 border border-border p-4 bg-background"
+            >
               <h3 className="font-medium text-foreground">
                 {editingIngredient ? 'Sửa nguyên liệu' : 'Thêm nguyên liệu mới'}
               </h3>
               <input
                 aria-label="Tên nguyên liệu"
                 placeholder="Tên nguyên liệu (bắt buộc)"
-                maxLength={200}
+                maxLength={100}
                 className={inputClass}
-                value={ingredientForm.name}
-                onChange={(event) => setIngredientForm({ ...ingredientForm, name: event.target.value })}
+                {...ingredientFields.register('name')}
+                aria-invalid={Boolean(ingredientFields.formState.errors.name)}
+                aria-describedby={
+                  ingredientFields.formState.errors.name ? 'ingredient-name-error' : undefined
+                }
+              />
+              <FieldError
+                id="ingredient-name-error"
+                message={ingredientFields.formState.errors.name?.message}
               />
               <div className="grid grid-cols-2 gap-3">
                 <input
@@ -390,23 +467,34 @@ export function RecipeCompositionWizard({
                   min="0.001"
                   step="0.001"
                   className={inputClass}
-                  value={ingredientForm.quantity ?? ''}
-                  onChange={(event) =>
-                    setIngredientForm({
-                      ...ingredientForm,
-                      quantity: event.target.value ? Number(event.target.value) : null,
-                    })
+                  {...ingredientFields.register('quantity', {
+                    setValueAs: (value: string) => (value == null || value === '' ? null : Number(value)),
+                  })}
+                  aria-invalid={Boolean(ingredientFields.formState.errors.quantity)}
+                  aria-describedby={
+                    ingredientFields.formState.errors.quantity ? 'ingredient-quantity-error' : undefined
                   }
+                />
+                <FieldError
+                  id="ingredient-quantity-error"
+                  message={ingredientFields.formState.errors.quantity?.message}
                 />
                 <input
                   aria-label="Đơn vị"
                   placeholder="Đơn vị (g, ml, muỗng…)"
                   maxLength={50}
                   className={inputClass}
-                  value={ingredientForm.unit ?? ''}
-                  onChange={(event) =>
-                    setIngredientForm({ ...ingredientForm, unit: event.target.value || null })
+                  {...ingredientFields.register('unit', {
+                    setValueAs: (value: string) => (value == null || value === '' ? null : value),
+                  })}
+                  aria-invalid={Boolean(ingredientFields.formState.errors.unit)}
+                  aria-describedby={
+                    ingredientFields.formState.errors.unit ? 'ingredient-unit-error' : undefined
                   }
+                />
+                <FieldError
+                  id="ingredient-unit-error"
+                  message={ingredientFields.formState.errors.unit?.message}
                 />
               </div>
               <input
@@ -414,13 +502,21 @@ export function RecipeCompositionWizard({
                 placeholder="Ghi chú (tùy chọn)"
                 maxLength={500}
                 className={inputClass}
-                value={ingredientForm.notes ?? ''}
-                onChange={(event) =>
-                  setIngredientForm({ ...ingredientForm, notes: event.target.value || null })
+                {...ingredientFields.register('notes', {
+                  setValueAs: (value: string) => (value == null || value === '' ? null : value),
+                })}
+                aria-invalid={Boolean(ingredientFields.formState.errors.notes)}
+                aria-describedby={
+                  ingredientFields.formState.errors.notes ? 'ingredient-notes-error' : undefined
                 }
+              />
+              <FieldError
+                id="ingredient-notes-error"
+                message={ingredientFields.formState.errors.notes?.message}
               />
               <div className="flex items-center gap-2 pt-1">
                 <button
+                  type="submit"
                   disabled={ingredientMutation.isPending}
                   className="flex items-center gap-2 bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
@@ -500,10 +596,13 @@ export function RecipeCompositionWizard({
                     type="button"
                     aria-label="Xóa nguyên liệu"
                     className="p-1 text-muted-foreground hover:text-red-600"
-                    onClick={() => {
-                      if (window.confirm(`Xóa nguyên liệu «${item.name}»?`))
-                        void run(() => deleteIngredient(recipe.id, item.id, version))
-                    }}
+                    onClick={() =>
+                      setDeleteTarget({
+                        kind: 'ingredient',
+                        id: item.id,
+                        label: `nguyên liệu «${item.name}»`,
+                      })
+                    }
                   >
                     <Trash2 size={15} />
                   </button>
@@ -536,7 +635,11 @@ export function RecipeCompositionWizard({
       {stage === 'steps' && (
         <div className="mt-6 space-y-6">
           <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-            <form onSubmit={submitStep} className="space-y-3 border border-border p-4 bg-background">
+            <form
+              noValidate
+              onSubmit={stepFields.handleSubmit(submitStep)}
+              className="space-y-3 border border-border p-4 bg-background"
+            >
               <h3 className="font-medium text-foreground">
                 {editingStep ? 'Sửa bước thực hiện' : 'Thêm bước mới'}
               </h3>
@@ -545,17 +648,26 @@ export function RecipeCompositionWizard({
                 placeholder="Tiêu đề bước (bắt buộc, ví dụ: Sơ chế rau củ)"
                 maxLength={200}
                 className={inputClass}
-                value={stepForm.title}
-                onChange={(event) => setStepForm({ ...stepForm, title: event.target.value })}
+                {...stepFields.register('title')}
+                aria-invalid={Boolean(stepFields.formState.errors.title)}
+                aria-describedby={stepFields.formState.errors.title ? 'step-title-error' : undefined}
               />
+              <FieldError id="step-title-error" message={stepFields.formState.errors.title?.message} />
               <textarea
                 aria-label="Mô tả bước"
                 placeholder="Mô tả chi tiết cách thực hiện…"
                 maxLength={2000}
                 rows={4}
                 className={inputClass}
-                value={stepForm.description}
-                onChange={(event) => setStepForm({ ...stepForm, description: event.target.value })}
+                {...stepFields.register('description')}
+                aria-invalid={Boolean(stepFields.formState.errors.description)}
+                aria-describedby={
+                  stepFields.formState.errors.description ? 'step-description-error' : undefined
+                }
+              />
+              <FieldError
+                id="step-description-error"
+                message={stepFields.formState.errors.description?.message}
               />
               <input
                 aria-label="Hẹn giờ phút"
@@ -563,16 +675,21 @@ export function RecipeCompositionWizard({
                 type="number"
                 min="0"
                 className={inputClass}
-                value={stepForm.timerMinutes ?? ''}
-                onChange={(event) =>
-                  setStepForm({
-                    ...stepForm,
-                    timerMinutes: event.target.value ? Number(event.target.value) : null,
-                  })
+                {...stepFields.register('timerMinutes', {
+                  setValueAs: (value: string) => (value == null || value === '' ? null : Number(value)),
+                })}
+                aria-invalid={Boolean(stepFields.formState.errors.timerMinutes)}
+                aria-describedby={
+                  stepFields.formState.errors.timerMinutes ? 'step-timerMinutes-error' : undefined
                 }
+              />
+              <FieldError
+                id="step-timerMinutes-error"
+                message={stepFields.formState.errors.timerMinutes?.message}
               />
               <div className="flex items-center gap-2 pt-1">
                 <button
+                  type="submit"
                   disabled={stepMutation.isPending}
                   className="flex items-center gap-2 bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
@@ -653,10 +770,9 @@ export function RecipeCompositionWizard({
                       type="button"
                       aria-label="Xóa bước"
                       className="p-1 text-muted-foreground hover:text-red-600"
-                      onClick={() => {
-                        if (window.confirm(`Xóa bước «${item.title}»?`))
-                          void run(() => deleteStep(recipe.id, item.id, version))
-                      }}
+                      onClick={() =>
+                        setDeleteTarget({ kind: 'step', id: item.id, label: `bước «${item.title}»` })
+                      }
                     >
                       <Trash2 size={15} />
                     </button>
@@ -694,12 +810,12 @@ export function RecipeCompositionWizard({
             className="space-y-3 border border-dashed border-border p-5 bg-background"
           >
             <label className="flex items-center gap-2 text-sm font-medium" htmlFor="recipe-image">
-              <ImagePlus size={17} /> Tải lên hình ảnh (JPEG, PNG hoặc WebP, tối đa 5 MB)
+              <ImagePlus size={17} /> Tải lên hình ảnh (JPEG, PNG, WebP hoặc AVIF, tối đa 5 MB)
             </label>
             <input
               id="recipe-image"
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/avif"
               onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
               className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:border-0 file:text-xs file:uppercase file:tracking-wider file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
             />
@@ -720,11 +836,12 @@ export function RecipeCompositionWizard({
               Đặt làm ảnh đại diện chính của công thức
             </label>
             {imageMutation.isPending && (
-              <progress className="w-full h-2" max={100} value={uploadProgress}>
+              <progress aria-label="Tiến độ tải ảnh" className="w-full h-2" max={100} value={uploadProgress}>
                 {uploadProgress}%
               </progress>
             )}
             <button
+              type="submit"
               disabled={imageMutation.isPending}
               className="bg-primary px-5 py-2.5 text-xs uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
@@ -752,7 +869,7 @@ export function RecipeCompositionWizard({
                       defaultValue={image.altText ?? ''}
                       onBlur={(event) => {
                         if (event.target.value !== (image.altText ?? ''))
-                          void run(async () => {
+                          run(async () => {
                             const result = await updateRecipeImage(recipe.id, image.id, version, {
                               altText: event.target.value || null,
                               isPrimary: image.isPrimary,
@@ -771,8 +888,8 @@ export function RecipeCompositionWizard({
                             ? 'font-medium text-amber-700'
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
-                        onClick={() =>
-                          void run(async () => {
+                        onClick={() => {
+                          run(async () => {
                             const result = await updateRecipeImage(recipe.id, image.id, version, {
                               altText: image.altText,
                               isPrimary: true,
@@ -780,7 +897,7 @@ export function RecipeCompositionWizard({
                             })
                             return result.meta.recipeVersion
                           })
-                        }
+                        }}
                       >
                         <Star size={14} className={image.isPrimary ? 'fill-amber-500 text-amber-500' : ''} />
                         {image.isPrimary ? 'Ảnh chính' : 'Đặt làm ảnh chính'}
@@ -789,10 +906,9 @@ export function RecipeCompositionWizard({
                         type="button"
                         aria-label="Xóa ảnh"
                         className="text-muted-foreground hover:text-red-600"
-                        onClick={() => {
-                          if (window.confirm('Xóa ảnh này khỏi công thức?'))
-                            void run(() => deleteRecipeImage(recipe.id, image.id, version))
-                        }}
+                        onClick={() =>
+                          setDeleteTarget({ kind: 'image', id: image.id, label: 'ảnh này khỏi công thức' })
+                        }
                       >
                         <Trash2 size={15} />
                       </button>
@@ -1027,6 +1143,29 @@ export function RecipeCompositionWizard({
                 {publishMutation.isPending || unpublishMutation.isPending ? 'Đang xử lý…' : 'Xác nhận'}
               </button>
             </div>
+          </div>
+        </Modal>
+      )}
+      {deleteTarget && (
+        <Modal open title="Xác nhận xóa nội dung" onClose={() => setDeleteTarget(null)} busy={deleting}>
+          <p>Bạn muốn xóa {deleteTarget.label}? Thao tác này không thể hoàn tác.</p>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => setDeleteTarget(null)}
+              className="border border-border px-4 py-2"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={confirmDelete}
+              className="bg-red-700 px-4 py-2 text-white"
+            >
+              {deleting ? 'Đang xóa…' : 'Xóa nội dung'}
+            </button>
           </div>
         </Modal>
       )}

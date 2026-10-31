@@ -76,11 +76,12 @@ export function Modal({
             event.preventDefault()
             lastElement.focus()
           }
-        } else {
-          if (document.activeElement === lastElement || !dialogRef.current.contains(document.activeElement)) {
-            event.preventDefault()
-            firstElement.focus()
-          }
+        } else if (
+          document.activeElement === lastElement ||
+          !dialogRef.current.contains(document.activeElement)
+        ) {
+          event.preventDefault()
+          firstElement.focus()
         }
       }
     }

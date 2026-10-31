@@ -6,14 +6,16 @@ import { createPageMetadata, createRecipeJsonLd, recipeImages, serializeJsonLd, 
 
 export const revalidate = 300
 
+export function generateStaticParams() {
+  return []
+}
+
 type RecipePageProps = { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
   const { slug } = await params
   const recipe = await getPublishedRecipe(slug, revalidate)
-  if (!recipe) {
-    return { title: 'Không tìm thấy công thức', robots: { index: false, follow: false } }
-  }
+  if (!recipe) notFound()
 
   return createPageMetadata({
     title: recipe.title,
@@ -34,10 +36,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(createRecipeJsonLd(recipe)) }}
-      />
+      <script type="application/ld+json">{serializeJsonLd(createRecipeJsonLd(recipe))}</script>
       <RecipeDetail recipe={recipe} />
     </>
   )

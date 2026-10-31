@@ -20,10 +20,10 @@ function Get-LatestBackupEpoch {
     param([ValidateSet("postgres", "minio")][string]$Kind)
 
     $command = if ($Kind -eq "postgres") {
-        "latest=`$(find /backups/postgres -type f -name '*.completed-at' | sort | tail -n 1); test -n `"`$latest`"; cat `"`$latest`""
+        'latest=$(find /backups/postgres -type f -name ''*.completed-at'' | sort | tail -n 1); test -n "$latest"; cat "${latest%.completed-at}.started-at"'
     }
     else {
-        "set -- /backups/minio/????????T??????Z.completed-at; test -f `"`$1`"; for file; do latest=`$file; done; cat `"`$latest`""
+        'set -- /backups/minio/????????T??????Z.completed-at; test -f "$1"; for file; do latest=$file; done; cat "${latest%.completed-at}.started-at"'
     }
 
     $service = "$Kind-backup"

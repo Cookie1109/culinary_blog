@@ -1,42 +1,57 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import Image from 'next/image'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { signIn } from 'next-auth/react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Eye, EyeOff, ChefHat, ArrowRight } from 'lucide-react'
 import loginBackground from '@/assets/login-cooking-background.webp'
+import { authErrorMessage } from '@/lib/api/problem-details'
+import { useToast } from '@/components/ui/toast'
 import { useAuth } from '../../contexts/AuthContext'
+import { setServerFieldErrors } from '../../forms/server-errors'
+import { formMessages } from '../../forms/messages'
+import type { LoginValues } from '../../forms/auth-schemas'
 
 export function Login({ googleEnabled }: { googleEnabled: boolean }) {
+  const { showToast } = useToast()
   const { login, isLoading } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const {
+    register,
+    handleSubmit,
+    setError: setFieldError,
+    formState: { errors: fieldErrors, isSubmitting },
+  } = useForm<LoginValues>({
+    resolver: async (...args) => (await import('../../forms/deferred-resolvers')).loginResolver(...args),
+    defaultValues: { email: '', password: '' },
+  })
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    const errors: Record<string, string> = {}
-    if (!email.trim()) errors.email = 'Vui lòng nhập email.'
-    else if ((document.getElementById('email') as HTMLInputElement).validity.typeMismatch)
-      errors.email = 'Địa chỉ email chưa hợp lệ.'
-    if (!password) errors.password = 'Vui lòng nhập mật khẩu.'
-    setFieldErrors(errors)
-    if (Object.keys(errors).length) {
-      setError('Vui lòng kiểm tra các trường được đánh dấu.')
-      document.getElementById(Object.keys(errors)[0])?.focus()
-      return
-    }
+  const submit = async ({ email, password }: LoginValues) => {
     try {
       setError('')
       await login(email, password)
-      const returnTo = searchParams.get('returnTo')
-      navigate(returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/dashboard')
-    } catch {
-      setError('Email hoặc mật khẩu không chính xác.')
+      showToast('Đăng nhập thành công.')
+      const target = new URL(
+        searchParams.get('returnTo') ?? searchParams.get('callbackUrl') ?? '/dashboard',
+        window.location.origin,
+      )
+      navigate(
+        target.origin === window.location.origin
+          ? `${target.pathname}${target.search}${target.hash}`
+          : '/dashboard',
+      )
+    } catch (failure) {
+      setServerFieldErrors(failure, setFieldError, {
+        Email: ['email', formMessages.emailInvalid],
+        Password: ['password', formMessages.passwordRequired],
+      })
+      setError(authErrorMessage(failure))
+      showToast(authErrorMessage(failure))
     }
   }
 
@@ -44,7 +59,10 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
     <div className="grid min-h-svh grid-cols-1 lg:grid-cols-2">
       {/* Left: editorial panel */}
       <div className="hidden lg:block relative overflow-hidden bg-background">
-        <img
+        <Image
+          fill
+          sizes="50vw"
+          unoptimized
           src={loginBackground.src}
           alt="Rau thơm, cà chua và dụng cụ nấu ăn trên mặt bàn sáng dưới ánh sáng tự nhiên"
           className="absolute inset-0 w-full h-full object-cover"
@@ -79,7 +97,11 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
             <p className="text-muted-foreground">Đăng nhập để quản lý công thức và hồ sơ của bạn.</p>
           </div>
 
-          <form noValidate onSubmit={handleSubmit} className="space-y-5">
+          <form
+            noValidate
+            onSubmit={handleSubmit(submit, () => setError('Vui lòng kiểm tra các trường được đánh dấu.'))}
+            className="space-y-5"
+          >
             {searchParams.get('passwordChanged') === '1' && (
               <p
                 role="status"
@@ -108,14 +130,13 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
                 aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                 type="email"
                 autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email')}
                 placeholder="your@email.com"
                 className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
               />
               {fieldErrors.email && (
                 <p id="email-error" className="mt-2 text-sm text-red-700">
-                  {fieldErrors.email}
+                  {fieldErrors.email.message}
                 </p>
               )}
             </div>
@@ -140,14 +161,13 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
                   aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register('password')}
                   placeholder="••••••••"
                   className="w-full border border-border bg-background px-4 py-3 pr-12 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all"
                 />
                 {fieldErrors.password && (
                   <p id="password-error" className="mt-2 text-sm text-red-700">
-                    {fieldErrors.password}
+                    {fieldErrors.password.message}
                   </p>
                 )}
                 <button
@@ -163,7 +183,7 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isSubmitting}
               className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 text-sm font-medium uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
               {isLoading ? (
@@ -183,7 +203,7 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
                 const returnTo = searchParams.get('returnTo')
                 const callbackUrl =
                   returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/dashboard'
-                void signIn('google', { callbackUrl })
+                signIn('google', { callbackUrl })
               }}
               className="mt-4 flex w-full items-center justify-center gap-3 border border-border px-4 py-3 text-sm font-medium hover:bg-secondary"
             >

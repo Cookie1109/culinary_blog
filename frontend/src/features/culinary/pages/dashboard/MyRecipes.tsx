@@ -15,9 +15,9 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { useAuth } from '../../contexts/AuthContext'
 import { Modal } from '@/components/ui/modal'
-import { ApiProblem } from '@/lib/api/problem-details'
+import { useToast } from '@/components/ui/toast'
+import { ApiProblem, apiErrorMessage } from '@/lib/api/problem-details'
 import {
   archiveRecipe,
   deleteRecipe,
@@ -29,6 +29,7 @@ import {
   type Recipe,
   type RecipeStatus,
 } from '@/lib/api/content-client'
+import { useAuth } from '../../contexts/AuthContext'
 
 const STATUS_FILTERS: { value: RecipeStatus | undefined; label: string }[] = [
   { value: undefined, label: 'Tất cả' },
@@ -76,6 +77,12 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
   const [actionNotice, setActionNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    const message = actionError ?? actionNotice
+    if (message) showToast(message)
+  }, [actionError, actionNotice, showToast])
 
   const recipesQuery = useQuery({
     queryKey: [scope === 'all' ? 'admin-recipes' : 'my-recipes', status, search.trim(), page, pageSize],
@@ -96,11 +103,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
     },
     onError: (error) => {
       setActionNotice(null)
-      setActionError(
-        error instanceof ApiProblem
-          ? (error.problem.detail ?? error.problem.title)
-          : 'Không thể xóa công thức.',
-      )
+      setActionError(apiErrorMessage(error, 'RECIPE_DELETE_FAILED'))
     },
   })
 
@@ -116,13 +119,9 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
     onError: (error) => {
       setActionNotice(null)
       if (error instanceof ApiProblem && error.problem.code === 'RECIPE_PUBLISH_INCOMPLETE') {
-        setActionError('Công thức cần ít nhất 1 nguyên liệu và 1 bước thực hiện để xuất bản.')
+        setActionError(apiErrorMessage(error))
       } else {
-        setActionError(
-          error instanceof ApiProblem
-            ? (error.problem.detail ?? error.problem.title)
-            : 'Không thể xuất bản công thức.',
-        )
+        setActionError(apiErrorMessage(error, 'RECIPE_PUBLISH_FAILED'))
       }
     },
   })
@@ -138,11 +137,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
     },
     onError: (error) => {
       setActionNotice(null)
-      setActionError(
-        error instanceof ApiProblem
-          ? (error.problem.detail ?? error.problem.title)
-          : 'Không thể gỡ xuất bản công thức.',
-      )
+      setActionError(apiErrorMessage(error, 'RECIPE_UNPUBLISH_FAILED'))
     },
   })
 
@@ -157,11 +152,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
     },
     onError: (error) => {
       setActionNotice(null)
-      setActionError(
-        error instanceof ApiProblem
-          ? (error.problem.detail ?? error.problem.title)
-          : 'Không thể lưu trữ công thức.',
-      )
+      setActionError(apiErrorMessage(error, 'RECIPE_ARCHIVE_FAILED'))
     },
   })
 
@@ -176,11 +167,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
     },
     onError: (error) => {
       setActionNotice(null)
-      setActionError(
-        error instanceof ApiProblem
-          ? (error.problem.detail ?? error.problem.title)
-          : 'Không thể khôi phục công thức.',
-      )
+      setActionError(apiErrorMessage(error, 'RECIPE_UNARCHIVE_FAILED'))
     },
   })
 
@@ -229,6 +216,17 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
     setSearchParams(nextParams)
   }
 
+  const totalDescription =
+    scope === 'all' ? `Tổng cộng ${total} công thức trên toàn hệ thống` : `Tổng cộng ${total} công thức`
+  const emptyDescription =
+    scope === 'all'
+      ? 'Quản lý toàn bộ công thức trên hệ thống qua quyền quản trị'
+      : 'Quản lý các công thức và bản nháp của bạn'
+  const emptyScopeMessage =
+    scope === 'all' ? 'Chưa có công thức nào trong phạm vi này.' : 'Hãy tạo bản nháp đầu tiên của bạn.'
+  const confirmationColor =
+    confirmDialog?.type === 'publish' ? 'bg-green-700 hover:bg-green-800' : 'bg-primary hover:bg-primary/90'
+
   return (
     <div>
       {/* Header */}
@@ -240,13 +238,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
             {scope === 'all' ? 'Tất cả công thức' : 'Công thức của tôi'}
           </Heading>
           <p className="mt-1 text-muted-foreground">
-            {scope === 'all'
-              ? recipesQuery.data
-                ? `Tổng cộng ${total} công thức trên toàn hệ thống`
-                : 'Quản lý toàn bộ công thức trên hệ thống qua quyền quản trị'
-              : recipesQuery.data
-                ? `Tổng cộng ${total} công thức`
-                : 'Quản lý các công thức và bản nháp của bạn'}
+            {recipesQuery.data ? totalDescription : emptyDescription}
           </p>
         </div>
         {!systemOverview && (
@@ -288,6 +280,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
         >
           {STATUS_FILTERS.map((item) => (
             <button
+              type="button"
               key={item.label}
               aria-pressed={status === item.value}
               onClick={() => handleStatusChange(item.value)}
@@ -323,12 +316,8 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
       )}
       {recipesQuery.isError && (
         <div className="border border-red-200 bg-red-50 p-6 text-red-700" role="alert">
-          <p>
-            {recipesQuery.error instanceof ApiProblem
-              ? recipesQuery.error.problem.detail
-              : 'Không thể tải danh sách công thức.'}
-          </p>
-          <button className="mt-3 underline" onClick={() => recipesQuery.refetch()}>
+          <p>{apiErrorMessage(recipesQuery.error, 'RECIPE_LIST_FAILED')}</p>
+          <button type="button" className="mt-3 underline" onClick={() => recipesQuery.refetch()}>
             Thử lại
           </button>
         </div>
@@ -341,11 +330,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
             <div className="border border-border bg-background px-4 py-16 text-center">
               <p className="mb-2 font-serif text-xl">Không tìm thấy công thức nào</p>
               <p className="text-sm text-muted-foreground">
-                {search
-                  ? 'Không có công thức phù hợp với từ khóa tìm kiếm.'
-                  : scope === 'all'
-                    ? 'Chưa có công thức nào trong phạm vi này.'
-                    : 'Hãy tạo bản nháp đầu tiên của bạn.'}
+                {search ? 'Không có công thức phù hợp với từ khóa tìm kiếm.' : emptyScopeMessage}
               </p>
               {(search || status) && (
                 <button
@@ -728,11 +713,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                 disabled={isPendingAction}
                 onClick={handleConfirmAction}
                 className={`px-5 py-2 text-xs uppercase tracking-wider text-white disabled:opacity-50 ${
-                  confirmDialog.type === 'delete'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : confirmDialog.type === 'publish'
-                      ? 'bg-green-700 hover:bg-green-800'
-                      : 'bg-primary hover:bg-primary/90'
+                  confirmDialog.type === 'delete' ? 'bg-red-600 hover:bg-red-700' : confirmationColor
                 }`}
               >
                 {isPendingAction ? 'Đang xử lý…' : 'Xác nhận'}

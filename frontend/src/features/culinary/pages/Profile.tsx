@@ -1,24 +1,41 @@
-import { useState, type FormEvent } from 'react'
+import Image from 'next/image'
+import { useState, type MouseEvent } from 'react'
+import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { Pencil, Check, X } from 'lucide-react'
+import { FieldError } from '@/components/ui/field-error'
+import { useToast } from '@/components/ui/toast'
+import { apiErrorMessage } from '@/lib/api/problem-details'
 import { useAuth } from '../contexts/AuthContext'
 import { PasswordForm } from './auth/PasswordForm'
+import type { ProfileValues } from '../forms/auth-schemas'
+import { setServerFieldErrors } from '../forms/server-errors'
+import { formMessages } from '../forms/messages'
 
 export function Profile() {
   const { user, updateProfile, logout } = useAuth()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(user?.name ?? '')
-  const [bio, setBio] = useState(user?.bio ?? '')
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError: setFieldError,
+    formState: { errors, isSubmitting: saving },
+  } = useForm<ProfileValues>({
+    resolver: async (...args) => (await import('../forms/deferred-resolvers')).profileResolver(...args),
+    defaultValues: { name: '', bio: '', avatar: '' },
+  })
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
-  const [saving, setSaving] = useState(false)
 
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
         <h1 className="font-serif text-3xl mb-4">Đăng nhập để xem hồ sơ của bạn</h1>
         <button
+          type="button"
           onClick={() => navigate('/login')}
           className="bg-primary text-primary-foreground px-8 py-3 text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors"
         >
@@ -28,40 +45,35 @@ export function Profile() {
     )
   }
 
-  const handleSave = async (e: FormEvent) => {
-    e.preventDefault()
-    if (name.trim().length < 2 || name.trim().length > 100) {
-      setError('Tên hiển thị phải có từ 2 đến 100 ký tự.')
-      return
-    }
-    if (bio.length > 2000) {
-      setError('Tiểu sử không được vượt quá 2.000 ký tự.')
-      return
-    }
+  const handleSave = async (values: ProfileValues) => {
     try {
       setError('')
-      setSaving(true)
-      await updateProfile({ name: name.trim(), bio })
+      await updateProfile(values)
       setEditing(false)
       setSaved(true)
+      showToast('Cập nhật hồ sơ thành công.')
       setTimeout(() => setSaved(false), 2500)
-    } catch {
-      setError('Cập nhật hồ sơ thất bại. Vui lòng thử lại.')
-    } finally {
-      setSaving(false)
+    } catch (failure) {
+      setServerFieldErrors(failure, setFieldError, {
+        DisplayName: ['name', formMessages.displayName],
+        AvatarUrl: ['avatar', formMessages.imageUrlInvalid],
+        Bio: ['bio', formMessages.bioLength],
+      })
+      const message = apiErrorMessage(failure, 'PROFILE_UPDATE_FAILED')
+      setError(message)
+      showToast(message)
     }
   }
 
   const handleCancel = () => {
-    setName(user.name)
-    setBio(user.bio ?? '')
+    reset({ name: user.name, bio: user.bio ?? '', avatar: user.avatar ?? '' })
     setEditing(false)
     setError('')
   }
 
-  const beginEdit = () => {
-    setName(user.name)
-    setBio(user.bio ?? '')
+  const beginEdit = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    reset({ name: user.name, bio: user.bio ?? '', avatar: user.avatar ?? '' })
     setError('')
     setEditing(true)
   }
@@ -79,7 +91,10 @@ export function Profile() {
         <div className="flex flex-col items-center lg:items-start gap-4">
           <div className="relative">
             {user.avatar ? (
-              <img
+              <Image
+                width={112}
+                height={112}
+                unoptimized
                 src={user.avatar}
                 alt={user.name}
                 className="w-28 h-28 rounded-full object-cover border-2 border-border"
@@ -112,13 +127,13 @@ export function Profile() {
             </div>
           )}
 
-          <form onSubmit={handleSave}>
+          <form noValidate onSubmit={handleSubmit(handleSave)}>
             {/* Name */}
             <div className="mb-6 pb-6 border-b border-border">
               <div className="flex items-center justify-between mb-4">
-                <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+                <span className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
                   Họ và tên
-                </label>
+                </span>
                 {!editing && (
                   <button
                     type="button"
@@ -134,20 +149,47 @@ export function Profile() {
                   aria-label="Họ và tên"
                   disabled={saving}
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  {...register('name')}
+                  aria-invalid={Boolean(errors.name)}
+                  aria-describedby={errors.name ? 'profile-name-error' : undefined}
                   className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                 />
               ) : (
                 <p className="text-foreground">{user.name}</p>
               )}
+              <FieldError id="profile-name-error" message={errors.name?.message} />
             </div>
+
+            {editing && (
+              <div className="mb-6 pb-6 border-b border-border">
+                <label
+                  htmlFor="profile-avatar"
+                  className="mb-3 block text-xs uppercase tracking-widest text-muted-foreground font-medium"
+                >
+                  URL ảnh đại diện
+                </label>
+                <input
+                  id="profile-avatar"
+                  type="url"
+                  disabled={saving}
+                  {...register('avatar')}
+                  aria-invalid={Boolean(errors.avatar)}
+                  aria-describedby={`profile-avatar-help${errors.avatar ? ' profile-avatar-error' : ''}`}
+                  placeholder="https://example.com/avatar.jpg"
+                  className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+                <p id="profile-avatar-help" className="mt-2 text-xs text-muted-foreground">
+                  Nhập đường dẫn ảnh HTTP hoặc HTTPS. Để trống để xóa ảnh đại diện.
+                </p>
+                <FieldError id="profile-avatar-error" message={errors.avatar?.message} />
+              </div>
+            )}
 
             {/* Email (readonly) */}
             <div className="mb-6 pb-6 border-b border-border">
-              <label className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
+              <span className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
                 Địa chỉ email
-              </label>
+              </span>
               <p className="text-foreground">{user.email}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Email không thể thay đổi tại đây. Vui lòng liên hệ hỗ trợ nếu cần.
@@ -156,15 +198,16 @@ export function Profile() {
 
             {/* Bio */}
             <div className="mb-6 pb-6 border-b border-border">
-              <label className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
+              <span className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
                 Tiểu sử giới thiệu
-              </label>
+              </span>
               {editing ? (
                 <textarea
                   aria-label="Tiểu sử giới thiệu"
                   disabled={saving}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
+                  {...register('bio')}
+                  aria-invalid={Boolean(errors.bio)}
+                  aria-describedby={errors.bio ? 'profile-bio-error' : undefined}
                   rows={4}
                   placeholder="Chia sẻ đôi nét về bạn với độc giả..."
                   className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground transition-all resize-none"
@@ -176,13 +219,14 @@ export function Profile() {
                   )}
                 </p>
               )}
+              <FieldError id="profile-bio-error" message={errors.bio?.message} />
             </div>
 
             {/* Role */}
             <div className="mb-8 pb-6 border-b border-border">
-              <label className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
+              <span className="block text-xs uppercase tracking-widest text-muted-foreground font-medium mb-3">
                 Vai trò tài khoản
-              </label>
+              </span>
               <span className="inline-block px-3 py-1 bg-secondary text-foreground text-sm border border-border">
                 {user.role === 'admin' ? 'Quản trị viên' : 'Tác giả'}
               </span>

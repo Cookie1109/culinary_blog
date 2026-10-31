@@ -4,6 +4,8 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
 FROM node:22.23.3-bookworm-slim@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c AS build
+ARG WEB_VITALS_ENABLED=false
+ENV WEB_VITALS_ENABLED=$WEB_VITALS_ENABLED
 WORKDIR /workspace
 COPY --from=dependencies /workspace/frontend/node_modules frontend/node_modules
 COPY frontend frontend

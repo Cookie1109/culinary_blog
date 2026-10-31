@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Net;
@@ -11,11 +13,16 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SkiaSharp;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for recipe composition api tests.</summary>
+/// <param name="factory">The factory supplied to this operation.</param>
 public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFactory>
 {
+    /// <summary>Verifies that p7 author can compose recipe and step reorder stays continuous.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task P7AuthorCanComposeRecipeAndStepReorderStaysContinuous()
     {
@@ -65,8 +72,16 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         var detail = (await detailResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeDetailResponse>>())!.Data;
         Assert.Collection(
             detail.Steps,
-            step => { Assert.Equal(secondStep.Id, step.Id); Assert.Equal(1, step.StepNumber); },
-            step => { Assert.Equal(firstStep.Id, step.Id); Assert.Equal(2, step.StepNumber); });
+            step =>
+            {
+                Assert.Equal(secondStep.Id, step.Id);
+                Assert.Equal(1, step.StepNumber);
+            },
+            step =>
+            {
+                Assert.Equal(firstStep.Id, step.Id);
+                Assert.Equal(2, step.StepNumber);
+            });
         Assert.Null(Assert.Single(detail.Ingredients).Quantity);
 
         SetToken(client, other.AccessToken);
@@ -79,6 +94,8 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
     }
 
+    /// <summary>Verifies that p7 author can complete publishing archive and delete lifecycle.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle()
     {
@@ -105,7 +122,7 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         using var incompleteRequest = CreateLifecyclePatch(recipe.Id, "publish", 1);
         using var incompleteResponse = await client.SendAsync(incompleteRequest);
         var incompleteProblem = await incompleteResponse.Content.ReadFromJsonAsync<Problem>();
-        Assert.Equal(HttpStatusCode.BadRequest, incompleteResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, incompleteResponse.StatusCode);
         Assert.Equal("RECIPE_PUBLISH_INCOMPLETE", incompleteProblem?.Code);
 
         using var ingredientResponse = await SendJsonAsync(
@@ -167,12 +184,12 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
 
         using var unpublishRequest = CreateLifecyclePatch(recipe.Id, "unpublish", 5);
         using var unpublishResponse = await client.SendAsync(unpublishRequest);
-        var unpublished = (await unpublishResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        var unpublished = Assert.IsType<DataEnvelope<RecipeResponse>>(await unpublishResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>()).Data;
         Assert.Equal(HttpStatusCode.OK, unpublishResponse.StatusCode);
         Assert.Equal("\"6\"", unpublishResponse.Headers.ETag?.Tag);
         Assert.Equal("draft", unpublished.Status);
         Assert.NotNull(unpublished.PublishedAt);
-        Assert.InRange((unpublished.PublishedAt.Value - published.PublishedAt!.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+        Assert.InRange((unpublished.PublishedAt.Value - published.PublishedAt.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
         using var hiddenResponse = await client.GetAsync($"/api/v1/recipes/{published.Slug}");
         Assert.Equal(HttpStatusCode.NotFound, hiddenResponse.StatusCode);
@@ -197,13 +214,13 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
 
         using var archiveRequest = CreateLifecyclePatch(recipe.Id, "archive", 7);
         using var archiveResponse = await client.SendAsync(archiveRequest);
-        var archived = (await archiveResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        var archived = Assert.IsType<DataEnvelope<RecipeResponse>>(await archiveResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>()).Data;
         Assert.Equal(HttpStatusCode.OK, archiveResponse.StatusCode);
         Assert.Equal("\"8\"", archiveResponse.Headers.ETag?.Tag);
         Assert.Equal("archived", archived.Status);
         Assert.Equal(published.Slug, archived.Slug);
         Assert.NotNull(archived.PublishedAt);
-        Assert.InRange((archived.PublishedAt.Value - published.PublishedAt!.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+        Assert.InRange((archived.PublishedAt.Value - published.PublishedAt.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
         using var archivedDetailResponse = await client.GetAsync($"/api/v1/recipes/{published.Slug}");
         Assert.Equal(HttpStatusCode.NotFound, archivedDetailResponse.StatusCode);
@@ -220,13 +237,13 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
 
         using var unarchiveRequest = CreateLifecyclePatch(recipe.Id, "unarchive", 8);
         using var unarchiveResponse = await client.SendAsync(unarchiveRequest);
-        var unarchived = (await unarchiveResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>())!.Data;
+        var unarchived = Assert.IsType<DataEnvelope<RecipeResponse>>(await unarchiveResponse.Content.ReadFromJsonAsync<DataEnvelope<RecipeResponse>>()).Data;
         Assert.Equal(HttpStatusCode.OK, unarchiveResponse.StatusCode);
         Assert.Equal("\"9\"", unarchiveResponse.Headers.ETag?.Tag);
         Assert.Equal("draft", unarchived.Status);
         Assert.Equal(published.Slug, unarchived.Slug);
         Assert.NotNull(unarchived.PublishedAt);
-        Assert.InRange((unarchived.PublishedAt.Value - published.PublishedAt!.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+        Assert.InRange((unarchived.PublishedAt.Value - published.PublishedAt.Value).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
 
         Assert.Equal(1, observedMetrics["recipe.created"]);
         Assert.Equal(2, observedMetrics["recipe.published"]);
@@ -243,6 +260,8 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         Assert.Equal(HttpStatusCode.NotFound, deletedDetailResponse.StatusCode);
     }
 
+    /// <summary>Verifies that image upload validates content and keeps draft media private.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ImageUploadValidatesContentAndKeepsDraftMediaPrivate()
     {
@@ -259,25 +278,25 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         var recipe = await CreateRecipeAsync(client, categoryId, "Secure image integration recipe");
         var initialKeys = storage.Keys;
 
-        using var invalidMime = await UploadAsync(client, recipe.Id, 1, "text/plain", "dish.txt", [1, 2, 3, 4]);
+        using var invalidMime = await UploadTestImageAsync(client, recipe.Id, 1, "text/plain", "dish.txt", [1, 2, 3, 4]);
         var mimeProblem = await invalidMime.Content.ReadFromJsonAsync<Problem>();
         Assert.Equal(HttpStatusCode.BadRequest, invalidMime.StatusCode);
         Assert.Equal("FILE_MIME_INVALID", mimeProblem?.Code);
 
-        using var spoofed = await UploadAsync(client, recipe.Id, 1, "image/png", "../../spoof.png", [1, 2, 3, 4]);
+        using var spoofed = await UploadTestImageAsync(client, recipe.Id, 1, "image/png", "../../spoof.png", [1, 2, 3, 4]);
         var spoofedProblem = await spoofed.Content.ReadFromJsonAsync<Problem>();
         Assert.Equal(HttpStatusCode.BadRequest, spoofed.StatusCode);
         Assert.Equal("FILE_SIGNATURE_INVALID", spoofedProblem?.Code);
         Assert.Empty(storage.Keys.Except(initialKeys));
 
-        using var oversized = await UploadAsync(client, recipe.Id, 1, "image/png", "large.png", new byte[(5 * 1024 * 1024) + 1]);
+        using var oversized = await UploadTestImageAsync(client, recipe.Id, 1, "image/png", "large.png", new byte[(5 * 1024 * 1024) + 1]);
         var oversizedProblem = await oversized.Content.ReadFromJsonAsync<Problem>();
         Assert.Equal(HttpStatusCode.BadRequest, oversized.StatusCode);
         Assert.Equal("FILE_SIZE_EXCEEDED", oversizedProblem?.Code);
         Assert.Empty(storage.Keys.Except(initialKeys));
 
         var png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
-        using var uploaded = await UploadAsync(client, recipe.Id, 1, "image/png", "../../dish.png", png);
+        using var uploaded = await UploadTestImageAsync(client, recipe.Id, 1, "image/png", "../../dish.png", png);
         var image = (await uploaded.Content.ReadFromJsonAsync<MutationEnvelope<ImageResponse>>())!;
         Assert.Equal(HttpStatusCode.Created, uploaded.StatusCode);
         Assert.Equal(2, image.Meta.RecipeVersion);
@@ -289,13 +308,23 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
             await resizeJob.ProcessAsync(Guid.NewGuid(), image.Data.Id, CancellationToken.None);
             await resizeJob.ProcessAsync(Guid.NewGuid(), image.Data.Id, CancellationToken.None);
         }
-        Assert.Equal(3, storage.Keys.Except(initialKeys).Count());
 
-        using var secondUpload = await UploadAsync(client, recipe.Id, 2, "image/png", "second.png", png);
+        Assert.Equal(3, storage.Keys.Except(initialKeys).Count());
+        foreach (var (fileName, width, height) in new[] { ("medium.webp", 800, 600), ("thumbnail.webp", 300, 300) })
+        {
+            var key = Assert.Single(storage.Keys, item => item.Contains(image.Data.Id.ToString("N"), StringComparison.Ordinal) && item.EndsWith(fileName, StringComparison.Ordinal));
+            await using var variant = await storage.OpenReadAsync(key, CancellationToken.None);
+            using var bitmap = SKBitmap.Decode(variant);
+            Assert.NotNull(bitmap);
+            Assert.Equal(width, bitmap.Width);
+            Assert.Equal(height, bitmap.Height);
+        }
+
+        using var secondUpload = await UploadTestImageAsync(client, recipe.Id, 2, "image/png", "second.png", png);
         var secondImage = (await secondUpload.Content.ReadFromJsonAsync<MutationEnvelope<ImageResponse>>())!;
         Assert.Equal(HttpStatusCode.Created, secondUpload.StatusCode);
 
-        using var rateLimited = await UploadAsync(client, recipe.Id, 3, "image/png", "limited.png", png);
+        using var rateLimited = await UploadTestImageAsync(client, recipe.Id, 3, "image/png", "limited.png", png);
         Assert.Equal(HttpStatusCode.TooManyRequests, rateLimited.StatusCode);
         Assert.True(rateLimited.Headers.Contains("Retry-After"));
 
@@ -337,7 +366,7 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         Assert.Equal(initialKeys.Order(), storage.Keys.Order());
     }
 
-    private static async Task<HttpResponseMessage> UploadAsync(
+    private static async Task<HttpResponseMessage> UploadTestImageAsync(
         HttpClient client,
         Guid recipeId,
         long version,
@@ -428,59 +457,73 @@ public sealed class RecipeCompositionApiTests(AuthApiFactory factory) : IClassFi
         : new AuthenticationHeaderValue("Bearer", token);
 
     private sealed record DataEnvelope<T>(T Data);
+
     private sealed record RecipePage(IReadOnlyList<RecipeResponse> Data);
+
     private sealed record CategoryDetailEnvelopeResponse(CategoryDetailDataResponse Data);
+
     private sealed record CategoryDetailDataResponse(IReadOnlyList<RecipeResponse> Recipes);
+
     private sealed record MutationEnvelope<T>(T Data, MutationMeta Meta);
+
     private sealed record MutationMeta(long RecipeVersion);
+
     private sealed record AuthSession(string AccessToken);
+
     private sealed record RecipeResponse(
         Guid Id,
         string Slug,
         string Status,
         DateTimeOffset? PublishedAt,
         long Version);
+
     private sealed record CategoryResponse(Guid Id, string Slug);
+
     private sealed record StepResponse(Guid Id, int StepNumber, string Title, string Description);
+
     private sealed record IngredientResponse(decimal? Quantity);
+
     private sealed record RecipeDetailResponse(IReadOnlyList<StepResponse> Steps, IReadOnlyList<IngredientResponse> Ingredients);
+
     private sealed record ImageResponse(Guid Id, string OriginalUrl);
+
     private sealed record Problem(string Code);
 
     private sealed class InMemoryFileStorage : IFileStorageService
     {
-        private readonly ConcurrentDictionary<string, byte[]> _files = new(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, byte[]> files = new(StringComparer.Ordinal);
 
-        public string[] Keys => _files.Keys.ToArray();
+        public string[] Keys => this.files.Keys.ToArray();
 
         public async Task UploadAsync(string objectKey, Stream content, long length, string contentType, CancellationToken cancellationToken)
         {
             using var output = new MemoryStream();
             await content.CopyToAsync(output, cancellationToken);
-            _files[objectKey] = output.ToArray();
+            this.files[objectKey] = output.ToArray();
         }
 
         public Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken) =>
-            Task.FromResult<Stream>(new MemoryStream(_files[objectKey], writable: false));
+            Task.FromResult<Stream>(new MemoryStream(this.files[objectKey], writable: false));
 
         public Task DeleteAsync(string objectKey, CancellationToken cancellationToken)
         {
-            _files.TryRemove(objectKey, out _);
+            this.files.TryRemove(objectKey, out _);
             return Task.CompletedTask;
         }
 
         public Task<bool> ExistsAsync(string objectKey, CancellationToken cancellationToken) =>
-            Task.FromResult(_files.ContainsKey(objectKey));
+            Task.FromResult(this.files.ContainsKey(objectKey));
 
         public async IAsyncEnumerable<string> ListKeysAsync(
             string prefix,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            foreach (var key in _files.Keys.Where(key => key.StartsWith(prefix, StringComparison.Ordinal)))
+            foreach (var key in this.files.Keys.Where(key => key.StartsWith(prefix, StringComparison.Ordinal)))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 yield return key;
             }
+
             await Task.CompletedTask;
         }
     }

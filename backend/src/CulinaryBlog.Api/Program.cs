@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Globalization;
 using CulinaryBlog.Api.Health;
 using CulinaryBlog.Api.Middleware;
@@ -8,8 +10,12 @@ using CulinaryBlog.Application;
 using CulinaryBlog.Infrastructure;
 using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Jobs;
+using CulinaryBlog.Infrastructure.Persistence;
+using CulinaryBlog.Infrastructure.RateLimiting;
 using Hangfire;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
@@ -32,6 +38,7 @@ try
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
+            .Enrich.With(new CulinaryBlog.Api.Logging.RequestContextEnricher(services.GetRequiredService<IHttpContextAccessor>()))
             .Enrich.WithProperty("Application", "CulinaryBlog.Api")
             .WriteTo.Console(new RenderedCompactJsonFormatter())
             .WriteTo.File(
@@ -60,6 +67,7 @@ try
     {
         app.UseForwardedHeaders();
     }
+
     if (app.Environment.IsProduction())
     {
         app.UseHsts();
@@ -81,6 +89,18 @@ try
     app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
+    app.Use(async (context, next) =>
+    {
+        if (context.User.Identity?.IsAuthenticated == true ||
+            context.Request.Path.StartsWithSegments("/api/v1/me") ||
+            context.Request.Path.StartsWithSegments("/api/v1/admin"))
+        {
+            context.Response.Headers.CacheControl = "private, no-store";
+        }
+
+        await next(context).ConfigureAwait(false);
+    });
+    app.UseOutputCache();
     app.UseMiddleware<AuditMutationMiddleware>();
 
     var backgroundJobsEnabled = builder.Configuration.GetValue("BackgroundJobs:Enabled", true);
@@ -101,6 +121,19 @@ try
             .ConfigureAwait(false);
     }
 
+    if (builder.Configuration.GetValue("DataProtection:PersistKeysToDatabase", false))
+    {
+        await using var keyScope = app.Services.CreateAsyncScope();
+        var keys = keyScope.ServiceProvider.GetRequiredService<DataProtectionKeyDbContext>().DataProtectionKeys;
+        _ = await keys.AnyAsync().ConfigureAwait(false);
+        var protector = app.Services.GetRequiredService<IDataProtectionProvider>().CreateProtector("CulinaryBlog.StartupKeyringCheck");
+        _ = protector.Unprotect(protector.Protect("keyring-ready"));
+        if (!await keys.AnyAsync().ConfigureAwait(false))
+        {
+            throw new InvalidOperationException("Database Data Protection keyring did not persist a key.");
+        }
+    }
+
     app.MapAuthEndpoints();
     app.MapContentEndpoints();
 
@@ -117,6 +150,8 @@ try
 
     if (backgroundJobsEnabled)
     {
+        RecurringJob.AddOrUpdate<RateLimitStateCleanupJob>(
+            "rate-limit-state-cleanup", job => job.RunAsync(CancellationToken.None), Cron.Minutely);
         RecurringJob.AddOrUpdate<ImageReconciliationJob>(
             "media-reconciliation",
             job => job.RunAsync(CancellationToken.None),
@@ -136,12 +171,7 @@ try
     }));
     app.MapGet("/api/v1/release", (IConfiguration configuration) => Results.Ok(new
     {
-        data = new
-        {
-            commitSha = configuration["Release:CommitSha"],
-            apiImageDigest = configuration["Release:ApiImageDigest"],
-            webImageDigest = configuration["Release:WebImageDigest"],
-        },
+        data = ReleaseMetadata.FromConfiguration(configuration),
         meta = new { },
     }));
     app.MapGet("/api/v1/operations/maintenance", (IConfiguration configuration) =>
@@ -192,4 +222,11 @@ finally
     await Log.CloseAndFlushAsync().ConfigureAwait(false);
 }
 
-public partial class Program;
+/// <summary>Represents the program.</summary>
+public partial class Program
+{
+    /// <summary>Initializes a new instance of the <see cref="Program"/> class.</summary>
+    protected Program()
+    {
+    }
+}
