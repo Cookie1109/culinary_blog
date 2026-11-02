@@ -233,6 +233,10 @@ async function setup({ editing = true } = {}) {
     setSearch: (next) => {
       search = new URLSearchParams(next)
     },
+    refetchRecipe: () => client.refetchQueries({ queryKey: ['my-recipe'] }),
+    setRecipe: (next) => {
+      recipe = next
+    },
     setUpdate: (next) => {
       update = next
     },
@@ -487,7 +491,7 @@ test('invalid save-and-leave keeps the editor and describes the error inside the
     await openLeaveDialog()
     await click(button('Lưu và chuyển tiếp'))
     assert.equal(h.navigations.length, 0)
-    assert.match(document.querySelector('[role="dialog"] [role="alert"]').textContent, /ít nhất 5 ký tự/)
+    assert.match(document.querySelector('[role="dialog"] [role="alert"]').textContent, /trường được đánh dấu/)
     assert.equal(document.getElementById('title').value, 'abc')
   } finally {
     await h.close()
@@ -1252,5 +1256,268 @@ test('category create and edit reject invalid names and accept the 50-character 
     } finally {
       await h.close()
     }
+  }
+})
+
+test('recipe header blocks publishing an incomplete draft and basic validation stays beside fields', async () => {
+  const h = await setup()
+  try {
+    const Editor = h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor
+    await h.render(React.createElement(Editor))
+    assert.equal(button('Xuất bản').disabled, true)
+    const input = document.getElementById('title')
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set
+      setter.call(input, 'abc')
+      input.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
+    })
+    await act(async () =>
+      document
+        .querySelector('form')
+        .dispatchEvent(new h.dom.window.Event('submit', { bubbles: true, cancelable: true })),
+    )
+    assert.equal(input.getAttribute('aria-invalid'), 'true')
+    assert.match(document.getElementById(input.getAttribute('aria-describedby')).textContent, /5.*200/)
+    assert.equal(input.value, 'abc')
+  } finally {
+    await h.close()
+  }
+})
+
+test('dirty editor keeps the original version after a background refresh and preserves conflict input', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    let sentVersion
+    h.setUpdate(async (_id, version) => {
+      sentVersion = version
+      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
+    })
+    const Editor = h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor
+    await h.render(React.createElement(Editor))
+    await act(async () => {
+      const input = document.getElementById('title')
+      Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set.call(
+        input,
+        'Ban nhap cuc bo',
+      )
+      input.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
+    })
+    h.setRecipe({ ...fixture, title: 'Ban moi tu phien khac', version: 2 })
+    await act(async () => {
+      await h.refetchRecipe()
+      await new Promise((r) => setTimeout(r, 30))
+    })
+    assert.equal(document.getElementById('title').value, 'Ban nhap cuc bo')
+    await act(async () => {
+      document
+        .querySelector('form')
+        .dispatchEvent(new h.dom.window.Event('submit', { bubbles: true, cancelable: true }))
+      await new Promise((r) => setTimeout(r, 30))
+    })
+    assert.equal(sentVersion, 1)
+    assert.equal(document.getElementById('title').value, 'Ban nhap cuc bo')
+    assert.ok(document.querySelector('[role="dialog"]'))
+  } finally {
+    await h.close()
+  }
+})
+
+test('lifecycle failure stays in confirmation without success and repeated pending clicks send one request', async () => {
+  const h = await setup()
+  try {
+    let calls = 0
+    let reject
+    h.setApi('archiveRecipe', () => {
+      calls++
+      return new Promise((_resolve, fail) => {
+        reject = fail
+      })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await act(async () => button('Lưu trữ').click())
+    await act(async () => {
+      button('Xác nhận').click()
+      await new Promise((r) => setTimeout(r, 20))
+    })
+    const pending = button('Đang xử lý…', document.querySelector('[role="dialog"]'))
+    assert.equal(pending.disabled, true)
+    await act(async () => pending.click())
+    assert.equal(calls, 1)
+    await act(async () => {
+      reject(new Error('Synthetic offline'))
+      await new Promise((r) => setTimeout(r, 30))
+    })
+    assert.match(document.querySelector('[role="dialog"] [role="alert"]').textContent, /Không thể lưu/)
+    assert.equal(document.getElementById('title').value, fixture.title)
+    assert.doesNotMatch(document.body.textContent, /Công thức đã được đưa vào kho lưu trữ/)
+  } finally {
+    await h.close()
+  }
+})
+
+test('ingredient and step forms validate inline without sending invalid composition writes', async () => {
+  const h = await setup()
+  try {
+    const Wizard = h.load(
+      'features/culinary/pages/dashboard/RecipeCompositionWizard.tsx',
+    ).RecipeCompositionWizard
+    const props = {
+      recipe: structuredClone(fixture),
+      version: 1,
+      onChanged: async () => {},
+      activeStage: 'ingredients',
+    }
+    await h.render(React.createElement(Wizard, props))
+    await act(async () => button('Thêm nguyên liệu').click())
+    const name = document.querySelector('[aria-label="Tên nguyên liệu"]')
+    assert.equal(name.getAttribute('aria-invalid'), 'true')
+    assert.match(document.getElementById(name.getAttribute('aria-describedby')).textContent, /1.*100/)
+    await h.render(React.createElement(Wizard, { ...props, activeStage: 'steps' }))
+    await act(async () => button('Thêm bước').click())
+    assert.equal(document.querySelector('[aria-label="Tiêu đề bước"]').getAttribute('aria-invalid'), 'true')
+    assert.equal(document.querySelector('[aria-label="Mô tả bước"]').getAttribute('aria-invalid'), 'true')
+  } finally {
+    await h.close()
+  }
+})
+
+test('server field validation is inline and failed conflict reload retains every local field', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setUpdate(async () => {
+      throw new ApiProblem({
+        status: 400,
+        title: 'Invalid',
+        code: 'VALIDATION_FAILED',
+        errors: { CategoryId: ['Internal validator text'] },
+      })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await act(async () => {
+      const input = document.getElementById('description')
+      Object.getOwnPropertyDescriptor(h.dom.window.HTMLTextAreaElement.prototype, 'value').set.call(
+        input,
+        'Local description',
+      )
+      input.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
+    })
+    async function submit() {
+      await act(async () => {
+        document
+          .querySelector('form')
+          .dispatchEvent(new h.dom.window.Event('submit', { bubbles: true, cancelable: true }))
+        await new Promise((r) => setTimeout(r, 30))
+      })
+    }
+    await submit()
+    assert.equal(document.getElementById('category').getAttribute('aria-invalid'), 'true')
+    assert.match(document.getElementById('category-error').textContent, /danh mục/)
+    assert.doesNotMatch(document.body.textContent, /Internal validator text/)
+    h.setUpdate(async () => {
+      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
+    })
+    await submit()
+    h.setApi('getAdminRecipe', async () => {
+      throw new Error('Synthetic network error')
+    })
+    await act(async () => {
+      button('Tải lại phiên bản mới nhất').click()
+      await new Promise((r) => setTimeout(r, 30))
+    })
+    assert.equal(document.getElementById('description').value, 'Local description')
+    assert.match(
+      document.querySelector('[role="dialog"] [role="alert"]').textContent,
+      /Không thể tải bản mới/,
+    )
+  } finally {
+    await h.close()
+  }
+})
+
+test('recipe forms reject invalid ranges and accept optional zero nutrition and cook time', async () => {
+  const h = await setup()
+  try {
+    const { validateRecipe, validateIngredient, validateStep } = h.load(
+      'features/culinary/pages/dashboard/recipe-form-validation.ts',
+    )
+    const valid = { ...fixture, categoryId: 'cat', cookTime: 0, nutrition: { calories: 0, protein: null } }
+    assert.equal(Object.keys(validateRecipe(valid)).length, 0)
+    const errors = validateRecipe({
+      ...valid,
+      title: 'abc',
+      description: '',
+      instructions: 'x'.repeat(10001),
+      categoryId: '',
+      prepTime: 0,
+      cookTime: -1,
+      servings: 1.5,
+      nutrition: { calories: -1 },
+    })
+    assert.deepEqual(
+      Object.keys(errors).sort(),
+      [
+        'title',
+        'description',
+        'instructions',
+        'categoryId',
+        'prepTime',
+        'cookTime',
+        'servings',
+        'nutrition.calories',
+      ].sort(),
+    )
+    assert.equal(Object.keys(validateIngredient({ name: 'Salt', quantity: null })).length, 0)
+    assert.equal(
+      Object.keys(validateIngredient({ name: '', quantity: 0, unit: 'x'.repeat(51), notes: 'x'.repeat(501) }))
+        .length,
+      4,
+    )
+    assert.equal(Object.keys(validateStep({ title: '', description: '', timerMinutes: -1 })).length, 3)
+  } finally {
+    await h.close()
+  }
+})
+
+test('dirty composition also keeps the original version when recipe data refreshes', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('step=ingredients')
+    let sentVersion
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setApi('createIngredient', async (_id, version) => {
+      sentVersion = version
+      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await act(async () => {
+      const input = document.querySelector('[aria-label="Tên nguyên liệu"]')
+      Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set.call(
+        input,
+        'Local ingredient',
+      )
+      input.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
+    })
+    h.setRecipe({ ...fixture, version: 2 })
+    await act(async () => {
+      await h.refetchRecipe()
+      await new Promise((r) => setTimeout(r, 30))
+    })
+    await act(async () => {
+      button('Thêm nguyên liệu').click()
+      await new Promise((r) => setTimeout(r, 30))
+    })
+    assert.equal(sentVersion, 1)
+    assert.equal(document.querySelector('[aria-label="Tên nguyên liệu"]').value, 'Local ingredient')
+    assert.match(document.body.textContent, /Công thức đã thay đổi ở phiên khác/)
+  } finally {
+    await h.close()
   }
 })

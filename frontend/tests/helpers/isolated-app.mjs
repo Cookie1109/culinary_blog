@@ -222,6 +222,7 @@ export async function withIsolatedApp({ media = false }, exercise) {
     })
     await new Promise((resolve) => gateway.listen(0, '127.0.0.1', resolve))
     const baseURL = `http://127.0.0.1:${gateway.address().port}`
+    const revalidationSecret = randomBytes(32).toString('hex')
     const apiCopy = path.join(artifacts, 'api')
     await cp(path.join(root, 'backend/src/CulinaryBlog.Api/bin/Release/net10.0'), apiCopy, {
       recursive: true,
@@ -249,6 +250,8 @@ export async function withIsolatedApp({ media = false }, exercise) {
       Seq__ServerUrl: '',
       Telemetry__OtlpEndpoint: '',
       Sitemap__PublicBaseUrl: baseURL,
+      Sitemap__RevalidationEndpoint: `${web}/api/revalidate`,
+      Sitemap__RevalidationSecret: revalidationSecret,
     })
     await ready('API', async () => (await fetch(`${api}/health/ready`)).ok)
     const standalone = path.join(artifacts, 'standalone')
@@ -270,6 +273,7 @@ export async function withIsolatedApp({ media = false }, exercise) {
       NEXTAUTH_URL: baseURL,
       AUTH_TRUST_HOST: 'true',
       AUTH_SECRET: randomBytes(32).toString('hex'),
+      REVALIDATION_SECRET: revalidationSecret,
       AUTH_GOOGLE_ID: '',
       AUTH_GOOGLE_SECRET: '',
     })

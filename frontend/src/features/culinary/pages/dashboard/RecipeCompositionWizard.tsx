@@ -38,6 +38,14 @@ import {
   type StepWrite,
 } from '@/lib/api/content-client'
 import { Modal } from '@/components/ui/modal'
+import { FieldError } from '@/components/ui/field-error'
+import {
+  recipeErrorMessage,
+  recipeFieldErrors,
+  validateIngredient,
+  validateStep,
+  type FieldErrors,
+} from './recipe-form-validation'
 import { ApiProblem } from '@/lib/api/problem-details'
 import { computeRecipeValidation, type Stage, type WizardAllSteps } from './recipe-validation'
 
@@ -52,12 +60,6 @@ interface Props {
   onStageChange?: (stage: Stage) => void
   onNavigateToStep?: (step: WizardAllSteps) => void
   onDirtyChange?: (dirty: boolean) => void
-}
-
-function errorMessage(error: unknown) {
-  return error instanceof ApiProblem
-    ? (error.problem.detail ?? error.problem.title)
-    : 'Không thể lưu thay đổi.'
 }
 
 function imageErrorMessage(error: unknown) {
@@ -160,6 +162,8 @@ export function RecipeCompositionWizard({
   const [imageAlt, setImageAlt] = useState('')
   const [imagePrimary, setImagePrimary] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [ingredientErrors, setIngredientErrors] = useState<FieldErrors>({})
+  const [stepErrors, setStepErrors] = useState<FieldErrors>({})
   const [clientError, setClientError] = useState<string | null>(null)
 
   const originalIngredient = recipe.ingredients.find((item) => item.id === editingIngredient)
@@ -201,9 +205,11 @@ export function RecipeCompositionWizard({
         : createIngredient(recipe.id, version, { ...ingredientForm, orderIndex: recipe.ingredients.length }),
     onSuccess: async (result) => {
       setIngredientForm(EMPTY_INGREDIENT)
+      setIngredientErrors({})
       setEditingIngredient(null)
       await onChanged(result.meta.recipeVersion)
     },
+    onError: (error) => setIngredientErrors(recipeFieldErrors(error)),
   })
 
   const stepMutation = useMutation({
@@ -213,9 +219,18 @@ export function RecipeCompositionWizard({
         : createStep(recipe.id, version, stepForm),
     onSuccess: async (result) => {
       setStepForm(EMPTY_STEP)
+      setStepErrors({})
       setEditingStep(null)
       await onChanged(result.meta.recipeVersion)
     },
+    onError: (error) =>
+      setStepErrors(
+        recipeFieldErrors(error, {
+          title: 'Tiêu đề bước cần từ 1 đến 200 ký tự.',
+          description: 'Mô tả bước cần từ 1 đến 2000 ký tự.',
+          timerMinutes: 'Hẹn giờ phải là số nguyên không âm hoặc để trống.',
+        }),
+      ),
   })
 
   const imageMutation = useMutation({
@@ -241,11 +256,10 @@ export function RecipeCompositionWizard({
       await onChanged(updated.version)
     },
     onError: (error) => {
-      setConfirmModal(null)
       if (error instanceof ApiProblem && error.problem.code === 'RECIPE_PUBLISH_INCOMPLETE') {
         setClientError('Công thức cần ít nhất 1 nguyên liệu và 1 bước thực hiện để xuất bản.')
       } else {
-        setClientError(errorMessage(error))
+        setClientError(recipeErrorMessage(error))
       }
     },
   })
@@ -258,8 +272,7 @@ export function RecipeCompositionWizard({
       await onChanged(updated.version)
     },
     onError: (error) => {
-      setConfirmModal(null)
-      setClientError(errorMessage(error))
+      setClientError(recipeErrorMessage(error))
     },
   })
 
@@ -269,7 +282,7 @@ export function RecipeCompositionWizard({
       const nextVersion = await action()
       await onChanged(nextVersion ?? version + 1)
     } catch (error) {
-      setClientError(errorMessage(error))
+      setClientError(recipeErrorMessage(error))
     }
   }
 
@@ -293,17 +306,20 @@ export function RecipeCompositionWizard({
 
   const submitIngredient = (event: FormEvent) => {
     event.preventDefault()
-    if (!ingredientForm.name.trim() || ingredientForm.name.trim().length > 100)
-      return setClientError('Tên nguyên liệu cần từ 1 đến 100 ký tự.')
+    if (ingredientMutation.isPending) return
+    const errors = validateIngredient(ingredientForm)
+    setIngredientErrors(errors)
+    if (Object.keys(errors).length > 0) return
     setClientError(null)
     ingredientMutation.mutate()
   }
 
   const submitStep = (event: FormEvent) => {
     event.preventDefault()
-    if (!stepForm.title.trim() || !stepForm.description.trim()) {
-      return setClientError('Tiêu đề và mô tả bước là bắt buộc.')
-    }
+    if (stepMutation.isPending) return
+    const errors = validateStep(stepForm)
+    setStepErrors(errors)
+    if (Object.keys(errors).length > 0) return
     setClientError(null)
     stepMutation.mutate()
   }
@@ -381,7 +397,7 @@ export function RecipeCompositionWizard({
         <p role="alert" className="mt-5 border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {imageMutation.isError
             ? imageErrorMessage(imageMutation.error)
-            : errorMessage(ingredientMutation.error ?? stepMutation.error)}
+            : recipeErrorMessage(ingredientMutation.error ?? stepMutation.error)}
         </p>
       )}
 
@@ -389,75 +405,97 @@ export function RecipeCompositionWizard({
       {stage === 'ingredients' && (
         <div className="mt-6 space-y-6">
           <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-            <form onSubmit={submitIngredient} className="space-y-3 border border-border p-4 bg-background">
-              <h3 className="font-medium text-foreground">
-                {editingIngredient ? 'Sửa nguyên liệu' : 'Thêm nguyên liệu mới'}
-              </h3>
-              <input
-                aria-label="Tên nguyên liệu"
-                placeholder="Tên nguyên liệu (bắt buộc)"
-                maxLength={100}
-                className={inputClass}
-                value={ingredientForm.name}
-                onChange={(event) => setIngredientForm({ ...ingredientForm, name: event.target.value })}
-              />
-              <div className="grid grid-cols-2 gap-3">
+            <form
+              noValidate
+              onSubmit={submitIngredient}
+              className="space-y-3 border border-border p-4 bg-background"
+            >
+              <fieldset disabled={ingredientMutation.isPending} className="min-w-0 space-y-3">
+                <h3 className="font-medium text-foreground">
+                  {editingIngredient ? 'Sửa nguyên liệu' : 'Thêm nguyên liệu mới'}
+                </h3>
                 <input
-                  aria-label="Số lượng"
-                  placeholder="Số lượng (vừa đủ nếu trống)"
-                  type="number"
-                  min="0.001"
-                  step="0.001"
+                  aria-label="Tên nguyên liệu"
+                  aria-invalid={Boolean(ingredientErrors.name)}
+                  aria-describedby={ingredientErrors.name ? 'ingredient-name-error' : undefined}
+                  placeholder="Tên nguyên liệu (bắt buộc)"
+                  maxLength={100}
                   className={inputClass}
-                  value={ingredientForm.quantity ?? ''}
+                  value={ingredientForm.name}
+                  onChange={(event) => setIngredientForm({ ...ingredientForm, name: event.target.value })}
+                />
+                <FieldError id="ingredient-name-error" message={ingredientErrors.name} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <input
+                      aria-label="Số lượng"
+                      aria-invalid={Boolean(ingredientErrors.quantity)}
+                      aria-describedby={ingredientErrors.quantity ? 'ingredient-quantity-error' : undefined}
+                      placeholder="Số lượng (vừa đủ nếu trống)"
+                      type="number"
+                      min="0.001"
+                      step="0.001"
+                      className={inputClass}
+                      value={ingredientForm.quantity ?? ''}
+                      onChange={(event) =>
+                        setIngredientForm({
+                          ...ingredientForm,
+                          quantity: event.target.value ? Number(event.target.value) : null,
+                        })
+                      }
+                    />
+                    <FieldError id="ingredient-quantity-error" message={ingredientErrors.quantity} />
+                  </div>
+                  <div>
+                    <input
+                      aria-label="Đơn vị"
+                      aria-invalid={Boolean(ingredientErrors.unit)}
+                      aria-describedby={ingredientErrors.unit ? 'ingredient-unit-error' : undefined}
+                      placeholder="Đơn vị (g, ml, muỗng…)"
+                      maxLength={50}
+                      className={inputClass}
+                      value={ingredientForm.unit ?? ''}
+                      onChange={(event) =>
+                        setIngredientForm({ ...ingredientForm, unit: event.target.value || null })
+                      }
+                    />
+                    <FieldError id="ingredient-unit-error" message={ingredientErrors.unit} />
+                  </div>
+                </div>
+                <input
+                  aria-label="Ghi chú nguyên liệu"
+                  aria-invalid={Boolean(ingredientErrors.notes)}
+                  aria-describedby={ingredientErrors.notes ? 'ingredient-notes-error' : undefined}
+                  placeholder="Ghi chú (tùy chọn)"
+                  maxLength={500}
+                  className={inputClass}
+                  value={ingredientForm.notes ?? ''}
                   onChange={(event) =>
-                    setIngredientForm({
-                      ...ingredientForm,
-                      quantity: event.target.value ? Number(event.target.value) : null,
-                    })
+                    setIngredientForm({ ...ingredientForm, notes: event.target.value || null })
                   }
                 />
-                <input
-                  aria-label="Đơn vị"
-                  placeholder="Đơn vị (g, ml, muỗng…)"
-                  maxLength={50}
-                  className={inputClass}
-                  value={ingredientForm.unit ?? ''}
-                  onChange={(event) =>
-                    setIngredientForm({ ...ingredientForm, unit: event.target.value || null })
-                  }
-                />
-              </div>
-              <input
-                aria-label="Ghi chú nguyên liệu"
-                placeholder="Ghi chú (tùy chọn)"
-                maxLength={500}
-                className={inputClass}
-                value={ingredientForm.notes ?? ''}
-                onChange={(event) =>
-                  setIngredientForm({ ...ingredientForm, notes: event.target.value || null })
-                }
-              />
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  disabled={ingredientMutation.isPending}
-                  className="flex items-center gap-2 bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  <Plus size={14} /> {editingIngredient ? 'Lưu nguyên liệu' : 'Thêm nguyên liệu'}
-                </button>
-                {editingIngredient && (
+                <FieldError id="ingredient-notes-error" message={ingredientErrors.notes} />
+                <div className="flex items-center gap-2 pt-1">
                   <button
-                    type="button"
-                    onClick={() => {
-                      setEditingIngredient(null)
-                      setIngredientForm(EMPTY_INGREDIENT)
-                    }}
-                    className="border border-border px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
+                    disabled={ingredientMutation.isPending}
+                    className="flex items-center gap-2 bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                   >
-                    Hủy sửa
+                    <Plus size={14} /> {editingIngredient ? 'Lưu nguyên liệu' : 'Thêm nguyên liệu'}
                   </button>
-                )}
-              </div>
+                  {editingIngredient && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingIngredient(null)
+                        setIngredientForm(EMPTY_INGREDIENT)
+                      }}
+                      className="border border-border px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
+                    >
+                      Hủy sửa
+                    </button>
+                  )}
+                </div>
+              </fieldset>
             </form>
 
             <div className="space-y-2">
@@ -555,61 +593,76 @@ export function RecipeCompositionWizard({
       {stage === 'steps' && (
         <div className="mt-6 space-y-6">
           <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-            <form onSubmit={submitStep} className="space-y-3 border border-border p-4 bg-background">
-              <h3 className="font-medium text-foreground">
-                {editingStep ? 'Sửa bước thực hiện' : 'Thêm bước mới'}
-              </h3>
-              <input
-                aria-label="Tiêu đề bước"
-                placeholder="Tiêu đề bước (bắt buộc, ví dụ: Sơ chế rau củ)"
-                maxLength={200}
-                className={inputClass}
-                value={stepForm.title}
-                onChange={(event) => setStepForm({ ...stepForm, title: event.target.value })}
-              />
-              <textarea
-                aria-label="Mô tả bước"
-                placeholder="Mô tả chi tiết cách thực hiện…"
-                maxLength={2000}
-                rows={4}
-                className={inputClass}
-                value={stepForm.description}
-                onChange={(event) => setStepForm({ ...stepForm, description: event.target.value })}
-              />
-              <input
-                aria-label="Hẹn giờ phút"
-                placeholder="Hẹn giờ nấu (phút, tùy chọn)"
-                type="number"
-                min="0"
-                className={inputClass}
-                value={stepForm.timerMinutes ?? ''}
-                onChange={(event) =>
-                  setStepForm({
-                    ...stepForm,
-                    timerMinutes: event.target.value ? Number(event.target.value) : null,
-                  })
-                }
-              />
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  disabled={stepMutation.isPending}
-                  className="flex items-center gap-2 bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  <Save size={14} /> {editingStep ? 'Lưu bước' : 'Thêm bước'}
-                </button>
-                {editingStep && (
+            <form
+              noValidate
+              onSubmit={submitStep}
+              className="space-y-3 border border-border p-4 bg-background"
+            >
+              <fieldset disabled={stepMutation.isPending} className="min-w-0 space-y-3">
+                <h3 className="font-medium text-foreground">
+                  {editingStep ? 'Sửa bước thực hiện' : 'Thêm bước mới'}
+                </h3>
+                <input
+                  aria-label="Tiêu đề bước"
+                  aria-invalid={Boolean(stepErrors.title)}
+                  aria-describedby={stepErrors.title ? 'step-title-error' : undefined}
+                  placeholder="Tiêu đề bước (bắt buộc, ví dụ: Sơ chế rau củ)"
+                  maxLength={200}
+                  className={inputClass}
+                  value={stepForm.title}
+                  onChange={(event) => setStepForm({ ...stepForm, title: event.target.value })}
+                />
+                <FieldError id="step-title-error" message={stepErrors.title} />
+                <textarea
+                  aria-label="Mô tả bước"
+                  aria-invalid={Boolean(stepErrors.description)}
+                  aria-describedby={stepErrors.description ? 'step-description-error' : undefined}
+                  placeholder="Mô tả chi tiết cách thực hiện…"
+                  maxLength={2000}
+                  rows={4}
+                  className={inputClass}
+                  value={stepForm.description}
+                  onChange={(event) => setStepForm({ ...stepForm, description: event.target.value })}
+                />
+                <FieldError id="step-description-error" message={stepErrors.description} />
+                <input
+                  aria-label="Hẹn giờ phút"
+                  aria-invalid={Boolean(stepErrors.timerMinutes)}
+                  aria-describedby={stepErrors.timerMinutes ? 'step-timerMinutes-error' : undefined}
+                  placeholder="Hẹn giờ nấu (phút, tùy chọn)"
+                  type="number"
+                  min="0"
+                  className={inputClass}
+                  value={stepForm.timerMinutes ?? ''}
+                  onChange={(event) =>
+                    setStepForm({
+                      ...stepForm,
+                      timerMinutes: event.target.value ? Number(event.target.value) : null,
+                    })
+                  }
+                />
+                <FieldError id="step-timerMinutes-error" message={stepErrors.timerMinutes} />
+                <div className="flex items-center gap-2 pt-1">
                   <button
-                    type="button"
-                    onClick={() => {
-                      setEditingStep(null)
-                      setStepForm(EMPTY_STEP)
-                    }}
-                    className="border border-border px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
+                    disabled={stepMutation.isPending}
+                    className="flex items-center gap-2 bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                   >
-                    Hủy sửa
+                    <Save size={14} /> {editingStep ? 'Lưu bước' : 'Thêm bước'}
                   </button>
-                )}
-              </div>
+                  {editingStep && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingStep(null)
+                        setStepForm(EMPTY_STEP)
+                      }}
+                      className="border border-border px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
+                    >
+                      Hủy sửa
+                    </button>
+                  )}
+                </div>
+              </fieldset>
             </form>
 
             <ol className="space-y-3">
@@ -1012,6 +1065,11 @@ export function RecipeCompositionWizard({
           busy={publishMutation.isPending || unpublishMutation.isPending}
         >
           <div className="space-y-4">
+            {clientError && (
+              <p role="alert" className="text-sm text-red-700">
+                {clientError}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground leading-relaxed">
               {confirmModal === 'publish' ? (
                 <>
