@@ -9,6 +9,7 @@ import {
   Activity,
   ExternalLink,
   Shield,
+  Users,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -45,6 +46,7 @@ export function DashboardLayout() {
             items: [
               { to: '/dashboard/system', label: 'Tổng quan hệ thống', icon: Shield, end: true },
               { to: '/dashboard/categories', label: 'Quản lý danh mục', icon: Tag, end: true },
+              { to: '/dashboard/users', label: 'Danh sách người dùng', icon: Users, end: true },
             ],
           },
         ]

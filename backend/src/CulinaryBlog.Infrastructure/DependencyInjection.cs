@@ -4,6 +4,7 @@ using CulinaryBlog.Application.Audit;
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Media;
+using CulinaryBlog.Application.Users;
 using CulinaryBlog.Infrastructure.Audit;
 using CulinaryBlog.Infrastructure.Caching;
 using CulinaryBlog.Infrastructure.Configuration;
@@ -105,6 +106,7 @@ public static class DependencyInjection
         services.AddScoped<IContentService>(provider => provider.GetRequiredService<ContentService>());
         services.AddScoped<IRecipeSearchRepository>(provider => provider.GetRequiredService<ContentService>());
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IAdminUserDirectory, AdminUserDirectory>();
         services.AddSingleton<IFileStorageService, MinioFileStorageService>();
         services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
         services.AddScoped<IAuthorizationHandler, RecipeAuthorizationHandler>();

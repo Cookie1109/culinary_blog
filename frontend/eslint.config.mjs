@@ -7,7 +7,13 @@ import tseslint from 'typescript-eslint'
 
 const eslintConfiguration = tseslint.config(
   {
-    ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts', 'src/lib/api/schema.d.ts'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'next-env.d.ts',
+      'src/lib/api/schema.d.ts',
+      'src/lib/api/admin-users-schema.d.ts',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

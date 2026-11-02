@@ -103,6 +103,7 @@ try
 
     app.MapAuthEndpoints();
     app.MapContentEndpoints();
+    app.MapAdminUsersEndpoints();
 
     if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
     {
