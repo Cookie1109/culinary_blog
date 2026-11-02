@@ -64,6 +64,6 @@ test('public recipe imagery uses next/image with responsive sizes and placeholde
   }
 
   const mediaProxy = await source('src/app/api/public-media/[imageId]/[variant]/route.ts')
-  assert.match(mediaProxy, /revalidate: 300, tags: \[PUBLIC_CONTENT_TAG\]/)
-  assert.match(mediaProxy, /'Cache-Control': 'public, max-age=300'/)
+  assert.match(mediaProxy, /cache: 'no-store'/)
+  assert.match(mediaProxy, /'Cache-Control': 'no-store'/)
 })

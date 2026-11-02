@@ -253,6 +253,72 @@ function button(label, container = document) {
   return result
 }
 
+test('AVIF upload preserves the selected file and alt text after storage failure, then retries successfully', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    let fail = true
+    h.setApi('uploadRecipeImage', async (...args) => {
+      h.requests.push(['upload', ...args])
+      if (fail)
+        throw new ApiProblem({
+          title: 'Upload failed',
+          detail: 'private-storage-address',
+          status: 503,
+          code: 'FILE_UPLOAD_FAILED',
+        })
+      return { data: {}, meta: { recipeVersion: 2 } }
+    })
+    const changed = []
+    await h.render(
+      React.createElement(
+        h.load('features/culinary/pages/dashboard/RecipeCompositionWizard.tsx').RecipeCompositionWizard,
+        {
+          recipe: structuredClone(fixture),
+          version: 1,
+          activeStage: 'images',
+          onChanged: async (version) => {
+            changed.push(version)
+          },
+        },
+      ),
+    )
+    const input = document.getElementById('recipe-image')
+    assert.match(input.accept, /image\/avif/)
+    const file = new h.dom.window.File(['synthetic-avif'], 'dish.avif', { type: 'image/avif' })
+    Object.defineProperty(input, 'files', { configurable: true, value: [file] })
+    await act(async () => input.dispatchEvent(new window.Event('change', { bubbles: true })))
+    await act(async () => {
+      const alt = document.querySelector('[aria-label="Mô tả ảnh"]')
+      Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set.call(
+        alt,
+        'Ảnh món ăn',
+      )
+      alt.dispatchEvent(new window.Event('input', { bubbles: true }))
+    })
+    async function submit() {
+      await act(async () => {
+        input.closest('form').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }))
+        await new Promise((resolve) => setTimeout(resolve, 30))
+      })
+    }
+    await submit()
+    assert.equal(h.requests.length, 1)
+    assert.equal(h.requests[0][3], file)
+    assert.equal(document.querySelector('[aria-label="Mô tả ảnh"]').value, 'Ảnh món ăn')
+    assert.match(document.querySelector('[role="alert"]').textContent, /Không thể tải ảnh/)
+    assert.doesNotMatch(document.body.textContent, /private-storage-address/)
+    fail = false
+    await submit()
+    assert.equal(h.requests.length, 2)
+    assert.equal(h.requests[1][3], file)
+    assert.deepEqual(changed, [2])
+    assert.equal(document.querySelector('[aria-label="Mô tả ảnh"]').value, '')
+  } finally {
+    await h.close()
+  }
+})
+
 test('password change rejects weak or mismatched passwords and preserves the form on server rejection', async () => {
   const h = await setup()
   try {

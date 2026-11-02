@@ -127,7 +127,7 @@ internal static class ContentEndpoints
 
         endpoints.MapGet("/api/v1/media/{imageId:guid}/{variant}", OpenMediaAsync).AllowAnonymous()
             .WithTags("Images").WithSummary("Read an original, medium or thumbnail image")
-            .WithDescription("Published recipe images are public; private images require an owner or Admin JWT.")
+            .WithDescription("Published recipe images are public; private images require an owner or Admin JWT. Responses use no-store so each request checks current visibility.")
             .Produces(StatusCodes.Status200OK, contentType: "application/octet-stream");
 
         var mine = endpoints.MapGroup("/api/v1/me/recipes").RequireAuthorization("AuthorPolicy").WithTags("MyRecipes");
@@ -702,7 +702,7 @@ internal static class ContentEndpoints
     {
         var file = await contentService.OpenMediaAsync(
             imageId, variant, GetOptionalUserId(principal), principal.IsInRole("Admin"), cancellationToken).ConfigureAwait(false);
-        httpContext.Response.Headers.CacheControl = principal.Identity?.IsAuthenticated == true ? "private, no-store" : "public, max-age=300";
+        httpContext.Response.Headers.CacheControl = "private, no-store";
         return Results.Stream(file.Content, file.ContentType, enableRangeProcessing: true);
     }
 

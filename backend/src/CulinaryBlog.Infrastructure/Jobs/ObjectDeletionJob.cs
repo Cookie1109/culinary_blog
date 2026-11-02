@@ -13,12 +13,25 @@ public sealed class ObjectDeletionJob(IFileStorageService fileStorage, ILogger<O
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = [60, 300, 1800])]
     public async Task DeleteAsync(Guid outboxId, string[] objectKeys, CancellationToken cancellationToken)
     {
-        foreach (var objectKey in objectKeys.Where(key => !string.IsNullOrWhiteSpace(key)).Distinct(StringComparer.Ordinal))
+        var keys = objectKeys.Where(key => !string.IsNullOrWhiteSpace(key)).SelectMany(IncludeVariants).Distinct(StringComparer.Ordinal).ToArray();
+        foreach (var objectKey in keys)
         {
             await fileStorage.DeleteAsync(objectKey, cancellationToken).ConfigureAwait(false);
         }
 
         MediaJobMetrics.Completed.Add(1, new KeyValuePair<string, object?>("job.type", "objects.delete"));
-        DeletionCompleted(logger, outboxId, objectKeys.Length, null);
+        DeletionCompleted(logger, outboxId, keys.Length, null);
+    }
+
+    private static IEnumerable<string> IncludeVariants(string objectKey)
+    {
+        yield return objectKey;
+        var separator = objectKey.LastIndexOf('/');
+        if (separator >= 0 && objectKey[(separator + 1)..].StartsWith("original.", StringComparison.Ordinal))
+        {
+            var prefix = objectKey[..(separator + 1)];
+            yield return prefix + "medium.webp";
+            yield return prefix + "thumbnail.webp";
+        }
     }
 }

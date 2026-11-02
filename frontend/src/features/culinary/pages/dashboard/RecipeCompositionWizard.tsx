@@ -60,6 +60,19 @@ function errorMessage(error: unknown) {
     : 'Không thể lưu thay đổi.'
 }
 
+function imageErrorMessage(error: unknown) {
+  const messages: Record<string, string> = {
+    FILE_SIZE_EXCEEDED: 'Ảnh phải có dung lượng từ 1 byte đến 5 MB.',
+    FILE_MIME_INVALID: 'Chỉ chấp nhận JPEG, PNG, WebP hoặc AVIF.',
+    FILE_SIGNATURE_INVALID: 'Nội dung ảnh không hợp lệ hoặc không khớp định dạng đã chọn.',
+    RECIPE_CONCURRENCY_CONFLICT: 'Công thức đã thay đổi. Hãy tải lại bản mới trước khi tải ảnh.',
+  }
+  return (
+    (error instanceof ApiProblem && messages[error.problem.code]) ||
+    'Không thể tải ảnh. Hãy kiểm tra kết nối và thử lại.'
+  )
+}
+
 function PrivateImage({ image }: { image: RecipeImage }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [shouldLoad, setShouldLoad] = useState(false)
@@ -143,6 +156,7 @@ export function RecipeCompositionWizard({
   const [stepForm, setStepForm] = useState<StepWrite>(EMPTY_STEP)
   const [editingStep, setEditingStep] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const [imageAlt, setImageAlt] = useState('')
   const [imagePrimary, setImagePrimary] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -214,6 +228,7 @@ export function RecipeCompositionWizard({
       setImageAlt('')
       setImagePrimary(false)
       setUploadProgress(0)
+      if (imageInputRef.current) imageInputRef.current.value = ''
       await onChanged(result.meta.recipeVersion)
     },
   })
@@ -296,9 +311,10 @@ export function RecipeCompositionWizard({
   const submitImage = (event: FormEvent) => {
     event.preventDefault()
     if (!imageFile) return setClientError('Vui lòng chọn ảnh.')
-    if (imageFile.size > 5 * 1024 * 1024) return setClientError('Ảnh không được vượt quá 5 MB.')
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(imageFile.type)) {
-      return setClientError('Chỉ chấp nhận JPEG, PNG hoặc WebP.')
+    if (imageFile.size === 0 || imageFile.size > 5 * 1024 * 1024)
+      return setClientError('Ảnh phải có dung lượng từ 1 byte đến 5 MB.')
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(imageFile.type)) {
+      return setClientError('Chỉ chấp nhận JPEG, PNG, WebP hoặc AVIF.')
     }
     setClientError(null)
     imageMutation.mutate()
@@ -363,7 +379,9 @@ export function RecipeCompositionWizard({
       )}
       {(ingredientMutation.isError || stepMutation.isError || imageMutation.isError) && (
         <p role="alert" className="mt-5 border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {errorMessage(ingredientMutation.error ?? stepMutation.error ?? imageMutation.error)}
+          {imageMutation.isError
+            ? imageErrorMessage(imageMutation.error)
+            : errorMessage(ingredientMutation.error ?? stepMutation.error)}
         </p>
       )}
 
@@ -695,17 +713,20 @@ export function RecipeCompositionWizard({
             className="space-y-3 border border-dashed border-border p-5 bg-background"
           >
             <label className="flex items-center gap-2 text-sm font-medium" htmlFor="recipe-image">
-              <ImagePlus size={17} /> Tải lên hình ảnh (JPEG, PNG hoặc WebP, tối đa 5 MB)
+              <ImagePlus size={17} /> Tải lên hình ảnh (JPEG, PNG, WebP hoặc AVIF, tối đa 5 MB)
             </label>
             <input
               id="recipe-image"
+              ref={imageInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              disabled={imageMutation.isPending}
               onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
               className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:border-0 file:text-xs file:uppercase file:tracking-wider file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
             />
             <input
               aria-label="Mô tả ảnh"
+              disabled={imageMutation.isPending}
               placeholder="Alt text mô tả ảnh (khuyến nghị cho SEO và trợ năng)"
               maxLength={200}
               className={inputClass}
@@ -716,12 +737,13 @@ export function RecipeCompositionWizard({
               <input
                 type="checkbox"
                 checked={imagePrimary}
+                disabled={imageMutation.isPending}
                 onChange={(event) => setImagePrimary(event.target.checked)}
               />{' '}
               Đặt làm ảnh đại diện chính của công thức
             </label>
             {imageMutation.isPending && (
-              <progress className="w-full h-2" max={100} value={uploadProgress}>
+              <progress aria-label="Tiến độ tải ảnh" className="w-full h-2" max={100} value={uploadProgress}>
                 {uploadProgress}%
               </progress>
             )}

@@ -1,5 +1,6 @@
 using CulinaryBlog.Application.Media;
 using CulinaryBlog.Domain.Recipes;
+using CulinaryBlog.Infrastructure.Media;
 using CulinaryBlog.Infrastructure.Persistence;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -35,14 +36,24 @@ public sealed class ImageProcessingJob(
         try
         {
             await using var original = await fileStorage.OpenReadAsync(imageRecord.ObjectKey, cancellationToken).ConfigureAwait(false);
-            using var decoded = SKBitmap.Decode(original)
+            using var decoded = imageRecord.ContentType == "image/avif" ? AvifImage.Decode(original) : SKBitmap.Decode(original)
                 ?? throw new InvalidDataException("The original image cannot be decoded.");
             var prefix = $"recipes/{imageRecord.RecipeId:N}/{imageRecord.Id:N}";
             var mediumKey = $"{prefix}/medium.webp";
             var thumbnailKey = $"{prefix}/thumbnail.webp";
 
-            await UploadVariantAsync(decoded, mediumKey, 1200, 900, cancellationToken).ConfigureAwait(false);
-            await UploadVariantAsync(decoded, thumbnailKey, 480, 480, cancellationToken).ConfigureAwait(false);
+            await UploadVariantAsync(decoded, mediumKey, 800, 600, cancellationToken).ConfigureAwait(false);
+            await UploadVariantAsync(decoded, thumbnailKey, 300, 300, cancellationToken).ConfigureAwait(false);
+
+            // Deletion may finish while binary uploads are in flight.
+            await dbContext.Entry(imageRecord).ReloadAsync(cancellationToken).ConfigureAwait(false);
+            if (imageRecord.IsDeleted || await dbContext.Recipes.IgnoreQueryFilters().AnyAsync(
+                    recipe => recipe.Id == imageRecord.RecipeId && recipe.IsDeleted, cancellationToken).ConfigureAwait(false))
+            {
+                await fileStorage.DeleteAsync(mediumKey, cancellationToken).ConfigureAwait(false);
+                await fileStorage.DeleteAsync(thumbnailKey, cancellationToken).ConfigureAwait(false);
+                return;
+            }
 
             imageRecord.MarkReady(mediumKey, thumbnailKey);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -66,14 +77,16 @@ public sealed class ImageProcessingJob(
         int height,
         CancellationToken cancellationToken)
     {
-        var scale = Math.Min(width / (double)source.Width, height / (double)source.Height);
-        scale = Math.Min(scale, 1d);
-        var targetWidth = Math.Max(1, (int)Math.Round(source.Width * scale));
-        var targetHeight = Math.Max(1, (int)Math.Round(source.Height * scale));
-        using var variant = source.Resize(
-            new SKImageInfo(targetWidth, targetHeight),
-            new SKSamplingOptions(SKCubicResampler.Mitchell))
-            ?? throw new InvalidDataException("The image variant cannot be resized.");
+        using var variant = new SKBitmap(width, height);
+        using (var canvas = new SKCanvas(variant))
+        {
+            canvas.Clear(SKColors.White);
+            var scale = Math.Min(width / (float)source.Width, height / (float)source.Height);
+            var targetWidth = source.Width * scale;
+            var targetHeight = source.Height * scale;
+            canvas.DrawBitmap(source, SKRect.Create((width - targetWidth) / 2, (height - targetHeight) / 2, targetWidth, targetHeight),
+                new SKSamplingOptions(SKCubicResampler.Mitchell));
+        }
         using var variantImage = SKImage.FromBitmap(variant);
         using var encoded = variantImage.Encode(SKEncodedImageFormat.Webp, 90);
         await using var output = new MemoryStream();

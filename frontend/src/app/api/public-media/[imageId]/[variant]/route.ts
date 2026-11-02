@@ -1,4 +1,4 @@
-import { PUBLIC_CONTENT_TAG } from '@/lib/api/public-content-server'
+export const dynamic = 'force-dynamic'
 
 const allowedVariants = new Set(['original', 'medium', 'thumbnail'])
 
@@ -13,7 +13,7 @@ export async function GET(
   const response = await fetch(
     `${apiBaseUrl}/media/${encodeURIComponent(imageId)}/${encodeURIComponent(variant)}`,
     {
-      next: { revalidate: 300, tags: [PUBLIC_CONTENT_TAG] },
+      cache: 'no-store',
     },
   )
 
@@ -21,7 +21,7 @@ export async function GET(
 
   return new Response(response.body, {
     headers: {
-      'Cache-Control': 'public, max-age=300',
+      'Cache-Control': 'no-store',
       'Content-Type': response.headers.get('content-type') ?? 'application/octet-stream',
     },
   })

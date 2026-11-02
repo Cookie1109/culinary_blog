@@ -2,6 +2,7 @@ using System.Text.Json;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Recipes;
 using CulinaryBlog.Infrastructure.Jobs;
+using CulinaryBlog.Infrastructure.Media;
 using Microsoft.EntityFrameworkCore;
 using SkiaSharp;
 
@@ -17,6 +18,7 @@ internal sealed partial class ContentService
             ["image/jpeg"] = ".jpg",
             ["image/png"] = ".png",
             ["image/webp"] = ".webp",
+            ["image/avif"] = ".avif",
         };
 
     public async Task<ChildMutationDto<IngredientDto>> CreateIngredientAsync(
@@ -363,7 +365,7 @@ internal sealed partial class ContentService
 
         if (!ImageExtensions.ContainsKey(contentType))
         {
-            throw new ContentProblemException("FILE_MIME_INVALID", "Only JPEG, PNG and WebP images are accepted.", ContentProblemKind.BadRequest);
+            throw new ContentProblemException("FILE_MIME_INVALID", "Only JPEG, PNG, WebP and AVIF images are accepted.", ContentProblemKind.BadRequest);
         }
 
         var recipe = await FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
@@ -675,6 +677,11 @@ internal sealed partial class ContentService
         {
             using var input = File.OpenRead(path);
             cancellationToken.ThrowIfCancellationRequested();
+            if (AvifImage.HasSignature(input))
+            {
+                using var avif = AvifImage.Decode(input);
+                return Task.FromResult("image/avif");
+            }
             using var codec = SKCodec.Create(input);
             if (codec is null || codec.Info.Width <= 0 || codec.Info.Height <= 0 ||
                 (long)codec.Info.Width * codec.Info.Height > 40_000_000)
@@ -717,7 +724,10 @@ internal sealed partial class ContentService
         }
         catch
         {
-            // The daily reconciliation job reports objects left behind after a failed compensation.
+            // Rollback leaves tracked upload entities behind; persist only the cleanup intent.
+            dbContext.ChangeTracker.Clear();
+            dbContext.MediaOutbox.Add(CreateOutbox(MediaOutboxTypes.DeleteObjects, new DeleteObjectsPayload([objectKey])));
+            await dbContext.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
 }
