@@ -58,6 +58,45 @@ public sealed class RecipeMediaUploadTests(RecipeMediaFixture fixture) : IClassF
     }
 
     [Fact]
+    public async Task DeletingRecipeAtomicallyHidesImagesAndQueuesRealStorageCleanup()
+    {
+        using var owner = fixture.App.CreateClient(); await Register(owner);
+        var recipe = await CreateRecipe(owner);
+        using var uploaded = await Upload(owner, recipe.Id, 1, "image/png", Image(MagickFormat.Png));
+        var imageId = (await Data(uploaded)).GetProperty("id").GetGuid();
+        await RunJob(Job.FromExpression<ImageProcessingJob>(job => job.ProcessAsync(Guid.Empty, imageId, CancellationToken.None)));
+        Assert.Equal(3, (await Keys(recipe.Id)).Length);
+        using var stale = await Send(owner, HttpMethod.Delete, $"/api/v1/recipes/{recipe.Id}", 1);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        await AssertImageCount(recipe.Id, 1, 2);
+        await using (var unchanged = fixture.App.Services.CreateAsyncScope())
+        {
+            var messages = await unchanged.ServiceProvider.GetRequiredService<AppDbContext>().MediaOutbox
+                .Where(item => item.Type == "objects.delete").ToListAsync();
+            Assert.DoesNotContain(messages, item => item.Payload.Contains(recipe.Id.ToString("N"), StringComparison.Ordinal));
+        }
+        using var deleted = await Send(owner, HttpMethod.Delete, $"/api/v1/recipes/{recipe.Id}", 2);
+        Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+        using var hidden = await owner.GetAsync($"/api/v1/media/{imageId}/original");
+        Assert.Equal(HttpStatusCode.NotFound, hidden.StatusCode);
+        await using var scope = fixture.App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var storedRecipe = await db.Recipes.IgnoreQueryFilters().SingleAsync(item => item.Id == recipe.Id);
+        var storedImage = await db.RecipeImages.IgnoreQueryFilters().SingleAsync(item => item.Id == imageId);
+        Assert.True(storedRecipe.IsDeleted); Assert.NotNull(storedRecipe.DeletedAt);
+        Assert.True(storedImage.IsDeleted); Assert.NotNull(storedImage.DeletedAt);
+        Assert.Empty(await db.RecipeImages.Where(item => item.RecipeId == recipe.Id).ToListAsync());
+        var deletions = await db.MediaOutbox.Where(item => item.Type == "objects.delete").ToListAsync();
+        var message = Assert.Single(deletions, item => item.Payload.Contains(recipe.Id.ToString("N"), StringComparison.Ordinal));
+        var keys = JsonSerializer.Deserialize<DeleteObjectsPayload>(message.Payload)!.ObjectKeys;
+        Assert.Equal(3, keys.Length);
+        await RunJob(Job.FromExpression<ObjectDeletionJob>(job => job.DeleteAsync(Guid.Empty, keys, CancellationToken.None)));
+        Assert.Empty(await Keys(recipe.Id));
+        // A retry is idempotent even after all objects have gone.
+        await RunJob(Job.FromExpression<ObjectDeletionJob>(job => job.DeleteAsync(Guid.Empty, keys, CancellationToken.None)));
+    }
+
+    [Fact]
     public async Task InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange()
     {
         using var client = fixture.App.CreateClient();

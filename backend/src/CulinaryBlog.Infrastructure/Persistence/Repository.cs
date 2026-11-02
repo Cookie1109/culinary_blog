@@ -1,7 +1,9 @@
+using System.Text.Json;
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Common;
 using CulinaryBlog.Domain.Recipes;
+using CulinaryBlog.Infrastructure.Jobs;
 using Microsoft.EntityFrameworkCore;
 
 namespace CulinaryBlog.Infrastructure.Persistence;
@@ -24,12 +26,37 @@ internal sealed class RecipeRepository(AppDbContext dbContext) : Repository<Reci
             cancellationToken);
 }
 
-internal sealed class UnitOfWork(AppDbContext dbContext, IRecipeRepository recipes) : IUnitOfWork
+internal sealed class UnitOfWork(AppDbContext dbContext, IRecipeRepository recipes, TimeProvider timeProvider) : IUnitOfWork
 {
     public IRecipeRepository Recipes => recipes;
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)
     {
+        var deletedIds = dbContext.ChangeTracker.Entries<Recipe>()
+            .Where(entry => entry.State == EntityState.Modified && entry.Entity.IsDeleted &&
+                !entry.Property(recipe => recipe.IsDeleted).OriginalValue)
+            .Select(entry => entry.Entity.Id).ToArray();
+        if (deletedIds.Length > 0)
+        {
+            var images = await dbContext.RecipeImages.Where(image => deletedIds.Contains(image.RecipeId))
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var image in images) image.Delete();
+            var keys = images.SelectMany(image => new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey })
+                .OfType<string>().Distinct().ToArray();
+            if (keys.Length > 0)
+            {
+                // Persist cleanup with the soft delete, so a rejected write cannot delete live objects.
+                dbContext.MediaOutbox.Add(new MediaOutboxMessage
+                {
+                    Id = Guid.NewGuid(),
+                    Type = MediaOutboxTypes.DeleteObjects,
+                    Payload = JsonSerializer.Serialize(new DeleteObjectsPayload(keys)),
+                    CreatedAt = timeProvider.GetUtcNow(),
+                    NextAttemptAt = timeProvider.GetUtcNow(),
+                });
+            }
+        }
+
         try
         {
             return await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
