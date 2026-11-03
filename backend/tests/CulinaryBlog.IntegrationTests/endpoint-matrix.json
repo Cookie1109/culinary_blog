@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 1,
+  "scope": "Four functional requirements; test references are evidence links, not an assertion of exhaustive branch coverage. Historical G05 evidence is unchanged.",
+  "source": "Current branch runtime OpenAPI plus current integration TRX; excludes unrelated uncommitted SRS changes.",
+  "operations": [
+    {
+      "operation": "GET /api/v1/categories",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/categories/{slug}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/media/{imageId}/{variant}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeMediaUploadTests.AdminCanUploadForAnotherAuthorAndGuestCannotReadArchivedOrDeletedMedia"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/admin/users",
+      "cases": {
+        "happy": [
+          "AdminUsersApiTests.DirectoryFiltersBeforePagingKeepsAllRolesAndExcludesCredentials",
+          "AdminUsersApiTests.DirectorySearchTreatsWildcardsLiterallyAndUsesStableTieBreak"
+        ],
+        "error": [
+          "AdminUsersApiTests.DirectoryRejectsInvalidQueriesWithValidationProblem"
+        ],
+        "authorization": [
+          "AdminUsersApiTests.DirectoryRejectsGuestAuthorsInactiveAndDemotedAdmins",
+          "AdminUsersApiTests.DirectApplicationDispatchWithoutAdminCannotReadUsers"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/recipes",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "POST /api/v1/recipes",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/recipes/search",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/recipes/{slug}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "PUT /api/v1/recipes/{id}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "DELETE /api/v1/recipes/{id}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "PATCH /api/v1/recipes/{id}/publish",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "PATCH /api/v1/recipes/{id}/unpublish",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "PATCH /api/v1/recipes/{id}/archive",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "PATCH /api/v1/recipes/{id}/unarchive",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "POST /api/v1/recipes/{id}/ingredients",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanComposeRecipeAndStepReorderStaysContinuous"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "PUT /api/v1/recipes/{id}/ingredients/{ingredientId}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanComposeRecipeAndStepReorderStaysContinuous"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "DELETE /api/v1/recipes/{id}/ingredients/{ingredientId}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanComposeRecipeAndStepReorderStaysContinuous"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "POST /api/v1/recipes/{id}/steps",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanComposeRecipeAndStepReorderStaysContinuous"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "PUT /api/v1/recipes/{id}/steps/{stepId}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanComposeRecipeAndStepReorderStaysContinuous"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "DELETE /api/v1/recipes/{id}/steps/{stepId}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanComposeRecipeAndStepReorderStaysContinuous"
+        ],
+        "error": [
+          "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "POST /api/v1/recipes/{id}/images",
+      "cases": {
+        "happy": [
+          "RecipeMediaUploadTests.OwnershipMetadataAndConcurrentUploadsPreservePrimaryVersionAndObjects"
+        ],
+        "error": [
+          "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "PATCH /api/v1/recipes/{id}/images/{imageId}",
+      "cases": {
+        "happy": [
+          "RecipeMediaUploadTests.OwnershipMetadataAndConcurrentUploadsPreservePrimaryVersionAndObjects"
+        ],
+        "error": [
+          "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "DELETE /api/v1/recipes/{id}/images/{imageId}",
+      "cases": {
+        "happy": [
+          "RecipeMediaUploadTests.OwnershipMetadataAndConcurrentUploadsPreservePrimaryVersionAndObjects"
+        ],
+        "error": [
+          "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
+        ],
+        "authorization": [
+          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/me/recipes",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/me/recipes/{id}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/admin/recipes",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/admin/recipes/{id}",
+      "cases": {
+        "happy": [
+          "RecipeCompositionApiTests.P7AuthorCanCompletePublishingArchiveAndDeleteLifecycle"
+        ],
+        "error": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ],
+        "authorization": [
+          "RecipeCoreApiTests.P7OwnershipRoleEscalationAndAdminOverrideAreEnforced"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/admin/audit-logs",
+      "cases": {
+        "happy": [
+          "AdminAuditLogsApiTests.RecipeHistoryKeepsEveryRealEditAndTransitionWithoutSnapshotDuplicates"
+        ],
+        "error": [
+          "AuditMutationMiddlewareTests.FailedChangesDoNotAppearAsSuccessfulAuditEvents"
+        ],
+        "authorization": [
+          "AdminAuditLogsApiTests.AnonymousRequestIsRejectedWithUnauthorized",
+          "AdminAuditLogsApiTests.AuthorRequestIsRejectedWithForbidden"
+        ]
+      }
+    }
+  ]
+}

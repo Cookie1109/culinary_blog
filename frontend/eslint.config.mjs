@@ -18,7 +18,7 @@ const eslintConfiguration = tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['**/*.{js,mjs,cjs,ts,tsx}'],
+    files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
     languageOptions: {
       globals: {
         ...globals.browser,

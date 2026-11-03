@@ -120,19 +120,36 @@ export async function withIsolatedApp({ media = false }, exercise) {
 
   try {
     await command('docker', ['info', '--format', '{{.ServerVersion}}'])
-    await build(
-      'backend-build',
-      'dotnet',
-      ['build', 'backend/CulinaryBlog.slnx', '-c', 'Release', '--no-restore'],
-      root,
-    )
-    const previousApi = process.env.INTERNAL_API_BASE_URL
-    process.env.INTERNAL_API_BASE_URL = 'http://127.0.0.1:1/api/v1'
-    try {
-      await build('frontend-build', process.execPath, ['node_modules/next/dist/bin/next', 'build'], frontend)
-    } finally {
-      if (previousApi === undefined) delete process.env.INTERNAL_API_BASE_URL
-      else process.env.INTERNAL_API_BASE_URL = previousApi
+    const frozenPath = process.env.CULINARY_E2E_BUILD_MANIFEST
+    if (frozenPath) {
+      const frozen = JSON.parse(await readFile(frozenPath, 'utf8'))
+      for (const [name, expected] of Object.entries(frozen.backendBinaries)) {
+        const actual = createHash('sha256')
+          .update(await readFile(path.join(root, 'backend/src/CulinaryBlog.Api/bin/Release/net10.0', name)))
+          .digest('hex')
+        assert.equal(actual, expected, `Frozen backend changed: ${name}`)
+      }
+      assert.equal((await readFile(path.join(frontend, '.next/BUILD_ID'), 'utf8')).trim(), frozen.buildId)
+    } else {
+      await build(
+        'backend-build',
+        'dotnet',
+        ['build', 'backend/CulinaryBlog.slnx', '-c', 'Release', '--no-restore'],
+        root,
+      )
+      const previousApi = process.env.INTERNAL_API_BASE_URL
+      process.env.INTERNAL_API_BASE_URL = 'http://127.0.0.1:1/api/v1'
+      try {
+        await build(
+          'frontend-build',
+          process.execPath,
+          ['node_modules/next/dist/bin/next', 'build'],
+          frontend,
+        )
+      } finally {
+        if (previousApi === undefined) delete process.env.INTERNAL_API_BASE_URL
+        else process.env.INTERNAL_API_BASE_URL = previousApi
+      }
     }
     const buildId = (await readFile(path.join(frontend, '.next/BUILD_ID'), 'utf8')).trim()
     await command('docker', ['network', 'create', '--label', label, network])
@@ -324,6 +341,7 @@ export async function withIsolatedApp({ media = false }, exercise) {
         {
           run,
           buildId,
+          frozenBuildManifest: frozenPath ?? null,
           node: process.version,
           apiSha256: createHash('sha256')
             .update(await readFile(path.join(apiCopy, 'CulinaryBlog.Api.dll')))
