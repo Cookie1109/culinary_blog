@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { randomBytes, createHash } from 'node:crypto'
 import { createWriteStream, existsSync } from 'node:fs'
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import http from 'node:http'
 import net from 'node:net'
 import path from 'node:path'
@@ -51,7 +51,7 @@ export async function withIsolatedApp({ media = false }, exercise) {
     await writeFile(path.join(artifacts, `${name}.log`), output)
   }
   function start(name, exe, args, cwd, env) {
-    const log = createWriteStream(path.join(artifacts, `${name}.log`))
+    const log = createWriteStream(path.join(artifacts, `${name}.log`), { flags: 'a' })
     const child = spawn(exe, args, {
       cwd,
       windowsHide: true,
@@ -66,7 +66,16 @@ export async function withIsolatedApp({ media = false }, exercise) {
         resolve(code)
       })
     })
-    processes.push({ child, exit })
+    const handle = { child, exit }
+    processes.push(handle)
+    return handle
+  }
+  async function stop({ child, exit }) {
+    if (child.exitCode === null && !child.signalCode) {
+      if (process.platform === 'win32') await command('taskkill', ['/PID', String(child.pid), '/T', '/F'])
+      else child.kill('SIGTERM')
+      await exit
+    }
   }
   async function freePort() {
     const server = net.createServer()
@@ -227,7 +236,7 @@ export async function withIsolatedApp({ media = false }, exercise) {
     await cp(path.join(root, 'backend/src/CulinaryBlog.Api/bin/Release/net10.0'), apiCopy, {
       recursive: true,
     })
-    start('api', 'dotnet', ['CulinaryBlog.Api.dll'], apiCopy, {
+    const apiEnvironment = {
       ASPNETCORE_ENVIRONMENT: 'Testing',
       ASPNETCORE_URLS: api,
       ConnectionStrings__Database: connection,
@@ -252,7 +261,32 @@ export async function withIsolatedApp({ media = false }, exercise) {
       Sitemap__PublicBaseUrl: baseURL,
       Sitemap__RevalidationEndpoint: `${web}/api/revalidate`,
       Sitemap__RevalidationSecret: revalidationSecret,
-    })
+    }
+    let apiProcess = start('api', 'dotnet', ['CulinaryBlog.Api.dll'], apiCopy, apiEnvironment)
+    async function restartApi() {
+      await stop(apiProcess)
+      apiProcess = start('api', 'dotnet', ['CulinaryBlog.Api.dll'], apiCopy, apiEnvironment)
+      await ready('API after restart', async () => (await fetch(`${api}/health/ready`)).ok)
+    }
+    async function readApiLogs() {
+      const logDirectory = path.join(apiCopy, 'logs')
+      const files = (await readdir(logDirectory)).filter((name) => /^api-.*\.json$/.test(name))
+      assert.ok(
+        files.length > 0 && files.every((name) => /^api-\d{8}(?:_\d+)?\.json$/.test(name)),
+        'Daily rolling log files must exist',
+      )
+      const entries = []
+      for (const name of files) {
+        for (const line of (await readFile(path.join(logDirectory, name), 'utf8')).split(/\r?\n/)) {
+          try {
+            entries.push(JSON.parse(line))
+          } catch {
+            /* An in-flight final line is retried by the assertion. */
+          }
+        }
+      }
+      return entries
+    }
     await ready('API', async () => (await fetch(`${api}/health/ready`)).ok)
     const standalone = path.join(artifacts, 'standalone')
     await cp(path.join(frontend, '.next/standalone'), standalone, { recursive: true })
@@ -283,7 +317,7 @@ export async function withIsolatedApp({ media = false }, exercise) {
       JSON.stringify(await (await fetch(`${api}/openapi/v1.json`)).json()),
     )
     browser = await chromium.launch()
-    await exercise({ api, baseURL, artifacts, browser, command, pg, minio })
+    await exercise({ api, baseURL, artifacts, browser, command, pg, minio, restartApi, readApiLogs })
     await writeFile(
       path.join(artifacts, 'run.json'),
       JSON.stringify(
@@ -305,13 +339,7 @@ export async function withIsolatedApp({ media = false }, exercise) {
       gateway.closeAllConnections()
       await new Promise((resolve) => gateway.close(resolve))
     }
-    for (const { child, exit } of processes.reverse()) {
-      if (child.exitCode === null && !child.signalCode) {
-        if (process.platform === 'win32') await command('taskkill', ['/PID', String(child.pid), '/T', '/F'])
-        else child.kill('SIGTERM')
-        await exit
-      }
-    }
+    for (const handle of processes.reverse()) await stop(handle)
     for (const id of containers.reverse()) {
       const info = JSON.parse(await command('docker', ['inspect', id]))[0]
       assert.equal(info.Config.Labels['culinary.feature'], run)
