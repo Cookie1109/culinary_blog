@@ -296,7 +296,7 @@ test(
           await page.locator('#email').fill(email)
           await page.locator('#password').fill(password)
           await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-          await expect.poll(() => new URL(page.url()).pathname).toMatch(/^\/dashboard/)
+          await expect.poll(() => new URL(page.url()).pathname).toBe('/')
           return { context, page }
         }
         const browserAdmin = await login('admin@users-e2e.test')

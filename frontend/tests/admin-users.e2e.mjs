@@ -50,7 +50,8 @@ test(
         await page.locator('#email').fill(email)
         await page.locator('#password').fill(password)
         await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-        await expect.poll(() => new URL(page.url()).pathname).toMatch(/^\/dashboard/)
+        await expect.poll(() => new URL(page.url()).pathname).toBe('/')
+        await page.goto('/dashboard')
       }
 
       await t.test(
@@ -119,7 +120,7 @@ test(
         await authorPage.locator('#email').fill('browser-0@users-e2e.test')
         await authorPage.locator('#password').fill(password)
         await authorPage.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-        await expect.poll(() => new URL(authorPage.url()).pathname).toMatch(/^\/dashboard/)
+        await expect.poll(() => new URL(authorPage.url()).pathname).toBe('/')
         await expect
           .poll(
             async () =>

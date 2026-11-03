@@ -34,7 +34,7 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
       setError('')
       await login(email, password)
       const returnTo = searchParams.get('returnTo')
-      navigate(returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/dashboard')
+      navigate(returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/')
     } catch {
       setError('Email hoặc mật khẩu không chính xác.')
     }
@@ -181,8 +181,7 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
               type="button"
               onClick={() => {
                 const returnTo = searchParams.get('returnTo')
-                const callbackUrl =
-                  returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/dashboard'
+                const callbackUrl = returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/'
                 void signIn('google', { callbackUrl })
               }}
               className="mt-4 flex w-full items-center justify-center gap-3 border border-border px-4 py-3 text-sm font-medium hover:bg-secondary"

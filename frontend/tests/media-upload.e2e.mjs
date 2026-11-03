@@ -32,7 +32,7 @@ test(
       await page.locator('#email').fill(email)
       await page.locator('#password').fill(password)
       await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-      await expect.poll(() => new URL(page.url()).pathname).toMatch(/^\/dashboard/)
+      await expect.poll(() => new URL(page.url()).pathname).toBe('/')
       await page.goto('/dashboard/recipes/new')
       await page.locator('#title').fill('Công thức kiểm thử upload ảnh')
       await page.locator('#description').fill('Dữ liệu synthetic kiểm thử riêng cho chức năng ảnh.')
