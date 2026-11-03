@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using CulinaryBlog.Domain.Common;
+using CulinaryBlog.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -38,6 +39,11 @@ internal sealed class AuditSaveChangesInterceptor(
         var actor = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? httpContextAccessor.HttpContext?.User.FindFirstValue("sub")
             ?? "system";
+
+        foreach (var entry in dbContext.ChangeTracker.Entries<MediaOutboxMessage>().Where(entry => entry.State == EntityState.Added))
+        {
+            MediaJobLogContext.Capture(entry.Entity, httpContextAccessor.HttpContext, actor);
+        }
 
         foreach (var entry in dbContext.ChangeTracker.Entries<BaseEntity>())
         {

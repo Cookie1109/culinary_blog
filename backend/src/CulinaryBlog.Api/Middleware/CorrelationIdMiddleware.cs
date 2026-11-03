@@ -13,6 +13,12 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next, ILogger<Correl
         var correlationId = GetOrCreateCorrelationId(context);
         context.TraceIdentifier = correlationId;
         context.Response.Headers[HeaderName] = correlationId;
+        context.Response.OnStarting(() =>
+        {
+            // Exception handling can clear headers after the request has received its ID.
+            context.Response.Headers[HeaderName] = correlationId;
+            return Task.CompletedTask;
+        });
         Activity.Current?.SetTag("correlation.id", correlationId);
         Activity.Current?.AddBaggage("correlation.id", correlationId);
 

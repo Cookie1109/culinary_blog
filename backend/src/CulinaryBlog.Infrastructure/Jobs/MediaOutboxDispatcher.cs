@@ -41,6 +41,7 @@ internal sealed class MediaOutboxDispatcher(
 
         foreach (var message in messages)
         {
+            using var logScope = MediaJobLogContext.Begin(logger, message, message.Id);
             try
             {
                 if (message.Type == MediaOutboxTypes.ResizeImage)

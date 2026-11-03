@@ -113,6 +113,88 @@ public sealed class AdminAuditLogsApiTests(AuthApiFactory factory) : IClassFixtu
         _client.DefaultRequestHeaders.Remove("X-Correlation-ID");
     }
 
+    [Theory]
+    [InlineData(false, HttpStatusCode.UnprocessableEntity)]
+    [InlineData(true, HttpStatusCode.Unauthorized)]
+    public async Task ErrorResponsesRetainTheRequestCorrelationHeader(bool validEmail, HttpStatusCode expectedStatus)
+    {
+        var correlation = "rejected-" + Guid.NewGuid().ToString("N");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/auth/login")
+        {
+            Content = JsonContent.Create(new { email = validEmail ? "not-registered@example.test" : "invalid", password = "Synthetic#Invalid123" }),
+        };
+        request.Headers.Add("X-Correlation-ID", correlation);
+        using var response = await _client.SendAsync(request);
+        Assert.Equal(expectedStatus, response.StatusCode);
+        Assert.Equal(correlation, Assert.Single(response.Headers.GetValues("X-Correlation-ID")));
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(correlation, problem.GetProperty("correlationId").GetString());
+    }
+
+    [Fact]
+    public async Task RecipeHistoryKeepsEveryRealEditAndTransitionWithoutSnapshotDuplicates()
+    {
+        var email = $"history-{Guid.NewGuid():N}@example.com";
+        var user = await RegisterAsync(email);
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            Assert.True((await users.AddToRoleAsync((await users.FindByEmailAsync(email))!, "Admin")).Succeeded);
+        }
+        SetToken((await LoginAsync(email)).AccessToken);
+        using var categories = await _client.GetAsync("/api/v1/categories");
+        var category = (await categories.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("data")[0].GetProperty("id").GetGuid();
+        var prefix = $"history-{Guid.NewGuid():N}";
+        var expected = new List<(string Event, string Correlation)>();
+        var actorId = string.Empty;
+        async Task<JsonElement> Send(string method, string path, string action, object? body = null, long? version = null)
+        {
+            var correlation = $"{prefix}-{expected.Count}";
+            using var request = new HttpRequestMessage(new HttpMethod(method), path);
+            request.Headers.Add("X-Correlation-ID", correlation);
+            if (version.HasValue) request.Headers.TryAddWithoutValidation("If-Match", $"\"{version}\"");
+            if (body is not null) request.Content = JsonContent.Create(body);
+            using var response = await _client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            expected.Add((action, correlation));
+            return response.StatusCode == HttpStatusCode.NoContent ? default : (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("data");
+        }
+        object Payload(string title) => new { title, description = "History check", categoryId = category, prepTime = 10, cookTime = 0, servings = 2, difficulty = "easy" };
+        var created = await Send("POST", "/api/v1/recipes", "recipe.created", Payload("Audit history recipe"));
+        var id = created.GetProperty("id").GetGuid();
+        var path = $"/api/v1/recipes/{id}";
+        await Send("PUT", path, "recipe.updated", Payload("Audit history edit one"), 1);
+        await Send("PUT", path, "recipe.updated", Payload("Audit history edit two"), 2);
+        await Send("POST", path + "/ingredients", "recipe.ingredients.created", new { name = "Rice" }, 3);
+        await Send("POST", path + "/steps", "recipe.steps.created", new { title = "Cook", description = "Cook rice" }, 4);
+        // Later lifecycle changes must not be mistaken for a third explicit edit.
+        await Task.Delay(1100);
+        long nextVersion = 5;
+        foreach (var (route, action) in new[] { ("publish", "published"), ("unpublish", "unpublished"), ("publish", "published"), ("archive", "archived"), ("unarchive", "unarchived") })
+        {
+            await Send("PATCH", path + "/" + route, "recipe." + action, version: nextVersion++);
+        }
+        await Send("DELETE", path, "recipe.deleted", version: nextVersion);
+        using var historyResponse = await _client.GetAsync($"/api/v1/admin/audit-logs?search={id}&pageSize=100");
+        var history = (await historyResponse.Content.ReadFromJsonAsync<AuditLogsEnvelope>())!.Data
+            .Where(entry => entry.EventName.StartsWith("recipe.", StringComparison.Ordinal)).ToArray();
+        Assert.Equal(expected.Count, history.Length);
+        foreach (var (action, correlation) in expected)
+        {
+            var entry = Assert.Single(history, item => item.CorrelationId == correlation);
+            Assert.Equal(action, entry.EventName);
+            Assert.Equal(id.ToString(), entry.Properties!["EntityId"]);
+            Assert.NotEqual("snapshot", entry.Properties.GetValueOrDefault("Source"));
+            Assert.Equal("Audit Test User", entry.Properties["UserName"]);
+            Assert.False(string.IsNullOrWhiteSpace(entry.UserId));
+            actorId = string.IsNullOrEmpty(actorId) ? entry.UserId! : actorId;
+            Assert.Equal(actorId, entry.UserId);
+            Assert.InRange(entry.Timestamp, DateTimeOffset.UtcNow.AddMinutes(-5), DateTimeOffset.UtcNow.AddMinutes(1));
+        }
+        Assert.Equal(2, history.Count(entry => entry.EventName == "recipe.updated"));
+        Assert.Equal(2, history.Count(entry => entry.EventName == "recipe.published"));
+    }
+
     private async Task<AuthSession> RegisterAsync(string email)
     {
         using var response = await _client.PostAsJsonAsync("/api/v1/auth/register", new

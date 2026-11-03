@@ -47,12 +47,13 @@ public sealed class AuditLogService(
 
         // 2. Synthesize audit entries from entity change tracking in database
         var dbEntries = await GetDatabaseAuditEntriesAsync(cancellationToken).ConfigureAwait(false);
-        entries.AddRange(dbEntries.Where(snapshot => !entries.Any(entry =>
-            entry.EventName == snapshot.EventName &&
-            Math.Abs((entry.Timestamp - snapshot.Timestamp).TotalSeconds) < 1 &&
-            entry.Properties?.GetValueOrDefault("EntityId") is { } entityId &&
-            (snapshot.Properties?.GetValueOrDefault("RecipeId") == entityId ||
-             snapshot.Properties?.GetValueOrDefault("CategoryId") == entityId))));
+        // Snapshots describe current state, not additional historical edits or transitions.
+        // Once recorded history exists for an entity, keep that history as the sole source.
+        var recordedIds = entries.Where(entry => entry.Properties?.ContainsKey("AuditEvent") == true)
+            .Select(entry => entry.Properties!.GetValueOrDefault("EntityId"))
+            .OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
+        entries.AddRange(dbEntries.Where(snapshot => !recordedIds.Contains(
+            snapshot.Properties?.GetValueOrDefault("RecipeId") ?? snapshot.Properties?.GetValueOrDefault("CategoryId") ?? string.Empty)));
 
         var userIds = entries.Select(entry => Guid.TryParse(entry.UserId, out var id) ? id : Guid.Empty)
             .Where(id => id != Guid.Empty).Distinct().ToArray();
@@ -93,7 +94,7 @@ public sealed class AuditLogService(
                 (e.EventName.Contains(term, StringComparison.OrdinalIgnoreCase)));
         }
 
-        var ordered = query.OrderByDescending(e => e.Timestamp).ToList();
+        var ordered = query.OrderByDescending(e => e.Timestamp).ThenBy(e => e.Id).ToList();
         var total = ordered.Count;
         var totalPages = total == 0 ? 1 : (int)Math.Ceiling((double)total / targetPageSize);
 

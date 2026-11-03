@@ -1,5 +1,7 @@
 using System.Globalization;
+using System.Security.Claims;
 using CulinaryBlog.Api.Health;
+using CulinaryBlog.Api.Logging;
 using CulinaryBlog.Api.Middleware;
 using CulinaryBlog.Api.Presentation;
 using CulinaryBlog.Api.Security;
@@ -32,6 +34,7 @@ try
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
+            .Enrich.With(new RequestContextEnricher(services.GetRequiredService<IHttpContextAccessor>()))
             .Enrich.WithProperty("Application", "CulinaryBlog.Api")
             .WriteTo.Console(new RenderedCompactJsonFormatter())
             .WriteTo.File(
@@ -73,7 +76,7 @@ try
             diagnosticContext.Set("CorrelationId", httpContext.TraceIdentifier);
             diagnosticContext.Set("RequestMethod", httpContext.Request.Method);
             diagnosticContext.Set("RequestPath", httpContext.Request.Path.Value ?? string.Empty);
-            diagnosticContext.Set("UserId", httpContext.User.FindFirst("sub")?.Value ?? "anonymous");
+            diagnosticContext.Set("UserId", httpContext.User.FindFirstValue("sub") ?? httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous");
         };
     });
     app.UseExceptionHandler();

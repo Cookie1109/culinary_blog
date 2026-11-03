@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using CulinaryBlog.Application.Audit;
 using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Jobs;
 using CulinaryBlog.Infrastructure.Persistence;
@@ -243,12 +244,18 @@ public sealed class RecipeMediaUploadTests(RecipeMediaFixture fixture) : IClassF
     {
         using var client = fixture.App.CreateClient(); await Register(client);
         var recipe = await CreateRecipe(client);
+        var correlation = "resize-origin-" + Guid.NewGuid().ToString("N");
+        client.DefaultRequestHeaders.Add("X-Correlation-ID", correlation);
         using var upload = await Upload(client, recipe.Id, 1, "image/png", Image(MagickFormat.Png));
         var id = (await Data(upload)).GetProperty("id").GetGuid();
+        await using var scope = fixture.App.Services.CreateAsyncScope();
+        var messages = await scope.ServiceProvider.GetRequiredService<AppDbContext>().MediaOutbox
+            .Where(item => item.Type == "image.resize").ToListAsync();
+        var outboxId = messages.Single(item => item.Payload.Contains(id.ToString(), StringComparison.Ordinal)).Id;
         fixture.Storage.FailVariants = true;
         try
         {
-            await RunJob(Job.FromExpression<ImageProcessingJob>(job => job.ProcessAsync(Guid.Empty, id, CancellationToken.None)), failThenRecover: true,
+            await RunJob(Job.FromExpression<ImageProcessingJob>(job => job.ProcessAsync(outboxId, id, CancellationToken.None)), failThenRecover: true,
                 recover: async () =>
                 {
                     using var original = await client.GetAsync($"/api/v1/media/{id}/original");
@@ -259,6 +266,50 @@ public sealed class RecipeMediaUploadTests(RecipeMediaFixture fixture) : IClassF
         finally { fixture.Storage.FailVariants = false; }
         using var thumbnail = await client.GetAsync($"/api/v1/media/{id}/thumbnail");
         Assert.Equal(HttpStatusCode.OK, thumbnail.StatusCode);
+        await AssertJobErrors(correlation, "ProcessingFailed", outboxId, $"/api/v1/recipes/{recipe.Id}/images");
+    }
+
+    [Fact]
+    public async Task FailedDeletionRetriesKeepTheOriginOfTheDeleteRequest()
+    {
+        using var client = fixture.App.CreateClient(); await Register(client);
+        var recipe = await CreateRecipe(client);
+        using var upload = await Upload(client, recipe.Id, 1, "image/png", Image(MagickFormat.Png));
+        var imageId = (await Data(upload)).GetProperty("id").GetGuid();
+        var correlation = "delete-origin-" + Guid.NewGuid().ToString("N");
+        client.DefaultRequestHeaders.Add("X-Correlation-ID", correlation);
+        using var deleted = await Send(client, HttpMethod.Delete, $"/api/v1/recipes/{recipe.Id}/images/{imageId}", 2);
+        Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+        await using var scope = fixture.App.Services.CreateAsyncScope();
+        var messages = await scope.ServiceProvider.GetRequiredService<AppDbContext>().MediaOutbox
+            .Where(item => item.Type == "objects.delete").ToListAsync();
+        var message = messages.Single(item => item.Payload.Contains(imageId.ToString("N"), StringComparison.Ordinal));
+        var keys = JsonSerializer.Deserialize<DeleteObjectsPayload>(message.Payload)!.ObjectKeys;
+        fixture.Storage.FailDeletes = true;
+        try
+        {
+            await RunJob(Job.FromExpression<ObjectDeletionJob>(job => job.DeleteAsync(message.Id, keys, CancellationToken.None)),
+                failThenRecover: true, recover: () => { fixture.Storage.FailDeletes = false; return Task.CompletedTask; });
+        }
+        finally { fixture.Storage.FailDeletes = false; }
+        Assert.Empty(await Keys(recipe.Id));
+        await AssertJobErrors(correlation, "DeletionFailed", message.Id, $"/api/v1/recipes/{recipe.Id}/images/{imageId}");
+    }
+
+    private async Task AssertJobErrors(string correlation, string eventName, Guid outboxId, string requestPath)
+    {
+        await using var scope = fixture.App.Services.CreateAsyncScope();
+        var history = await scope.ServiceProvider.GetRequiredService<IAuditLogService>()
+            .ListAuditLogsAsync("Error", correlation, 1, 100, default);
+        var errors = history.Data.Where(entry => entry.EventName == eventName).ToArray();
+        Assert.Equal(4, errors.Length);
+        Assert.All(errors, entry =>
+        {
+            Assert.Equal(correlation, entry.CorrelationId);
+            Assert.True(Guid.TryParse(entry.UserId, out _));
+            Assert.Equal(requestPath, entry.RequestPath);
+            Assert.Equal(outboxId.ToString(), entry.Properties!["OutboxId"]);
+        });
     }
 
     [Fact]

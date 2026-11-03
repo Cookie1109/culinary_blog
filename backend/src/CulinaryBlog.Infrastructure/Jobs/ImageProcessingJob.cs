@@ -25,6 +25,8 @@ public sealed class ImageProcessingJob(
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = [60, 300, 1800])]
     public async Task ProcessAsync(Guid outboxId, Guid imageId, CancellationToken cancellationToken)
     {
+        var message = await MediaJobLogContext.ReadAsync(dbContext, outboxId, cancellationToken).ConfigureAwait(false);
+        using var logScope = MediaJobLogContext.Begin(logger, message, outboxId);
         var imageRecord = await dbContext.RecipeImages.IgnoreQueryFilters()
             .SingleOrDefaultAsync(image => image.Id == imageId, cancellationToken)
             .ConfigureAwait(false);
