@@ -17,6 +17,29 @@ const label = `culinary.feature=${run}`
 const network = `culinary-feature-${run}`
 export const password = 'Synthetic#UsersE2e123'
 
+export async function command(exe, args, cwd = root, env = {}) {
+  const child = spawn(exe, args, {
+    cwd,
+    windowsHide: true,
+    env: { ...process.env, ...env },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  let output = ''
+  let errors = ''
+  child.stdout.on('data', (chunk) => {
+    output += chunk
+  })
+  child.stderr.on('data', (chunk) => {
+    errors += chunk
+  })
+  const code = await new Promise((resolve, reject) => {
+    child.on('error', reject)
+    child.on('close', resolve)
+  })
+  assert.equal(code, 0, `${exe} ${args[0]} failed: ${(output + errors).slice(-2000)}`)
+  return output.trim()
+}
+
 export async function withIsolatedApp({ media = false }, exercise) {
   const containers = []
   const processes = []
@@ -25,27 +48,6 @@ export async function withIsolatedApp({ media = false }, exercise) {
   let ownsNetwork = false
   await mkdir(artifacts, { recursive: true })
 
-  async function command(exe, args, cwd = root, env = {}) {
-    const child = spawn(exe, args, {
-      cwd,
-      windowsHide: true,
-      env: { ...process.env, ...env },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-    let output = ''
-    child.stdout.on('data', (chunk) => {
-      output += chunk
-    })
-    child.stderr.on('data', (chunk) => {
-      output += chunk
-    })
-    const code = await new Promise((resolve, reject) => {
-      child.on('error', reject)
-      child.on('close', resolve)
-    })
-    assert.equal(code, 0, `${exe} ${args[0]} failed: ${output.slice(-2000)}`)
-    return output.trim()
-  }
   async function build(name, exe, args, cwd) {
     const output = await command(exe, args, cwd)
     await writeFile(path.join(artifacts, `${name}.log`), output)
