@@ -163,8 +163,19 @@ export async function withIsolatedApp({ media = false }, exercise) {
     const connection = `Host=127.0.0.1;Port=${pg.port};Database=users;Username=users;Password=synthetic-users-only`
     let minio
     if (media) {
+      const minioImage = 'culinary-blog-minio-test:2025-09-07'
+      if (!(await command('docker', ['image', 'ls', '--quiet', minioImage]))) {
+        await command('docker', [
+          'build',
+          '--tag',
+          minioImage,
+          '--file',
+          path.join(root, 'infra/testing/minio.Dockerfile'),
+          path.join(root, 'infra/testing'),
+        ])
+      }
       minio = await container(
-        'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e',
+        minioImage,
         9000,
         { MINIO_ROOT_USER: 'media-storage', MINIO_ROOT_PASSWORD: 'synthetic-media-only' },
         ['server', '/data'],

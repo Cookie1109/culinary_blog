@@ -14,13 +14,14 @@ public sealed class DependencyContainers : IAsyncLifetime
 
     public RedisContainer Redis { get; } = new RedisBuilder("redis:7.4.5-alpine").Build();
 
-    public MinioContainer Minio { get; } = new MinioBuilder("minio/minio:RELEASE.2025-09-07T16-13-09Z")
+    public MinioContainer Minio { get; } = new MinioBuilder(MinioTestImage.Name)
         .WithUsername("culinary-test")
         .WithPassword("integration-test-only")
         .Build();
 
     public async Task InitializeAsync()
     {
+        await MinioTestImage.PrepareAsync();
         await Task.WhenAll(PostgreSql.StartAsync(), Redis.StartAsync(), Minio.StartAsync());
     }
 

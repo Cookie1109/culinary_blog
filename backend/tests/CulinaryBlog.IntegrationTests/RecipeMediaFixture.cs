@@ -3,12 +3,13 @@ using System.Net.Sockets;
 using CulinaryBlog.Application.Media;
 using CulinaryBlog.Infrastructure.Configuration;
 using CulinaryBlog.Infrastructure.Media;
-using CulinaryBlog.Infrastructure.Persistence;
+using CulinaryBlog.IntegrationTests.Fixtures;
+using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -21,7 +22,7 @@ namespace CulinaryBlog.IntegrationTests;
 public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
 {
     private readonly AuthApiFactory factory = new();
-    public MinioContainer Minio { get; } = new MinioBuilder("minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e")
+    public MinioContainer Minio { get; } = new MinioBuilder(MinioTestImage.Name)
         .WithUsername("media-test").WithPassword("synthetic-media-only").WithPortBinding(ReservePort(), 9000).Build();
     public WebApplicationFactory<Program> App { get; private set; } = null!;
     public ControlledMediaStorage Storage { get; private set; } = null!;
@@ -30,6 +31,7 @@ public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
 
     public async Task InitializeAsync()
     {
+        await MinioTestImage.PrepareAsync();
         await Task.WhenAll(factory.InitializeAsync(), Minio.StartAsync());
         client = new MinioClient().WithEndpoint(Minio.Hostname, Minio.GetMappedPublicPort(9000))
             .WithCredentials("media-test", "synthetic-media-only").WithTimeout(2000).Build();
@@ -44,13 +46,18 @@ public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
             {
                 services.RemoveAll<IFileStorageService>();
                 services.AddSingleton<IFileStorageService>(Storage);
+                // Each test host needs its own storage; JobStorage.Current is shared across parallel fixtures.
+                services.RemoveAll<JobStorage>();
+                services.AddSingleton<JobStorage>(provider =>
+                {
+                    var options = new PostgreSqlStorageOptions { PrepareSchemaIfNecessary = true };
+                    return new PostgreSqlStorage(new Hangfire.PostgreSql.Factories.NpgsqlConnectionFactory(
+                        provider.GetRequiredService<IConfiguration>().GetConnectionString("Database"), options, null), options);
+                });
             });
         });
         using var startup = App.CreateClient();
-        await using var scope = App.Services.CreateAsyncScope();
-        var options = new PostgreSqlStorageOptions { PrepareSchemaIfNecessary = true };
-        _ = new PostgreSqlStorage(new Hangfire.PostgreSql.Factories.NpgsqlConnectionFactory(
-            scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.GetConnectionString(), options, null), options);
+        _ = App.Services.GetRequiredService<JobStorage>();
     }
 
     public async Task DisposeAsync()

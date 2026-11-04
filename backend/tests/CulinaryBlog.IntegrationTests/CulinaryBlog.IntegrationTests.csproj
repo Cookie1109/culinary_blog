@@ -13,6 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="endpoint-matrix.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../infra/testing/minio.Dockerfile" Link="TestDependencies/minio.Dockerfile" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
