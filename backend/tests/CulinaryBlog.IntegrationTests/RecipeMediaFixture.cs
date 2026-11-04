@@ -54,6 +54,12 @@ public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
                     return new PostgreSqlStorage(new Hangfire.PostgreSql.Factories.NpgsqlConnectionFactory(
                         provider.GetRequiredService<IConfiguration>().GetConnectionString("Database"), options, null), options);
                 });
+                services.RemoveAll<IBackgroundJobClient>();
+                services.AddSingleton<IBackgroundJobClient>(provider =>
+                {
+                    _ = provider.GetRequiredService<IGlobalConfiguration>();
+                    return new BackgroundJobClient(provider.GetRequiredService<JobStorage>());
+                });
             });
         });
         using var startup = App.CreateClient();

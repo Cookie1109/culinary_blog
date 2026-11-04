@@ -29,8 +29,10 @@ test(
           const context = await browser.newContext({ baseURL })
           const page = await context.newPage()
           await page.goto('/login')
-          await page.locator('#email').fill(email)
-          await page.locator('#password').fill(password)
+          const emailInput = page.locator('#email:visible')
+          await expect(emailInput).toHaveCount(1)
+          await emailInput.fill(email)
+          await page.locator('#password:visible').fill(password)
           await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
           await expect.poll(() => new URL(page.url()).pathname).toBe('/')
           return { context, page }

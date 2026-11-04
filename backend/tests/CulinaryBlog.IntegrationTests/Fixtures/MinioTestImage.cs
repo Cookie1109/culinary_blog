@@ -5,7 +5,7 @@ namespace CulinaryBlog.IntegrationTests.Fixtures;
 
 internal static class MinioTestImage
 {
-    public const string Name = "culinary-blog-minio-test:2025-09-07";
+    public const string Name = "culinary-blog-minio-test:2025-09-07-v2";
 
     private static readonly IFutureDockerImage Image = new ImageFromDockerfileBuilder()
         .WithName(Name)

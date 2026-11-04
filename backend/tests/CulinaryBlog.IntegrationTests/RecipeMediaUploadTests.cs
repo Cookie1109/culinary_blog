@@ -345,6 +345,7 @@ public sealed class RecipeMediaUploadTests(RecipeMediaFixture fixture) : IClassF
     {
         var storage = fixture.App.Services.GetRequiredService<JobStorage>();
         var jobs = fixture.App.Services.GetRequiredService<IBackgroundJobClient>();
+        Assert.Same(storage, Assert.IsType<BackgroundJobClient>(jobs).Storage);
         var queue = "media-" + Guid.NewGuid().ToString("N");
         var id = jobs.Create(job, new EnqueuedState(queue));
         using var worker = new BackgroundJobServer(new BackgroundJobServerOptions
