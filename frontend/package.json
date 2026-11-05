@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build": "next build && node scripts/check-bundle-budget.mjs",
     "start": "next start --port 3000",
     "test": "node --test tests/*.test.mjs",
     "test:users:e2e": "node --test tests/admin-users.e2e.mjs",
