@@ -1,17 +1,6 @@
-import { z } from 'zod'
+import type { ProblemDetails } from './problem-details-schema'
 
-export const problemDetailsSchema = z.object({
-  type: z.string().optional(),
-  title: z.string(),
-  status: z.number().int(),
-  detail: z.string().optional(),
-  instance: z.string().optional(),
-  code: z.string().default('HTTP_ERROR'),
-  traceId: z.string().optional(),
-  errors: z.record(z.string(), z.array(z.string())).optional(),
-})
-
-export type ProblemDetails = z.infer<typeof problemDetailsSchema>
+export type { ProblemDetails } from './problem-details-schema'
 
 export class ApiProblem extends Error {
   constructor(public readonly problem: ProblemDetails) {
@@ -28,6 +17,7 @@ export async function readProblemDetails(response: Response): Promise<ApiProblem
   }
 
   try {
+    const { problemDetailsSchema } = await import('./problem-details-schema')
     const parsed = problemDetailsSchema.safeParse(await response.json())
     return new ApiProblem(parsed.success ? parsed.data : fallback)
   } catch {
