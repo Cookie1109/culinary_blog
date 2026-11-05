@@ -37,7 +37,8 @@
     "react-dom": "19.3.0",
     "react-hook-form": "7.87.0",
     "zod": "4.6.7",
-    "zustand": "5.0.15"
+    "zustand": "5.0.15",
+    "web-vitals": "4.2.4"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
