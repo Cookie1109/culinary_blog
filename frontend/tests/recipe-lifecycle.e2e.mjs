@@ -38,9 +38,38 @@ test(
           return { context, page }
         }
         const email = 'owner@recipe-e2e.test'
-        const token = await register(email)
+        const registration = await browser.newContext({ baseURL })
+        const registerPage = await registration.newPage()
+        await registerPage.goto('/register')
+        await registerPage.locator('#name').fill('Recipe lifecycle author')
+        await registerPage.locator('#email').fill(email)
+        await registerPage.locator('#password').fill(password)
+        await registerPage.locator('#confirm').fill(password)
+        const registered = registerPage.waitForResponse(
+          (response) =>
+            new URL(response.url()).pathname.endsWith('/auth/register') &&
+            response.request().method() === 'POST',
+        )
+        await registerPage.getByRole('button', { name: 'Đăng ký tài khoản', exact: true }).click()
+        assert.equal((await registered).status(), 201)
+        await expect(registerPage).toHaveURL(/\/dashboard/)
+        assert.equal((await registration.request.get('/dashboard')).headers()['set-cookie'], undefined)
+        assert.equal((await registration.request.get('/api/auth/session')).headers()['set-cookie'], undefined)
+        await registerPage.getByRole('button', { name: 'Đăng xuất', exact: true }).click()
+        await expect
+          .poll(async () =>
+            Boolean((await (await registration.request.get('/api/auth/session')).json()).backendUser),
+          )
+          .toBe(false)
+        await registerPage.goto('/dashboard')
+        await expect(registerPage).toHaveURL(/\/login/)
+        await expect(registerPage.getByRole('main')).toBeVisible()
+        await registration.close()
+
         const otherToken = await register('other@recipe-e2e.test')
         const { context, page } = await login(email)
+        const token = (await (await context.request.get('/api/auth/session')).json()).accessToken
+        assert.ok(token)
         const title = 'Step3 lifecycle synthetic recipe'
         await page.goto('/dashboard/recipes/new')
         await page.locator('#title').fill('abc')
@@ -241,6 +270,9 @@ test(
         }
         await lifecycle('Xuất bản', '/publish')
         await visiblePublic(true)
+        await publicPage.goto(paths[3])
+        await expect(publicPage.getByRole('group', { name: 'Bộ lọc đang áp dụng' })).toBeVisible()
+        await expect(publicPage.getByRole('button', { name: new RegExp(`Từ khóa: ${title}`) })).toBeVisible()
         const publishedVersion = (await detail()).version
         assert.equal((await direct('/publish', 'PATCH')).status, 409)
         assert.equal((await detail()).version, publishedVersion)

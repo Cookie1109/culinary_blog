@@ -208,6 +208,8 @@ export async function withIsolatedApp({ media = false }, exercise) {
           'ef',
           'database',
           'update',
+          '--context',
+          'AppDbContext',
           '--project',
           'src/CulinaryBlog.Infrastructure',
           '--startup-project',

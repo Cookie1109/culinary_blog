@@ -52,7 +52,7 @@ public sealed class PublicCacheKeyTests
     public void DetailAndCategoryKeysUsePublicVersionedNamespace()
     {
         Assert.Equal("cb:v1:recipe:slug=pho-bo&locale=default", PublicCacheKeys.Recipe(" PHO-BO "));
-        Assert.Equal("cb:v1:categories:locale=default", PublicCacheKeys.Categories());
+        Assert.Equal("cb:v1:categories:locale=default", PublicCacheKeys.Categories);
         Assert.Equal(
             "cb:v1:category:slug=mon-viet&page=1&pageSize=12&locale=default",
             PublicCacheKeys.Category("Mon-Viet", 1, 12));

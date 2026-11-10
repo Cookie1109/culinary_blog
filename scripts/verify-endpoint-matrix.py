@@ -1,4 +1,4 @@
-"""Verify scoped runtime operations and all referenced current TRX cases; never infer missing assertions."""
+"""Verify all runtime operations and their referenced current TRX cases."""
 
 import argparse
 import json
@@ -33,8 +33,8 @@ def verify(matrix, contract, trx):
                 if not matches or any(outcome != "Passed" for outcome in matches):
                     raise ValueError(f"No complete passing TRX evidence: {symbol}")
                 references.add(symbol)
-    if "GET /api/v1/admin/users" not in seen:
-        raise ValueError("User directory is missing from the current matrix")
+    if operations - seen:
+        raise ValueError(f"Runtime operations missing from the matrix: {sorted(operations - seen)}")
     return {"operations": len(seen), "testSymbols": len(references), "runtimeInventory": len(operations)}
 
 

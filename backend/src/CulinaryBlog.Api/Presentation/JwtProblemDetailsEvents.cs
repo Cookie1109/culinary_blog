@@ -33,8 +33,10 @@ internal static class JwtProblemDetailsEvents
             {
                 context.HandleResponse();
                 var failure = context.HttpContext.Items[AuthenticationFailureKey] as Exception;
-                var code = failure is SecurityTokenExpiredException ? "AUTH_TOKEN_EXPIRED" :
-                    string.IsNullOrWhiteSpace(context.Request.Headers.Authorization) ? "AUTH_TOKEN_MISSING" : "AUTH_TOKEN_INVALID";
+                var invalidOrMissingCode = string.IsNullOrWhiteSpace(context.Request.Headers.Authorization)
+                    ? "AUTH_TOKEN_MISSING"
+                    : "AUTH_TOKEN_INVALID";
+                var code = failure is SecurityTokenExpiredException ? "AUTH_TOKEN_EXPIRED" : invalidOrMissingCode;
                 await WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, code, "Authentication required")
                     .ConfigureAwait(false);
             },
@@ -58,6 +60,6 @@ internal static class JwtProblemDetailsEvents
             code,
             correlationId = context.TraceIdentifier,
             traceId = context.TraceIdentifier,
-        });
+        }, context.RequestAborted);
     }
 }

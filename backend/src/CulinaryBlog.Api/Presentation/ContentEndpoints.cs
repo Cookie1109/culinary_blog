@@ -180,7 +180,7 @@ internal static class ContentEndpoints
     {
         var categories = await GetOrCreateCachedAsync(
             cache,
-            PublicCacheKeys.Categories(),
+            PublicCacheKeys.Categories,
             TimeSpan.FromMinutes(30),
             PublicCacheKeys.CategoryTags,
             contentService.ListCategoriesAsync,

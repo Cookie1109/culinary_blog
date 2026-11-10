@@ -47,6 +47,12 @@ class MatrixGateTests(unittest.TestCase):
             with self.subTest(group=group), self.assertRaises(ValueError):
                 self.check(["Passed"], matrix=matrix)
 
+    def test_unmapped_runtime_operation_is_rejected(self):
+        contract = copy.deepcopy(self.contract)
+        contract["paths"]["/api/v1/release"] = {"get": {}}
+        with self.assertRaisesRegex(ValueError, "Runtime operations missing"):
+            self.check(["Passed"], contract=contract)
+
 
 if __name__ == "__main__":
     unittest.main()

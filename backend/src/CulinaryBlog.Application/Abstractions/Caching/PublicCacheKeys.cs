@@ -12,7 +12,7 @@ public static class PublicCacheKeys
     public static readonly IReadOnlyCollection<string> RecipeTags = [RecipesTag, CategoriesTag];
     public static readonly IReadOnlyCollection<string> CategoryTags = [CategoriesTag, RecipesTag];
 
-    public static string Categories() => "cb:v1:categories:locale=default";
+    public const string Categories = "cb:v1:categories:locale=default";
 
     public static string Category(string slug, int page, int pageSize) =>
         $"cb:v1:category:slug={Normalize(slug)}&page={page.ToString(CultureInfo.InvariantCulture)}&pageSize={pageSize.ToString(CultureInfo.InvariantCulture)}&locale=default";

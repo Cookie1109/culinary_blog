@@ -69,7 +69,7 @@ internal sealed class AuthService(
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            Recipient = user.Email!,
+            Recipient = user.Email,
             DisplayName = user.DisplayName,
             Attempts = 0,
             CreatedAt = now,

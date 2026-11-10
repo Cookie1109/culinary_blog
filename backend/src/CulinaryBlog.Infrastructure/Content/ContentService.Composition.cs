@@ -45,7 +45,7 @@ internal sealed partial class ContentService
                 ingredients[index].MoveTo(index);
             }
             dbContext.RecipeIngredients.Add(ingredient);
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
         }
         catch (ContentProblemException)
@@ -96,7 +96,7 @@ internal sealed partial class ContentService
                 ingredients[index].MoveTo(index);
             }
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<IngredientDto>(ToIngredientDto(ingredient), recipe.Version);
         }
         catch (ContentProblemException)
@@ -149,7 +149,7 @@ internal sealed partial class ContentService
                 remaining[index].MoveTo(index);
             }
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             return recipe.Version;
         }
         catch (ContentProblemException)
@@ -190,7 +190,7 @@ internal sealed partial class ContentService
             var step = RecipeStep.Create(Guid.NewGuid(), recipeId, number, request.Title, request.Description, request.TimerMinutes, request.ImageUrl);
             dbContext.RecipeSteps.Add(step);
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
         }
         catch (ContentProblemException)
@@ -257,7 +257,7 @@ internal sealed partial class ContentService
             }
 
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<StepDto>(ToStepDto(step), recipe.Version);
         }
@@ -320,7 +320,7 @@ internal sealed partial class ContentService
             }
 
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return recipe.Version;
         }
@@ -372,7 +372,8 @@ internal sealed partial class ContentService
         EnsureVersion(recipe, expectedVersion);
         recipe.MarkCompositionChanged();
 
-        var temporaryPath = Path.GetTempFileName();
+        var temporaryDirectory = Directory.CreateTempSubdirectory("culinary-image-");
+        var temporaryPath = Path.Combine(temporaryDirectory.FullName, "content");
         string? objectKey = null;
         try
         {
@@ -406,7 +407,7 @@ internal sealed partial class ContentService
             var image = RecipeImage.Create(imageId, recipeId, objectKey, detectedContentType, altText, makePrimary, existingImages.Count);
             dbContext.RecipeImages.Add(image);
             dbContext.MediaOutbox.Add(CreateOutbox(MediaOutboxTypes.ResizeImage, new ResizeImagePayload(imageId)));
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<RecipeImageDto>(ToImageDto(image), recipe.Version);
         }
@@ -457,6 +458,7 @@ internal sealed partial class ContentService
         finally
         {
             File.Delete(temporaryPath);
+            temporaryDirectory.Delete();
         }
     }
 
@@ -502,7 +504,7 @@ internal sealed partial class ContentService
                 item.UpdateMetadata(item.Id == imageId ? request.AltText : item.AltText, item.Id == imageId ? makePrimary : item.IsPrimary, index);
             }
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new ChildMutationDto<RecipeImageDto>(ToImageDto(image), recipe.Version);
         }
@@ -570,7 +572,7 @@ internal sealed partial class ContentService
                 MediaOutboxTypes.DeleteObjects,
                 new DeleteObjectsPayload(new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey }.OfType<string>().ToArray())));
             recipe.MarkCompositionChanged();
-            await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+            await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return recipe.Version;
         }

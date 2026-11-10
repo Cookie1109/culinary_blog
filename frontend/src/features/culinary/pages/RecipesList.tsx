@@ -252,15 +252,15 @@ export function RecipesList({
         </button>
       </div>
       {(q || category || difficulty || maxTime > 0) && (
-        <div className="mb-3 flex flex-wrap gap-2" aria-label="Bộ lọc đang áp dụng">
+        <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Bộ lọc đang áp dụng">
           {q && (
             <button
               type="button"
-              aria-label="Bỏ từ khóa"
               onClick={clearSearch}
               className="flex max-w-full items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm text-primary"
             >
               <span className="truncate">Từ khóa: {q}</span>
+              <span className="sr-only">, bỏ từ khóa</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -269,9 +269,9 @@ export function RecipesList({
               type="button"
               onClick={() => setFilter('category', '')}
               className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm"
-              aria-label="Bỏ lọc danh mục"
             >
               {selectedCategory?.name ?? category}
+              <span className="sr-only">, bỏ lọc danh mục</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -280,9 +280,9 @@ export function RecipesList({
               type="button"
               onClick={() => setFilter('difficulty', '')}
               className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm"
-              aria-label="Bỏ lọc độ khó"
             >
               {difficulties.find((item) => item.value === difficulty)?.label ?? difficulty}
+              <span className="sr-only">, bỏ lọc độ khó</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -291,9 +291,9 @@ export function RecipesList({
               type="button"
               onClick={() => setFilter('maxTime', '')}
               className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm"
-              aria-label="Bỏ lọc thời gian"
             >
               Tối đa {maxTime} phút
+              <span className="sr-only">, bỏ lọc thời gian</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}

@@ -1,9 +1,18 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using CulinaryBlog.Application.Auth;
+using CulinaryBlog.Application.Media;
+using CulinaryBlog.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using NSubstitute;
 
 namespace CulinaryBlog.IntegrationTests;
 
@@ -31,6 +40,103 @@ public sealed class EndpointMatrixTests(AuthApiFactory factory) : IClassFixture<
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
             await File.WriteAllTextAsync(output, json);
+        }
+    }
+
+    [Theory]
+    [InlineData("/api/v1")]
+    [InlineData("/api/v1/release")]
+    [InlineData("/api/v1/operations/maintenance")]
+    public async Task SupportingReadsReturnDataAndRejectWrites(string path)
+    {
+        using var client = _app.CreateClient();
+        using var happy = await client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.OK, happy.StatusCode);
+        Assert.Contains("\"data\"", await happy.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        using var invalid = await client.PostAsJsonAsync(path, new { });
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, invalid.StatusCode);
+    }
+
+    [Fact]
+    public async Task SitemapReturnsStoredXmlOrNotFound()
+    {
+        using var client = _app.CreateClient();
+        await using var scope = _app.Services.CreateAsyncScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IFileStorageService>();
+        var key = scope.ServiceProvider.GetRequiredService<IOptions<SitemapOptions>>().Value.ObjectKey;
+        const string xml = "<?xml version=\"1.0\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"/>";
+        using var missing = await client.GetAsync("/api/v1/sitemap.xml");
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        using var input = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+        await storage.UploadAsync(key, input, input.Length, "application/xml", default);
+        using var happy = await client.GetAsync("/api/v1/sitemap.xml");
+        Assert.Equal(HttpStatusCode.OK, happy.StatusCode);
+        Assert.Equal("application/xml", happy.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(xml, await happy.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task GoogleAdapterValidatesInputAndReturnsTheServiceSession()
+    {
+        var auth = Substitute.For<IAuthService>();
+        var session = new AuthSessionDto(
+            "synthetic-access", "synthetic-refresh", DateTimeOffset.UtcNow.AddMinutes(1),
+            new UserDto("synthetic-user", "adapter@example.test", "Adapter", null, null, ["Author"], true, true, DateTimeOffset.UtcNow));
+        auth.LoginWithGoogleAsync("synthetic-provider-token", Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(session);
+        await using var app = factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IAuthService>();
+            services.AddSingleton(auth);
+        }));
+        using var client = app.CreateClient();
+        using var invalid = await client.PostAsJsonAsync("/api/v1/auth/google", new { idToken = string.Empty });
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalid.StatusCode);
+        Assert.Empty(auth.ReceivedCalls());
+        using var happy = await client.PostAsJsonAsync("/api/v1/auth/google", new { idToken = "synthetic-provider-token" });
+        Assert.Equal(HttpStatusCode.OK, happy.StatusCode);
+        var payload = await happy.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(session.AccessToken, payload.GetProperty("data").GetProperty("accessToken").GetString());
+    }
+
+    [Fact]
+    public async Task AccountEndpointsRejectDuplicateInvalidAndUnauthenticatedRequests()
+    {
+        using var client = _app.CreateClient();
+        var account = new { email = $"matrix-{Guid.NewGuid():N}@example.test", displayName = "Matrix Author", password = "Synthetic#Matrix123" };
+        using var created = await client.PostAsJsonAsync("/api/v1/auth/register", account);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        using var duplicate = await client.PostAsJsonAsync("/api/v1/auth/register", account);
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        using var invalid = await client.PostAsJsonAsync("/api/v1/auth/logout", new { refreshToken = string.Empty });
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalid.StatusCode);
+        using var privateProfile = await client.PatchAsJsonAsync("/api/v1/auth/me", new { displayName = "Unauthorized" });
+        Assert.Equal(HttpStatusCode.Unauthorized, privateProfile.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("POST", "/api/v1/categories")]
+    [InlineData("PUT", "/api/v1/categories/11111111-1111-1111-1111-111111111111")]
+    [InlineData("DELETE", "/api/v1/categories/11111111-1111-1111-1111-111111111111")]
+    public async Task CategoryWritesRequireAdmin(string method, string path)
+    {
+        using var client = _app.CreateClient();
+        using var registered = await client.PostAsJsonAsync("/api/v1/auth/register", new
+        {
+            email = $"matrix-{Guid.NewGuid():N}@example.test",
+            displayName = "Matrix Author",
+            password = "Synthetic#Matrix123",
+        });
+        Assert.Equal(HttpStatusCode.Created, registered.StatusCode);
+        var payload = await registered.Content.ReadFromJsonAsync<JsonElement>();
+        var author = payload.GetProperty("data").GetProperty("accessToken").GetString();
+        foreach (var (token, expected) in new[] { ((string?)null, HttpStatusCode.Unauthorized), (author, HttpStatusCode.Forbidden) })
+        {
+            using var request = new HttpRequestMessage(new HttpMethod(method), path);
+            request.Headers.Authorization = token is null ? null : new AuthenticationHeaderValue("Bearer", token);
+            request.Content = JsonContent.Create(new { name = "Test category", orderIndex = 0 });
+            using var response = await client.SendAsync(request);
+            Assert.Equal(expected, response.StatusCode);
         }
     }
 

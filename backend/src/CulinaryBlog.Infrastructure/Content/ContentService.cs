@@ -235,7 +235,7 @@ internal sealed partial class ContentService(
             request.Difficulty,
             request.Instructions,
             ToNutrition(request.Nutrition));
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }
 
@@ -261,7 +261,7 @@ internal sealed partial class ContentService(
             .ConfigureAwait(false);
 
         recipe.Publish(timeProvider.GetUtcNow(), categoryExists, ingredientCount, stepNumbers);
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
         ContentMetrics.RecipePublished.Add(1);
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }
@@ -276,7 +276,7 @@ internal sealed partial class ContentService(
         var recipe = await FindRecipeForMutationAsync(id, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
         recipe.Unpublish();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
         ContentMetrics.RecipeUnpublished.Add(1);
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }
@@ -291,7 +291,7 @@ internal sealed partial class ContentService(
         var recipe = await FindRecipeForMutationAsync(id, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
         recipe.Archive();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }
 
@@ -305,7 +305,7 @@ internal sealed partial class ContentService(
         var recipe = await FindRecipeForMutationAsync(id, userId, isAdmin, cancellationToken).ConfigureAwait(false);
         EnsureVersion(recipe, expectedVersion);
         recipe.Unarchive();
-        await SaveRecipeMutationAsync(recipe, cancellationToken).ConfigureAwait(false);
+        await SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
         return await MapRecipeAsync(recipe, cancellationToken).ConfigureAwait(false);
     }
 
@@ -412,7 +412,11 @@ internal sealed partial class ContentService(
         ValidatePage(page, pageSize);
         var stopwatch = Stopwatch.StartNew();
         var query = dbContext.Recipes.AsNoTracking().Where(recipe => recipe.Status == RecipeStatus.Published);
-        var rawTerms = Regex.Matches((search ?? string.Empty).Normalize(NormalizationForm.FormKC), @"[\p{L}\p{N}]+")
+        var rawTerms = Regex.Matches(
+            (search ?? string.Empty).Normalize(NormalizationForm.FormKC),
+            @"[\p{L}\p{N}]+",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(1))
             .Select(match => match.Value).Take(20).ToArray();
         var terms = rawTerms.Select(RemoveAccents).ToArray();
         if (!string.IsNullOrWhiteSpace(search) && terms.Length == 0)
@@ -450,8 +454,10 @@ internal sealed partial class ContentService(
             foreach (var term in accentedTerms)
             {
                 var pattern = @"\m" + Regex.Escape(term) + @"\M";
-                accentedMatches = accentedMatches.Where(recipe =>
-                    Regex.IsMatch(recipe.Title, pattern, RegexOptions.IgnoreCase));
+                // Npgsql translates this expression to SQL, where the database command timeout applies.
+#pragma warning disable S6444
+                accentedMatches = accentedMatches.Where(recipe => Regex.IsMatch(recipe.Title, pattern, RegexOptions.IgnoreCase));
+#pragma warning restore S6444
             }
 
             if (accentedTerms.Length > 0 && await accentedMatches.AnyAsync(cancellationToken).ConfigureAwait(false))
@@ -667,7 +673,7 @@ internal sealed partial class ContentService(
         return recipe;
     }
 
-    private async Task SaveRecipeMutationAsync(Recipe recipe, CancellationToken cancellationToken)
+    private async Task SaveRecipeMutationAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -950,7 +956,7 @@ internal sealed partial class ContentService(
                 }
             }
 
-            var first = imagesForCategory.First();
+            var first = imagesForCategory[0];
             imageByCategory[category.Id] = MediaUrl(first.ImageId, first.HasMedium ? "medium" : "original");
         }
 

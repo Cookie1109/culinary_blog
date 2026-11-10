@@ -53,3 +53,11 @@ Given Author A sở hữu Recipe, when Author B gọi private read/write/delete 
 ## Completion rule
 
 Mỗi journey phải chạy trên staging với PostgreSQL, Redis, MinIO và Hangfire thật; không dùng in-memory database. Release bị chặn nếu một journey không pass hoặc có Critical/High security defect chưa được chấp nhận chính thức.
+
+## Kiểm thử chấp nhận cho issue #25
+
+Chạy `npm --prefix frontend run test:completion:e2e` để kiểm hồi quy trên API, PostgreSQL, Redis và MinIO cô lập. Bài `recipe-lifecycle.e2e.mjs` kiểm đăng ký trên UI, đăng xuất, đăng nhập lại, lưu nháp, xuất bản, tìm kiếm và quyền truy cập. Ma trận FR nối các luồng với màn hình, API và test. Bộ seed mặc định có 100 công thức Việt Nam và 5 tác giả, kiểm bằng `FunctionalRegressionSeedTests`. [Ma trận truy vết](06_Traceability_Matrix.md)
+
+Trên bản thử đã xác định phiên bản, Product Owner đăng ký một tài khoản thử, đăng xuất và kiểm dashboard yêu cầu đăng nhập lại. Sau khi đăng nhập, tạo bản nháp với một nguyên liệu và một bước, xuất bản rồi tìm theo tên trong cửa sổ ẩn danh. Xác nhận kết quả hoặc ghi lại bước lỗi cùng phiên bản đã thử.
+
+Ngày 11/11/2026, Product Owner xác nhận đã thử và chấp nhận bản chạy tại `http://localhost:18080` trong project Compose riêng `culinary-issues-25-29-uat`. Image ID API `sha256:f9335b163755e3c6fbe914a1b0d7b789923589330277cf8e7a48070d591d3d86`, image ID Web `sha256:a8470a8d92ce8cc6d7b654b0ba5b93c2aae3746a987db99bbecd2c0243125d0c`.
