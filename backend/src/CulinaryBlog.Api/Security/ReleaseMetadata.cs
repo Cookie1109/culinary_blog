@@ -67,7 +67,8 @@ public sealed record ReleaseMetadata(
     private static void RequirePattern(string? value, string key, string pattern, ICollection<string> failures)
     {
         if (string.IsNullOrWhiteSpace(value)
-            || !System.Text.RegularExpressions.Regex.IsMatch(value, pattern))
+            || !System.Text.RegularExpressions.Regex.IsMatch(
+                value, pattern, System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)))
         {
             failures.Add($"{key} must contain a valid deployment identity");
         }

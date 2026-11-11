@@ -127,16 +127,10 @@ public sealed class AuditLogService(
             Path.Combine(AppContext.BaseDirectory, "logs"),
         };
 
-        foreach (var dir in logDirs)
-        {
-            if (Directory.Exists(dir))
-            {
-                return Directory.GetFiles(dir, "api-*.json")
-                    .OrderByDescending(File.GetLastWriteTimeUtc);
-            }
-        }
-
-        return [];
+        var dir = Array.Find(logDirs, Directory.Exists);
+        return dir is null
+            ? []
+            : Directory.GetFiles(dir, "api-*.json").OrderByDescending(File.GetLastWriteTimeUtc);
     }
 
     private static List<AuditLogEntryDto> ReadEntriesFromFile(string filePath)
@@ -163,9 +157,9 @@ public sealed class AuditLogService(
                     ? lProp.GetString() ?? "Information"
                     : "Information";
 
-                var message = root.TryGetProperty("@m", out var mProp)
-                    ? mProp.GetString() ?? string.Empty
-                    : (root.TryGetProperty("@mt", out var mtProp) ? mtProp.GetString() ?? string.Empty : string.Empty);
+                var hasMessage = root.TryGetProperty("@m", out var messageProperty)
+                    || root.TryGetProperty("@mt", out messageProperty);
+                var message = hasMessage ? messageProperty.GetString() ?? string.Empty : string.Empty;
 
                 var correlationId = root.TryGetProperty("CorrelationId", out var cProp) ? cProp.GetString() : null;
                 var userId = root.TryGetProperty("UserId", out var uProp) ? uProp.GetString() : null;
@@ -204,12 +198,9 @@ public sealed class AuditLogService(
                 }
 
                 var properties = new Dictionary<string, string>();
-                foreach (var prop in root.EnumerateObject())
+                foreach (var prop in root.EnumerateObject().Where(property => !property.Name.StartsWith('@')))
                 {
-                    if (!prop.Name.StartsWith('@'))
-                    {
-                        properties[prop.Name] = prop.Value.ToString();
-                    }
+                    properties[prop.Name] = prop.Value.ToString();
                 }
 
                 result.Add(new AuditLogEntryDto(

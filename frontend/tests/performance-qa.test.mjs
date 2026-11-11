@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import test from 'node:test'
-import { gzipSync } from 'node:zlib'
+import { firstLoadJavaScript } from '../scripts/bundle-budget.mjs'
 
 const source = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 
@@ -84,18 +84,9 @@ test('P6-22 & P6-23: All built routes strictly satisfy the <= 200 KB First Load 
 
   const MAX_GZIP_BYTES = 200 * 1024
 
-  for (const [route, chunks] of Object.entries(pages)) {
-    let totalGzipBytes = 0
-    const uniqueChunks = Array.from(new Set(chunks))
-
-    for (const chunk of uniqueChunks) {
-      const chunkPath = join(nextDir, chunk)
-      if (existsSync(chunkPath)) {
-        const content = readFileSync(chunkPath)
-        totalGzipBytes += gzipSync(content).length
-      }
-    }
-
+  for (const { route, gzipBytes: totalGzipBytes } of firstLoadJavaScript(pages, (chunk) =>
+    readFileSync(join(nextDir, chunk)),
+  )) {
     assert.ok(
       totalGzipBytes <= MAX_GZIP_BYTES,
       `Route ${route} exceeds 200 KB gzip budget: ${(totalGzipBytes / 1024).toFixed(1)} kB`,

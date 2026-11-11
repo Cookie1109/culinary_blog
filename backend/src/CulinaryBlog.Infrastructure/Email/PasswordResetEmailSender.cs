@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.Mail;
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Infrastructure.Configuration;
@@ -27,18 +26,12 @@ internal sealed partial class PasswordResetEmailSender(
             Body = $"Bạn đã yêu cầu đặt lại mật khẩu Culinary Blog.\n\nMở liên kết sau trong vòng 30 phút:\n{link}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.",
         };
         message.To.Add(email);
-        using var client = new SmtpClient(options.Host, options.Port)
-        {
-            EnableSsl = options.EnableSsl,
-            UseDefaultCredentials = false,
-            Credentials = string.IsNullOrWhiteSpace(options.Username)
-                ? null : new NetworkCredential(options.Username, options.Password),
-        };
         try
         {
+            using var client = SmtpClientFactory.Create(options);
             await client.SendMailAsync(message, cancellationToken).ConfigureAwait(false);
         }
-        catch (SmtpException)
+        catch (Exception exception) when (exception is SmtpException or InvalidOperationException)
         {
             // Do not expose whether an address exists or log reset tokens.
             DeliveryFailed(logger);

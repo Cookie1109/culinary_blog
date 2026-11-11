@@ -238,6 +238,7 @@ export function AppLayout() {
               ) : (
                 <Link
                   to="/login"
+                  aria-label="Đăng nhập"
                   className="flex items-center gap-2 text-sm font-medium tracking-wide uppercase hover:text-primary transition-colors"
                 >
                   <span className="hidden sm:inline">Đăng nhập</span>

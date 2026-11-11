@@ -1,9 +1,21 @@
 using System.Reflection;
+using ArchUnitNET.Loader;
+using ArchUnitNET.xUnit;
+using static ArchUnitNET.Fluent.ArchRuleDefinition;
+using Architecture = ArchUnitNET.Domain.Architecture;
 
 namespace CulinaryBlog.ArchitectureTests;
 
 public sealed class DependencyDirectionTests
 {
+    private static readonly Assembly Domain = CulinaryBlog.Domain.AssemblyReference.Assembly;
+    private static readonly Assembly Application = CulinaryBlog.Application.AssemblyReference.Assembly;
+    private static readonly Assembly Infrastructure = typeof(CulinaryBlog.Infrastructure.DependencyInjection).Assembly;
+    private static readonly Assembly Api = typeof(Program).Assembly;
+    private static readonly Architecture Architecture = new ArchLoader()
+        .LoadAssemblies(Domain, Application, Infrastructure, Api)
+        .Build();
+
     [Fact]
     public void DomainHasNoProjectOrThirdPartyDependencies()
     {
@@ -15,18 +27,20 @@ public sealed class DependencyDirectionTests
     [Fact]
     public void ApplicationDoesNotReferenceInfrastructureOrApi()
     {
-        var references = GetReferenceNames(CulinaryBlog.Application.AssemblyReference.Assembly);
-
-        Assert.DoesNotContain("CulinaryBlog.Infrastructure", references);
-        Assert.DoesNotContain("CulinaryBlog.Api", references);
+        Types().That().ResideInAssembly(Application).Should()
+            .NotDependOnAny(Types().That().ResideInAssembly(Infrastructure))
+            .Check(Architecture);
+        Types().That().ResideInAssembly(Application).Should()
+            .NotDependOnAny(Types().That().ResideInAssembly(Api))
+            .Check(Architecture);
     }
 
     [Fact]
     public void InfrastructureDoesNotReferenceApi()
     {
-        var references = GetReferenceNames(typeof(CulinaryBlog.Infrastructure.DependencyInjection).Assembly);
-
-        Assert.DoesNotContain("CulinaryBlog.Api", references);
+        Types().That().ResideInAssembly(Infrastructure).Should()
+            .NotDependOnAny(Types().That().ResideInAssembly(Api))
+            .Check(Architecture);
     }
 
     private static string[] GetNonPlatformReferences(Assembly assembly) =>
@@ -36,10 +50,5 @@ public sealed class DependencyDirectionTests
                 !name.StartsWith("System", StringComparison.Ordinal) &&
                 !name.StartsWith("Microsoft", StringComparison.Ordinal) &&
                 !name.Equals("netstandard", StringComparison.Ordinal))
-            .ToArray();
-
-    private static string[] GetReferenceNames(Assembly assembly) =>
-        assembly.GetReferencedAssemblies()
-            .Select(reference => reference.Name ?? string.Empty)
             .ToArray();
 }

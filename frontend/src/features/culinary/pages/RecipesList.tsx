@@ -226,7 +226,7 @@ export function RecipesList({
           <button
             disabled={isPending}
             type="submit"
-            className="h-14 bg-primary px-8 text-sm font-semibold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90"
+            className="h-14 bg-primary px-8 sm:w-44 text-sm font-semibold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {isPending ? 'Đang tìm…' : 'Tìm kiếm'}
           </button>
@@ -237,8 +237,8 @@ export function RecipesList({
         <FieldError id="recipes-search-error" message={searchError} />
       </header>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 lg:hidden">
-        <p className="min-w-0 max-w-full break-words text-sm" aria-live="polite">
+      <div className="mb-6 flex min-h-11 items-center justify-between gap-3 lg:hidden">
+        <p className="line-clamp-2 min-w-0 flex-1 break-words text-sm" aria-live="polite">
           {searchSummary}
         </p>
         <button
@@ -246,21 +246,25 @@ export function RecipesList({
           aria-expanded={filtersOpen}
           aria-controls="recipes-filters"
           onClick={() => setFiltersOpen((open) => !open)}
-          className="border border-border px-4 py-2 text-sm"
+          className="shrink-0 border border-border px-4 py-2 text-sm"
         >
           {filtersOpen ? 'Ẩn bộ lọc' : 'Bộ lọc'}
         </button>
       </div>
-      {(q || category || difficulty || maxTime > 0) && (
-        <div className="mb-3 flex flex-wrap gap-2" aria-label="Bộ lọc đang áp dụng">
+      <div className="mb-6 flex h-14 items-center gap-3">
+        <div
+          className="flex min-w-0 flex-1 gap-2 overflow-x-auto"
+          role="group"
+          aria-label="Bộ lọc đang áp dụng"
+        >
           {q && (
             <button
               type="button"
-              aria-label="Bỏ từ khóa"
               onClick={clearSearch}
-              className="flex max-w-full items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm text-primary"
+              className="flex max-w-full shrink-0 items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm text-foreground"
             >
               <span className="truncate">Từ khóa: {q}</span>
+              <span className="sr-only">, bỏ từ khóa</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -268,10 +272,10 @@ export function RecipesList({
             <button
               type="button"
               onClick={() => setFilter('category', '')}
-              className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm"
-              aria-label="Bỏ lọc danh mục"
+              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-sm"
             >
               {selectedCategory?.name ?? category}
+              <span className="sr-only">, bỏ lọc danh mục</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -279,10 +283,10 @@ export function RecipesList({
             <button
               type="button"
               onClick={() => setFilter('difficulty', '')}
-              className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm"
-              aria-label="Bỏ lọc độ khó"
+              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-sm"
             >
               {difficulties.find((item) => item.value === difficulty)?.label ?? difficulty}
+              <span className="sr-only">, bỏ lọc độ khó</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -290,27 +294,27 @@ export function RecipesList({
             <button
               type="button"
               onClick={() => setFilter('maxTime', '')}
-              className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm"
-              aria-label="Bỏ lọc thời gian"
+              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-sm"
             >
               Tối đa {maxTime} phút
+              <span className="sr-only">, bỏ lọc thời gian</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
         </div>
-      )}
-      {(q || category || difficulty || maxTime || sort !== 'newest') && (
-        <button
-          type="button"
-          onClick={() => {
-            setFiltersOpen(false)
-            startTransition(() => setSearchParams(new URLSearchParams(), { replace: false, scroll: false }))
-          }}
-          className="mb-6 text-sm text-primary underline"
-        >
-          Xóa tìm kiếm và bộ lọc
-        </button>
-      )}
+        {(q || category || difficulty || maxTime || sort !== 'newest') && (
+          <button
+            type="button"
+            onClick={() => {
+              setFiltersOpen(false)
+              startTransition(() => setSearchParams(new URLSearchParams(), { replace: false, scroll: false }))
+            }}
+            className="shrink-0 text-sm text-primary underline"
+          >
+            Xóa tìm kiếm và bộ lọc
+          </button>
+        )}
+      </div>
 
       <div className="grid gap-10 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8 xl:gap-12">
         <aside
@@ -424,7 +428,7 @@ export function RecipesList({
           ref={resultsRef}
           tabIndex={-1}
           aria-busy={isPending}
-          className="scroll-mt-24"
+          className="min-h-[calc(100svh-6rem)] scroll-mt-24"
           aria-label="Danh sách công thức"
         >
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">

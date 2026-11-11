@@ -13,7 +13,7 @@ RUN rm -rf frontend/.next/standalone/node_modules/@img/sharp-wasm32 \
     frontend/.next/standalone/node_modules/@img/sharp-linuxmusl-x64 \
     frontend/.next/standalone/node_modules/@img/sharp-libvips-linuxmusl-x64
 
-FROM gcr.io/distroless/nodejs22-debian13:nonroot@sha256:ec2313763dd43931543bd03830466e0c409ce73a487e8d46f10db72d3b816c1c AS runtime
+FROM gcr.io/distroless/nodejs22-debian13:nonroot@sha256:1b90ca047c3a1046ad3527998c747c25b6a88dde91ba8c71b98669d5813aaa21 AS runtime
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0

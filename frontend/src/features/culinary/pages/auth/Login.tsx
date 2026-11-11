@@ -41,7 +41,7 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
   }
 
   return (
-    <div className="grid min-h-svh grid-cols-1 lg:grid-cols-2">
+    <main className="grid min-h-svh grid-cols-1 lg:grid-cols-2">
       {/* Left: editorial panel */}
       <div className="hidden lg:block relative overflow-hidden bg-background">
         <img
@@ -223,6 +223,6 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

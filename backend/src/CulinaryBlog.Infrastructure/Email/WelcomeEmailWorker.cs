@@ -69,6 +69,7 @@ internal sealed class WelcomeEmailWorker(
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            // A host shutdown is not an email delivery failure.
         }
         catch (Exception exception)
         {
@@ -90,11 +91,7 @@ internal sealed class WelcomeEmailWorker(
             };
             mailMessage.To.Add(message.Recipient);
 
-            using var smtpClient = new SmtpClient(emailOptions.Host, emailOptions.Port)
-            {
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = true,
-            };
+            using var smtpClient = SmtpClientFactory.Create(emailOptions);
             await smtpClient.SendMailAsync(mailMessage, cancellationToken).ConfigureAwait(false);
             message.SentAt = timeProvider.GetUtcNow();
             message.LastError = null;

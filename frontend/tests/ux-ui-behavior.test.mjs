@@ -1093,7 +1093,12 @@ test('recipe search shows plain cards and removes one filter without losing the 
       /Khớp mô tả|Khớp không dấu|Khớp tên và mô tả|Tên món gần đúng/,
     )
     assert.equal(document.querySelectorAll('article mark').length, 0)
-    await click(document.querySelector('[aria-label="Bỏ lọc danh mục"]'))
+    const filters = document.querySelector('[role="group"][aria-label="Bộ lọc đang áp dụng"]')
+    const categoryFilter = [...filters.querySelectorAll('button')].find((button) =>
+      button.textContent.includes('bỏ lọc danh mục'),
+    )
+    assert.ok(categoryFilter)
+    await click(categoryFilter)
     assert.equal(h.getSearch().has('category'), false)
     assert.equal(h.getSearch().has('page'), false)
     assert.equal(h.getSearch().get('q'), 'ga')

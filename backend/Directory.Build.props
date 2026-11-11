@@ -16,4 +16,7 @@
     <IsTestProject>true</IsTestProject>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <ItemGroup Condition="'$(IsTestProject)' != 'true'">
+    <PackageReference Include="SonarAnalyzer.CSharp" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

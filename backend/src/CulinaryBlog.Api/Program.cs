@@ -207,4 +207,9 @@ finally
     await Log.CloseAndFlushAsync().ConfigureAwait(false);
 }
 
-public partial class Program;
+public partial class Program
+{
+    protected Program()
+    {
+    }
+}
