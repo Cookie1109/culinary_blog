@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
+using Npgsql;
 using Testcontainers.Minio;
 
 namespace CulinaryBlog.IntegrationTests;
@@ -63,6 +64,12 @@ public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
             });
         });
         using var startup = App.CreateClient();
+        var connectionString = App.Services.GetRequiredService<IConfiguration>().GetConnectionString("Database");
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        PostgreSqlObjectsInstaller.Install(connection);
+        await using var schemaCheck = new NpgsqlCommand("SELECT to_regclass('hangfire.job') IS NOT NULL", connection);
+        Assert.True(await schemaCheck.ExecuteScalarAsync() is true);
         _ = App.Services.GetRequiredService<JobStorage>();
     }
 

@@ -58,7 +58,7 @@ test(
         await registerPage.getByRole('button', { name: 'Đăng xuất', exact: true }).click()
         await expect
           .poll(async () =>
-            Boolean((await (await registration.request.get('/api/auth/session')).json()).backendUser),
+            Boolean((await (await registration.request.get('/api/auth/session')).json())?.backendUser),
           )
           .toBe(false)
         await registerPage.goto('/dashboard')

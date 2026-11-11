@@ -8,6 +8,23 @@ const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 })
 
+const isVercel = process.env.VERCEL === '1'
+const apiBaseUrl = (process.env.INTERNAL_API_BASE_URL ?? 'http://localhost:5000/api/v1').replace(/\/+$/, '')
+if (isVercel) {
+  const endpoint = process.env.INTERNAL_API_BASE_URL && new URL(apiBaseUrl)
+  if (
+    !endpoint ||
+    endpoint.protocol !== 'https:' ||
+    endpoint.username ||
+    endpoint.password ||
+    endpoint.search ||
+    endpoint.hash
+  )
+    throw new Error(
+      'Vercel requires an absolute HTTPS INTERNAL_API_BASE_URL without credentials, query or fragment',
+    )
+}
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -72,11 +89,11 @@ const nextConfig = {
     ]
   },
   async rewrites() {
-    return process.env.NODE_ENV === 'development'
+    return process.env.NODE_ENV === 'development' || isVercel
       ? [
           {
             source: '/api/v1/:path*',
-            destination: `${process.env.INTERNAL_API_BASE_URL ?? 'http://localhost:5000/api/v1'}/:path*`,
+            destination: `${apiBaseUrl}/:path*`,
           },
         ]
       : []

@@ -46,10 +46,13 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 }
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const WebVitals =
+    process.env.WEB_VITALS_ENABLED === 'true' ? (await import('@/components/web-vitals')).WebVitals : null
   return (
     <html lang="vi" className={`${inter.variable} ${playfairDisplay.variable}`}>
       <body>
+        {WebVitals && <WebVitals />}
         <Providers>{children}</Providers>
       </body>
     </html>
