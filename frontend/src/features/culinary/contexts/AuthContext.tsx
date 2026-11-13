@@ -15,6 +15,7 @@ import type { AuthUser } from '@/lib/api/auth-types'
 import { clearRefreshToken, readRefreshToken, storeRefreshToken } from '@/lib/api/session-token-store'
 
 export interface User {
+  hasPassword?: boolean
   id: string
   name: string
   email: string
@@ -29,13 +30,14 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
-  updateProfile: (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => Promise<void>
+  updateProfile: (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>, avatarFile?: File) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
 function mapUser(user: AuthUser): User {
   return {
+    hasPassword: user.hasPassword,
     id: user.id,
     name: user.displayName,
     email: user.email,
@@ -140,13 +142,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.removeQueries()
   }
 
-  const updateProfile = async (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => {
-    await updateRemoteProfile({
-      displayName: data.name ?? user?.name ?? '',
-      ...(data.bio !== undefined ? { bio: data.bio } : {}),
-      ...(data.avatar !== undefined ? { avatarUrl: data.avatar } : {}),
-    })
-    await update()
+  const updateProfile = async (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>, avatarFile?: File) => {
+    await updateRemoteProfile(
+      {
+        displayName: data.name ?? user?.name ?? '',
+        ...(data.bio !== undefined ? { bio: data.bio } : {}),
+        ...(data.avatar !== undefined ? { avatarUrl: data.avatar || null } : {}),
+      },
+      avatarFile,
+    )
+    await update({})
   }
 
   return (

@@ -1,4 +1,5 @@
 export interface AuthUser {
+  hasPassword?: boolean
   id: string
   email: string
   displayName: string

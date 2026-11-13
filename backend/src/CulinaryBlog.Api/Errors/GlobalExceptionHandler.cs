@@ -105,7 +105,7 @@ internal sealed class GlobalExceptionHandler(
             "AUTH_ACCOUNT_LOCKED" => StatusCodes.Status423Locked,
             "AUTH_ACCOUNT_DISABLED" => StatusCodes.Status403Forbidden,
             "AUTH_GOOGLE_UNAVAILABLE" or "AUTH_EMAIL_UNAVAILABLE" => StatusCodes.Status503ServiceUnavailable,
-            "AUTH_CURRENT_PASSWORD_INVALID" or "AUTH_RESET_TOKEN_INVALID" => StatusCodes.Status400BadRequest,
+            "AUTH_CURRENT_PASSWORD_INVALID" or "AUTH_PASSWORD_NOT_SET" or "AUTH_RESET_TOKEN_INVALID" => StatusCodes.Status400BadRequest,
             "USER_NOT_FOUND" => StatusCodes.Status404NotFound,
             "AUTH_GOOGLE_TOKEN_INVALID" or "AUTH_GOOGLE_EMAIL_UNVERIFIED" => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status401Unauthorized,

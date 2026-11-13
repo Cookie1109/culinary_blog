@@ -38,7 +38,8 @@ public sealed record UserDto(
     IReadOnlyCollection<string> Roles,
     bool EmailConfirmed,
     bool IsActive,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool HasPassword = true);
 
 public sealed record AuthSessionDto(
     string AccessToken,
@@ -50,6 +51,13 @@ public sealed record DataEnvelope<T>(T Data);
 
 public interface IAuthService
 {
+    Task<UserDto> UpdateProfileAvatarAsync(
+        string userId, UpdateProfileRequest request, Stream content, long length,
+        string contentType, CancellationToken cancellationToken);
+
+    Task<CulinaryBlog.Application.Content.MediaFileDto> OpenProfileAvatarAsync(
+        string userId, string fileName, CancellationToken cancellationToken);
+
     Task<AuthSessionDto> RegisterAsync(
         RegisterRequest request,
         string? ipAddress,

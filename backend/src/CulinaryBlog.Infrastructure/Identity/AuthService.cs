@@ -1,4 +1,6 @@
 using CulinaryBlog.Application.Auth;
+using CulinaryBlog.Application.Media;
+using Microsoft.Extensions.Logging;
 using CulinaryBlog.Infrastructure.Email;
 using CulinaryBlog.Infrastructure.Persistence;
 using FluentValidation;
@@ -11,7 +13,7 @@ using Microsoft.Extensions.Options;
 
 namespace CulinaryBlog.Infrastructure.Identity;
 
-internal sealed class AuthService(
+internal sealed partial class AuthService(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
     AppDbContext dbContext,
@@ -19,7 +21,10 @@ internal sealed class AuthService(
     IOptions<JwtOptions> jwtOptions,
     IConfiguration configuration,
     IPasswordResetEmailSender passwordResetEmailSender,
-    TimeProvider timeProvider) : IAuthService
+    TimeProvider timeProvider,
+    IFileStorageService fileStorage,
+    IOptions<CulinaryBlog.Infrastructure.Configuration.SitemapOptions> siteOptions,
+    ILogger<AuthService> logger) : IAuthService
 {
     private const string AuthorRole = "Author";
 
@@ -313,6 +318,11 @@ internal sealed class AuthService(
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var user = await FindActiveUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        if (!await userManager.HasPasswordAsync(user).ConfigureAwait(false))
+        {
+            throw new AuthProblemException("AUTH_PASSWORD_NOT_SET", "This account uses Google sign-in and has no local password.");
+        }
+
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword).ConfigureAwait(false);
         if (result.Errors.Any(error => error.Code == "PasswordMismatch"))
         {
@@ -390,6 +400,7 @@ internal sealed class AuthService(
             user.DisplayName = request.DisplayName!.Trim();
         }
 
+        var previousAvatar = user.AvatarUrl;
         if (request.UpdateAvatarUrl)
         {
             user.AvatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl) ? null : request.AvatarUrl.Trim();
@@ -402,6 +413,11 @@ internal sealed class AuthService(
 
         var result = await userManager.UpdateAsync(user).ConfigureAwait(false);
         ThrowIfIdentityFailed(result);
+        if (request.UpdateAvatarUrl && !string.Equals(previousAvatar, user.AvatarUrl, StringComparison.Ordinal))
+        {
+            await TryDeleteAvatarAsync(user.Id.ToString(), previousAvatar).ConfigureAwait(false);
+        }
+
         return await ToDtoAsync(user).ConfigureAwait(false);
     }
 
@@ -448,7 +464,8 @@ internal sealed class AuthService(
             roles.ToArray(),
             user.EmailConfirmed,
             user.IsActive,
-            user.CreatedAt);
+            user.CreatedAt,
+            await userManager.HasPasswordAsync(user).ConfigureAwait(false));
     }
 
     private async Task<ApplicationUser> FindActiveUserAsync(string userId, CancellationToken cancellationToken)
