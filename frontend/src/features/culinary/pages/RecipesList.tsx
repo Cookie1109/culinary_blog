@@ -311,7 +311,11 @@ export function RecipesList({
         </button>
       </div>
       <div className="mb-6 flex h-14 items-center gap-3">
-        <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto" aria-label="Bộ lọc đang áp dụng">
+        <div
+          role="group"
+          className="flex min-w-0 flex-1 gap-2 overflow-x-auto"
+          aria-label="Bộ lọc đang áp dụng"
+        >
           {q && (
             <button
               type="button"

@@ -348,8 +348,8 @@ test(
         browserAuthor.page.on('request', (request) => {
           if (request.url().includes('/api/v1/admin/audit-logs')) forbiddenAuditReads += 1
         })
-        await browserAuthor.page.goto('/dashboard/audit')
-        await expect.poll(() => new URL(browserAuthor.page.url()).pathname).toBe('/dashboard')
+        const forbiddenPage = await browserAuthor.page.goto('/dashboard/audit')
+        assert.equal(forbiddenPage.status(), 403)
         await expect(
           browserAuthor.page.getByRole('heading', { name: 'Lịch sử hệ thống', exact: true }),
         ).toHaveCount(0)
@@ -357,7 +357,8 @@ test(
         const guest = await browser.newContext({ baseURL })
         const guestPage = await guest.newPage()
         await guestPage.goto('/dashboard/audit')
-        await expect.poll(() => new URL(guestPage.url()).pathname).toBe('/login')
+        await expect.poll(() => new URL(guestPage.url()).pathname).toBe('/auth/login')
+        assert.equal(new URL(guestPage.url()).searchParams.get('returnTo'), '/dashboard/audit')
         logs = await readApiLogs()
         const serialized = JSON.stringify(logs)
         for (const secret of secrets.filter(Boolean))

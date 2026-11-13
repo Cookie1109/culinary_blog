@@ -258,7 +258,7 @@ test('E2E-04 publish and unpublish invalidate all public views', async ({ page, 
       await admin.close()
     }
     await page.goto(editor)
-    await page.getByRole('button', { name: 'Gỡ xuất bản', exact: true }).click()
+    await page.getByRole('button', { name: 'Gỡ', exact: true }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click()
     await expect(page.getByText('Bản nháp', { exact: true }).first()).toBeVisible()
     for (const route of [
@@ -519,6 +519,7 @@ test('mobile touch menu keeps keyboard focus, closes with Escape and restores fo
     await expect(dialog).toBeVisible()
     await page.keyboard.press('Escape')
     await register(page, 'G05 Touch')
+    await page.goto('/dashboard')
     await page.locator('summary').tap()
     await expect(page.getByRole('navigation', { name: 'Điều hướng quản lý trên điện thoại' })).toBeVisible()
     const dashboardMenu = await new AxeBuilder({ page })

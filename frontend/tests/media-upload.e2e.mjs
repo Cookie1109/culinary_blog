@@ -65,6 +65,7 @@ test(
         assert.equal(response.status(), 201)
         images.push({ ...(await response.json()).data, format })
         await expect(input).toHaveValue('')
+        await expect(input).toBeEnabled()
       }
       await expect(gallery).toHaveCount(4)
       async function detail() {

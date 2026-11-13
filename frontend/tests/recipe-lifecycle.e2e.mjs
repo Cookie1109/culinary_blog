@@ -119,6 +119,10 @@ test(
           await page.getByRole('button', { name: label, exact: true }).click()
           assert.equal((await response).status(), status)
           await expect.poll(async () => (await detail()).version).toBeGreaterThan(1)
+          if (suffix.includes('/ingredients'))
+            await expect(page.getByRole('textbox', { name: 'Tên nguyên liệu', exact: true })).toHaveValue('')
+          if (suffix.includes('/steps'))
+            await expect(page.getByRole('textbox', { name: 'Tiêu đề bước', exact: true })).toHaveValue('')
         }
         await expect(page.getByRole('button', { name: 'Xuất bản', exact: true })).toBeDisabled()
         assert.equal((await direct('/publish', 'PATCH')).status, 422)
@@ -128,7 +132,7 @@ test(
           'true',
         )
         await page.getByRole('textbox', { name: 'Tên nguyên liệu', exact: true }).fill('Rice')
-        await page.getByRole('textbox', { name: 'Số lượng', exact: true }).fill('200')
+        await page.getByRole('spinbutton', { name: 'Số lượng', exact: true }).fill('200')
         await write('Thêm nguyên liệu', 'POST', '/ingredients', 201)
         await expect(page.locator('article').filter({ hasText: 'Rice' })).toBeVisible()
         await page
