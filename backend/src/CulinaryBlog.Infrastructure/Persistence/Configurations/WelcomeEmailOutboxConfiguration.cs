@@ -13,6 +13,7 @@ internal sealed class WelcomeEmailOutboxConfiguration : IEntityTypeConfiguration
         builder.Property(message => message.Recipient).HasMaxLength(256).IsRequired();
         builder.Property(message => message.DisplayName).HasMaxLength(100).IsRequired();
         builder.Property(message => message.LastError).HasMaxLength(1000);
+        builder.Property(message => message.JobId).HasMaxLength(100);
         builder.HasIndex(message => new { message.SentAt, message.NextAttemptAt });
     }
 }

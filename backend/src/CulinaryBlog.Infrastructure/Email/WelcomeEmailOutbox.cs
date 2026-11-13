@@ -2,6 +2,8 @@ namespace CulinaryBlog.Infrastructure.Email;
 
 public sealed class WelcomeEmailOutbox
 {
+    public string? JobId { get; set; }
+
     public Guid Id { get; set; }
 
     public Guid UserId { get; set; }

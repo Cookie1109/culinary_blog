@@ -1,6 +1,5 @@
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Media;
-using Microsoft.Extensions.Logging;
 using CulinaryBlog.Infrastructure.Email;
 using CulinaryBlog.Infrastructure.Persistence;
 using FluentValidation;
@@ -9,6 +8,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace CulinaryBlog.Infrastructure.Identity;
@@ -203,6 +203,16 @@ internal sealed partial class AuthService(
                 };
                 ThrowIfIdentityFailed(await userManager.CreateAsync(user).ConfigureAwait(false));
                 ThrowIfIdentityFailed(await userManager.AddToRoleAsync(user, AuthorRole).ConfigureAwait(false));
+                dbContext.WelcomeEmailOutbox.Add(new WelcomeEmailOutbox
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Recipient = payload.Email,
+                    DisplayName = user.DisplayName,
+                    Attempts = 0,
+                    CreatedAt = user.CreatedAt,
+                    NextAttemptAt = user.CreatedAt,
+                });
             }
 
             ThrowIfIdentityFailed(await userManager.AddLoginAsync(

@@ -41,7 +41,7 @@ export function Register() {
     try {
       setError('')
       await register(name.trim(), email.trim(), password)
-      navigate('/dashboard')
+      navigate('/')
     } catch {
       setError('Đăng ký thất bại. Vui lòng thử lại.')
     }

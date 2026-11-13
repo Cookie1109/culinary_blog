@@ -135,7 +135,12 @@ public static class DependencyInjection
         services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
         services.AddScoped<IAuthorizationHandler, RecipeAuthorizationHandler>();
         services.AddScoped<DatabaseInitializer>();
-        services.AddHostedService<WelcomeEmailWorker>();
+        if (backgroundJobsEnabled)
+        {
+            services.AddHostedService<WelcomeEmailWorker>();
+        }
+
+        services.AddTransient<WelcomeEmailJob>();
         services.AddTransient<ImageProcessingJob>();
         services.AddTransient<ObjectDeletionJob>();
         services.AddTransient<ImageReconciliationJob>();
