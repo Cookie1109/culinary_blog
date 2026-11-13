@@ -10,7 +10,7 @@ async function register(page: Page, name: string) {
   await page.locator('#password').fill(password)
   await page.locator('#confirm').fill(password)
   await page.getByRole('button', { name: 'Đăng ký tài khoản', exact: true }).click()
-  await expect(page).toHaveURL(/dashboard/)
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/')
   return email
 }
 async function login(page: Page, email: string, secret = password) {
@@ -18,10 +18,11 @@ async function login(page: Page, email: string, secret = password) {
   await page.locator('#email').fill(email)
   await page.locator('#password').fill(secret)
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-  await expect(page).toHaveURL(/dashboard/)
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/')
 }
 
 async function logout(page: Page) {
+  await page.goto('/dashboard')
   const signedOut = page.waitForResponse(
     (response) => response.url().includes('/api/auth/signout') && response.ok(),
   )
@@ -79,16 +80,14 @@ async function createDraft(page: Page, title: string) {
     .getByRole('button', { name: /4\. Hình ảnh/ })
     .first()
     .click()
-  await page.locator('#recipe-image').setInputFiles('e2e/fixtures/recipe.png')
-  await page.getByRole('textbox', { name: 'Mô tả ảnh', exact: true }).fill('Ảnh synthetic của món phở')
   const image = page.waitForResponse(
     (response) => response.url().endsWith('/images') && response.status() === 201,
   )
-  await page.getByRole('button', { name: 'Tải ảnh lên', exact: true }).click()
+  await page.locator('#recipe-image').setInputFiles('e2e/fixtures/recipe.png')
   await image
   await expect(page.getByText('Thư viện ảnh của công thức (1)')).toBeVisible()
   await page.getByRole('button', { name: /5\. Xem trước & Xuất bản/ }).click()
-  await expect(page.getByRole('button', { name: 'Xuất bản công thức', exact: true })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Xuất bản', exact: true })).toBeEnabled()
   await expect(page).toHaveURL(/step=preview/)
   return recipe
 }
@@ -210,7 +209,7 @@ test('E2E-04 publish and unpublish invalidate all public views', async ({ page, 
   const title = 'G05 Phở xuất bản'
   const recipe = await createDraft(page, title)
   const editor = page.url()
-  await page.getByRole('button', { name: 'Xuất bản công thức', exact: true }).click()
+  await page.getByRole('button', { name: 'Xuất bản', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click()
   await expect(page.getByText('Đã xuất bản', { exact: true }).first()).toBeVisible()
   const guest = await browser.newContext()
@@ -279,7 +278,7 @@ test('E2E-04 publish and unpublish invalidate all public views', async ({ page, 
         .not.toContain(title)
     }
     expect((await publicPage.goto(`/recipes/${recipe.slug}`))?.status()).toBe(404)
-    await page.getByRole('button', { name: 'Xuất bản công thức', exact: true }).click()
+    await page.getByRole('button', { name: 'Xuất bản', exact: true }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click()
     await expect(page.getByText('Đã xuất bản', { exact: true }).first()).toBeVisible()
     await page.getByRole('button', { name: 'Lưu trữ', exact: true }).click()

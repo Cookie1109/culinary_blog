@@ -52,9 +52,10 @@ test(
         )
         await registerPage.getByRole('button', { name: 'Đăng ký tài khoản', exact: true }).click()
         assert.equal((await registered).status(), 201)
-        await expect(registerPage).toHaveURL(/\/dashboard/)
+        await expect.poll(() => new URL(registerPage.url()).pathname).toBe('/')
         assert.equal((await registration.request.get('/dashboard')).headers()['set-cookie'], undefined)
         assert.equal((await registration.request.get('/api/auth/session')).headers()['set-cookie'], undefined)
+        await registerPage.goto('/dashboard')
         await registerPage.getByRole('button', { name: 'Đăng xuất', exact: true }).click()
         await expect
           .poll(async () =>
@@ -127,7 +128,7 @@ test(
           'true',
         )
         await page.getByRole('textbox', { name: 'Tên nguyên liệu', exact: true }).fill('Rice')
-        await page.getByRole('spinbutton', { name: 'Số lượng', exact: true }).fill('200')
+        await page.getByRole('textbox', { name: 'Số lượng', exact: true }).fill('200')
         await write('Thêm nguyên liệu', 'POST', '/ingredients', 201)
         await expect(page.locator('article').filter({ hasText: 'Rice' })).toBeVisible()
         await page
@@ -150,11 +151,13 @@ test(
         await page.getByRole('textbox', { name: 'Mô tả bước', exact: true }).fill('Cook slowly until tender.')
         await write('Lưu bước', 'PUT', `/steps/${(await detail()).steps[0].id}`, 200)
         await stage('4\\. Hình ảnh')
+        const uploaded = page.waitForResponse(
+          (response) => response.request().method() === 'POST' && response.url().endsWith('/images'),
+        )
         await page
           .locator('#recipe-image')
           .setInputFiles({ name: 'dish.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
-        await page.getByRole('textbox', { name: 'Mô tả ảnh', exact: true }).fill('Synthetic rice image')
-        await write('Tải ảnh lên', 'POST', '/images', 201)
+        assert.equal((await uploaded).status(), 201)
         await expect.poll(async () => (await detail()).images[0]?.processingStatus).toBe('ready')
         const saved = await detail()
         // A new authenticated browser session proves persistence beyond client memory.

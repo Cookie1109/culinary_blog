@@ -12,7 +12,7 @@ namespace CulinaryBlog.IntegrationTests;
 public sealed class MigrationUpgradeTests : IAsyncLifetime
 {
     private const string PreviousReleaseMigration = "20260922150000_RecipeSearchVector";
-    private const string ReleaseCandidateMigration = "20261029172426_RecipeTitleSortIndex";
+    private const string ReleaseCandidateMigration = "20261112212150_FractionalStepTimers";
 
     private readonly PostgreSqlContainer postgresSql = new PostgreSqlBuilder("postgres:16.10-bookworm")
         .WithDatabase("culinary_blog_migration_upgrade_test")

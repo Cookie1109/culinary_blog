@@ -71,19 +71,17 @@ test('P7-08: Admin recipe listing and actions wire /admin/recipes, author displa
   assert.match(myRecipesSource, /invalidateQueries\(\{\s*queryKey:\s*\['admin-recipes'\]\s*\}\)/)
 })
 
-test('P7-10: Dashboard layout and configuration wire Hangfire operations for admin', async () => {
+test('P7-10: Hangfire stays outside dashboard navigation and remains restricted to admin networks', async () => {
   const layoutSource = await readFile(
     new URL('../src/features/culinary/components/layout/DashboardLayout.tsx', import.meta.url),
     'utf8',
   )
 
-  assert.match(
+  assert.doesNotMatch(
     layoutSource,
-    /Tác vụ nền \(Hangfire\)/,
-    'Dashboard layout must provide Hangfire Jobs link for admin',
+    /Tác vụ nền \(Hangfire\)|href="\/jobs"/,
+    'Operational jobs must not appear in account navigation',
   )
-  assert.match(layoutSource, /\/jobs/, 'Hangfire link must target /jobs')
-  assert.match(layoutSource, /user\?\.role === 'admin'/, 'Hangfire link must be gated to admin users')
 
   const filterSource = await readFile(
     new URL(

@@ -8,8 +8,10 @@ namespace CulinaryBlog.Infrastructure.Media;
 /// <summary>Validates uploaded recipe and profile images.</summary>
 internal static class ImageUpload
 {
+    /// <summary>The maximum permitted image length in bytes.</summary>
     internal const long MaximumBytes = 5 * 1024 * 1024;
 
+    /// <summary>Maps accepted MIME types to their canonical file extensions.</summary>
     internal static readonly IReadOnlyDictionary<string, string> Extensions =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -20,6 +22,10 @@ internal static class ImageUpload
         };
 
     /// <summary>Copies an image while enforcing the upload limit.</summary>
+    /// <param name="source">The uploaded image stream.</param>
+    /// <param name="path">The temporary destination file.</param>
+    /// <param name="cancellationToken">Cancels the copy operation.</param>
+    /// <returns>A task that completes when the bounded copy finishes.</returns>
     internal static async Task CopyToLimitedFileAsync(Stream source, string path, CancellationToken cancellationToken)
     {
         await using var destination = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 64 * 1024, true);
@@ -39,6 +45,9 @@ internal static class ImageUpload
     }
 
     /// <summary>Checks image signatures, dimensions and decoding.</summary>
+    /// <param name="path">The temporary image file to inspect.</param>
+    /// <param name="cancellationToken">Cancels image validation.</param>
+    /// <returns>The MIME type detected from the validated image.</returns>
     internal static Task<string> DetectImageContentTypeAsync(string path, CancellationToken cancellationToken)
     {
         try
@@ -81,5 +90,4 @@ internal static class ImageUpload
             throw new ContentProblemException("FILE_SIGNATURE_INVALID", "The uploaded file is not a valid image.", ContentProblemKind.BadRequest);
         }
     }
-
 }

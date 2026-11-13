@@ -115,11 +115,12 @@ test('P7-04: Confirmation UX is implemented for publish, unpublish, archive, una
 
   // Wizard modal checks
   assert.match(wizardSource, /<Modal/, 'Wizard must render confirm dialog')
-  assert.match(wizardSource, /Xác nhận xuất bản công thức/, 'Wizard must confirm publication')
+  assert.match(wizardSource, /Xác nhận xóa nội dung/, 'Wizard must confirm content deletion')
 
   // Editor modal checks
   assert.match(editorSource, /<Modal/, 'Editor must render dialogs')
   assert.match(editorSource, /confirmModal/, 'Editor must manage confirmModal state')
+  assert.match(editorSource, /Xác nhận xuất bản công thức/, 'Editor must confirm publication')
 })
 
 test('P7-05: Validation summary checklist calculates criteria and provides deep link navigation', async () => {
@@ -146,13 +147,13 @@ test('P7-05: Validation summary checklist calculates criteria and provides deep 
 
   // Verify deep links to wizard steps
   assert.match(wizardSource, /onNavigateToStep/)
-  assert.match(wizardSource, /Chuyển đến: \{item\.stepLabel\}/)
 
   const editorSource = await readFile(
     new URL('../src/features/culinary/pages/dashboard/RecipeEditor.tsx', import.meta.url),
     'utf8',
   )
   assert.match(editorSource, /handleDeepLink/, 'Editor must provide handleDeepLink function')
+  assert.match(editorSource, /Đến bước \{item\.stepLabel\.split/)
   assert.match(editorSource, /Tổng hợp điều kiện xuất bản/, 'Editor must render validation summary banner')
 })
 

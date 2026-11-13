@@ -1,44 +1,55 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Net;
 using System.Net.Sockets;
 using CulinaryBlog.Application.Media;
 using CulinaryBlog.Infrastructure.Configuration;
 using CulinaryBlog.Infrastructure.Media;
+using CulinaryBlog.Infrastructure.Persistence;
 using CulinaryBlog.IntegrationTests.Fixtures;
-using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
-using Npgsql;
 using Testcontainers.Minio;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Represents the recipe media fixture.</summary>
 public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
 {
-    private readonly AuthApiFactory factory = new();
-    public MinioContainer Minio { get; } = new MinioBuilder(MinioTestImage.Name)
-        .WithUsername("media-test").WithPassword("synthetic-media-only").WithPortBinding(ReservePort(), 9000).Build();
-    public WebApplicationFactory<Program> App { get; private set; } = null!;
-    public ControlledMediaStorage Storage { get; private set; } = null!;
+    /// <summary>The bucket.</summary>
     public const string Bucket = "media-test";
+    private readonly AuthApiFactory factory = new();
     private IMinioClient client = null!;
 
+    /// <summary>Gets the minio.</summary>
+    public MinioContainer Minio { get; } = new MinioBuilder(MinioTestImage.Name)
+        .WithUsername("media-test").WithPassword("synthetic-media-only").WithPortBinding(ReservePort(), 9000).Build();
+
+    /// <summary>Gets the app.</summary>
+    public WebApplicationFactory<Program> App { get; private set; } = null!;
+
+    /// <summary>Gets the storage.</summary>
+    public ControlledMediaStorage Storage { get; private set; } = null!;
+
+    /// <summary>Performs the initialize operation.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task InitializeAsync()
     {
         await MinioTestImage.PrepareAsync();
-        await Task.WhenAll(factory.InitializeAsync(), Minio.StartAsync());
-        client = new MinioClient().WithEndpoint(Minio.Hostname, Minio.GetMappedPublicPort(9000))
+        await Task.WhenAll(this.factory.InitializeAsync(), this.Minio.StartAsync());
+        this.client = new MinioClient().WithEndpoint(this.Minio.Hostname, this.Minio.GetMappedPublicPort(9000))
             .WithCredentials("media-test", "synthetic-media-only").WithTimeout(2000).Build();
-        await client.MakeBucketAsync(new MakeBucketArgs().WithBucket(Bucket));
-        Storage = new ControlledMediaStorage(new MinioFileStorageService(client, Options.Create(new ObjectStorageOptions { BucketName = Bucket })));
-        App = factory.WithWebHostBuilder(builder =>
+        await this.client.MakeBucketAsync(new MakeBucketArgs().WithBucket(Bucket));
+        this.Storage = new ControlledMediaStorage(new MinioFileStorageService(this.client, Options.Create(new ObjectStorageOptions { BucketName = Bucket })));
+        this.App = this.factory.WithWebHostBuilder(builder =>
         {
             builder.UseSetting("RateLimiting:GlobalPermitLimit", "10000");
             builder.UseSetting("RateLimiting:AuthPermitLimit", "1000");
@@ -46,43 +57,32 @@ public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IFileStorageService>();
-                services.AddSingleton<IFileStorageService>(Storage);
-                // Each test host needs its own storage; JobStorage.Current is shared across parallel fixtures.
-                services.RemoveAll<JobStorage>();
-                services.AddSingleton<JobStorage>(provider =>
-                {
-                    var options = new PostgreSqlStorageOptions { PrepareSchemaIfNecessary = true };
-                    return new PostgreSqlStorage(new Hangfire.PostgreSql.Factories.NpgsqlConnectionFactory(
-                        provider.GetRequiredService<IConfiguration>().GetConnectionString("Database"), options, null), options);
-                });
-                services.RemoveAll<IBackgroundJobClient>();
-                services.AddSingleton<IBackgroundJobClient>(provider =>
-                {
-                    _ = provider.GetRequiredService<IGlobalConfiguration>();
-                    return new BackgroundJobClient(provider.GetRequiredService<JobStorage>());
-                });
+                services.AddSingleton<IFileStorageService>(this.Storage);
             });
         });
-        using var startup = App.CreateClient();
-        var connectionString = App.Services.GetRequiredService<IConfiguration>().GetConnectionString("Database");
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
-        PostgreSqlObjectsInstaller.Install(connection);
-        await using var schemaCheck = new NpgsqlCommand("SELECT to_regclass('hangfire.job') IS NOT NULL", connection);
-        Assert.True(await schemaCheck.ExecuteScalarAsync() is true);
-        _ = App.Services.GetRequiredService<JobStorage>();
+        using var startup = this.App.CreateClient();
+        await using var scope = this.App.Services.CreateAsyncScope();
+        var options = new PostgreSqlStorageOptions { PrepareSchemaIfNecessary = true };
+        _ = new PostgreSqlStorage(
+            new Hangfire.PostgreSql.Factories.NpgsqlConnectionFactory(
+                scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.GetConnectionString(), options, null),
+            options);
     }
 
+    /// <summary>Performs the dispose operation.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task DisposeAsync()
     {
-        await App.DisposeAsync();
-        await factory.DisposeAsync();
-        await ((IAsyncLifetime)factory).DisposeAsync();
-        client.Dispose();
-        await Minio.DisposeAsync();
+        await this.App.DisposeAsync();
+        await this.factory.DisposeAsync();
+        await ((IAsyncLifetime)this.factory).DisposeAsync();
+        this.client.Dispose();
+        await this.Minio.DisposeAsync();
     }
 
-    ValueTask IAsyncDisposable.DisposeAsync() => new(DisposeAsync());
+    /// <summary>Performs the dispose operation.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
+    ValueTask IAsyncDisposable.DisposeAsync() => new(this.DisposeAsync());
 
     private static int ReservePort()
     {
@@ -90,28 +90,4 @@ public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
         listener.Start();
         return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
-}
-
-public sealed class ControlledMediaStorage(IFileStorageService inner) : IFileStorageService
-{
-    public bool FailVariants { get; set; }
-    public bool FailAfterOriginal { get; set; }
-    public bool FailDeletes { get; set; }
-    public Func<string, Task>? AfterUpload { get; set; }
-
-    public async Task UploadAsync(string objectKey, Stream content, long length, string contentType, CancellationToken cancellationToken)
-    {
-        if (FailVariants && objectKey.EndsWith(".webp", StringComparison.Ordinal) && !objectKey.Contains("original", StringComparison.Ordinal))
-            throw new IOException("Controlled variant failure.");
-        await inner.UploadAsync(objectKey, content, length, contentType, cancellationToken);
-        if (FailAfterOriginal && objectKey.Contains("original", StringComparison.Ordinal))
-            throw new IOException("Controlled failure after original storage.");
-        if (AfterUpload is not null) await AfterUpload(objectKey);
-    }
-
-    public Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken) => inner.OpenReadAsync(objectKey, cancellationToken);
-    public Task DeleteAsync(string objectKey, CancellationToken cancellationToken) => FailDeletes
-        ? Task.FromException(new IOException("Controlled deletion failure.")) : inner.DeleteAsync(objectKey, cancellationToken);
-    public Task<bool> ExistsAsync(string objectKey, CancellationToken cancellationToken) => inner.ExistsAsync(objectKey, cancellationToken);
-    public IAsyncEnumerable<string> ListKeysAsync(string prefix, CancellationToken cancellationToken) => inner.ListKeysAsync(prefix, cancellationToken);
 }

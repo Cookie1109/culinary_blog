@@ -1,11 +1,17 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Users;
 using MediatR;
 
 namespace CulinaryBlog.Api.Presentation;
 
+/// <summary>Represents the admin users endpoints.</summary>
 internal static class AdminUsersEndpoints
 {
+    /// <summary>Maps admin users endpoints.</summary>
+    /// <param name="endpoints">The endpoints supplied to this operation.</param>
+    /// <returns>The map admin users endpoints result.</returns>
     public static IEndpointRouteBuilder MapAdminUsersEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/api/v1/admin/users", ListAsync)
@@ -27,7 +33,11 @@ internal static class AdminUsersEndpoints
     }
 
     private static async Task<IResult> ListAsync(
-        ISender sender, CancellationToken cancellationToken,
-        string? search = null, string? role = null, int page = 1, int pageSize = 20) =>
+        ISender sender,
+        CancellationToken cancellationToken,
+        string? search = null,
+        string? role = null,
+        int page = 1,
+        int pageSize = 20) =>
         Results.Ok(await sender.Send(new ListAdminUsersQuery(search, role, page, pageSize), cancellationToken).ConfigureAwait(false));
 }

@@ -18,7 +18,6 @@ test('content-client exports publishing lifecycle patch methods', async () => {
 test('recipe dashboard components wire publish and unpublish actions', async () => {
   const components = [
     'src/features/culinary/pages/dashboard/RecipeEditor.tsx',
-    'src/features/culinary/pages/dashboard/RecipeCompositionWizard.tsx',
     'src/features/culinary/pages/dashboard/MyRecipes.tsx',
   ]
 

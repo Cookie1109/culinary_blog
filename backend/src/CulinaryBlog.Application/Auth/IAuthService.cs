@@ -104,6 +104,13 @@ public interface IAuthService
         CancellationToken cancellationToken);
 
     /// <summary>Updates a profile with an uploaded avatar.</summary>
+    /// <param name="userId">The authenticated account to update.</param>
+    /// <param name="request">The accompanying profile fields.</param>
+    /// <param name="content">The uploaded image stream.</param>
+    /// <param name="length">The declared image length in bytes.</param>
+    /// <param name="contentType">The declared image MIME type.</param>
+    /// <param name="cancellationToken">Cancels the update operation.</param>
+    /// <returns>The updated user profile.</returns>
     Task<UserDto> UpdateProfileAvatarAsync(
         string userId,
         UpdateProfileRequest request,
@@ -113,5 +120,9 @@ public interface IAuthService
         CancellationToken cancellationToken);
 
     /// <summary>Reads the current public avatar for an active account.</summary>
+    /// <param name="userId">The account whose current avatar is requested.</param>
+    /// <param name="fileName">The unique file name of the current avatar.</param>
+    /// <param name="cancellationToken">Cancels the read operation.</param>
+    /// <returns>The image stream and MIME type.</returns>
     Task<MediaFileDto> OpenProfileAvatarAsync(string userId, string fileName, CancellationToken cancellationToken);
 }

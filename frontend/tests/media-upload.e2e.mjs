@@ -53,16 +53,14 @@ test(
       const gallery = page.locator('section[aria-labelledby="composition-heading"] article')
       const images = []
       for (const [format, base64] of Object.entries(fixtures)) {
+        const uploaded = page.waitForResponse(
+          (response) => response.url().endsWith('/images') && response.request().method() === 'POST',
+        )
         await input.setInputFiles({
           name: `dish.${format}`,
           mimeType: `image/${format === 'jpg' ? 'jpeg' : format}`,
           buffer: Buffer.from(base64, 'base64'),
         })
-        await page.getByRole('textbox', { name: 'Mô tả ảnh', exact: true }).fill(`Ảnh ${format}`)
-        const uploaded = page.waitForResponse(
-          (response) => response.url().endsWith('/images') && response.request().method() === 'POST',
-        )
-        await page.getByRole('button', { name: 'Tải ảnh lên', exact: true }).click()
         const response = await uploaded
         assert.equal(response.status(), 201)
         images.push({ ...(await response.json()).data, format })
@@ -87,35 +85,39 @@ test(
         .toBe(300)
       await gallery.nth(1).getByRole('button', { name: 'Đặt làm ảnh chính', exact: true }).click()
       await expect(gallery.nth(1).getByRole('button', { name: 'Ảnh chính', exact: true })).toBeVisible()
-      const alt = gallery.nth(1).getByRole('textbox', { name: 'Alt text', exact: true })
-      const edited = page.waitForResponse(
-        (response) => response.request().method() === 'PATCH' && response.url().includes('/images/'),
-      )
-      await alt.fill('Ảnh chính đã cập nhật')
-      await alt.press('Tab')
-      await edited
+      await expect(gallery.nth(1).locator('img')).toHaveAttribute('alt', 'Công thức kiểm thử upload ảnh')
+      const edited = await fetch(`${api}/api/v1/recipes/${recipeId}/images/${images[1].id}`, {
+        method: 'PATCH',
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+          'If-Match': `"${(await detail()).version}"`,
+        },
+        body: JSON.stringify({ altText: 'Ảnh chính đã cập nhật', isPrimary: true, orderIndex: 1 }),
+      })
+      assert.equal(edited.status, 200)
       await expect
         .poll(async () => (await detail()).images.find((image) => image.id === images[1].id).altText)
         .toBe('Ảnh chính đã cập nhật')
 
-      await input.setInputFiles({
+      await page.reload()
+      await expect(gallery.nth(1).locator('img')).toHaveAttribute('alt', 'Ảnh chính đã cập nhật')
+      const retryFile = {
         name: 'retry.avif',
         mimeType: 'image/avif',
         buffer: Buffer.from(fixtures.avif, 'base64'),
-      })
-      await page.getByRole('textbox', { name: 'Mô tả ảnh', exact: true }).fill('Giữ mô tả khi storage lỗi')
+      }
       await command('docker', ['stop', minio.id])
       try {
         const failure = page.waitForResponse(
           (response) => response.url().endsWith('/images') && response.status() === 503,
         )
-        await page.getByRole('button', { name: 'Tải ảnh lên', exact: true }).click()
+        await input.setInputFiles(retryFile)
         await failure
         await expect(page.getByRole('alert').filter({ hasText: 'Không thể tải ảnh' })).toBeVisible()
-        await expect(page.getByRole('textbox', { name: 'Mô tả ảnh', exact: true })).toHaveValue(
-          'Giữ mô tả khi storage lỗi',
-        )
-        assert.equal(await input.evaluate((element) => element.files[0].name), 'retry.avif')
+        await expect(gallery).toHaveCount(4)
+        await expect(input).toBeEnabled()
+        await expect(input).toHaveValue('')
       } finally {
         await command('docker', ['start', minio.id])
       }
@@ -131,18 +133,18 @@ test(
       const retried = page.waitForResponse(
         (response) => response.url().endsWith('/images') && response.status() === 201,
       )
-      await page.getByRole('button', { name: 'Tải ảnh lên', exact: true }).click()
+      await input.setInputFiles(retryFile)
       await retried
       await expect(input).toHaveValue('')
       await expect(gallery).toHaveCount(5)
       await expect
         .poll(async () => (await detail()).images.every((image) => image.processingStatus === 'ready'))
         .toBe(true)
-      page.once('dialog', (dialog) => dialog.accept())
       const removed = page.waitForResponse(
         (response) => response.request().method() === 'DELETE' && response.url().includes('/images/'),
       )
       await gallery.nth(1).getByRole('button', { name: 'Xóa ảnh', exact: true }).click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Xóa nội dung', exact: true }).click()
       await removed
       await expect(gallery).toHaveCount(4)
       await expect

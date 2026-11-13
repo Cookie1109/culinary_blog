@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Behaviors;
 using CulinaryBlog.Application.Content;
@@ -8,10 +10,14 @@ using NSubstitute;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for completion regression tests.</summary>
 public sealed class CompletionRegressionTests
 {
     private static readonly string[] StepFields = ["Description", "StepNumber", "TimerMinutes", "Title"];
     private static readonly string[] ImageFields = ["AltText", "OrderIndex"];
+
+    /// <summary>Verifies that public list preserves all filters pagination and cancellation.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task PublicListPreservesAllFiltersPaginationAndCancellation()
     {
@@ -24,6 +30,10 @@ public sealed class CompletionRegressionTests
         await repository.Received(1).ListPublishedRecipesAsync(request.CategoryId, RecipeDifficulty.Hard, 45, 2, 5, 30, "-prepTime", 3, 20, request.Category, request.MaxTime, cancellation.Token);
     }
 
+    /// <summary>Verifies that step validation allows optional safe images and rejects executable urls.</summary>
+    /// <param name="imageUrl">The image url supplied to this operation.</param>
+    /// <param name="valid">The valid supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [Theory]
     [InlineData(null, true)]
     [InlineData("https://example.test/step.png", true)]
@@ -34,14 +44,19 @@ public sealed class CompletionRegressionTests
     {
         var result = await new StepWriteRequestValidator().ValidateAsync(new StepWriteRequest("Cook", "Cook rice", 0, imageUrl, 1));
         Assert.Equal(valid, result.IsValid);
-        if (!valid) Assert.Contains(result.Errors, error => error.PropertyName == "ImageUrl");
+        if (!valid)
+        {
+            Assert.Contains(result.Errors, error => error.PropertyName == "ImageUrl");
+        }
     }
 
+    /// <summary>Verifies that composition rejects invalid fields and accepts optional metadata.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task CompositionRejectsInvalidFieldsAndAcceptsOptionalMetadata()
     {
         var steps = new StepWriteRequestValidator();
-        var invalid = await steps.ValidateAsync(new StepWriteRequest("", "", -1, null, 0));
+        var invalid = await steps.ValidateAsync(new StepWriteRequest(string.Empty, string.Empty, -1, null, 0));
         Assert.Equal(StepFields, invalid.Errors.Select(error => error.PropertyName).Order().ToArray());
         Assert.True((await steps.ValidateAsync(new StepWriteRequest("Cook", "Cook rice", null, null))).IsValid);
         var images = new ImageMetadataRequestValidator();
@@ -51,17 +66,22 @@ public sealed class CompletionRegressionTests
         Assert.Equal(ImageFields, imageErrors.Errors.Select(error => error.PropertyName).Order().ToArray());
     }
 
+    /// <summary>Verifies that slow failure still warns without logging request payload.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task SlowFailureStillWarnsWithoutLoggingRequestPayload()
     {
         var logger = new CaptureLogger();
         var behavior = new PerformanceBehavior<PrivateRequest, string>(logger);
         var error = new IOException("Synthetic failure");
-        var thrown = await Assert.ThrowsAsync<IOException>(() => behavior.Handle(new PrivateRequest("synthetic-private-value"), async cancellationToken =>
-        {
-            await Task.Delay(550, cancellationToken);
-            throw error;
-        }, default));
+        var thrown = await Assert.ThrowsAsync<IOException>(() => behavior.Handle(
+            new PrivateRequest("synthetic-private-value"),
+            async cancellationToken =>
+            {
+                await Task.Delay(550, cancellationToken);
+                throw error;
+            },
+            default));
         Assert.Same(error, thrown);
         Assert.Equal(LogLevel.Warning, logger.Level);
         Assert.Contains(nameof(PrivateRequest), logger.Message, StringComparison.Ordinal);
@@ -69,16 +89,22 @@ public sealed class CompletionRegressionTests
     }
 
     private sealed record PrivateRequest(string Password);
+
     private sealed class CaptureLogger : ILogger<PerformanceBehavior<PrivateRequest, string>>
     {
         public LogLevel Level { get; private set; }
         public string Message { get; private set; } = string.Empty;
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+            => null;
+
         public bool IsEnabled(LogLevel logLevel) => true;
+
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            Level = logLevel;
-            Message = formatter(state, exception);
+            this.Level = logLevel;
+            this.Message = formatter(state, exception);
         }
     }
 }

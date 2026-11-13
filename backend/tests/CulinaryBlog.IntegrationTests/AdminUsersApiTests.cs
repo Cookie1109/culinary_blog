@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -15,6 +17,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for admin users api tests.</summary>
+/// <param name="factory">The factory supplied to this operation.</param>
 public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<AuthApiFactory>
 {
     private const string Password = "Synthetic#Users123";
@@ -22,16 +26,18 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
     private static readonly string[] SafeFields = ["createdAt", "displayName", "email", "id", "isActive", "roles"];
     private static readonly string[] QueryNames = ["page", "pageSize", "role", "search"];
 
+    /// <summary>Verifies that directory rejects guest authors inactive and demoted admins.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task DirectoryRejectsGuestAuthorsInactiveAndDemotedAdmins()
     {
         using var client = factory.CreateClient();
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/v1/admin/users")).StatusCode);
-        var author = await CreateSessionAsync(false);
+        var author = await this.CreateSessionAsync(false);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", author.AccessToken);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/v1/admin/users")).StatusCode);
 
-        var admin = await CreateSessionAsync(true);
+        var admin = await this.CreateSessionAsync(true);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", admin.AccessToken);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/v1/admin/users")).StatusCode);
         await using var scope = factory.Services.CreateAsyncScope();
@@ -45,18 +51,20 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/v1/admin/users")).StatusCode);
     }
 
+    /// <summary>Verifies that directory filters before paging keeps all roles and excludes credentials.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task DirectoryFiltersBeforePagingKeepsAllRolesAndExcludesCredentials()
     {
         using var client = factory.CreateClient();
-        var admin = await CreateSessionAsync(true);
+        var admin = await this.CreateSessionAsync(true);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", admin.AccessToken);
-        var marker = $"directory-{Guid.NewGuid():N}";
+        string marker = $"directory-{Guid.NewGuid():N}";
         var createdAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
         await using (var scope = factory.Services.CreateAsyncScope())
         {
             var manager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            for (var index = 1; index <= 3; index++)
+            for (int index = 1; index <= 3; index++)
             {
                 var user = new ApplicationUser
                 {
@@ -69,7 +77,10 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
                 };
                 Assert.True((await manager.CreateAsync(user)).Succeeded);
                 Assert.True((await manager.AddToRoleAsync(user, "Author")).Succeeded);
-                if (index == 3) Assert.True((await manager.AddToRoleAsync(user, "Admin")).Succeeded);
+                if (index == 3)
+                {
+                    Assert.True((await manager.AddToRoleAsync(user, "Admin")).Succeeded);
+                }
             }
         }
 
@@ -101,18 +112,21 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
         Assert.False(empty.Meta.HasNextPage);
 
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal(SafeFields,
+        Assert.Equal(
+            SafeFields,
             json.RootElement.GetProperty("data")[0].EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
         using var defaultResponse = await client.GetAsync("/api/v1/admin/users");
         Assert.Equal(20, (await defaultResponse.Content.ReadFromJsonAsync<PageEnvelope<AdminUserDto>>())!.Meta.PageSize);
     }
 
+    /// <summary>Verifies that directory search treats wildcards literally and uses stable tie break.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task DirectorySearchTreatsWildcardsLiterallyAndUsesStableTieBreak()
     {
         using var client = factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", (await CreateSessionAsync(true)).AccessToken);
-        var marker = $"literal-{Guid.NewGuid():N}";
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", (await this.CreateSessionAsync(true)).AccessToken);
+        string marker = $"literal-{Guid.NewGuid():N}";
         var ids = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() }.Order().ToArray();
         await using (var scope = factory.Services.CreateAsyncScope())
         {
@@ -130,15 +144,20 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
                     CreatedAt = createdAt,
                 });
             }
+
             db.Users.Add(new ApplicationUser { Id = Guid.NewGuid().ToString(), DisplayName = marker + "XYZ", CreatedAt = createdAt });
             await db.SaveChangesAsync();
         }
-        var search = Uri.EscapeDataString(marker + "%_\\");
+
+        string search = Uri.EscapeDataString(marker + "%_\\");
         var result = (await client.GetFromJsonAsync<PageEnvelope<AdminUserDto>>($"/api/v1/admin/users?search={search}"))!;
         Assert.Equal(ids.Select(id => id.ToString()), result.Data.Select(user => user.Id));
         Assert.Equal(3, result.Meta.Total);
     }
 
+    /// <summary>Verifies that directory rejects invalid queries with validation problem.</summary>
+    /// <param name="query">The query supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [Theory]
     [InlineData("role=Guest")]
     [InlineData("role=admin")]
@@ -149,7 +168,7 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
     public async Task DirectoryRejectsInvalidQueriesWithValidationProblem(string query)
     {
         using var client = factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", (await CreateSessionAsync(true)).AccessToken);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", (await this.CreateSessionAsync(true)).AccessToken);
         using var response = await client.GetAsync($"/api/v1/admin/users?{query}");
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -157,6 +176,8 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
         Assert.True(json.RootElement.GetProperty("errors").EnumerateObject().Any());
     }
 
+    /// <summary>Verifies that direct application dispatch without admin cannot read users.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task DirectApplicationDispatchWithoutAdminCannotReadUsers()
     {
@@ -167,6 +188,8 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
         Assert.Equal(ContentProblemKind.Forbidden, exception.Kind);
     }
 
+    /// <summary>Verifies that open api describes user directory and safe response.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task OpenApiDescribesUserDirectoryAndSafeResponse()
     {
@@ -176,20 +199,26 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var operation = json.RootElement.GetProperty("paths").GetProperty("/api/v1/admin/users").GetProperty("get");
         Assert.Equal("ListAdminUsers", operation.GetProperty("operationId").GetString());
-        Assert.Equal(QueryNames,
+        Assert.Equal(
+            QueryNames,
             operation.GetProperty("parameters").EnumerateArray().Select(parameter => parameter.GetProperty("name").GetString()).Order(StringComparer.Ordinal));
-        Assert.Equal(SafeFields,
+        Assert.Equal(
+            SafeFields,
             json.RootElement.GetProperty("components").GetProperty("schemas").GetProperty("AdminUserDto").GetProperty("properties").EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
     }
 
     private async Task<AuthSessionDto> CreateSessionAsync(bool admin)
     {
         using var client = factory.CreateClient();
-        var email = $"users-{Guid.NewGuid():N}@users.test";
+        string email = $"users-{Guid.NewGuid():N}@users.test";
         using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new { displayName = "Directory Actor", email, password = Password });
         Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
         var session = (await registration.Content.ReadFromJsonAsync<DataEnvelope<AuthSessionDto>>())!.Data;
-        if (!admin) return session;
+        if (!admin)
+        {
+            return session;
+        }
+
         await using var scope = factory.Services.CreateAsyncScope();
         var manager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         Assert.True((await manager.AddToRoleAsync((await manager.FindByEmailAsync(email))!, "Admin")).Succeeded);

@@ -268,8 +268,9 @@ internal static class AuthEndpoints
             true,
             form.ContainsKey("bio"));
         await using var content = file.OpenReadStream();
-        var user = await sender.Send(new UpdateProfileAvatarCommand(
-            GetUserId(principal), request, content, file.Length, file.ContentType), cancellationToken).ConfigureAwait(false);
+        var user = await sender.Send(
+            new UpdateProfileAvatarCommand(GetUserId(principal), request, content, file.Length, file.ContentType),
+            cancellationToken).ConfigureAwait(false);
         return Results.Ok(new DataEnvelope<UserDto>(user));
     }
 

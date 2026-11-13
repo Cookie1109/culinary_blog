@@ -1,11 +1,20 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Users;
 using NSubstitute;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for admin user directory tests.</summary>
 public sealed class AdminUserDirectoryTests
 {
+    /// <summary>Verifies that validates directory inputs.</summary>
+    /// <param name="search">The search supplied to this operation.</param>
+    /// <param name="role">The role supplied to this operation.</param>
+    /// <param name="page">The page supplied to this operation.</param>
+    /// <param name="pageSize">The page size supplied to this operation.</param>
+    /// <param name="valid">The valid supplied to this operation.</param>
     [Theory]
     [InlineData(null, null, 1, 20, true)]
     [InlineData("name", "Admin", 1, 100, true)]
@@ -24,6 +33,8 @@ public sealed class AdminUserDirectoryTests
         Assert.False(validator.Validate(new ListAdminUsersQuery(new string('a', 101), null)).IsValid);
     }
 
+    /// <summary>Verifies that unauthorized application request never reads directory.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task UnauthorizedApplicationRequestNeverReadsDirectory()
     {
@@ -35,6 +46,8 @@ public sealed class AdminUserDirectoryTests
         await directory.DidNotReceiveWithAnyArgs().ListAsync(default, default, default, default, default);
     }
 
+    /// <summary>Verifies that authorized query trims search and preserves pagination and cancellation.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task AuthorizedQueryTrimsSearchAndPreservesPaginationAndCancellation()
     {

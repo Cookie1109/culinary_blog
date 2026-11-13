@@ -117,9 +117,9 @@ async function setup({ editing = true } = {}) {
   const api = new Proxy(
     {
       listCategories: async () => [recipe.category],
-      updateProfile: async (values) => {
-        requests.push(['profile', values])
-        user = { ...user, ...values }
+      updateProfile: async (values, avatarFile) => {
+        requests.push(avatarFile ? ['profile', values, avatarFile] : ['profile', values])
+        user = { ...user, ...values, ...(avatarFile ? { avatar: '/api/v1/auth/avatar?version=2' } : {}) }
       },
       getAdminRecipe: async () => {
         requests.push(['read-admin'])
@@ -206,6 +206,11 @@ async function setup({ editing = true } = {}) {
         }
       if (name.includes('AuthContext')) return auth
       if (name.endsWith('content-client')) return api
+      if (name === 'next/dynamic' && filename.endsWith('RecipeDetail.tsx'))
+        return () =>
+          function MarkdownFixture({ children }) {
+            return React.createElement('div', null, children)
+          }
       if (name === 'next/dynamic')
         return () =>
           load('features/culinary/pages/dashboard/RecipeCompositionWizard.tsx').RecipeCompositionWizard
@@ -224,6 +229,9 @@ async function setup({ editing = true } = {}) {
         return load(target + extension)
       }
       if (name === 'react') return require('react')
+      if (name === '@dnd-kit/core') return require('@dnd-kit/core')
+      if (name === '@dnd-kit/sortable') return require('@dnd-kit/sortable')
+      if (name === '@dnd-kit/utilities') return require('@dnd-kit/utilities')
       if (name === 'react/jsx-runtime') return require('react/jsx-runtime')
       if (name === 'react-hook-form') return require('react-hook-form')
       if (name === '@hookform/resolvers/zod') return require('@hookform/resolvers/zod')
@@ -455,7 +463,13 @@ test('forgot password sends the trimmed email and displays a neutral confirmatio
     await click(button('Gửi liên kết đặt lại mật khẩu'))
     assert.deepEqual(h.requests, [['forgot', 'author@example.test']])
     assert.match(document.querySelector('[role="status"]').textContent, /Nếu email.*30 phút/)
-    await click(button('Gửi lại yêu cầu'))
+    const resend = [...document.querySelectorAll('button')].find((element) =>
+      element.textContent.startsWith('Gửi lại sau '),
+    )
+    assert.ok(resend?.disabled)
+    await click(resend)
+    assert.equal(h.requests.length, 1)
+    await click(button('Đổi địa chỉ email'))
     assert.ok(document.getElementById('forgot-email'))
   } finally {
     await h.close()
@@ -744,7 +758,7 @@ test('composition input survives the basic step and sidebar navigation is guarde
   }
 })
 
-test('AVIF upload accepts its MIME, reports progress, and retains the file for retry after failure', async () => {
+test('AVIF selection uploads immediately, reports progress, and allows reselecting after failure', async () => {
   const h = await setup()
   try {
     let rejectUpload
@@ -779,23 +793,23 @@ test('AVIF upload accepts its MIME, reports progress, and retains the file for r
     await act(async () => {
       fileInput.dispatchEvent(new Event('change', { bubbles: true }))
     })
-    await click(button('Tải ảnh lên'))
     assert.deepEqual(attempts, ['image/avif'])
     assert.equal(document.querySelector('progress').value, 37)
-    assert.ok(button('Đang tải 37%…').disabled)
+    assert.ok(fileInput.disabled)
     await act(async () => {
       rejectUpload(new Error('synthetic failure'))
       await new Promise((resolve) => {
         setTimeout(resolve, 20)
       })
     })
-    assert.match(document.querySelector('[role="alert"]').textContent, /Không thể lưu thay đổi/)
+    assert.match(document.querySelector('[role="alert"]').textContent, /Không thể tải ảnh lên/)
     h.setApi('uploadRecipeImage', async (_id, _version, file, _alt, _primary, onProgress) => {
       attempts.push(file.type)
       onProgress(100)
       return { meta: { recipeVersion: 2 } }
     })
-    await click(button('Tải ảnh lên'))
+    assert.equal(fileInput.disabled, false)
+    await act(async () => fileInput.dispatchEvent(new Event('change', { bubbles: true })))
     assert.deepEqual(attempts, ['image/avif', 'image/avif'])
     assert.equal(changedVersion, 2)
     assert.equal(document.querySelector('progress'), null)
@@ -840,36 +854,41 @@ test('profile edit reads the user after an asynchronous session loads', async ()
   }
 })
 
-test('profile validates avatar URLs, saves all fields, and supports clearing the avatar', async () => {
+test('profile validates avatar files, saves all fields, and supports clearing the avatar', async () => {
   const h = await setup()
   try {
     await h.render(React.createElement(h.load('features/culinary/pages/Profile.tsx').Profile))
     await click(button('Cập nhật'))
-    // eslint-disable-next-line no-script-url -- Negative fixture must stay to verify URL rejection.
-    await input(document.getElementById('profile-avatar'), 'javascript:alert(1)')
-    await click(button('Lưu thay đổi'))
+    const avatar = document.getElementById('profile-avatar-file')
+    const choose = async (file) => {
+      Object.defineProperty(avatar, 'files', { configurable: true, value: [file] })
+      await act(async () => avatar.dispatchEvent(new Event('change', { bubbles: true })))
+    }
+    await choose(new File(['invalid'], 'avatar.svg', { type: 'image/svg+xml' }))
     assert.equal(h.requests.length, 0)
-    assert.equal(document.getElementById('profile-avatar').getAttribute('aria-invalid'), 'true')
-    assert.match(document.getElementById('profile-avatar-error').textContent, /HTTP hoặc HTTPS/)
+    assert.match(document.getElementById('profile-avatar-error').textContent, /JPEG|PNG/)
+    const large = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'large.png', { type: 'image/png' })
+    await choose(large)
+    assert.match(document.getElementById('profile-avatar-error').textContent, /5 MB/)
     await input(document.querySelector('input[aria-label="Họ và tên"]'), '  Tên đã sửa  ')
-    await input(document.getElementById('profile-avatar'), 'https://example.test/avatar.jpg')
+    const file = new File(['synthetic'], 'avatar.png', { type: 'image/png' })
+    await choose(file)
     await click(button('Lưu thay đổi'))
-    assert.deepEqual(h.requests[0], [
-      'profile',
-      { name: 'Tên đã sửa', bio: 'Giới thiệu', avatar: 'https://example.test/avatar.jpg' },
-    ])
-    assert.equal(document.querySelector('img').getAttribute('src'), 'https://example.test/avatar.jpg')
+    assert.deepEqual(h.requests[0], ['profile', { name: 'Tên đã sửa', bio: 'Giới thiệu', avatar: '' }, file])
+    await h.render()
+    assert.equal(document.querySelector('img').getAttribute('src'), '/api/v1/auth/avatar?version=2')
     await click(button('Cập nhật'))
-    await input(document.getElementById('profile-avatar'), '')
+    await click(button('Xóa ảnh đại diện'))
     await click(button('Lưu thay đổi'))
     assert.equal(h.requests[1][1].avatar, '')
+    await h.render()
     assert.equal(document.querySelector('img'), null)
   } finally {
     await h.close()
   }
 })
 
-test('profile preserves edits and maps server validation to the avatar field', async () => {
+test('profile preserves edits and selected avatar on server rejection without exposing internals', async () => {
   const h = await setup()
   try {
     const { ApiProblem } = h.load('lib/api/problem-details.ts')
@@ -883,14 +902,22 @@ test('profile preserves edits and maps server validation to the avatar field', a
     })
     await h.render(React.createElement(h.load('features/culinary/pages/Profile.tsx').Profile))
     await click(button('Cập nhật'))
-    await input(document.getElementById('profile-avatar'), 'https://example.test/avatar.jpg')
+    await input(document.querySelector('input[aria-label="Họ và tên"]'), 'Tên chưa lưu')
+    const avatar = document.getElementById('profile-avatar-file')
+    Object.defineProperty(avatar, 'files', {
+      configurable: true,
+      value: [new File(['synthetic'], 'avatar.png', { type: 'image/png' })],
+    })
+    await act(async () => avatar.dispatchEvent(new Event('change', { bubbles: true })))
     await click(button('Lưu thay đổi'))
-    assert.equal(document.getElementById('profile-avatar').value, 'https://example.test/avatar.jpg')
+    assert.equal(document.querySelector('input[aria-label="Họ và tên"]').value, 'Tên chưa lưu')
+    assert.match(document.body.textContent, /Bấm Lưu thay đổi để dùng ảnh này/)
     assert.match(document.getElementById('profile-avatar-error').textContent, /URL ảnh HTTP hoặc HTTPS/)
     assert.doesNotMatch(document.body.textContent, /Stack trace|secret storage/)
     await click(button('Hủy'))
     await click(button('Cập nhật'))
-    assert.equal(document.getElementById('profile-avatar').value, '')
+    assert.equal(document.querySelector('input[aria-label="Họ và tên"]').value, 'Tên đã tải từ phiên')
+    assert.doesNotMatch(document.body.textContent, /Bấm Lưu thay đổi để dùng ảnh này/)
   } finally {
     await h.close()
   }
@@ -967,7 +994,7 @@ test('registration submits trimmed identity fields while preserving password cha
       await input(document.getElementById(id), value)
     await click(button('Đăng ký tài khoản'))
     assert.deepEqual(h.requests, [['register', 'Tác giả mới', 'author@example.test', ' Strong#Password1 ']])
-    assert.deepEqual(h.navigations, ['/dashboard'])
+    assert.deepEqual(h.navigations, ['/'])
   } finally {
     await h.close()
   }
@@ -1162,7 +1189,11 @@ test('dashboard has one create action and system management keeps its own naviga
     )
     assert.equal(button('Tổng quan hệ thống').textContent.trim(), 'Tổng quan hệ thống')
     assert.ok(document.querySelector('a[href$="/preview?from=system"]'))
-    await click(button('2. Nguyên liệu'))
+    await click(
+      [...document.querySelectorAll('button')].find((element) =>
+        element.textContent.startsWith('2. Nguyên liệu'),
+      ),
+    )
     assert.equal(button('Tổng quan hệ thống').textContent.trim(), 'Tổng quan hệ thống')
     await click(button('Tổng quan hệ thống'))
     assert.equal(h.navigations.at(-1), '/dashboard/system')

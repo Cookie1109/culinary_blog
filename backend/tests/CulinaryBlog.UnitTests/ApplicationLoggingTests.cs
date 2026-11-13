@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Behaviors;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Common;
@@ -6,8 +8,13 @@ using Microsoft.Extensions.Logging;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for application logging tests.</summary>
 public sealed class ApplicationLoggingTests
 {
+    /// <summary>Verifies that expected rejections are warnings and unexpected failures are errors.</summary>
+    /// <param name="failure">The failure supplied to this operation.</param>
+    /// <param name="expected">The expected supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [Theory]
     [InlineData("validation", LogLevel.Warning)]
     [InlineData("domain", LogLevel.Warning)]
@@ -34,6 +41,8 @@ public sealed class ApplicationLoggingTests
         Assert.All(capture.Entries, entry => Assert.DoesNotContain("synthetic-password-must-not-log", entry.Message, StringComparison.Ordinal));
     }
 
+    /// <summary>Verifies that successful command logs its type without payload.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task SuccessfulCommandLogsItsTypeWithoutPayload()
     {
@@ -54,9 +63,14 @@ public sealed class ApplicationLoggingTests
     private sealed class CaptureLogger : ILogger<LoggingBehavior<SecretCommand, string>>
     {
         public List<(LogLevel Level, string Message)> Entries { get; } = [];
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+            => null;
+
         public bool IsEnabled(LogLevel logLevel) => true;
+
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-            Entries.Add((logLevel, formatter(state, exception)));
+            this.Entries.Add((logLevel, formatter(state, exception)));
     }
 }

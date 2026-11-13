@@ -9,6 +9,7 @@ using CulinaryBlog.Infrastructure.Configuration;
 using CulinaryBlog.Infrastructure.Jobs;
 using CulinaryBlog.Infrastructure.Media;
 using CulinaryBlog.Infrastructure.Persistence;
+using CulinaryBlog.IntegrationTests.Fixtures;
 using DotNet.Testcontainers.Builders;
 using ImageMagick;
 using Microsoft.AspNetCore.TestHost;
@@ -32,7 +33,8 @@ public sealed class MediaStorageTests(AuthApiFactory factory) : IClassFixture<Au
     [Fact]
     public async Task RealPrivateMinioAcceptsAllFormatsAndPreservesOriginalAcrossResizeAndDeletionFailures()
     {
-        await using var minio = new MinioBuilder("minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e")
+        await MinioTestImage.PrepareAsync();
+        await using var minio = new MinioBuilder(MinioTestImage.Name)
             .WithUsername("g04-test").WithPassword("integration-test-only")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(9000).ForPath("/minio/health/ready")))
             .Build();
