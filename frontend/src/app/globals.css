@@ -67,3 +67,66 @@
     }
   }
 }
+
+@layer components {
+  .recipe-instructions {
+    @apply min-w-0 wrap-anywhere text-lg leading-relaxed text-muted-foreground;
+  }
+
+  .recipe-instructions > * + * {
+    @apply mt-4;
+  }
+
+  .recipe-instructions p {
+    @apply whitespace-pre-wrap;
+  }
+
+  .recipe-instructions :is(h1, h2, h3, h4, h5, h6) {
+    @apply text-foreground;
+  }
+
+  .recipe-instructions :is(h1, h2) {
+    @apply text-2xl;
+  }
+
+  .recipe-instructions :is(h3, h4, h5, h6) {
+    @apply text-xl;
+  }
+
+  .recipe-instructions ul {
+    @apply list-disc pl-6;
+  }
+
+  .recipe-instructions ol {
+    @apply list-decimal pl-6;
+  }
+
+  .recipe-instructions li + li,
+  .recipe-instructions li > :is(ul, ol) {
+    @apply mt-2;
+  }
+
+  .recipe-instructions a {
+    @apply text-primary underline underline-offset-2;
+  }
+
+  .recipe-instructions blockquote {
+    @apply border-l-4 border-primary pl-4 italic;
+  }
+
+  .recipe-instructions code {
+    @apply rounded bg-muted px-1 py-0.5 font-mono text-sm;
+  }
+
+  .recipe-instructions pre {
+    @apply max-w-full overflow-x-auto whitespace-pre rounded bg-muted p-4;
+  }
+
+  .recipe-instructions pre code {
+    @apply whitespace-pre bg-transparent p-0;
+  }
+
+  .recipe-instructions img {
+    @apply h-auto max-w-full;
+  }
+}

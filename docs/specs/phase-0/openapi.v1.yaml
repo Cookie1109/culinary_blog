@@ -995,7 +995,7 @@ components:
       properties:
         title: {type: string, minLength: 1, maxLength: 200}
         description: {type: string, minLength: 1, maxLength: 2000}
-        timerMinutes: {type: [integer, 'null'], minimum: 0}
+        timerMinutes: {type: [number, 'null'], minimum: 0}
         imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
         stepNumber: {type: integer, minimum: 1, description: Chỉ dùng khi PUT để đổi vị trí}
     Step:

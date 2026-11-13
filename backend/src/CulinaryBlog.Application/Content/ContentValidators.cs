@@ -65,7 +65,8 @@ internal sealed class StepWriteRequestValidator : AbstractValidator<StepWriteReq
     {
         RuleFor(request => request.Title).NotEmpty().MaximumLength(200);
         RuleFor(request => request.Description).NotEmpty().MaximumLength(2000);
-        RuleFor(request => request.TimerMinutes).GreaterThanOrEqualTo(0).When(request => request.TimerMinutes.HasValue);
+        RuleFor(request => request.TimerMinutes).GreaterThanOrEqualTo(0)
+            .Must(value => !value.HasValue || double.IsFinite(value.Value));
         RuleFor(request => request.ImageUrl).MaximumLength(500).Must(BeSafeUrl)
             .When(request => !string.IsNullOrWhiteSpace(request.ImageUrl));
         RuleFor(request => request.StepNumber).GreaterThan(0).When(request => request.StepNumber.HasValue);

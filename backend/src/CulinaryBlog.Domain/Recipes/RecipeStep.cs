@@ -16,7 +16,7 @@ public sealed class RecipeStep : BaseEntity
 
     public string Description { get; private set; } = string.Empty;
 
-    public int? TimerMinutes { get; private set; }
+    public double? TimerMinutes { get; private set; }
 
     public string? ImageUrl { get; private set; }
 
@@ -26,7 +26,7 @@ public sealed class RecipeStep : BaseEntity
         int stepNumber,
         string title,
         string description,
-        int? timerMinutes,
+        double? timerMinutes,
         string? imageUrl)
     {
         var step = new RecipeStep { Id = id, RecipeId = recipeId };
@@ -34,11 +34,12 @@ public sealed class RecipeStep : BaseEntity
         return step;
     }
 
-    public void Update(int stepNumber, string title, string description, int? timerMinutes, string? imageUrl)
+    public void Update(int stepNumber, string title, string description, double? timerMinutes, string? imageUrl)
     {
         var trimmedTitle = title.Trim();
         var trimmedDescription = description.Trim();
-        if (stepNumber < 1 || trimmedTitle.Length is < 1 or > 200 || trimmedDescription.Length is < 1 or > 2000 || timerMinutes < 0)
+        if (stepNumber < 1 || trimmedTitle.Length is < 1 or > 200 || trimmedDescription.Length is < 1 or > 2000 || timerMinutes < 0 ||
+            (timerMinutes.HasValue && !double.IsFinite(timerMinutes.Value)))
         {
             throw new DomainException("RECIPE_DATA_INVALID", "Recipe step data is invalid.");
         }

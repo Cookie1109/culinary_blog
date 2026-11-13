@@ -34,7 +34,7 @@ public sealed record IngredientDto(
 public sealed record StepWriteRequest(
     string Title,
     string Description,
-    int? TimerMinutes,
+    double? TimerMinutes,
     string? ImageUrl,
     int? StepNumber = null);
 
@@ -43,7 +43,7 @@ public sealed record StepDto(
     int StepNumber,
     string Title,
     string Description,
-    int? TimerMinutes,
+    double? TimerMinutes,
     string? ImageUrl);
 
 public sealed record ImageMetadataRequest(string? AltText, bool? IsPrimary, int? OrderIndex);

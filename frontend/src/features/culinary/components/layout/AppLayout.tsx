@@ -1,15 +1,19 @@
+import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useNavigate, NavLink } from 'react-router'
 import { ChefHat, Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
 import { NetworkStatusBanner } from '@/features/culinary/components/NetworkStatusBanner'
 import { MaintenanceBanner } from '@/features/culinary/components/MaintenanceBanner'
 import { useUIStore } from '@/store/useUIStore'
+import { useAuth } from '../../contexts/AuthContext'
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 export function AppLayout() {
+  const pathname = usePathname()
+  const hideFooter = /^\/(dashboard|profile)(\/|$)/.test(pathname)
   const { user, logout } = useAuth()
   const mobileOpen = useUIStore((state) => state.sidebarOpen)
   const setMobileOpen = useUIStore((state) => state.setSidebarOpen)
@@ -83,11 +87,12 @@ export function AppLayout() {
             e.preventDefault()
             last.focus()
           }
-        } else {
-          if (document.activeElement === last || !mobileDrawerRef.current.contains(document.activeElement)) {
-            e.preventDefault()
-            first.focus()
-          }
+        } else if (
+          document.activeElement === last ||
+          !mobileDrawerRef.current.contains(document.activeElement)
+        ) {
+          e.preventDefault()
+          first.focus()
         }
       }
     }
@@ -111,7 +116,10 @@ export function AppLayout() {
     }`
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ colorScheme: 'light' }}>
+    <div
+      className="min-h-screen flex flex-col xl:has-[[data-fit-workspace]]:h-dvh xl:has-[[data-fit-workspace]]:min-h-0 xl:has-[[data-fit-workspace]]:overflow-hidden"
+      style={{ colorScheme: 'light' }}
+    >
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:outline-none"
@@ -119,12 +127,13 @@ export function AppLayout() {
         Chuyển đến nội dung chính
       </a>
 
-      <header className="border-b border-border bg-background sticky top-0 z-30">
+      <header className="shrink-0 border-b border-border bg-background sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex h-20 items-center justify-between">
             {/* Mobile: hamburger */}
             <div className="flex items-center gap-3 lg:hidden">
               <button
+                type="button"
                 ref={hamburgerButtonRef}
                 onClick={() => setMobileOpen(true)}
                 className="p-2 text-foreground hover:text-primary transition-colors"
@@ -167,6 +176,7 @@ export function AppLayout() {
               {user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
+                    type="button"
                     ref={userMenuButtonRef}
                     onClick={() => setUserMenuOpen((v) => !v)}
                     className="flex items-center gap-2 hover:text-primary transition-colors"
@@ -175,7 +185,10 @@ export function AppLayout() {
                     aria-label={`Menu người dùng: ${user.name}`}
                   >
                     {user.avatar ? (
-                      <img
+                      <Image
+                        width={32}
+                        height={32}
+                        unoptimized
                         src={user.avatar}
                         alt={`Ảnh đại diện của ${user.name}`}
                         className="w-8 h-8 rounded-full object-cover border border-border"
@@ -224,6 +237,7 @@ export function AppLayout() {
                       </Link>
                       <div className="border-t border-border mt-1 pt-1">
                         <button
+                          type="button"
                           role="menuitem"
                           onClick={handleLogout}
                           className="flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground hover:text-primary hover:bg-secondary transition-colors w-full text-left"
@@ -316,7 +330,7 @@ export function AppLayout() {
                       className={({ isActive }) =>
                         `block px-4 py-3 text-sm font-medium tracking-wide uppercase transition-colors ${
                           isActive
-                            ? 'text-primary bg-primary/5'
+                            ? 'text-foreground bg-primary/5'
                             : 'text-foreground hover:text-primary hover:bg-secondary'
                         }`
                       }
@@ -395,77 +409,84 @@ export function AppLayout() {
         </div>
       )}
 
-      <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
+      <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 outline-none">
         <Outlet />
       </main>
 
-      <footer className="bg-secondary text-secondary-foreground border-t border-border pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-2">
-              <Link to="/" className="flex items-center gap-2 mb-6">
-                <ChefHat className="text-primary" size={28} strokeWidth={1.5} aria-hidden="true" />
-                <span className="font-serif text-2xl tracking-tight text-foreground">Culinary Blog</span>
-              </Link>
-              <p className="text-muted-foreground leading-relaxed max-w-sm">
-                Bộ sưu tập công thức nấu ăn và ghi chú ẩm thực được tuyển chọn kỹ lưỡng. Chúng tôi tin vào
-                nguyên liệu tươi ngon, nấu nướng chân thành và niềm vui sẻ chia bữa ăn.
-              </p>
+      {!hideFooter && (
+        <footer className="bg-secondary text-secondary-foreground border-t border-border pt-16 pb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className={`grid grid-cols-1 ${user ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-12 mb-12`}>
+              <div className="md:col-span-2">
+                <Link to="/" className="flex items-center gap-2 mb-6">
+                  <ChefHat className="text-primary" size={28} strokeWidth={1.5} aria-hidden="true" />
+                  <span className="font-serif text-2xl tracking-tight text-foreground">Culinary Blog</span>
+                </Link>
+                <p className="text-muted-foreground leading-relaxed max-w-sm">
+                  Bộ sưu tập công thức nấu ăn và ghi chú ẩm thực được tuyển chọn kỹ lưỡng. Chúng tôi tin vào
+                  nguyên liệu tươi ngon, nấu nướng chân thành và niềm vui sẻ chia bữa ăn.
+                </p>
+              </div>
+              <div>
+                <nav aria-label="Khám phá">
+                  <h3 className="font-serif text-lg mb-6 text-foreground">Khám phá</h3>
+                  <ul className="space-y-4">
+                    <li>
+                      <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
+                        Trang chủ
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/recipes"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Tất cả công thức
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/categories"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Danh mục
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+              {!user && (
+                <div>
+                  <nav aria-label="Tài khoản">
+                    <h3 className="font-serif text-lg mb-6 text-foreground">Tài khoản</h3>
+                    <ul className="space-y-4">
+                      <li>
+                        <Link
+                          to="/login"
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          Đăng nhập
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/register"
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          Tạo tài khoản
+                        </Link>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              )}
             </div>
-            <div>
-              <nav aria-label="Khám phá">
-                <h3 className="font-serif text-lg mb-6 text-foreground">Khám phá</h3>
-                <ul className="space-y-4">
-                  <li>
-                    <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                      Trang chủ
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/recipes"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Tất cả công thức
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/categories"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Danh mục
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-            <div>
-              <nav aria-label="Tài khoản">
-                <h3 className="font-serif text-lg mb-6 text-foreground">Tài khoản</h3>
-                <ul className="space-y-4">
-                  <li>
-                    <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors">
-                      Đăng nhập
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/register"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Tạo tài khoản
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
+            <div className="pt-8 border-t border-border/50 text-sm text-muted-foreground flex flex-col sm:flex-row justify-between items-center gap-4">
+              <p>&copy; {new Date().getFullYear()} Culinary Blog.</p>
             </div>
           </div>
-          <div className="pt-8 border-t border-border/50 text-sm text-muted-foreground flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p>&copy; {new Date().getFullYear()} Culinary Blog. Đã đăng ký bản quyền.</p>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   )
 }

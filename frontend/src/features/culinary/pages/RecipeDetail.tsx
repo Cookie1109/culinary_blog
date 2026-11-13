@@ -1,8 +1,12 @@
 import { ChefHat, Clock, Timer, Users } from 'lucide-react'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
+import { formatTimerDuration } from '@/lib/recipe-timer'
 import { Link } from 'react-router'
 import type { Nutrition, Recipe } from '@/lib/api/content-client'
 import { privateMediaUrl, publicMediaUrl } from '@/lib/media-url'
+
+const Markdown = dynamic(() => import('react-markdown'))
 
 const IMAGE_PLACEHOLDER =
   'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="16" height="9"%3E%3Crect width="16" height="9" fill="%23eee9e2"/%3E%3C/svg%3E'
@@ -32,11 +36,9 @@ export function RecipeDetail({
 }) {
   const ingredients = [...recipe.ingredients].sort((left, right) => left.orderIndex - right.orderIndex)
   const steps = [...recipe.steps].sort((left, right) => left.stepNumber - right.stepNumber)
-  const images = recipe.images
-    .filter((image) => image.processingStatus === 'ready')
-    .sort(
-      (left, right) => Number(right.isPrimary) - Number(left.isPrimary) || left.orderIndex - right.orderIndex,
-    )
+  const images = [...recipe.images].sort(
+    (left, right) => Number(right.isPrimary) - Number(left.isPrimary) || left.orderIndex - right.orderIndex,
+  )
   const primaryImage = images.find((image) => image.isPrimary)
   const heroImage = primaryImage?.originalUrl ?? primaryImage?.mediumUrl ?? recipe.primaryImageUrl
   const imageSource = privatePreview ? privateMediaUrl : publicMediaUrl
@@ -200,61 +202,71 @@ export function RecipeDetail({
             </section>
           </div>
 
-          <section className="lg:col-span-7" aria-labelledby="steps-title">
-            <h2 id="steps-title" className="mb-8 border-b border-border pb-3 font-serif text-3xl">
-              Các bước thực hiện
-            </h2>
-            {steps.length === 0 ? (
-              recipe.instructions ? (
-                <p className="whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
-                  {recipe.instructions}
-                </p>
-              ) : (
+          <div className="min-w-0 space-y-12 lg:col-span-7">
+            {recipe.instructions?.trim() && (
+              <section aria-labelledby="general-instructions-title">
+                <h2
+                  id="general-instructions-title"
+                  className="mb-6 border-b border-border pb-3 font-serif text-3xl"
+                >
+                  Ghi chú hướng dẫn chung
+                </h2>
+                <div className="recipe-instructions">
+                  <Markdown>{recipe.instructions}</Markdown>
+                </div>
+              </section>
+            )}
+            <section aria-labelledby="steps-title">
+              <h2 id="steps-title" className="mb-8 border-b border-border pb-3 font-serif text-3xl">
+                Các bước thực hiện
+              </h2>
+              {steps.length === 0 && !recipe.instructions && (
                 <p className="text-muted-foreground">Tác giả chưa bổ sung các bước thực hiện.</p>
-              )
-            ) : (
-              <ol className="space-y-10">
-                {steps.map((step) => (
-                  <li key={step.id} className="grid gap-5 sm:grid-cols-[4rem_1fr]">
-                    <span
-                      className="grid h-12 w-12 place-items-center rounded-full bg-primary font-serif text-xl text-primary-foreground"
-                      aria-hidden="true"
-                    >
-                      {step.stepNumber}
-                    </span>
-                    <div>
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                        <h3 className="font-serif text-2xl">{step.title}</h3>
-                        {step.timerMinutes != null && (
-                          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                            <Timer size={15} aria-hidden="true" /> {step.timerMinutes} phút
-                          </span>
+              )}
+              {!(steps.length === 0) && (
+                <ol className="space-y-10">
+                  {steps.map((step) => (
+                    <li key={step.id} className="grid gap-5 sm:grid-cols-[4rem_minmax(0,1fr)]">
+                      <span
+                        className="grid h-12 w-12 place-items-center rounded-full bg-primary font-serif text-xl text-primary-foreground"
+                        aria-hidden="true"
+                      >
+                        {step.stepNumber}
+                      </span>
+                      <div className="min-w-0 wrap-anywhere">
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                          <h3 className="font-serif text-2xl">{step.title}</h3>
+                          {step.timerMinutes != null && (
+                            <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <Timer size={15} aria-hidden="true" /> {formatTimerDuration(step.timerMinutes)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                          {step.description}
+                        </p>
+                        {step.imageUrl && (
+                          <div className="relative mt-5 aspect-video w-full overflow-hidden bg-muted">
+                            <Image
+                              src={imageSource(step.imageUrl)}
+                              alt={`Bước ${step.stepNumber}: ${step.title}`}
+                              fill
+                              loading="lazy"
+                              sizes="(max-width: 1024px) 100vw, 768px"
+                              placeholder="blur"
+                              blurDataURL={IMAGE_PLACEHOLDER}
+                              unoptimized={privatePreview}
+                              className="object-cover"
+                            />
+                          </div>
                         )}
                       </div>
-                      <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
-                        {step.description}
-                      </p>
-                      {step.imageUrl && (
-                        <div className="relative mt-5 aspect-video w-full overflow-hidden bg-muted">
-                          <Image
-                            src={imageSource(step.imageUrl)}
-                            alt={`Bước ${step.stepNumber}: ${step.title}`}
-                            fill
-                            loading="lazy"
-                            sizes="(max-width: 1024px) 100vw, 768px"
-                            placeholder="blur"
-                            blurDataURL={IMAGE_PLACEHOLDER}
-                            unoptimized={privatePreview}
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </section>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          </div>
         </div>
 
         {images.length > 1 && (
