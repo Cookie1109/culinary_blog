@@ -279,7 +279,9 @@ test(
         await visiblePublic(true)
         await publicPage.goto(paths[3])
         await expect(publicPage.getByRole('group', { name: 'Bộ lọc đang áp dụng' })).toBeVisible()
-        await expect(publicPage.getByRole('button', { name: new RegExp(`Từ khóa: ${title}`) })).toBeVisible()
+        const keyword = publicPage.getByRole('button', { name: 'Bỏ từ khóa', exact: true })
+        await expect(keyword).toBeVisible()
+        await expect(keyword).toHaveText(`Từ khóa: ${title}`)
         const publishedVersion = (await detail()).version
         assert.equal((await direct('/publish', 'PATCH')).status, 409)
         assert.equal((await detail()).version, publishedVersion)
