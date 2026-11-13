@@ -149,8 +149,17 @@ try {
     POSTGRES_PASSWORD: 'synthetic-g05-only',
   })
   const redis = await container('redis:7.4.5-alpine', [6379])
+  const minioImage = 'culinary-blog-minio-test:2025-09-07-v2'
+  await checked('docker', [
+    'build',
+    '--tag',
+    minioImage,
+    '--file',
+    path.join(root, 'infra/testing/minio.Dockerfile'),
+    path.join(root, 'infra/testing'),
+  ])
   const minio = await container(
-    'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e',
+    minioImage,
     [9000],
     { MINIO_ROOT_USER: 'g05storage', MINIO_ROOT_PASSWORD: 'synthetic-g05-storage' },
     ['server', '/data'],
@@ -165,7 +174,7 @@ try {
     network,
     '--entrypoint',
     '/bin/sh',
-    'minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727',
+    minioImage,
     '-ec',
     'mc alias set test http://storage:9000 g05storage synthetic-g05-storage >/dev/null && mc mb test/g05',
   ])
