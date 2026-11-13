@@ -127,7 +127,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -141,7 +142,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -155,7 +157,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -169,7 +172,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -183,7 +187,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -197,7 +202,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -211,7 +217,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -225,7 +232,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -239,7 +247,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -253,7 +262,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -267,7 +277,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -281,7 +292,8 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -295,7 +307,8 @@
           "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -309,7 +322,8 @@
           "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -323,7 +337,8 @@
           "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
+          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
+          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
         ]
       }
     },
@@ -430,13 +445,13 @@
       "operation": "POST /api/v1/auth/google",
       "cases": {
         "happy": [
-          "EndpointMatrixTests.GoogleAdapterValidatesInputAndReturnsTheServiceSession"
+          "EndpointMatrixTests.GoogleHttpAdapterReturnsSessionAndRejectsInvalidBodyWithoutCallingProvider"
         ],
         "error": [
-          "EndpointMatrixTests.GoogleAdapterValidatesInputAndReturnsTheServiceSession"
+          "EndpointMatrixTests.GoogleHttpAdapterReturnsSessionAndRejectsInvalidBodyWithoutCallingProvider"
         ],
         "authorization": [
-          "EndpointMatrixTests.GoogleAdapterValidatesInputAndReturnsTheServiceSession"
+          "EndpointMatrixTests.GoogleHttpAdapterReturnsSessionAndRejectsInvalidBodyWithoutCallingProvider"
         ]
       }
     },
@@ -584,13 +599,13 @@
       "operation": "GET /api/v1/sitemap.xml",
       "cases": {
         "happy": [
-          "EndpointMatrixTests.SitemapReturnsStoredXmlOrNotFound"
+          "EndpointMatrixTests.SitemapEndpointReturnsStoredXmlOrNotFound"
         ],
         "error": [
-          "EndpointMatrixTests.SitemapReturnsStoredXmlOrNotFound"
+          "EndpointMatrixTests.SitemapEndpointReturnsStoredXmlOrNotFound"
         ],
         "authorization": [
-          "EndpointMatrixTests.SitemapReturnsStoredXmlOrNotFound"
+          "EndpointMatrixTests.SitemapEndpointReturnsStoredXmlOrNotFound"
         ]
       }
     },
@@ -598,13 +613,13 @@
       "operation": "GET /api/v1",
       "cases": {
         "happy": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
         ],
         "error": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
         ],
         "authorization": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
         ]
       }
     },
@@ -612,13 +627,13 @@
       "operation": "GET /api/v1/release",
       "cases": {
         "happy": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
         ],
         "error": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
         ],
         "authorization": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
         ]
       }
     },
@@ -626,13 +641,41 @@
       "operation": "GET /api/v1/operations/maintenance",
       "cases": {
         "happy": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
         ],
         "error": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
         ],
         "authorization": [
-          "EndpointMatrixTests.SupportingReadsReturnDataAndRejectWrites"
+          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
+        ]
+      }
+    },
+    {
+      "operation": "POST /api/v1/auth/me/avatar",
+      "cases": {
+        "happy": [
+          "RecipeMediaUploadTests.ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage"
+        ],
+        "error": [
+          "RecipeMediaUploadTests.ProfileAvatarUploadRejectsGuestsAndInvalidFilesWithoutChangingProfile"
+        ],
+        "authorization": [
+          "RecipeMediaUploadTests.ProfileAvatarUploadRejectsGuestsAndInvalidFilesWithoutChangingProfile"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/avatars/{userId}/{fileName}",
+      "cases": {
+        "happy": [
+          "RecipeMediaUploadTests.ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage"
+        ],
+        "error": [
+          "RecipeMediaUploadTests.ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage"
+        ],
+        "authorization": [
+          "RecipeMediaUploadTests.ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage"
         ]
       }
     }

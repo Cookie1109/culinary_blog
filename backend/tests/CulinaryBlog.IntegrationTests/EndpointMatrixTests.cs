@@ -20,6 +20,77 @@ namespace CulinaryBlog.IntegrationTests;
 /// <param name="factory">The factory supplied to this operation.</param>
 public sealed class EndpointMatrixTests(AuthApiFactory factory) : IClassFixture<AuthApiFactory>
 {
+    /// <summary>Verifies the endpoint matrix references runtime routes and exports the current contract.</summary>
+    /// <returns>A task representing the contract inventory check.</returns>
+    [Fact]
+    public async Task ContractInventoryMatchesCurrentApi()
+    {
+        using var client = factory.CreateClient();
+        string json = await client.GetStringAsync("/openapi/v1.json");
+        using var contract = JsonDocument.Parse(json);
+        using var matrix = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "endpoint-matrix.json")));
+        foreach (var entry in matrix.RootElement.GetProperty("operations").EnumerateArray())
+        {
+            string[] operation = entry.GetProperty("operation").GetString()!.Split(' ', 2);
+            Assert.True(contract.RootElement.GetProperty("paths").TryGetProperty(operation[1], out var path), operation[1]);
+            Assert.True(path.TryGetProperty(operation[0].ToLowerInvariant(), out _), entry.ToString());
+        }
+
+        string? output = Environment.GetEnvironmentVariable("CULINARY_CONTRACT_OUTPUT");
+        if (!string.IsNullOrWhiteSpace(output))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
+            await File.WriteAllTextAsync(output, json);
+        }
+    }
+
+    /// <summary>Verifies duplicate registration, invalid logout and unauthenticated profile updates fail.</summary>
+    /// <returns>A task representing the account rejection checks.</returns>
+    [Fact]
+    public async Task AccountEndpointsRejectDuplicateInvalidAndUnauthenticatedRequests()
+    {
+        using var client = factory.CreateClient();
+        var account = new { email = $"matrix-{Guid.NewGuid():N}@example.test", displayName = "Matrix Author", password = "Synthetic#Matrix123" };
+        using var created = await client.PostAsJsonAsync("/api/v1/auth/register", account);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        using var duplicate = await client.PostAsJsonAsync("/api/v1/auth/register", account);
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        using var invalid = await client.PostAsJsonAsync("/api/v1/auth/logout", new { refreshToken = string.Empty });
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalid.StatusCode);
+        using var privateProfile = await client.PatchAsJsonAsync("/api/v1/auth/me", new { displayName = "Unauthorized" });
+        Assert.Equal(HttpStatusCode.Unauthorized, privateProfile.StatusCode);
+    }
+
+    /// <summary>Verifies category mutations require an authenticated administrator.</summary>
+    /// <param name="method">The HTTP mutation method.</param>
+    /// <param name="path">The category endpoint to protect.</param>
+    /// <returns>A task representing the category authorization checks.</returns>
+    [Theory]
+    [InlineData("POST", "/api/v1/categories")]
+    [InlineData("PUT", "/api/v1/categories/11111111-1111-1111-1111-111111111111")]
+    [InlineData("DELETE", "/api/v1/categories/11111111-1111-1111-1111-111111111111")]
+    public async Task CategoryWritesRequireAdmin(string method, string path)
+    {
+        using var client = factory.CreateClient();
+        using var registered = await client.PostAsJsonAsync("/api/v1/auth/register", new
+        {
+            email = $"matrix-{Guid.NewGuid():N}@example.test",
+            displayName = "Matrix Author",
+            password = "Synthetic#Matrix123",
+        });
+        Assert.Equal(HttpStatusCode.Created, registered.StatusCode);
+        var payload = await registered.Content.ReadFromJsonAsync<JsonElement>();
+        string? author = payload.GetProperty("data").GetProperty("accessToken").GetString();
+        foreach (var (token, expected) in new[] { ((string?)null, HttpStatusCode.Unauthorized), (author, HttpStatusCode.Forbidden) })
+        {
+            using var request = new HttpRequestMessage(new HttpMethod(method), path);
+            request.Headers.Authorization = token is null ? null : new AuthenticationHeaderValue("Bearer", token);
+            request.Content = JsonContent.Create(new { name = "Test category", orderIndex = 0 });
+            using var response = await client.SendAsync(request);
+            Assert.Equal(expected, response.StatusCode);
+        }
+    }
+
     /// <summary>Verifies that other author cannot mutate any recipe component and no version changes.</summary>
     /// <returns>A task representing the operation and its result.</returns>
     [Fact]

@@ -423,6 +423,74 @@ public sealed class RecipeMediaUploadTests(RecipeMediaFixture fixture) : IClassF
         Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync($"/api/v1/media/{id}/original")).StatusCode);
     }
 
+    /// <summary>Verifies profile uploads persist and only the current avatar remains publicly readable.</summary>
+    /// <returns>A task representing the avatar lifecycle test.</returns>
+    [Fact]
+    public async Task ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage()
+    {
+        using var owner = fixture.App.CreateClient();
+        await Register(owner);
+        byte[] bytes = Image(MagickFormat.Png);
+        using var uploaded = await UploadAvatar(owner, bytes);
+        Assert.Equal(HttpStatusCode.OK, uploaded.StatusCode);
+        var profile = await Data(uploaded);
+        string avatar = profile.GetProperty("avatarUrl").GetString()!;
+        Assert.Equal("Avatar Author", profile.GetProperty("displayName").GetString());
+        using var guest = fixture.App.CreateClient();
+        string path = new Uri(avatar).AbsolutePath;
+        using var image = await guest.GetAsync(path);
+        Assert.Equal(HttpStatusCode.OK, image.StatusCode);
+        Assert.Equal("image/png", image.Content.Headers.ContentType!.MediaType);
+        Assert.Equal(bytes, await image.Content.ReadAsByteArrayAsync());
+        using var replaced = await UploadAvatar(owner, bytes);
+        Assert.Equal(HttpStatusCode.OK, replaced.StatusCode);
+        string replacement = (await Data(replaced)).GetProperty("avatarUrl").GetString()!;
+        Assert.NotEqual(avatar, replacement);
+        using var obsolete = await guest.GetAsync(path);
+        Assert.Equal(HttpStatusCode.NotFound, obsolete.StatusCode);
+        string current = new Uri(replacement).AbsolutePath;
+        using var currentImage = await guest.GetAsync(current);
+        Assert.Equal(HttpStatusCode.OK, currentImage.StatusCode);
+        using var unknown = await guest.GetAsync($"/api/v1/avatars/unknown/{Path.GetFileName(current)}");
+        Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+        using var cleared = await owner.PatchAsJsonAsync("/api/v1/auth/me", new { avatarUrl = (string?)null });
+        Assert.Equal(HttpStatusCode.OK, cleared.StatusCode);
+        using var removed = await guest.GetAsync(current);
+        Assert.Equal(HttpStatusCode.NotFound, removed.StatusCode);
+    }
+
+    /// <summary>Verifies guests and invalid image signatures cannot modify a profile avatar.</summary>
+    /// <returns>A task representing the avatar validation and authorization test.</returns>
+    [Fact]
+    public async Task ProfileAvatarUploadRejectsGuestsAndInvalidFilesWithoutChangingProfile()
+    {
+        using var guest = fixture.App.CreateClient();
+        byte[] bytes = Image(MagickFormat.Png);
+        using var forbidden = await UploadAvatar(guest, bytes);
+        Assert.Equal(HttpStatusCode.Unauthorized, forbidden.StatusCode);
+        using var owner = fixture.App.CreateClient();
+        await Register(owner);
+        using var uploaded = await UploadAvatar(owner, bytes);
+        Assert.Equal(HttpStatusCode.OK, uploaded.StatusCode);
+        string avatar = (await Data(uploaded)).GetProperty("avatarUrl").GetString()!;
+        using var invalid = await UploadAvatar(owner, [1, 2, 3]);
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        using var mismatched = await UploadAvatar(owner, bytes, "image/jpeg");
+        Assert.Equal(HttpStatusCode.BadRequest, mismatched.StatusCode);
+        using var profile = await owner.GetAsync("/api/v1/auth/me");
+        Assert.Equal(avatar, (await Data(profile)).GetProperty("avatarUrl").GetString());
+    }
+
+    private static async Task<HttpResponseMessage> UploadAvatar(HttpClient client, byte[] bytes, string mime = "image/png")
+    {
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(bytes);
+        file.Headers.ContentType = new MediaTypeHeaderValue(mime);
+        form.Add(file, "file", "avatar.png");
+        form.Add(new StringContent("Avatar Author"), "displayName");
+        return await client.PostAsync("/api/v1/auth/me/avatar", form);
+    }
+
     private static byte[] Image(MagickFormat format)
     {
         using var image = new MagickImage(MagickColors.Red, 32, 16);
