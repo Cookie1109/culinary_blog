@@ -168,9 +168,6 @@ public sealed class DatabaseInitializer(
                 seed.Nutrition.Fat,
                 seed.Nutrition.Fiber,
                 seed.Nutrition.Sodium);
-            var instructions = string.Join(
-                "\n\n",
-                seed.Steps.Select((step, index) => $"{index + 1}. {step.Title}: {step.Description}"));
             if (existingRecipes.ContainsKey(seed.Slug) || !categoryIds.TryGetValue(seed.CategorySlug, out var categoryId))
             {
                 continue;
@@ -187,7 +184,7 @@ public sealed class DatabaseInitializer(
                 seed.CookTime,
                 seed.Servings,
                 seed.Difficulty,
-                instructions,
+                null,
                 nutrition);
             recipe.Publish(
                 publishedAt.AddDays(recipeIndex),

@@ -84,7 +84,7 @@ test(
         await page.locator('button[type="submit"]').filter({ hasText: 'Lưu bản nháp' }).click()
         const createResponse = await created
         assert.equal(createResponse.status(), 201)
-        const id = (await createResponse.json()).data.id
+        const { id } = (await createResponse.json()).data
         await expect(page).toHaveURL(/\/edit/)
         const editUrl = `/dashboard/recipes/${id}/edit`
         async function detail() {
@@ -171,7 +171,7 @@ test(
           other.page.getByRole('alert').filter({ hasText: 'Không thể tải công thức' }),
         ).toContainText('Không thể tải công thức')
         const payload = ({
-          title,
+          title: recipeTitle,
           description,
           category,
           prepTime,
@@ -180,7 +180,7 @@ test(
           difficulty,
           nutrition,
         }) => ({
-          title,
+          title: recipeTitle,
           description,
           categoryId: category.id,
           prepTime,

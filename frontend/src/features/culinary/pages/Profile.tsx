@@ -1,8 +1,8 @@
 import Image from 'next/image'
-import { useState, type MouseEvent } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { useNavigate } from 'react-router'
-import { Pencil, Check, X } from 'lucide-react'
+import { Camera, Pencil, Check, X } from 'lucide-react'
 import { FieldError } from '@/components/ui/field-error'
 import { useToast } from '@/components/ui/toast'
 import { apiErrorMessage } from '@/lib/api/problem-details'
@@ -17,10 +17,16 @@ export function Profile() {
   const navigate = useNavigate()
   const { showToast } = useToast()
   const [editing, setEditing] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const {
     register,
+    control,
     handleSubmit,
     reset,
+    setValue,
+    clearErrors,
     setError: setFieldError,
     formState: { errors, isSubmitting: saving },
   } = useForm<ProfileValues>({
@@ -29,6 +35,17 @@ export function Profile() {
   })
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const avatarValue = useWatch({ control, name: 'avatar' })
+
+  useEffect(() => {
+    if (!avatarFile) {
+      setAvatarPreview(null)
+      return undefined
+    }
+    const url = URL.createObjectURL(avatarFile)
+    setAvatarPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [avatarFile])
 
   if (!user) {
     return (
@@ -48,7 +65,8 @@ export function Profile() {
   const handleSave = async (values: ProfileValues) => {
     try {
       setError('')
-      await updateProfile(values)
+      await updateProfile(values, avatarFile ?? undefined)
+      setAvatarFile(null)
       setEditing(false)
       setSaved(true)
       showToast('Cập nhật hồ sơ thành công.')
@@ -66,6 +84,7 @@ export function Profile() {
   }
 
   const handleCancel = () => {
+    setAvatarFile(null)
     reset({ name: user.name, bio: user.bio ?? '', avatar: user.avatar ?? '' })
     setEditing(false)
     setError('')
@@ -77,6 +96,8 @@ export function Profile() {
     setError('')
     setEditing(true)
   }
+
+  const avatarSource = editing ? (avatarPreview ?? avatarValue) : user.avatar
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 lg:py-24">
@@ -90,12 +111,12 @@ export function Profile() {
         {/* Avatar column */}
         <div className="flex flex-col items-center lg:items-start gap-4">
           <div className="relative">
-            {user.avatar ? (
+            {avatarSource ? (
               <Image
                 width={112}
                 height={112}
                 unoptimized
-                src={user.avatar}
+                src={avatarSource}
                 alt={user.name}
                 className="w-28 h-28 rounded-full object-cover border-2 border-border"
               />
@@ -104,7 +125,69 @@ export function Profile() {
                 {user.name[0]}
               </div>
             )}
+            <button
+              type="button"
+              aria-label="Thay đổi ảnh đại diện"
+              title="Thay đổi ảnh đại diện"
+              disabled={saving}
+              onClick={(event) => {
+                if (!editing) beginEdit(event)
+                avatarInputRef.current?.click()
+              }}
+              className="absolute -bottom-1 -right-1 grid h-9 w-9 place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-60"
+            >
+              <Camera size={18} aria-hidden="true" />
+            </button>
+            <input
+              id="profile-avatar-file"
+              ref={avatarInputRef}
+              type="file"
+              aria-label="Chọn ảnh đại diện từ máy"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              disabled={saving}
+              className="hidden"
+              onChange={(event) => {
+                const input = event.currentTarget
+                const file = input.files?.[0]
+                input.value = ''
+                if (!file) return
+                if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(file.type)) {
+                  setFieldError('avatar', { type: 'manual', message: formMessages.uploadType })
+                  return
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                  setFieldError('avatar', { type: 'manual', message: formMessages.uploadSize })
+                  return
+                }
+                clearErrors('avatar')
+                setError('')
+                setAvatarFile(file)
+              }}
+            />
           </div>
+          {editing && (
+            <div className="space-y-2 text-center lg:text-left">
+              <p className="text-xs text-muted-foreground">JPEG, PNG, WebP hoặc AVIF, tối đa 5 MB.</p>
+              {avatarFile && (
+                <p className="text-xs text-muted-foreground">Bấm Lưu thay đổi để dùng ảnh này.</p>
+              )}
+              {avatarSource && (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => {
+                    setAvatarFile(null)
+                    setValue('avatar', '', { shouldDirty: true })
+                    clearErrors('avatar')
+                  }}
+                  className="text-xs text-muted-foreground underline hover:text-primary disabled:opacity-60"
+                >
+                  Xóa ảnh đại diện
+                </button>
+              )}
+              <FieldError id="profile-avatar-error" message={errors.avatar?.message} />
+            </div>
+          )}
           <div className="text-center lg:text-left">
             <p className="font-medium">{user.name}</p>
             <p className="text-sm text-muted-foreground">
@@ -159,31 +242,6 @@ export function Profile() {
               )}
               <FieldError id="profile-name-error" message={errors.name?.message} />
             </div>
-
-            {editing && (
-              <div className="mb-6 pb-6 border-b border-border">
-                <label
-                  htmlFor="profile-avatar"
-                  className="mb-3 block text-xs uppercase tracking-widest text-muted-foreground font-medium"
-                >
-                  URL ảnh đại diện
-                </label>
-                <input
-                  id="profile-avatar"
-                  type="url"
-                  disabled={saving}
-                  {...register('avatar')}
-                  aria-invalid={Boolean(errors.avatar)}
-                  aria-describedby={`profile-avatar-help${errors.avatar ? ' profile-avatar-error' : ''}`}
-                  placeholder="https://example.com/avatar.jpg"
-                  className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                />
-                <p id="profile-avatar-help" className="mt-2 text-xs text-muted-foreground">
-                  Nhập đường dẫn ảnh HTTP hoặc HTTPS. Để trống để xóa ảnh đại diện.
-                </p>
-                <FieldError id="profile-avatar-error" message={errors.avatar?.message} />
-              </div>
-            )}
 
             {/* Email (readonly) */}
             <div className="mb-6 pb-6 border-b border-border">
@@ -273,7 +331,17 @@ export function Profile() {
               </div>
             )}
           </form>
-          <PasswordForm mode="change" />
+          {user.hasPassword === true && <PasswordForm mode="change" />}
+          {user.hasPassword === false && (
+            <section className="mt-12 border-t border-border pt-8" aria-labelledby="profile-sign-in-title">
+              <h2 id="profile-sign-in-title" className="mb-4 font-serif text-2xl">
+                Đăng nhập bằng Google
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Thông tin bảo mật đăng nhập được quản lý trong tài khoản Google của bạn.
+              </p>
+            </section>
+          )}
         </div>
       </div>
     </div>

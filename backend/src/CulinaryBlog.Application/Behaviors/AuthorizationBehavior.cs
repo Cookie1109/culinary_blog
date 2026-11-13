@@ -35,6 +35,7 @@ internal sealed class AuthorizationBehavior<TRequest, TResponse>(IApplicationAct
             ListAuditLogsQuery => new AccessRule(Admin: true),
             GetCurrentUserQuery r => new AccessRule(UserId: r.UserId),
             UpdateProfileCommand r => new AccessRule(UserId: r.UserId),
+            UpdateProfileAvatarCommand r => new AccessRule(UserId: r.UserId),
             ChangePasswordCommand r => new AccessRule(UserId: r.UserId),
             GetMyRecipeQuery r => new AccessRule(UserId: r.UserId.ToString(), RecipeId: r.Id, OwnerOnly: true),
             ListMyRecipesQuery r => new AccessRule(UserId: r.UserId.ToString()),

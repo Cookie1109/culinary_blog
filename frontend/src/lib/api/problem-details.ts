@@ -28,6 +28,8 @@ const errorMessages = {
   AUTH_ACCOUNT_LOCKED: 'Tài khoản đang tạm khóa. Vui lòng chờ rồi thử lại hoặc đặt lại mật khẩu.',
   AUTH_REQUEST_FAILED: 'Chưa thực hiện được yêu cầu. Vui lòng thử lại sau.',
   AUTH_CURRENT_PASSWORD_INVALID: 'Mật khẩu hiện tại không chính xác.',
+  AUTH_PASSWORD_NOT_SET:
+    'Tài khoản sử dụng Google để đăng nhập. Vui lòng quản lý bảo mật trong tài khoản Google.',
   AUTH_RESET_TOKEN_INVALID:
     'Liên kết không hợp lệ, đã hết hạn hoặc đã được sử dụng. Vui lòng yêu cầu liên kết mới.',
   AUTH_EMAIL_UNAVAILABLE: 'Dịch vụ gửi email chưa sẵn sàng. Vui lòng thử lại sau.',
@@ -56,6 +58,10 @@ const errorMessages = {
   RECIPE_DATA_INVALID: 'Nội dung công thức chưa hợp lệ. Vui lòng kiểm tra các trường và thử lại.',
   IMAGE_NOT_FOUND: 'Ảnh không còn tồn tại. Vui lòng tải lại công thức.',
   IMAGE_PRIMARY_CONFLICT: 'Ảnh đại diện đã thay đổi. Vui lòng tải lại và chọn lại ảnh.',
+  FILE_SIZE_EXCEEDED: 'Ảnh phải có dung lượng từ 1 byte đến 5 MB.',
+  FILE_MIME_INVALID: 'Chỉ chấp nhận JPEG, PNG, WebP hoặc AVIF.',
+  FILE_SIGNATURE_INVALID: 'Nội dung ảnh không hợp lệ hoặc không khớp định dạng đã chọn.',
+  FILE_UPLOAD_FAILED: 'Không thể tải ảnh lên. Dữ liệu đã nhập vẫn được giữ để thử lại.',
   VALIDATION_ERROR: 'Vui lòng kiểm tra các trường được đánh dấu và thử lại.',
   RATE_LIMIT_EXCEEDED: 'Bạn thao tác quá nhiều lần. Vui lòng chờ một phút rồi thử lại.',
   AUTH_REQUIRED: 'Phiên đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.',

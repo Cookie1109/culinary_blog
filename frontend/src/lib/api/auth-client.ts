@@ -69,11 +69,22 @@ export async function authenticatedBlobUrl(path: string): Promise<string> {
   return URL.createObjectURL(response.data)
 }
 
-export async function updateProfile(data: {
-  displayName: string
-  avatarUrl?: string | null
-  bio?: string | null
-}) {
+export async function updateProfile(
+  data: {
+    displayName: string
+    avatarUrl?: string | null
+    bio?: string | null
+  },
+  avatarFile?: File,
+) {
+  if (avatarFile) {
+    const form = new FormData()
+    form.set('file', avatarFile)
+    form.set('displayName', data.displayName)
+    if (data.bio !== undefined) form.set('bio', data.bio ?? '')
+    const response = await authenticatedAxios.post<{ data: AuthUser }>('/auth/me/avatar', form)
+    return response.data.data
+  }
   const response = await authenticatedApiRequest<{ data: AuthUser }>('/auth/me', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

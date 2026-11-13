@@ -102,7 +102,6 @@ export interface RecipeWrite {
 export interface PageEnvelope<T> {
   message?: string
   data: T[]
-  message?: string
   meta: {
     page: number
     pageSize: number

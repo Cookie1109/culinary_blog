@@ -19,9 +19,9 @@ public sealed class CompletionRegressionTests
         var request = new ListPublishedRecipesQuery(Guid.NewGuid(), RecipeDifficulty.Hard, 45, 2, 5, 30, "-prepTime", 3, 20);
         using var cancellation = new CancellationTokenSource();
         var expected = new PageEnvelope<RecipeDto>([], new PageMeta(3, 20, 0, 1, false, true));
-        repository.ListPublishedRecipesAsync(request.CategoryId, RecipeDifficulty.Hard, 45, 2, 5, 30, "-prepTime", 3, 20, cancellation.Token).Returns(expected);
+        repository.ListPublishedRecipesAsync(request.CategoryId, RecipeDifficulty.Hard, 45, 2, 5, 30, "-prepTime", 3, 20, request.Category, request.MaxTime, cancellation.Token).Returns(expected);
         Assert.Same(expected, await new ListPublishedRecipesQueryHandler(repository).Handle(request, cancellation.Token));
-        await repository.Received(1).ListPublishedRecipesAsync(request.CategoryId, RecipeDifficulty.Hard, 45, 2, 5, 30, "-prepTime", 3, 20, cancellation.Token);
+        await repository.Received(1).ListPublishedRecipesAsync(request.CategoryId, RecipeDifficulty.Hard, 45, 2, 5, 30, "-prepTime", 3, 20, request.Category, request.MaxTime, cancellation.Token);
     }
 
     [Theory]

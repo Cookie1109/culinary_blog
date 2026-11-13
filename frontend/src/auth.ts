@@ -100,7 +100,7 @@ export const { handlers, auth } = NextAuth({
 
       if (!backend) return token
 
-      if (trigger === 'update') {
+      if (trigger === 'update' || backend.user.hasPassword === undefined) {
         try {
           const response = await fetch(`${backendUrl}/auth/me`, {
             headers: { Authorization: `Bearer ${backend.accessToken}` },

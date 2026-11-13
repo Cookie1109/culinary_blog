@@ -87,7 +87,10 @@ Truy cập tại `http://localhost:8080`. Dừng môi trường này bằng `doc
 - Đăng nhập Google cần `AUTH_GOOGLE_ID` và `AUTH_GOOGLE_SECRET` tương ứng với cấu hình Google OAuth.
 - `SITE_URL` là địa chỉ công khai; `REVALIDATION_SECRET` bảo vệ callback cập nhật nội dung giữa backend và frontend.
 - Admin seed mặc định tắt. Khi cần, cấu hình `ADMIN_SEED_ENABLED`, `ADMIN_EMAIL` và `ADMIN_PASSWORD`.
-- Quên mật khẩu: chọn **Quên mật khẩu?** trên trang đăng nhập. Docker local gửi email vào [MailHog](http://localhost:8025); mở email và dùng liên kết để đặt mật khẩu mới. Khi chạy API trực tiếp, bật `Email:Enabled` và cấu hình SMTP. Production hỗ trợ `SMTP_ENABLE_SSL`, `SMTP_USERNAME`, `SMTP_PASSWORD` trong cấu hình release.
+- Quên mật khẩu: chọn **Quên mật khẩu?** trên trang đăng nhập. Thư chứa liên kết đặt lại mật khẩu có hiệu lực 30 phút, dùng một lần. Tài khoản chỉ đăng nhập bằng Google khôi phục quyền truy cập qua Google.
+- Docker local mặc định gửi thư vào [MailHog](http://localhost:8025). Để gửi đến email thật, cấu hình `EMAIL_ENABLED`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENABLE_SSL`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS`, `SMTP_FROM_NAME` trong `.env`, rồi chạy `docker compose up --detach --no-deps --wait api`. SMTP bên ngoài yêu cầu TLS; địa chỉ gửi phải được nhà cung cấp cho phép. Khi chạy API trực tiếp, dùng các khóa `Email__...` tương ứng. Production dùng các biến SMTP cùng tên trong cấu hình release.
+- Với Gmail, làm theo [hướng dẫn cấu hình Gmail SMTP](docs/operations/gmail-smtp.md).
+- Khi tạo tài khoản mới bằng email/mật khẩu hoặc Google, hệ thống xếp hàng gửi email chào mừng qua Hangfire. Thư dùng cấu hình SMTP ở trên, gồm tên người dùng và liên kết đến ứng dụng; tác vụ tự thử lại tối đa 3 lần khi gửi lỗi. Đăng nhập lại hoặc liên kết Google với tài khoản đã có không tạo thêm thư chào mừng.
 - Đổi hoặc đặt lại mật khẩu thu hồi mọi phiên đăng nhập. Bản cập nhật này cũng yêu cầu các phiên JWT cũ đăng nhập lại một lần. Volume `api-data-protection` lưu khóa bảo vệ token đặt lại mật khẩu; giữ volume này khi khởi động lại hoặc cập nhật container.
 - Docker local tự áp migration khi API khởi động. Production áp migration theo [quy trình phát hành](docs/release/v1.0.0-release-notes.md).
 

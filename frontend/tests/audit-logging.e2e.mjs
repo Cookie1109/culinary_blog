@@ -16,7 +16,7 @@ test(
     await withIsolatedApp(
       { media: true },
       async ({ api, baseURL, artifacts, browser, restartApi, readApiLogs }) => {
-        const prefix = 'audit-e2e-' + Date.now()
+        const prefix = `audit-e2e-${Date.now()}`
         const secrets = [
           password,
           'Wrong#PasswordOnly123',
@@ -44,7 +44,7 @@ test(
               ...(body && !multipart ? { 'Content-Type': 'application/json' } : {}),
               ...(version ? { 'If-Match': `"${version}"` } : {}),
             },
-            body: body ? (multipart ? body : JSON.stringify(body)) : undefined,
+            body: body && !multipart ? JSON.stringify(body) : body || undefined,
           })
           assert.equal(response.status, status, `${method} ${route}`)
           assert.equal(response.headers.get('x-correlation-id'), correlation)
@@ -100,7 +100,7 @@ test(
           status: 201,
           event: 'recipe.created',
         })
-        const id = created.data.id
+        const { id } = created.data
         const route = `/recipes/${id}`
         let version = 1
         async function mutation(suffix, method, body, event, status = 200) {
@@ -108,10 +108,11 @@ test(
             method,
             body,
             token: owner.accessToken,
-            version: version++,
+            version,
             event,
             status,
           })
+          version += 1
           return result
         }
         await mutation('', 'PUT', payload('Audit recipe edit one'), 'recipe.updated')
@@ -146,7 +147,9 @@ test(
         assert.equal(resizeLog.UserId, actor(owner.accessToken))
         assert.ok(resizeLog.OutboxId)
         // Separate the last explicit edit from transitions to catch snapshot-derived phantom edits.
-        await new Promise((resolve) => setTimeout(resolve, 1100))
+        await new Promise((resolve) => {
+          setTimeout(resolve, 1100)
+        })
         for (const [suffix, event] of [
           ['publish', 'published'],
           ['unpublish', 'unpublished'],
@@ -154,7 +157,7 @@ test(
           ['archive', 'archived'],
           ['unarchive', 'unarchived'],
         ]) {
-          await mutation('/' + suffix, 'PATCH', undefined, 'recipe.' + event)
+          await mutation(`/${suffix}`, 'PATCH', undefined, `recipe.${event}`)
         }
         await call(route, {
           method: 'PUT',
@@ -189,7 +192,7 @@ test(
           new Blob(['synthetic-multipart-secret'], { type: 'image/png' }),
           'synthetic-multipart-secret.png',
         )
-        await call(route + '/images', {
+        await call(`${route}/images`, {
           method: 'POST',
           token: owner.accessToken,
           version,
@@ -237,9 +240,9 @@ test(
         )
         for (const request of requests) {
           const entry = logs.find(
-            (entry) =>
-              entry.CorrelationId === request.correlation &&
-              entry.SourceContext === 'Serilog.AspNetCore.RequestLoggingMiddleware',
+            (record) =>
+              record.CorrelationId === request.correlation &&
+              record.SourceContext === 'Serilog.AspNetCore.RequestLoggingMiddleware',
           )
           assert.ok(entry, `Missing request log ${request.correlation}`)
           assert.equal(entry.RequestMethod, request.method)
@@ -249,7 +252,7 @@ test(
           assert.ok(Number.isFinite(entry.Elapsed) && entry.Elapsed >= 0)
           if (request.status >= 400)
             assert.ok(
-              !logs.some((entry) => entry.CorrelationId === request.correlation && entry.AuditEvent),
+              !logs.some((record) => record.CorrelationId === request.correlation && record.AuditEvent),
               'Rejected mutation appeared as successful',
             )
         }
@@ -302,7 +305,7 @@ test(
           return { context, page }
         }
         const browserAdmin = await login('admin@users-e2e.test')
-        const page = browserAdmin.page
+        const { page } = browserAdmin
         await page.goto('/dashboard/audit')
         await expect(page.getByRole('heading', { name: 'Lịch sử hệ thống', exact: true })).toBeVisible()
         const search = page.getByRole('textbox', {
@@ -343,7 +346,7 @@ test(
         const browserAuthor = await login('owner@audit-e2e.test')
         let forbiddenAuditReads = 0
         browserAuthor.page.on('request', (request) => {
-          if (request.url().includes('/api/v1/admin/audit-logs')) forbiddenAuditReads++
+          if (request.url().includes('/api/v1/admin/audit-logs')) forbiddenAuditReads += 1
         })
         await browserAuthor.page.goto('/dashboard/audit')
         await expect.poll(() => new URL(browserAuthor.page.url()).pathname).toBe('/dashboard')

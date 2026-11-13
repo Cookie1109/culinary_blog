@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using CulinaryBlog.Application.Auth;
+using CulinaryBlog.Application.Media;
 using CulinaryBlog.Infrastructure.Email;
 using CulinaryBlog.Infrastructure.Persistence;
 using FluentValidation;
@@ -25,7 +26,8 @@ namespace CulinaryBlog.Infrastructure.Identity;
 /// <param name="passwordResetEmailSender">The password reset email sender supplied to this operation.</param>
 /// <param name="timeProvider">The time provider supplied to this operation.</param>
 /// <param name="logger">The logger supplied to this operation.</param>
-internal sealed class AuthService(
+/// <param name="fileStorage">Stores profile images.</param>
+internal sealed partial class AuthService(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
     AppDbContext dbContext,
@@ -34,7 +36,8 @@ internal sealed class AuthService(
     IConfiguration configuration,
     IPasswordResetEmailSender passwordResetEmailSender,
     TimeProvider timeProvider,
-    ILogger<AuthService> logger) : IAuthService
+    ILogger<AuthService> logger,
+    IFileStorageService fileStorage) : IAuthService
 {
     private const string AuthorRole = "Author";
     private static readonly Action<ILogger, Guid, string, Exception?> RefreshReuse = LoggerMessage.Define<Guid, string>(
@@ -239,6 +242,18 @@ internal sealed class AuthService(
                 };
                 ThrowIfIdentityFailed(await userManager.CreateAsync(user).ConfigureAwait(false));
                 ThrowIfIdentityFailed(await userManager.AddToRoleAsync(user, AuthorRole).ConfigureAwait(false));
+                dbContext.WelcomeEmailOutbox.Add(new WelcomeEmailOutbox
+                {
+                    TraceParent = Activity.Current?.Id,
+                    CorrelationId = Activity.Current?.GetBaggageItem("correlation.id"),
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Recipient = payload.Email,
+                    DisplayName = user.DisplayName,
+                    Attempts = 0,
+                    CreatedAt = user.CreatedAt,
+                    NextAttemptAt = user.CreatedAt,
+                });
             }
 
             ThrowIfIdentityFailed(await userManager.AddLoginAsync(
@@ -386,6 +401,11 @@ internal sealed class AuthService(
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var user = await this.FindActiveUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        if (!await userManager.HasPasswordAsync(user).ConfigureAwait(false))
+        {
+            throw new AuthProblemException("AUTH_PASSWORD_NOT_SET", "This account signs in with Google and has no local password.");
+        }
+
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword).ConfigureAwait(false);
         if (result.Errors.Any(error => error.Code == "PasswordMismatch"))
         {
@@ -465,6 +485,7 @@ internal sealed class AuthService(
         CancellationToken cancellationToken)
     {
         var user = await this.FindActiveUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        var previousAvatar = user.AvatarUrl;
         if (request.UpdateDisplayName)
         {
             user.DisplayName = request.DisplayName!.Trim();
@@ -480,9 +501,15 @@ internal sealed class AuthService(
             user.Bio = string.IsNullOrWhiteSpace(request.Bio) ? null : request.Bio.Trim();
         }
 
+        var profile = await this.ToDtoAsync(user).ConfigureAwait(false);
         var result = await userManager.UpdateAsync(user).ConfigureAwait(false);
         ThrowIfIdentityFailed(result);
-        return await this.ToDtoAsync(user).ConfigureAwait(false);
+        if (previousAvatar != user.AvatarUrl)
+        {
+            await this.TryDeleteAvatarAsync(user.Id, previousAvatar).ConfigureAwait(false);
+        }
+
+        return profile;
     }
 
     private static AuthProblemException InvalidResetToken() =>
@@ -571,7 +598,8 @@ internal sealed class AuthService(
             roles.ToArray(),
             user.EmailConfirmed,
             user.IsActive,
-            user.CreatedAt);
+            user.CreatedAt,
+            await userManager.HasPasswordAsync(user).ConfigureAwait(false));
     }
 
     private async Task<ApplicationUser> FindActiveUserAsync(string userId, CancellationToken cancellationToken)

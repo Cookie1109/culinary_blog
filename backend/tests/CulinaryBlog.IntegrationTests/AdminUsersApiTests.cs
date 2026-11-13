@@ -60,7 +60,7 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
             {
                 var user = new ApplicationUser
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.NewGuid().ToString(),
                     DisplayName = $"{marker} Người {index}",
                     Email = $"{marker}-{index}@users.test",
                     UserName = $"{marker}-{index}@users.test",
@@ -122,7 +122,7 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
             {
                 db.Users.Add(new ApplicationUser
                 {
-                    Id = id,
+                    Id = id.ToString(),
                     DisplayName = marker + "%_\\",
                     Email = $"{id:N}@users.test",
                     UserName = $"{id:N}@users.test",
@@ -130,7 +130,7 @@ public sealed class AdminUsersApiTests(AuthApiFactory factory) : IClassFixture<A
                     CreatedAt = createdAt,
                 });
             }
-            db.Users.Add(new ApplicationUser { Id = Guid.NewGuid(), DisplayName = marker + "XYZ", CreatedAt = createdAt });
+            db.Users.Add(new ApplicationUser { Id = Guid.NewGuid().ToString(), DisplayName = marker + "XYZ", CreatedAt = createdAt });
             await db.SaveChangesAsync();
         }
         var search = Uri.EscapeDataString(marker + "%_\\");

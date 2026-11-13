@@ -32,7 +32,7 @@ async function run(exe, args, cwd, name, env = {}) {
     child.on('error', reject)
     child.on('close', resolve)
   })
-  await writeFile(path.join(output, name + '.log'), log)
+  await writeFile(path.join(output, `${name}.log`), log)
   commands.push({
     exe,
     args,
@@ -40,7 +40,7 @@ async function run(exe, args, cwd, name, env = {}) {
     started,
     finished: new Date().toISOString(),
     exitCode: code,
-    log: name + '.log',
+    log: `${name}.log`,
   })
   await writeFile(path.join(output, 'commands.json'), JSON.stringify(commands, null, 2))
   assert.equal(code, 0, `${name} failed; see ${output}: ${log.slice(-2500)}`)
@@ -67,9 +67,9 @@ async function sources() {
   const files = {}
   for (const name of [...new Set(listing.split('\0'))]
     .filter(
-      (name) =>
-        /\.(cs|csproj|props|targets|slnx|ts|tsx|js|jsx|mjs|json|yml|yaml|py|config)$/.test(name) ||
-        name === '.editorconfig',
+      (fileName) =>
+        /\.(cs|csproj|props|targets|slnx|ts|tsx|js|jsx|mjs|json|yml|yaml|py|config)$/.test(fileName) ||
+        fileName === '.editorconfig',
     )
     .sort()) {
     files[name] = createHash('sha256')
@@ -95,9 +95,9 @@ for (const name of [
   'CulinaryBlog.Domain',
   'CulinaryBlog.Infrastructure',
 ]) {
-  backendBinaries[name + '.dll'] = createHash('sha256')
+  backendBinaries[`${name}.dll`] = createHash('sha256')
     .update(
-      await readFile(path.join(root, 'backend/src/CulinaryBlog.Api/bin/Release/net10.0', name + '.dll')),
+      await readFile(path.join(root, 'backend/src/CulinaryBlog.Api/bin/Release/net10.0', `${name}.dll`)),
     )
     .digest('hex')
 }

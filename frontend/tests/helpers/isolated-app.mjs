@@ -84,8 +84,10 @@ export async function withIsolatedApp({ media = false }, exercise) {
     await new Promise((resolve) => {
       server.listen(0, '127.0.0.1', resolve)
     })
-    const port = server.address().port
-    await new Promise((resolve) => server.close(resolve))
+    const { port } = server.address()
+    await new Promise((resolve) => {
+      server.close(resolve)
+    })
     return port
   }
   async function ready(name, probe) {
@@ -96,7 +98,9 @@ export async function withIsolatedApp({ media = false }, exercise) {
       } catch {
         /* Wait only for this run's dependencies. */
       }
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 300)
+      })
     }
     throw new Error(`${name} readiness failed; logs: ${artifacts}`)
   }
@@ -261,7 +265,9 @@ export async function withIsolatedApp({ media = false }, exercise) {
       })
       request.pipe(upstream)
     })
-    await new Promise((resolve) => gateway.listen(0, '127.0.0.1', resolve))
+    await new Promise((resolve) => {
+      gateway.listen(0, '127.0.0.1', resolve)
+    })
     const baseURL = `http://127.0.0.1:${gateway.address().port}`
     const revalidationSecret = randomBytes(32).toString('hex')
     const apiCopy = path.join(artifacts, 'api')
@@ -370,7 +376,9 @@ export async function withIsolatedApp({ media = false }, exercise) {
     if (browser) await browser.close()
     if (gateway) {
       gateway.closeAllConnections()
-      await new Promise((resolve) => gateway.close(resolve))
+      await new Promise((resolve) => {
+        gateway.close(resolve)
+      })
     }
     for (const handle of processes.reverse()) await stop(handle)
     for (const id of containers.reverse()) {

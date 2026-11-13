@@ -31,7 +31,7 @@ export function Register() {
       setError('')
       await createAccount(name, email, password)
       showToast('Đăng ký thành công.')
-      navigate('/dashboard')
+      navigate('/')
     } catch (failure) {
       showToast(authErrorMessage(failure))
       setServerFieldErrors(failure, setFieldError, {

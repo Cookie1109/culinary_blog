@@ -170,7 +170,7 @@ test(
       await command('docker', ['exec', minio.id, 'mc', 'stat', `test/media-test/${objectKey}`])
       assert.equal((await fetch(`http://127.0.0.1:${minio.port}/media-test/${objectKey}`)).status, 403)
       async function mutate(suffix, method, body) {
-        const version = (await detail()).version
+        const { version } = await detail()
         const response = await fetch(`${api}/api/v1/recipes/${recipeId}${suffix}`, {
           method,
           headers: { ...headers, 'If-Match': `"${version}"`, 'Content-Type': 'application/json' },

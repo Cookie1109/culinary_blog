@@ -1,17 +1,7 @@
 import Image from 'next/image'
 import { Outlet, Link, useNavigate, useSearchParams } from 'react-router'
 import { usePathname } from 'next/navigation'
-import {
-  LayoutDashboard,
-  BookOpen,
-  Tag,
-  LogOut,
-  ChevronDown,
-  Activity,
-  ExternalLink,
-  Shield,
-  Users,
-} from 'lucide-react'
+import { LayoutDashboard, BookOpen, Tag, LogOut, ChevronDown, Shield, Users } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -72,7 +62,7 @@ export function DashboardLayout() {
   else if (pathname.endsWith('/edit')) currentPage = 'Chỉnh sửa công thức'
 
   return (
-    <div className="flex min-h-[calc(100vh-80px)]">
+    <div className="flex min-h-[calc(100vh-80px)] xl:has-[[data-fit-workspace]]:h-full xl:has-[[data-fit-workspace]]:min-h-0 xl:has-[[data-fit-workspace]]:overflow-hidden">
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-60 border-r border-border bg-background shrink-0">
         {/* User card */}
@@ -130,31 +120,6 @@ export function DashboardLayout() {
               </ul>
             </section>
           ))}
-
-          {user?.role === 'admin' && (
-            <div className="mt-6 pt-4 border-t border-border">
-              <p className="px-4 mb-2 text-xs uppercase tracking-widest text-muted-foreground">
-                Vận hành (Admin)
-              </p>
-              <ul className="space-y-0.5">
-                <li>
-                  <a
-                    href="/jobs"
-                    aria-label="Tác vụ nền Hangfire, mở trong tab mới"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary hover:text-primary transition-colors border-l-2 border-transparent"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Activity size={18} strokeWidth={1.5} />
-                      <span>Tác vụ nền (Hangfire)</span>
-                    </div>
-                    <ExternalLink size={14} className="text-muted-foreground" />
-                  </a>
-                </li>
-              </ul>
-            </div>
-          )}
         </nav>
 
         {/* Sign out */}
@@ -171,7 +136,7 @@ export function DashboardLayout() {
       </aside>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="min-h-0 flex-1 flex flex-col min-w-0">
         <details className="border-b border-border bg-background md:hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
             <span>{currentPage}</span>
@@ -202,22 +167,11 @@ export function DashboardLayout() {
                 </ul>
               </section>
             ))}
-            {user?.role === 'admin' && (
-              <a
-                href="/jobs"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground"
-              >
-                Tác vụ nền (Hangfire)
-                <ExternalLink size={14} aria-label="Mở trong tab mới" />
-              </a>
-            )}
           </nav>
         </details>
 
-        <div className="flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto w-full max-w-7xl">
+        <div className="min-h-0 min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl xl:has-[[data-fit-workspace]]:h-full xl:has-[[data-fit-workspace]]:min-h-0">
             <Outlet />
           </div>
         </div>

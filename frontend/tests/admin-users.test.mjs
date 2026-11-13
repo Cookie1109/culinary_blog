@@ -20,7 +20,7 @@ const fixture = {
 }
 
 function load(file, mocks) {
-  const module = { exports: {} }
+  const loadedModule = { exports: {} }
   const code = ts.transpileModule(readFileSync(file, 'utf8'), {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
@@ -29,14 +29,19 @@ function load(file, mocks) {
     },
   }).outputText
   vm.runInNewContext(code, {
-    module,
-    exports: module.exports,
-    require: (name) => mocks[name] ?? require(name),
+    module: loadedModule,
+    exports: loadedModule.exports,
+    require: (name) => {
+      if (mocks[name]) return mocks[name]
+      if (name === 'react/jsx-runtime') return require('react/jsx-runtime')
+      if (name === 'react') return require('react')
+      throw new Error(`Unexpected module: ${name}`)
+    },
     Intl,
     Date,
     URLSearchParams,
   })
-  return module.exports
+  return loadedModule.exports
 }
 
 async function setup(role = 'admin') {
@@ -73,19 +78,27 @@ async function setup(role = 'admin') {
   async function render() {
     await act(async () => {
       root.render(React.createElement(query.QueryClientProvider, { client }, React.createElement(UsersAdmin)))
-      await new Promise((resolve) => setTimeout(resolve, 20))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
     })
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 20))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
     })
   }
   async function event(element, name = 'click') {
     await act(async () => {
       element.dispatchEvent(new dom.window.Event(name, { bubbles: true, cancelable: true }))
-      await new Promise((resolve) => setTimeout(resolve, 20))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
     })
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 20))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
     })
   }
   return {
@@ -164,7 +177,9 @@ test('Directory distinguishes loading, network errors, retry and empty results w
     assert.match(document.querySelector('[role="status"]').textContent, /Đang tải/)
     await act(async () => {
       reject(new Error('private-database-detail'))
-      await new Promise((resolve) => setTimeout(resolve, 20))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
     })
     assert.match(document.querySelector('[role="alert"]').textContent, /Không thể tải/)
     assert.doesNotMatch(document.body.textContent, /private-database-detail/)

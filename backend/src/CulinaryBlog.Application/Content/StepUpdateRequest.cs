@@ -14,7 +14,7 @@ public sealed record StepUpdateRequest
     public InputField<string?> Description { get; init; }
 
     /// <summary>Gets or initializes the timer minutes.</summary>
-    public InputField<int?> TimerMinutes { get; init; }
+    public InputField<double?> TimerMinutes { get; init; }
 
     /// <summary>Gets or initializes the image url.</summary>
     public InputField<string?> ImageUrl { get; init; }

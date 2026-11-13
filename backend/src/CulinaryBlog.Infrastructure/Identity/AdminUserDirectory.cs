@@ -13,12 +13,12 @@ internal sealed class AdminUserDirectory(AppDbContext dbContext, IHttpContextAcc
     {
         var principal = accessor.HttpContext?.User;
         var userId = principal?.FindFirstValue("sub") ?? principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (principal?.Identity?.IsAuthenticated != true || !Guid.TryParse(userId, out var id))
+        if (principal?.Identity?.IsAuthenticated != true || string.IsNullOrWhiteSpace(userId))
         {
             return Task.FromResult(false);
         }
 
-        return dbContext.Users.AnyAsync(user => user.Id == id && user.IsActive &&
+        return dbContext.Users.AnyAsync(user => user.Id == userId && user.IsActive &&
             dbContext.UserRoles.Any(membership => membership.UserId == user.Id &&
                 dbContext.Roles.Any(role => role.Id == membership.RoleId && role.Name == "Admin")), cancellationToken);
     }

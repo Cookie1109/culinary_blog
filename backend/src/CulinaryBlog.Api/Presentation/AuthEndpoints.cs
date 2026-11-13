@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
 using CulinaryBlog.Application.Auth;
+using CulinaryBlog.Application.Content;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
@@ -83,6 +84,15 @@ internal static class AuthEndpoints
             })
             .Produces<DataEnvelope<UserDto>>()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        auth.MapPost("/me/avatar", UploadProfileAvatarAsync).RequireAuthorization("AuthorPolicy")
+            .RequireRateLimiting("upload")
+            .WithSummary("Update a profile with an avatar uploaded from the device")
+            .Accepts<ProfileAvatarBody>("multipart/form-data")
+            .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(6 * 1024 * 1024))
+            .Produces<DataEnvelope<UserDto>>();
+        endpoints.MapGet("/api/v1/avatars/{userId}/{fileName}", OpenAvatarAsync).AllowAnonymous()
+            .WithTags("Images").WithSummary("Read the current public profile avatar");
 
         return endpoints;
     }
@@ -226,6 +236,55 @@ internal static class AuthEndpoints
         return Results.Ok(new DataEnvelope<UserDto>(user));
     }
 
+    private static async Task<IResult> UploadProfileAvatarAsync(
+        HttpContext context,
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        if (!context.Request.HasFormContentType)
+        {
+            throw new ContentProblemException("FILE_MIME_INVALID", "A multipart image upload is required.", ContentProblemKind.BadRequest);
+        }
+
+        var bodyLimit = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
+        if (bodyLimit is { IsReadOnly: false })
+        {
+            bodyLimit.MaxRequestBodySize = 6 * 1024 * 1024;
+        }
+
+        var form = await context.Request.ReadFormAsync(cancellationToken).ConfigureAwait(false);
+        var file = form.Files.GetFile("file");
+        if (file is null || form.Files.Count != 1)
+        {
+            throw new ContentProblemException("FILE_MIME_INVALID", "Select one profile image.", ContentProblemKind.BadRequest);
+        }
+
+        var request = new UpdateProfileRequest(
+            form.ContainsKey("displayName") ? form["displayName"].ToString() : null,
+            null,
+            form.ContainsKey("bio") ? form["bio"].ToString() : null,
+            form.ContainsKey("displayName"),
+            true,
+            form.ContainsKey("bio"));
+        await using var content = file.OpenReadStream();
+        var user = await sender.Send(new UpdateProfileAvatarCommand(
+            GetUserId(principal), request, content, file.Length, file.ContentType), cancellationToken).ConfigureAwait(false);
+        return Results.Ok(new DataEnvelope<UserDto>(user));
+    }
+
+    private static async Task<IResult> OpenAvatarAsync(
+        string userId,
+        string fileName,
+        HttpContext context,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var file = await sender.Send(new OpenProfileAvatarQuery(userId, fileName), cancellationToken).ConfigureAwait(false);
+        context.Response.Headers.CacheControl = "public,max-age=86400";
+        return Results.Stream(file.Content, file.ContentType);
+    }
+
     private static string GetUserId(ClaimsPrincipal principal)
     {
         return principal.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -253,4 +312,6 @@ internal static class AuthEndpoints
     }
 
     private sealed record ProfileUpdateBody(string? DisplayName = null, string? AvatarUrl = null, string? Bio = null);
+
+    private sealed record ProfileAvatarBody(IFormFile File, string? DisplayName = null, string? Bio = null);
 }

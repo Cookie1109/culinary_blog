@@ -2,6 +2,7 @@
 
 using System.Net;
 using System.Net.Mail;
+using System.Text;
 using CulinaryBlog.Infrastructure.Configuration;
 using CulinaryBlog.Infrastructure.Persistence;
 using Hangfire;
@@ -52,6 +53,8 @@ public sealed partial class WelcomeEmailJob(
         {
             From = new MailAddress(email.FromAddress, email.FromName),
             Subject = "Chào mừng bạn đến với Culinary Blog",
+            SubjectEncoding = Encoding.UTF8,
+            BodyEncoding = Encoding.UTF8,
             Body = $"<html lang=\"vi\"><body><h1>Chào {name}!</h1><p>Chào mừng bạn đến với Culinary Blog.</p><p>Khám phá và chia sẻ công thức nấu ăn của bạn.</p><p><a href=\"{url}\">Truy cập Culinary Blog</a></p></body></html>",
             IsBodyHtml = true,
         };
@@ -64,6 +67,7 @@ public sealed partial class WelcomeEmailJob(
             message.LastError = null;
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            DeliveryAccepted(logger, message.Id);
         }
         catch (Exception exception) when (exception is SmtpException or InvalidOperationException)
         {
@@ -80,4 +84,7 @@ public sealed partial class WelcomeEmailJob(
 
     [LoggerMessage(EventId = 3002, Level = LogLevel.Warning, Message = "Welcome email delivery failed for message {MessageId} on attempt {Attempt}")]
     private static partial void DeliveryFailed(ILogger logger, Guid messageId, int attempt);
+
+    [LoggerMessage(EventId = 3005, Level = LogLevel.Information, Message = "Welcome email accepted by SMTP server for message {MessageId}")]
+    private static partial void DeliveryAccepted(ILogger logger, Guid messageId);
 }

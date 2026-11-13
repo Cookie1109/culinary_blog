@@ -1,5 +1,7 @@
 // Culinary Blog. Authorship is recorded in the repository history.
 
+using CulinaryBlog.Application.Content;
+
 namespace CulinaryBlog.Application.Auth;
 
 /// <summary>Defines the auth service contract.</summary>
@@ -100,4 +102,16 @@ public interface IAuthService
         string userId,
         UpdateProfileRequest request,
         CancellationToken cancellationToken);
+
+    /// <summary>Updates a profile with an uploaded avatar.</summary>
+    Task<UserDto> UpdateProfileAvatarAsync(
+        string userId,
+        UpdateProfileRequest request,
+        Stream content,
+        long length,
+        string contentType,
+        CancellationToken cancellationToken);
+
+    /// <summary>Reads the current public avatar for an active account.</summary>
+    Task<MediaFileDto> OpenProfileAvatarAsync(string userId, string fileName, CancellationToken cancellationToken);
 }

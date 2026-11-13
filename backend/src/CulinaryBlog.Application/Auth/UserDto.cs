@@ -12,6 +12,7 @@ namespace CulinaryBlog.Application.Auth;
 /// <param name="EmailConfirmed">The email confirmed supplied to this operation.</param>
 /// <param name="IsActive">The is active supplied to this operation.</param>
 /// <param name="CreatedAt">The UTC creation time.</param>
+/// <param name="HasPassword">Whether the account has a local password.</param>
 public sealed record UserDto(
     string Id,
     string Email,
@@ -21,4 +22,5 @@ public sealed record UserDto(
     IReadOnlyCollection<string> Roles,
     bool EmailConfirmed,
     bool IsActive,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool HasPassword = false);

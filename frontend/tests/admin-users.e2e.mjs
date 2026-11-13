@@ -4,6 +4,7 @@ import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { expect as playwrightExpect } from '@playwright/test'
 import { withIsolatedApp, password } from './helpers/isolated-app.mjs'
+
 const expect = playwrightExpect.configure({ timeout: 15_000 })
 test(
   'Admin user directory works with the real API, database and authenticated browser',
@@ -31,7 +32,7 @@ test(
         '-c',
         `INSERT INTO "AspNetUserRoles" ("UserId", "RoleId") VALUES ('${adminId}', '00000000-0000-0000-0000-000000000002')`,
       ])
-      for (let index = 0; index < 25; index++) {
+      for (let index = 0; index < 25; index += 1) {
         const response = await fetch(`${api}/api/v1/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -129,7 +130,7 @@ test(
           .toEqual(['Author'])
         let directoryRequests = 0
         authorPage.on('request', (request) => {
-          if (request.url().includes('/api/v1/admin/users')) directoryRequests++
+          if (request.url().includes('/api/v1/admin/users')) directoryRequests += 1
         })
         await authorPage.goto('/dashboard/users')
         try {

@@ -13,6 +13,6 @@ namespace CulinaryBlog.Application.Content;
 public sealed record StepWriteRequest(
     string Title,
     string Description,
-    int? TimerMinutes = null,
+    double? TimerMinutes = null,
     string? ImageUrl = null,
     int? StepNumber = null);

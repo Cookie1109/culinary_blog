@@ -16,5 +16,5 @@ public sealed record StepDto(
     int StepNumber,
     string Title,
     string Description,
-    int? TimerMinutes,
+    double? TimerMinutes,
     string? ImageUrl);
