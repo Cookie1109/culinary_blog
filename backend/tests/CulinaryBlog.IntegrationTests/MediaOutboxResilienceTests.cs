@@ -43,7 +43,7 @@ public sealed class MediaOutboxResilienceTests(AuthApiFactory factory) : IClassF
         try
         {
             await worker.StartAsync(CancellationToken.None);
-            await Task.WhenAny(worker.ExecuteTask!, Task.Delay(TimeSpan.FromSeconds(2)));
+            await Task.Delay(TimeSpan.FromSeconds(2));
             Assert.False(worker.ExecuteTask!.IsCompleted, "A failed batch must not terminate the hosted service.");
             connection = db.Database.GetConnectionString()!;
             var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
