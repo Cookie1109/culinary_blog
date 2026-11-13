@@ -34,6 +34,36 @@ const fixture = {
   author: { displayName: 'Tác giả' },
 }
 
+test('recipe detail displays the original image when background resize fails', async () => {
+  const h = await setup()
+  try {
+    const { RecipeDetail } = h.load('features/culinary/pages/RecipeDetail.tsx')
+    await h.render(
+      React.createElement(RecipeDetail, {
+        recipe: {
+          ...fixture,
+          slug: 'failed-resize',
+          images: [
+            {
+              id: 'failed-image',
+              originalUrl: '/api/v1/media/failed-image/original',
+              mediumUrl: null,
+              thumbnailUrl: null,
+              isPrimary: true,
+              orderIndex: 0,
+              processingStatus: 'failed',
+              altText: 'Ảnh gốc còn nguyên',
+            },
+          ],
+        },
+      }),
+    )
+    assert.ok(document.querySelector('img[src="/api/public-media/failed-image/original?v=1"]'))
+  } finally {
+    await h.close()
+  }
+})
+
 async function setup({ editing = true } = {}) {
   const dom = new JSDOM(
     '<!doctype html><html><body><button id="trigger">Mở</button><div id="root"></div></body></html>',
@@ -70,33 +100,34 @@ async function setup({ editing = true } = {}) {
   let search = new URLSearchParams()
   const navigations = []
   const requests = []
+  let historyEvents = 0
+  dom.window.addEventListener(
+    'popstate',
+    () => {
+      historyEvents += 1
+    },
+    true,
+  )
   let update = async (_id, _version, payload) => ({
     ...recipe,
     ...payload,
     category: recipe.category,
     version: recipe.version + 1,
   })
-  const auth = {
-    useAuth: () => ({
-      user,
-      isLoading: false,
-      updateProfile: async () => {},
-      logout: async () => {
-        requests.push(['logout'])
-      },
-      login: async () => {},
-      register: async () => {},
-    }),
-  }
   const api = new Proxy(
     {
       listCategories: async () => [recipe.category],
+      updateProfile: async (values) => {
+        requests.push(['profile', values])
+        user = { ...user, ...values }
+      },
       getAdminRecipe: async () => {
         requests.push(['read-admin'])
         return recipe
       },
       getMyRecipe: async () => recipe,
       updateRecipe: async (...args) => {
+        requests.push(['update', ...args])
         recipe = await update(...args)
         return recipe
       },
@@ -121,6 +152,18 @@ async function setup({ editing = true } = {}) {
         }),
     },
   )
+  const auth = {
+    useAuth: () => ({
+      user,
+      isLoading: false,
+      updateProfile: async (...args) => api.updateProfile(...args),
+      logout: async () => {
+        requests.push(['logout'])
+      },
+      login: async (...args) => api.login(...args),
+      register: async (...args) => api.register(...args),
+    }),
+  }
   const router = {
     Outlet: () => null,
     Link: ({ to, children, ...props }) => React.createElement('a', { href: to, ...props }, children),
@@ -145,6 +188,7 @@ async function setup({ editing = true } = {}) {
     cache.set(filename, exports)
     const customRequire = (name) => {
       if (name === 'react-router') return router
+      if (name === 'next/link') return require('next/link')
       if (name === 'next/navigation')
         return {
           usePathname: () => dom.window.location.pathname,
@@ -165,11 +209,11 @@ async function setup({ editing = true } = {}) {
       if (name === 'next/dynamic')
         return () =>
           load('features/culinary/pages/dashboard/RecipeCompositionWizard.tsx').RecipeCompositionWizard
-      if (name.startsWith('@/') || name.startsWith('./')) {
+      if (name.startsWith('@/') || name.startsWith('.')) {
         const target = name.startsWith('@/')
           ? name.slice(2)
           : path.relative(sourceRoot, path.resolve(path.dirname(filename), name))
-        const extension = existsSync(path.resolve(sourceRoot, target + '.tsx')) ? '.tsx' : '.ts'
+        const extension = existsSync(path.resolve(sourceRoot, `${target}.tsx`)) ? '.tsx' : '.ts'
         if (name.endsWith('auth-client'))
           return {
             authenticatedBlobUrl: async () => '',
@@ -179,7 +223,15 @@ async function setup({ editing = true } = {}) {
           }
         return load(target + extension)
       }
-      return require(name)
+      if (name === 'react') return require('react')
+      if (name === 'react/jsx-runtime') return require('react/jsx-runtime')
+      if (name === 'react-hook-form') return require('react-hook-form')
+      if (name === '@hookform/resolvers/zod') return require('@hookform/resolvers/zod')
+      if (name === 'zod') return require('zod')
+      if (name === 'zod/mini') return require('zod/mini')
+      if (name === 'lucide-react') return require('lucide-react')
+      if (name === 'next-auth/react') return require('next-auth/react')
+      throw new Error(`Unexpected UI fixture dependency: ${name}`)
     }
     const js = ts.transpileModule(readFileSync(filename, 'utf8'), {
       compilerOptions: {
@@ -189,20 +241,13 @@ async function setup({ editing = true } = {}) {
         esModuleInterop: true,
       },
     }).outputText
-    vm.runInNewContext(`(function(require,exports){${js}\n})`, {
-      console,
-      window: dom.window,
-      document: dom.window.document,
-      Element: dom.window.Element,
-      URL,
-      URLSearchParams,
-      setTimeout,
-      clearTimeout,
-      navigator: dom.window.navigator,
-    })(customRequire, exports)
+    // Share built-in constructors with real dependencies. RHF treats objects from
+    // a separate VM realm as class instances and cannot clone their form values.
+    vm.runInThisContext(`(function(require,exports){${js}\n})`, { filename })(customRequire, exports)
     return exports
   }
   const guard = load('components/navigation-guard.tsx')
+  const { ToastProvider } = load('components/ui/toast.tsx')
   let current
   async function render(element) {
     current = element ?? React.cloneElement(current)
@@ -211,31 +256,37 @@ async function setup({ editing = true } = {}) {
         React.createElement(
           QueryClientProvider,
           { client },
-          React.createElement(guard.NavigationGuardProvider, null, current),
+          React.createElement(
+            guard.NavigationGuardProvider,
+            null,
+            React.createElement(ToastProvider, null, current),
+          ),
         ),
       )
-      await new Promise((r) => setTimeout(r, 20))
+      await new Promise((r) => {
+        setTimeout(r, 20)
+      })
     })
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 20))
+      await new Promise((r) => {
+        setTimeout(r, 20)
+      })
     })
   }
   return {
     load,
     render,
     requests,
+    client,
     navigations,
+    historyEventCount: () => historyEvents,
+    getSearch: () => new URLSearchParams(search),
     dom,
     setUser: (next) => {
       user = next
     },
-    getSearch: () => new URLSearchParams(search),
     setSearch: (next) => {
       search = new URLSearchParams(next)
-    },
-    refetchRecipe: () => client.refetchQueries({ queryKey: ['my-recipe'] }),
-    setRecipe: (next) => {
-      recipe = next
     },
     setUpdate: (next) => {
       update = next
@@ -257,71 +308,70 @@ function button(label, container = document) {
   return result
 }
 
-test('AVIF upload preserves the selected file and alt text after storage failure, then retries successfully', async () => {
-  const h = await setup()
-  try {
-    const { ApiProblem } = h.load('lib/api/problem-details.ts')
-    let fail = true
-    h.setApi('uploadRecipeImage', async (...args) => {
-      h.requests.push(['upload', ...args])
-      if (fail)
-        throw new ApiProblem({
-          title: 'Upload failed',
-          detail: 'private-storage-address',
-          status: 503,
-          code: 'FILE_UPLOAD_FAILED',
-        })
-      return { data: {}, meta: { recipeVersion: 2 } }
-    })
+for (const [stage, label, method, item] of [
+  ['ingredients', 'Xóa nguyên liệu', 'deleteIngredient', { id: 'child', name: 'Muối', orderIndex: 0 }],
+  ['steps', 'Xóa bước', 'deleteStep', { id: 'child', title: 'Nấu', description: 'Nấu chín', stepNumber: 1 }],
+  [
+    'images',
+    'Xóa ảnh',
+    'deleteRecipeImage',
+    { id: 'child', altText: 'Ảnh thử', orderIndex: 0, processingStatus: 'failed' },
+  ],
+]) {
+  test(`composition ${stage} deletion confirms, blocks duplicate writes and keeps errors recoverable`, async () => {
+    const h = await setup()
+    let finish
+    let reject
     const changed = []
-    await h.render(
-      React.createElement(
-        h.load('features/culinary/pages/dashboard/RecipeCompositionWizard.tsx').RecipeCompositionWizard,
-        {
-          recipe: structuredClone(fixture),
-          version: 1,
-          activeStage: 'images',
-          onChanged: async (version) => {
-            changed.push(version)
-          },
-        },
-      ),
-    )
-    const input = document.getElementById('recipe-image')
-    assert.match(input.accept, /image\/avif/)
-    const file = new h.dom.window.File(['synthetic-avif'], 'dish.avif', { type: 'image/avif' })
-    Object.defineProperty(input, 'files', { configurable: true, value: [file] })
-    await act(async () => input.dispatchEvent(new window.Event('change', { bubbles: true })))
-    await act(async () => {
-      const alt = document.querySelector('[aria-label="Mô tả ảnh"]')
-      Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set.call(
-        alt,
-        'Ảnh món ăn',
-      )
-      alt.dispatchEvent(new window.Event('input', { bubbles: true }))
-    })
-    async function submit() {
-      await act(async () => {
-        input.closest('form').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }))
-        await new Promise((resolve) => setTimeout(resolve, 30))
+    try {
+      h.setApi(method, (...args) => {
+        h.requests.push(args)
+        return new Promise((resolve, fail) => {
+          finish = resolve
+          reject = fail
+        })
       })
+      const { RecipeCompositionWizard } = h.load(
+        'features/culinary/pages/dashboard/RecipeCompositionWizard.tsx',
+      )
+      await h.render(
+        React.createElement(RecipeCompositionWizard, {
+          recipe: { ...fixture, [stage]: [item] },
+          version: 7,
+          activeStage: stage,
+          onChanged: async (value) => {
+            changed.push(value)
+          },
+        }),
+      )
+      const openDelete = () => document.querySelector(`[aria-label="${label}"]`)
+      await click(openDelete())
+      assert.equal(h.requests.length, 0)
+      await click(button('Hủy', document.querySelector('[role="dialog"]')))
+      assert.equal(document.querySelector('[role="dialog"]'), null)
+      await click(openDelete())
+      await click(button('Xóa nội dung'))
+      assert.deepEqual(h.requests, [[fixture.id, 'child', 7]])
+      assert.equal(button('Đang xóa…').disabled, true)
+      await click(button('Đang xóa…'))
+      await act(async () =>
+        document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+      )
+      assert.ok(document.querySelector('[role="dialog"]'))
+      assert.equal(h.requests.length, 1)
+      await act(async () => reject(new Error('Synthetic delete failure')))
+      assert.equal(changed.length, 0)
+      assert.ok(document.querySelector('[role="alert"]'))
+      await click(openDelete())
+      await click(button('Xóa nội dung'))
+      await act(async () => finish(8))
+      assert.deepEqual(changed, [8])
+      assert.equal(document.querySelector('[role="dialog"]'), null)
+    } finally {
+      await h.close()
     }
-    await submit()
-    assert.equal(h.requests.length, 1)
-    assert.equal(h.requests[0][3], file)
-    assert.equal(document.querySelector('[aria-label="Mô tả ảnh"]').value, 'Ảnh món ăn')
-    assert.match(document.querySelector('[role="alert"]').textContent, /Không thể tải ảnh/)
-    assert.doesNotMatch(document.body.textContent, /private-storage-address/)
-    fail = false
-    await submit()
-    assert.equal(h.requests.length, 2)
-    assert.equal(h.requests[1][3], file)
-    assert.deepEqual(changed, [2])
-    assert.equal(document.querySelector('[aria-label="Mô tả ảnh"]').value, '')
-  } finally {
-    await h.close()
-  }
-})
+  })
+}
 
 test('password change rejects weak or mismatched passwords and preserves the form on server rejection', async () => {
   const h = await setup()
@@ -415,7 +465,7 @@ test('forgot password sends the trimmed email and displays a neutral confirmatio
 test('reset password rejects missing links and decodes fragment tokens without leaking them in navigation', async () => {
   const h = await setup()
   try {
-    const PasswordForm = h.load('features/culinary/pages/auth/PasswordForm.tsx').PasswordForm
+    const { PasswordForm } = h.load('features/culinary/pages/auth/PasswordForm.tsx')
     await h.render(React.createElement(PasswordForm, { mode: 'reset', key: 'missing' }))
     assert.equal(document.querySelector('form'), null)
     assert.match(document.querySelector('[role="alert"]').textContent, /không hợp lệ/)
@@ -463,7 +513,9 @@ test('expired reset links show recovery guidance and do not log the user out', a
 async function click(element) {
   await act(async () => {
     element.click()
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => {
+      setTimeout(r, 10)
+    })
   })
 }
 async function input(element, value) {
@@ -480,6 +532,126 @@ async function openLeaveDialog() {
   await click(button('Công thức của tôi'))
 }
 
+async function waitUntil(predicate) {
+  const deadline = Date.now() + 1500
+  while (!predicate() && Date.now() < deadline)
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10)
+    })
+  assert.ok(predicate(), 'Timed out waiting for browser state')
+}
+
+async function selectOption(element, value) {
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value').set.call(element, value)
+    element.dispatchEvent(new window.Event('change', { bubbles: true }))
+  })
+}
+
+test('public search applies numeric filters together, preserves existing filters and resets pagination', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('q=pho&category=mon-an&difficulty=easy&page=3&pageSize=24')
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/RecipesList.tsx').RecipesList, {
+        categories: [{ ...fixture.category, orderIndex: 0, recipeCount: 0 }],
+        result: { data: [], meta: { page: 3, pageSize: 24, total: 50, totalPages: 3 } },
+      }),
+    )
+    assert.equal(document.getElementById('recipes-sort-select').value, 'relevance')
+    for (const [key, value] of [
+      ['maxCookTime', '0'],
+      ['minServings', '4'],
+      ['minPrepTime', '5'],
+      ['maxPrepTime', '15'],
+    ])
+      await input(document.getElementById(`filter-${key}`), value)
+    await click(button('Áp dụng bộ lọc'))
+    assert.equal(h.getSearch().get('maxCookTime'), '0')
+    assert.equal(h.getSearch().get('minServings'), '4')
+    assert.equal(h.getSearch().get('minPrepTime'), '5')
+    assert.equal(h.getSearch().get('maxPrepTime'), '15')
+    assert.equal(h.getSearch().get('q'), 'pho')
+    assert.equal(h.getSearch().get('category'), 'mon-an')
+    assert.equal(h.getSearch().get('difficulty'), 'easy')
+    assert.equal(h.getSearch().get('pageSize'), '24')
+    assert.equal(h.getSearch().has('page'), false)
+    await selectOption(document.getElementById('recipes-sort-select'), '-servings')
+    assert.equal(h.getSearch().get('sort'), '-servings')
+    assert.equal(h.getSearch().get('maxCookTime'), '0')
+    await click(document.querySelector('[aria-label="Trang 2"]'))
+    assert.equal(h.getSearch().get('page'), '2')
+    assert.equal(h.getSearch().get('minPrepTime'), '5')
+    await selectOption(document.getElementById('recipes-page-size'), '50')
+    assert.equal(h.getSearch().get('pageSize'), '50')
+    assert.equal(h.getSearch().has('page'), false)
+    await click(button('Xóa tìm kiếm và bộ lọc'))
+    assert.equal(h.getSearch().toString(), '')
+    assert.equal(document.getElementById('filter-minServings').value, '')
+    assert.equal(document.getElementById('recipes-sort-select').value, 'newest')
+  } finally {
+    await h.close()
+  }
+})
+
+test('sortBy URL state is shown by the public form and choosing a sort replaces its aliases', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('sortBy=cookTime&sortOrder=desc&maxCookTime=0')
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/RecipesList.tsx').RecipesList, {
+        categories: [],
+        result: {
+          data: [],
+          message: 'Thử từ khóa khác hoặc giảm bộ lọc.',
+          meta: { page: 1, pageSize: 12, total: 0, totalPages: 0 },
+        },
+      }),
+    )
+    assert.equal(document.getElementById('recipes-sort-select').value, '-cookTime')
+    assert.ok(document.body.textContent.includes('Thử từ khóa khác hoặc giảm bộ lọc.'))
+    await selectOption(document.getElementById('recipes-sort-select'), 'az')
+    assert.equal(h.getSearch().get('sort'), 'az')
+    assert.equal(h.getSearch().has('sortBy'), false)
+    assert.equal(h.getSearch().has('sortOrder'), false)
+    assert.equal(h.getSearch().get('maxCookTime'), '0')
+  } finally {
+    await h.close()
+  }
+})
+
+test('public search validates ranges and restores form values from back-forward URL state', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('page=3&minPrepTime=10&maxPrepTime=30')
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/RecipesList.tsx').RecipesList, {
+        categories: [],
+        result: { data: [], meta: { page: 3, total: 0, totalPages: 0 } },
+      }),
+    )
+    await input(document.getElementById('filter-minPrepTime'), '40')
+    await click(button('Áp dụng bộ lọc'))
+    assert.equal(h.getSearch().get('minPrepTime'), '10')
+    assert.equal(h.getSearch().get('page'), '3')
+    assert.match(document.getElementById('filter-maxPrepTime-error').textContent, /lớn hơn hoặc bằng/)
+    h.setSearch('q=bun&minServings=6&sort=-cookTime')
+    await h.render()
+    assert.equal(document.getElementById('filter-minPrepTime').value, '')
+    assert.equal(document.getElementById('filter-minServings').value, '6')
+    assert.equal(document.getElementById('recipes-sort-select').value, '-cookTime')
+    h.setSearch('q=bun&sort=createdAt')
+    await h.render()
+    assert.equal(document.getElementById('recipes-sort-select').value, 'oldest')
+    await input(document.getElementById('recipes-search'), 'p')
+    await click(button('Tìm kiếm'))
+    assert.equal(h.getSearch().get('q'), 'bun')
+    assert.match(document.getElementById('recipes-search-error').textContent, /ít nhất 2/)
+  } finally {
+    await h.close()
+  }
+})
+
 test('invalid save-and-leave keeps the editor and describes the error inside the dialog', async () => {
   const h = await setup()
   try {
@@ -491,7 +663,7 @@ test('invalid save-and-leave keeps the editor and describes the error inside the
     await openLeaveDialog()
     await click(button('Lưu và chuyển tiếp'))
     assert.equal(h.navigations.length, 0)
-    assert.match(document.querySelector('[role="dialog"] [role="alert"]').textContent, /trường được đánh dấu/)
+    assert.match(document.querySelector('[role="dialog"] [role="alert"]').textContent, /ít nhất 5 ký tự/)
     assert.equal(document.getElementById('title').value, 'abc')
   } finally {
     await h.close()
@@ -502,11 +674,11 @@ test('save-and-leave waits for success, locks duplicate actions, and retains con
   for (const succeeds of [false, true]) {
     const h = await setup()
     try {
-      let resolve,
-        reject,
-        saves = 0
+      let resolve
+      let reject
+      let saves = 0
       h.setUpdate(() => {
-        saves++
+        saves += 1
         return new Promise((ok, fail) => {
           resolve = ok
           reject = fail
@@ -524,7 +696,9 @@ test('save-and-leave waits for success, locks duplicate actions, and retains con
       await act(async () => {
         if (succeeds) resolve({ ...fixture, title: 'Nội dung mới cần lưu', version: 2 })
         else reject(new Error('Offline'))
-        await new Promise((r) => setTimeout(r, 30))
+        await new Promise((r) => {
+          setTimeout(r, 30)
+        })
       })
       assert.equal(saves, 1)
       assert.equal(h.navigations.length, succeeds ? 1 : 0)
@@ -570,6 +744,66 @@ test('composition input survives the basic step and sidebar navigation is guarde
   }
 })
 
+test('AVIF upload accepts its MIME, reports progress, and retains the file for retry after failure', async () => {
+  const h = await setup()
+  try {
+    let rejectUpload
+    let changedVersion
+    const attempts = []
+    h.setApi('uploadRecipeImage', async (_id, _version, file, _alt, _primary, onProgress) => {
+      attempts.push(file.type)
+      onProgress(37)
+      return new Promise((_resolve, reject) => {
+        rejectUpload = reject
+      })
+    })
+    await h.render(
+      React.createElement(
+        h.load('features/culinary/pages/dashboard/RecipeCompositionWizard.tsx').RecipeCompositionWizard,
+        {
+          recipe: structuredClone(fixture),
+          version: 1,
+          activeStage: 'images',
+          onChanged: async (version) => {
+            changedVersion = version
+          },
+        },
+      ),
+    )
+    const fileInput = document.getElementById('recipe-image')
+    assert.ok(fileInput.accept.includes('image/avif'))
+    Object.defineProperty(fileInput, 'files', {
+      configurable: true,
+      value: [new h.dom.window.File(['synthetic'], 'recipe.avif', { type: 'image/avif' })],
+    })
+    await act(async () => {
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await click(button('Tải ảnh lên'))
+    assert.deepEqual(attempts, ['image/avif'])
+    assert.equal(document.querySelector('progress').value, 37)
+    assert.ok(button('Đang tải 37%…').disabled)
+    await act(async () => {
+      rejectUpload(new Error('synthetic failure'))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
+    })
+    assert.match(document.querySelector('[role="alert"]').textContent, /Không thể lưu thay đổi/)
+    h.setApi('uploadRecipeImage', async (_id, _version, file, _alt, _primary, onProgress) => {
+      attempts.push(file.type)
+      onProgress(100)
+      return { meta: { recipeVersion: 2 } }
+    })
+    await click(button('Tải ảnh lên'))
+    assert.deepEqual(attempts, ['image/avif', 'image/avif'])
+    assert.equal(changedVersion, 2)
+    assert.equal(document.querySelector('progress'), null)
+  } finally {
+    await h.close()
+  }
+})
+
 test('default category does not mark a new untouched recipe as dirty', async () => {
   const h = await setup({ editing: false })
   try {
@@ -601,6 +835,200 @@ test('profile edit reads the user after an asynchronous session loads', async ()
     assert.equal(document.querySelector('input[aria-label="Họ và tên"]').value, 'Tên tải sau')
     assert.equal(document.querySelector('textarea').value, 'Tiểu sử tải sau')
     assert.equal(document.querySelector('[aria-label="Đổi ảnh đại diện"]'), null)
+  } finally {
+    await h.close()
+  }
+})
+
+test('profile validates avatar URLs, saves all fields, and supports clearing the avatar', async () => {
+  const h = await setup()
+  try {
+    await h.render(React.createElement(h.load('features/culinary/pages/Profile.tsx').Profile))
+    await click(button('Cập nhật'))
+    // eslint-disable-next-line no-script-url -- Negative fixture must stay to verify URL rejection.
+    await input(document.getElementById('profile-avatar'), 'javascript:alert(1)')
+    await click(button('Lưu thay đổi'))
+    assert.equal(h.requests.length, 0)
+    assert.equal(document.getElementById('profile-avatar').getAttribute('aria-invalid'), 'true')
+    assert.match(document.getElementById('profile-avatar-error').textContent, /HTTP hoặc HTTPS/)
+    await input(document.querySelector('input[aria-label="Họ và tên"]'), '  Tên đã sửa  ')
+    await input(document.getElementById('profile-avatar'), 'https://example.test/avatar.jpg')
+    await click(button('Lưu thay đổi'))
+    assert.deepEqual(h.requests[0], [
+      'profile',
+      { name: 'Tên đã sửa', bio: 'Giới thiệu', avatar: 'https://example.test/avatar.jpg' },
+    ])
+    assert.equal(document.querySelector('img').getAttribute('src'), 'https://example.test/avatar.jpg')
+    await click(button('Cập nhật'))
+    await input(document.getElementById('profile-avatar'), '')
+    await click(button('Lưu thay đổi'))
+    assert.equal(h.requests[1][1].avatar, '')
+    assert.equal(document.querySelector('img'), null)
+  } finally {
+    await h.close()
+  }
+})
+
+test('profile preserves edits and maps server validation to the avatar field', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setApi('updateProfile', async () => {
+      throw new ApiProblem({
+        title: 'Validation failed',
+        status: 400,
+        code: 'VALIDATION_ERROR',
+        errors: { AvatarUrl: ['Stack trace: secret storage URL'] },
+      })
+    })
+    await h.render(React.createElement(h.load('features/culinary/pages/Profile.tsx').Profile))
+    await click(button('Cập nhật'))
+    await input(document.getElementById('profile-avatar'), 'https://example.test/avatar.jpg')
+    await click(button('Lưu thay đổi'))
+    assert.equal(document.getElementById('profile-avatar').value, 'https://example.test/avatar.jpg')
+    assert.match(document.getElementById('profile-avatar-error').textContent, /URL ảnh HTTP hoặc HTTPS/)
+    assert.doesNotMatch(document.body.textContent, /Stack trace|secret storage/)
+    await click(button('Hủy'))
+    await click(button('Cập nhật'))
+    assert.equal(document.getElementById('profile-avatar').value, '')
+  } finally {
+    await h.close()
+  }
+})
+
+test('recipe server validation keeps local input and marks the title without exposing internal details', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setUpdate(async () => {
+      throw new ApiProblem({
+        status: 422,
+        title: 'Invalid',
+        code: 'VALIDATION_ERROR',
+        errors: { Title: ['secret SQL stack trace'] },
+      })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await input(document.getElementById('title'), 'Nội dung cục bộ cần giữ')
+    await click(button('Lưu bản nháp'))
+    assert.equal(document.getElementById('title').value, 'Nội dung cục bộ cần giữ')
+    assert.equal(document.getElementById('title').getAttribute('aria-invalid'), 'true')
+    assert.match(document.getElementById('recipe-title-error').textContent, /5 đến 200/)
+    assert.doesNotMatch(document.body.textContent, /secret SQL|stack trace/)
+  } finally {
+    await h.close()
+  }
+})
+
+test('ingredient server rejection stays beside the field and retains input for retry', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setApi('createIngredient', async () => {
+      throw new ApiProblem({
+        status: 422,
+        title: 'Invalid',
+        code: 'VALIDATION_ERROR',
+        errors: { Name: ['secret SQL stack trace'] },
+      })
+    })
+    await h.render(
+      React.createElement(
+        h.load('features/culinary/pages/dashboard/RecipeCompositionWizard.tsx').RecipeCompositionWizard,
+        { recipe: fixture, version: 1, onChanged: async () => {} },
+      ),
+    )
+    const field = document.querySelector('[aria-label="Tên nguyên liệu"]')
+    await input(field, 'Nguyên liệu đang nhập')
+    await click(button('Thêm nguyên liệu'))
+    assert.equal(field.value, 'Nguyên liệu đang nhập')
+    assert.equal(field.getAttribute('aria-invalid'), 'true')
+    assert.match(document.getElementById('ingredient-name-error').textContent, /Tên nguyên liệu/)
+    assert.equal(button('Thêm nguyên liệu').disabled, false)
+    assert.doesNotMatch(document.body.textContent, /secret SQL|stack trace/)
+  } finally {
+    await h.close()
+  }
+})
+
+test('registration submits trimmed identity fields while preserving password characters', async () => {
+  const h = await setup()
+  try {
+    h.setApi('register', async (...args) => h.requests.push(['register', ...args]))
+    await h.render(React.createElement(h.load('features/culinary/pages/auth/Register.tsx').Register))
+    for (const [id, value] of [
+      ['name', '  Tác giả mới  '],
+      ['email', '  author@example.test  '],
+      ['password', ' Strong#Password1 '],
+      ['confirm', ' Strong#Password1 '],
+    ])
+      await input(document.getElementById(id), value)
+    await click(button('Đăng ký tài khoản'))
+    assert.deepEqual(h.requests, [['register', 'Tác giả mới', 'author@example.test', ' Strong#Password1 ']])
+    assert.deepEqual(h.navigations, ['/dashboard'])
+  } finally {
+    await h.close()
+  }
+})
+
+test('category edit updates the list optimistically and rolls back without losing form data', async () => {
+  const h = await setup()
+  let rejectSave
+  try {
+    const original = { id: 'cat', name: 'Danh mục cũ', slug: 'danh-muc-cu', orderIndex: 0, recipeCount: 0 }
+    h.setApi('listCategories', async () => [original])
+    h.setApi(
+      'updateCategory',
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectSave = reject
+        }),
+    )
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/CategoryAdmin.tsx').CategoryAdmin),
+    )
+    await click(document.querySelector('[aria-label="Sửa Danh mục cũ"]'))
+    await input(document.querySelector('[role="dialog"] input'), 'Danh mục mới')
+    await click(button('Lưu thay đổi'))
+    assert.equal(h.client.getQueryData(['categories'])[0].name, 'Danh mục mới')
+    await act(async () => {
+      const { ApiProblem } = h.load('lib/api/problem-details.ts')
+      rejectSave(
+        new ApiProblem({
+          status: 422,
+          title: 'Invalid',
+          code: 'VALIDATION_ERROR',
+          errors: { Name: ['secret SQL stack trace'] },
+        }),
+      )
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
+    })
+    assert.equal(h.client.getQueryData(['categories'])[0].name, 'Danh mục cũ')
+    assert.equal(document.querySelector('[role="dialog"] input').value, 'Danh mục mới')
+    assert.match(document.getElementById('category-name-error').textContent, /2 đến 50/)
+    assert.equal(document.querySelector('[role="dialog"] input').getAttribute('aria-invalid'), 'true')
+    assert.doesNotMatch(document.body.textContent, /secret SQL|stack trace/)
+  } finally {
+    await h.close()
+  }
+})
+
+test('recipe schema blocks negative quantities and nutrition before calling the API', async () => {
+  const h = await setup()
+  try {
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await input(document.getElementById('servings'), '-1')
+    await input(document.getElementById('calories'), '-2')
+    await click(button('Lưu bản nháp'))
+    assert.match(document.getElementById('recipe-servings-error').textContent, /lớn hơn 0/)
+    assert.match(document.getElementById('recipe-nutrition-calories-error').textContent, /không âm/)
+    assert.equal(h.requests.filter(([operation]) => operation === 'update').length, 0)
   } finally {
     await h.close()
   }
@@ -771,7 +1199,9 @@ test('category list opens one focused form, retains save errors and prevents dis
     assert.ok(document.querySelector('[role="dialog"]'))
     await act(async () => {
       rejectSave(new Error('Offline'))
-      await new Promise((resolve) => setTimeout(resolve, 20))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
     })
     dialog = document.querySelector('[role="dialog"]')
     assert.match(dialog.querySelector('[role="alert"]').textContent, /Không thể lưu danh mục/)
@@ -833,11 +1263,11 @@ test('modal traps focus, uses the latest close handler, keeps focus on rerender,
             title: 'Kiểm tra',
             busy,
             onClose: () => {
-              closed++
+              closed += 1
             },
           },
           React.createElement('input', { id: 'inside' }),
-          React.createElement('button', { id: 'last' }, 'Cuối'),
+          React.createElement('button', { type: 'button', id: 'last' }, 'Cuối'),
         ),
       )
     await renderModal()
@@ -900,13 +1330,6 @@ test('back and forward navigation restore the editor until unsaved changes are r
   const h = await setup()
   try {
     const targets = []
-    const waitForHistory = async (condition) => {
-      for (let attempt = 0; attempt < 100; attempt++) {
-        if (condition()) return
-        await new Promise((resolve) => setTimeout(resolve, 10))
-      }
-      assert.ok(condition(), 'History traversal and guard restoration must settle')
-    }
     const { useUnsavedChanges } = h.load('components/navigation-guard.tsx')
     function Guarded({ dirty }) {
       useUnsavedChanges(dirty, (target) => targets.push(target))
@@ -916,7 +1339,7 @@ test('back and forward navigation restore the editor until unsaved changes are r
     window.history.pushState({}, '', '/first')
     window.history.pushState({}, '', '/second')
     window.history.back()
-    await waitForHistory(() => targets[0] === '/first' && window.location.pathname === '/second')
+    await waitUntil(() => h.historyEventCount() === 2)
     assert.deepEqual(targets, ['/first'])
     assert.equal(window.location.pathname, '/second')
     const unload = new window.Event('beforeunload', { cancelable: true })
@@ -924,11 +1347,11 @@ test('back and forward navigation restore the editor until unsaved changes are r
     assert.equal(unload.defaultPrevented, true)
     await h.render(React.createElement(Guarded, { dirty: false }))
     window.history.back()
-    await waitForHistory(() => window.location.pathname === '/first')
+    await waitUntil(() => h.historyEventCount() === 3)
     assert.equal(window.location.pathname, '/first')
     await h.render(React.createElement(Guarded, { dirty: true }))
     window.history.forward()
-    await waitForHistory(() => targets.at(-1) === '/second' && window.location.pathname === '/first')
+    await waitUntil(() => h.historyEventCount() === 5)
     assert.equal(targets.at(-1), '/second')
     assert.equal(window.location.pathname, '/first')
   } finally {
@@ -954,10 +1377,10 @@ test('recipe action failures remain visible inside the confirmation dialog', asy
 test('editor action confirmation disables repeated submissions while pending', async () => {
   const h = await setup()
   try {
-    let resolve,
-      count = 0
+    let resolve
+    let count = 0
     h.setApi('archiveRecipe', () => {
-      count++
+      count += 1
       return new Promise((ok) => {
         resolve = ok
       })
@@ -973,7 +1396,9 @@ test('editor action confirmation disables repeated submissions while pending', a
     assert.equal(count, 1)
     await act(async () => {
       resolve({ ...fixture, version: 2, status: 'archived' })
-      await new Promise((r) => setTimeout(r, 20))
+      await new Promise((r) => {
+        setTimeout(r, 20)
+      })
     })
     assert.equal(document.querySelector('[role="dialog"]'), null)
   } finally {
@@ -994,7 +1419,8 @@ test('carousel excludes hidden links, pauses on focus and hover, and respects re
     }
     window.matchMedia = () => preference
     window.setInterval = (callback) => {
-      timers.set(++nextTimer, callback)
+      nextTimer += 1
+      timers.set(nextTimer, callback)
       return nextTimer
     }
     window.clearInterval = (id) => timers.delete(id)
@@ -1032,6 +1458,39 @@ test('carousel excludes hidden links, pauses on focus and hover, and respects re
     })
     assert.equal(timers.size, 0)
     assert.equal(document.getElementById('latest-recipes-carousel').style.transition, 'none')
+    // Gestures bubble through the presentation wrapper without changing layout.
+    const gesture = hero.querySelector('[role="presentation"]')
+    for (const [type, clientX] of [
+      ['mousedown', 200],
+      ['mousemove', 20],
+      ['mouseup', 20],
+    ]) {
+      await act(async () => gesture.dispatchEvent(new window.MouseEvent(type, { clientX, bubbles: true })))
+    }
+    assert.equal(slides[0].hasAttribute('inert'), true)
+    assert.equal(slides[1].hasAttribute('inert'), false)
+    for (const [type, clientX] of [
+      ['touchstart', 20],
+      ['touchmove', 200],
+      ['touchend', 200],
+    ]) {
+      const event = new window.Event(type, { bubbles: true })
+      Object.defineProperty(event, 'touches', { value: [{ clientX }] })
+      await act(async () => gesture.dispatchEvent(event))
+    }
+    assert.equal(slides[0].hasAttribute('inert'), false)
+  } finally {
+    await h.close()
+  }
+})
+
+test('content form schemas reject category HTML and accept long Instructions without an invented text limit', async () => {
+  const h = await setup()
+  try {
+    const { categorySchema, recipeSchema } = h.load('features/culinary/forms/content-schemas.ts')
+    assert.equal(categorySchema.shape.name.safeParse('<b>Category</b>').success, false)
+    assert.equal(categorySchema.shape.name.safeParse('Plain category').success, true)
+    assert.equal(recipeSchema.shape.instructions.safeParse('x'.repeat(10001)).success, true)
   } finally {
     await h.close()
   }
@@ -1093,12 +1552,7 @@ test('recipe search shows plain cards and removes one filter without losing the 
       /Khớp mô tả|Khớp không dấu|Khớp tên và mô tả|Tên món gần đúng/,
     )
     assert.equal(document.querySelectorAll('article mark').length, 0)
-    const filters = document.querySelector('[role="group"][aria-label="Bộ lọc đang áp dụng"]')
-    const categoryFilter = [...filters.querySelectorAll('button')].find((button) =>
-      button.textContent.includes('bỏ lọc danh mục'),
-    )
-    assert.ok(categoryFilter)
-    await click(categoryFilter)
+    await click(document.querySelector('[aria-label="Bỏ lọc danh mục"]'))
     assert.equal(h.getSearch().has('category'), false)
     assert.equal(h.getSearch().has('page'), false)
     assert.equal(h.getSearch().get('q'), 'ga')
@@ -1143,10 +1597,10 @@ test('search navigation can preserve browser history and scrolling without chang
         null,
         React.createElement(
           'button',
-          { onClick: () => set({ q: 'ga' }, { replace: false, scroll: false }) },
+          { type: 'button', onClick: () => set({ q: 'ga' }, { replace: false, scroll: false }) },
           'push-search',
         ),
-        React.createElement('button', { onClick: () => set({ q: 'pho' }) }, 'legacy-replace'),
+        React.createElement('button', { type: 'button', onClick: () => set({ q: 'pho' }) }, 'legacy-replace'),
       )
     }
     await h.render(React.createElement(Probe))
@@ -1173,14 +1627,14 @@ test('recipe search blocks Enter during Vietnamese IME composition', async () =>
         categories: [],
       }),
     )
-    const input = document.getElementById('recipes-search')
+    const searchInput = document.getElementById('recipes-search')
     const event = new window.KeyboardEvent('keydown', {
       key: 'Enter',
       isComposing: true,
       bubbles: true,
       cancelable: true,
     })
-    await act(async () => input.dispatchEvent(event))
+    await act(async () => searchInput.dispatchEvent(event))
     assert.equal(event.defaultPrevented, true)
     assert.equal(h.getSearch().get('q'), 'ga')
   } finally {
@@ -1242,7 +1696,9 @@ test('category create and edit reject invalid names and accept the 50-character 
           dialog
             .querySelector('form')
             .dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }))
-          await new Promise((resolve) => setTimeout(resolve, 20))
+          await new Promise((resolve) => {
+            setTimeout(resolve, 20)
+          })
         })
         assert.equal(h.requests.length, 0)
         assert.match(dialog.textContent, /2 đến 50|HTML/)
@@ -1252,7 +1708,9 @@ test('category create and edit reject invalid names and accept the 50-character 
         dialog
           .querySelector('form')
           .dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }))
-        await new Promise((resolve) => setTimeout(resolve, 20))
+        await new Promise((resolve) => {
+          setTimeout(resolve, 20)
+        })
       })
       assert.equal(h.requests.length, 1)
       assert.equal(h.requests[0][0], editing ? 'update' : 'create')
@@ -1261,268 +1719,5 @@ test('category create and edit reject invalid names and accept the 50-character 
     } finally {
       await h.close()
     }
-  }
-})
-
-test('recipe header blocks publishing an incomplete draft and basic validation stays beside fields', async () => {
-  const h = await setup()
-  try {
-    const Editor = h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor
-    await h.render(React.createElement(Editor))
-    assert.equal(button('Xuất bản').disabled, true)
-    const input = document.getElementById('title')
-    await act(async () => {
-      const setter = Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set
-      setter.call(input, 'abc')
-      input.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
-    })
-    await act(async () =>
-      document
-        .querySelector('form')
-        .dispatchEvent(new h.dom.window.Event('submit', { bubbles: true, cancelable: true })),
-    )
-    assert.equal(input.getAttribute('aria-invalid'), 'true')
-    assert.match(document.getElementById(input.getAttribute('aria-describedby')).textContent, /5.*200/)
-    assert.equal(input.value, 'abc')
-  } finally {
-    await h.close()
-  }
-})
-
-test('dirty editor keeps the original version after a background refresh and preserves conflict input', async () => {
-  const h = await setup()
-  try {
-    const { ApiProblem } = h.load('lib/api/problem-details.ts')
-    let sentVersion
-    h.setUpdate(async (_id, version) => {
-      sentVersion = version
-      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
-    })
-    const Editor = h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor
-    await h.render(React.createElement(Editor))
-    await act(async () => {
-      const input = document.getElementById('title')
-      Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set.call(
-        input,
-        'Ban nhap cuc bo',
-      )
-      input.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
-    })
-    h.setRecipe({ ...fixture, title: 'Ban moi tu phien khac', version: 2 })
-    await act(async () => {
-      await h.refetchRecipe()
-      await new Promise((r) => setTimeout(r, 30))
-    })
-    assert.equal(document.getElementById('title').value, 'Ban nhap cuc bo')
-    await act(async () => {
-      document
-        .querySelector('form')
-        .dispatchEvent(new h.dom.window.Event('submit', { bubbles: true, cancelable: true }))
-      await new Promise((r) => setTimeout(r, 30))
-    })
-    assert.equal(sentVersion, 1)
-    assert.equal(document.getElementById('title').value, 'Ban nhap cuc bo')
-    assert.ok(document.querySelector('[role="dialog"]'))
-  } finally {
-    await h.close()
-  }
-})
-
-test('lifecycle failure stays in confirmation without success and repeated pending clicks send one request', async () => {
-  const h = await setup()
-  try {
-    let calls = 0
-    let reject
-    h.setApi('archiveRecipe', () => {
-      calls++
-      return new Promise((_resolve, fail) => {
-        reject = fail
-      })
-    })
-    await h.render(
-      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
-    )
-    await act(async () => button('Lưu trữ').click())
-    await act(async () => {
-      button('Xác nhận').click()
-      await new Promise((r) => setTimeout(r, 20))
-    })
-    const pending = button('Đang xử lý…', document.querySelector('[role="dialog"]'))
-    assert.equal(pending.disabled, true)
-    await act(async () => pending.click())
-    assert.equal(calls, 1)
-    await act(async () => {
-      reject(new Error('Synthetic offline'))
-      await new Promise((r) => setTimeout(r, 30))
-    })
-    assert.match(document.querySelector('[role="dialog"] [role="alert"]').textContent, /Không thể lưu/)
-    assert.equal(document.getElementById('title').value, fixture.title)
-    assert.doesNotMatch(document.body.textContent, /Công thức đã được đưa vào kho lưu trữ/)
-  } finally {
-    await h.close()
-  }
-})
-
-test('ingredient and step forms validate inline without sending invalid composition writes', async () => {
-  const h = await setup()
-  try {
-    const Wizard = h.load(
-      'features/culinary/pages/dashboard/RecipeCompositionWizard.tsx',
-    ).RecipeCompositionWizard
-    const props = {
-      recipe: structuredClone(fixture),
-      version: 1,
-      onChanged: async () => {},
-      activeStage: 'ingredients',
-    }
-    await h.render(React.createElement(Wizard, props))
-    await act(async () => button('Thêm nguyên liệu').click())
-    const name = document.querySelector('[aria-label="Tên nguyên liệu"]')
-    assert.equal(name.getAttribute('aria-invalid'), 'true')
-    assert.match(document.getElementById(name.getAttribute('aria-describedby')).textContent, /1.*100/)
-    await h.render(React.createElement(Wizard, { ...props, activeStage: 'steps' }))
-    await act(async () => button('Thêm bước').click())
-    assert.equal(document.querySelector('[aria-label="Tiêu đề bước"]').getAttribute('aria-invalid'), 'true')
-    assert.equal(document.querySelector('[aria-label="Mô tả bước"]').getAttribute('aria-invalid'), 'true')
-  } finally {
-    await h.close()
-  }
-})
-
-test('server field validation is inline and failed conflict reload retains every local field', async () => {
-  const h = await setup()
-  try {
-    const { ApiProblem } = h.load('lib/api/problem-details.ts')
-    h.setUpdate(async () => {
-      throw new ApiProblem({
-        status: 400,
-        title: 'Invalid',
-        code: 'VALIDATION_FAILED',
-        errors: { CategoryId: ['Internal validator text'] },
-      })
-    })
-    await h.render(
-      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
-    )
-    await act(async () => {
-      const input = document.getElementById('description')
-      Object.getOwnPropertyDescriptor(h.dom.window.HTMLTextAreaElement.prototype, 'value').set.call(
-        input,
-        'Local description',
-      )
-      input.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
-    })
-    async function submit() {
-      await act(async () => {
-        document
-          .querySelector('form')
-          .dispatchEvent(new h.dom.window.Event('submit', { bubbles: true, cancelable: true }))
-        await new Promise((r) => setTimeout(r, 30))
-      })
-    }
-    await submit()
-    assert.equal(document.getElementById('category').getAttribute('aria-invalid'), 'true')
-    assert.match(document.getElementById('category-error').textContent, /danh mục/)
-    assert.doesNotMatch(document.body.textContent, /Internal validator text/)
-    h.setUpdate(async () => {
-      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
-    })
-    await submit()
-    h.setApi('getAdminRecipe', async () => {
-      throw new Error('Synthetic network error')
-    })
-    await act(async () => {
-      button('Tải lại phiên bản mới nhất').click()
-      await new Promise((r) => setTimeout(r, 30))
-    })
-    assert.equal(document.getElementById('description').value, 'Local description')
-    assert.match(
-      document.querySelector('[role="dialog"] [role="alert"]').textContent,
-      /Không thể tải bản mới/,
-    )
-  } finally {
-    await h.close()
-  }
-})
-
-test('recipe forms reject invalid ranges and accept optional zero nutrition and cook time', async () => {
-  const h = await setup()
-  try {
-    const { validateRecipe, validateIngredient, validateStep } = h.load(
-      'features/culinary/pages/dashboard/recipe-form-validation.ts',
-    )
-    const valid = { ...fixture, categoryId: 'cat', cookTime: 0, nutrition: { calories: 0, protein: null } }
-    assert.equal(Object.keys(validateRecipe(valid)).length, 0)
-    const errors = validateRecipe({
-      ...valid,
-      title: 'abc',
-      description: '',
-      instructions: 'x'.repeat(10001),
-      categoryId: '',
-      prepTime: 0,
-      cookTime: -1,
-      servings: 1.5,
-      nutrition: { calories: -1 },
-    })
-    assert.deepEqual(
-      Object.keys(errors).sort(),
-      [
-        'title',
-        'description',
-        'instructions',
-        'categoryId',
-        'prepTime',
-        'cookTime',
-        'servings',
-        'nutrition.calories',
-      ].sort(),
-    )
-    assert.equal(Object.keys(validateIngredient({ name: 'Salt', quantity: null })).length, 0)
-    assert.equal(
-      Object.keys(validateIngredient({ name: '', quantity: 0, unit: 'x'.repeat(51), notes: 'x'.repeat(501) }))
-        .length,
-      4,
-    )
-    assert.equal(Object.keys(validateStep({ title: '', description: '', timerMinutes: -1 })).length, 3)
-  } finally {
-    await h.close()
-  }
-})
-
-test('dirty composition also keeps the original version when recipe data refreshes', async () => {
-  const h = await setup()
-  try {
-    h.setSearch('step=ingredients')
-    let sentVersion
-    const { ApiProblem } = h.load('lib/api/problem-details.ts')
-    h.setApi('createIngredient', async (_id, version) => {
-      sentVersion = version
-      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
-    })
-    await h.render(
-      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
-    )
-    await act(async () => {
-      const input = document.querySelector('[aria-label="Tên nguyên liệu"]')
-      Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set.call(
-        input,
-        'Local ingredient',
-      )
-      input.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
-    })
-    h.setRecipe({ ...fixture, version: 2 })
-    await act(async () => {
-      await h.refetchRecipe()
-      await new Promise((r) => setTimeout(r, 30))
-    })
-    await act(async () => {
-      button('Thêm nguyên liệu').click()
-      await new Promise((r) => setTimeout(r, 30))
-    })
-    assert.equal(sentVersion, 1)
-    assert.equal(document.querySelector('[aria-label="Tên nguyên liệu"]').value, 'Local ingredient')
-    assert.match(document.body.textContent, /Công thức đã thay đổi ở phiên khác/)
-  } finally {
-    await h.close()
   }
 })

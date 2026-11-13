@@ -26,11 +26,11 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
     let restoring = false
     originalReplace.call(window.history, { ...window.history.state, culinaryIndex: index }, '')
 
-    const push: History['pushState'] = function (data, unused, url) {
+    const push: History['pushState'] = function pushState(data, unused, url) {
       originalPush.call(window.history, { ...data, culinaryIndex: index + 1 }, unused, url)
       index += 1
     }
-    const replace: History['replaceState'] = function (data, unused, url) {
+    const replace: History['replaceState'] = function replaceState(data, unused, url) {
       originalReplace.call(window.history, { ...data, culinaryIndex: index }, unused, url)
     }
     window.history.pushState = push
@@ -74,10 +74,10 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
       window.history.go(previous - index)
       guardRef.current.onLeave(target)
     }
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!guardRef.current) return
-      event.preventDefault()
-      event.returnValue = ''
+      e.preventDefault()
+      e.returnValue = ''
     }
     document.addEventListener('click', handleClick, true)
     window.addEventListener('popstate', handlePopState, true)

@@ -21,7 +21,13 @@ test('P7-07: CategoryAdmin provides complete CRUD, orderIndex ordering, delete c
 
   // Verify delete conflict detection & warning
   assert.match(source, /recipeCount > 0/, 'Must detect category delete conflict when recipes exist')
-  assert.match(source, /Xung đột xóa danh mục|Xung đột dữ liệu/, 'Must explain delete conflict')
+  const errorMessages = await readFile(new URL('../src/lib/api/problem-details.ts', import.meta.url), 'utf8')
+  assert.match(source, /apiErrorMessage\(error/, 'Must use the shared error-code catalog')
+  assert.match(
+    errorMessages,
+    /CATEGORY_DELETE_HAS_RECIPES: 'Xung đột dữ liệu/,
+    'Must explain delete conflict',
+  )
 
   // Verify accessible modal confirm dialog
   assert.match(source, /<Modal/, 'Must use the shared accessible dialog')
@@ -154,7 +160,7 @@ test('P7-18/P7-19: Direct navigation and admin scope remain role-gated', async (
     /matcher:\s*\[.*\/dashboard\/:path\*/s,
     'Direct dashboard URLs must pass Auth.js middleware',
   )
-  assert.match(authSource, /authorized\(\{ auth \}\).*Boolean\(auth\?\.backendUser\)/s)
+  assert.match(authSource, /authorized\(\{ auth: sessionAuth \}\).*Boolean\(sessionAuth\?\.backendUser\)/s)
   assert.match(layoutSource, /user\?\.role === 'admin'/, 'Admin navigation must be hidden from authors')
   assert.match(
     recipesSource,

@@ -1,11 +1,18 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Categories;
 using CulinaryBlog.Domain.Common;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for category name validation tests.</summary>
 public sealed class CategoryNameValidationTests
 {
+    /// <summary>Verifies that create and update respect business name bounds.</summary>
+    /// <param name="length">The length supplied to this operation.</param>
+    /// <param name="valid">The valid supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [Theory]
     [InlineData(1, false)]
     [InlineData(2, true)]
@@ -32,6 +39,9 @@ public sealed class CategoryNameValidationTests
         }
     }
 
+    /// <summary>Verifies that html is rejected without mutating category.</summary>
+    /// <param name="name">The name supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [Theory]
     [InlineData("<b>Món chay</b>")]
     [InlineData("<img src=x>")]

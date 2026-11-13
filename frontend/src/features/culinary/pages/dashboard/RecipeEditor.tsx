@@ -19,19 +19,13 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useForm, useWatch, type Path } from 'react-hook-form'
+import { FieldError } from '@/components/ui/field-error'
+import { useToast } from '@/components/ui/toast'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { Modal } from '@/components/ui/modal'
-import { FieldError } from '@/components/ui/field-error'
-import {
-  recipeErrorMessage,
-  recipeFieldErrors,
-  validateRecipe,
-  type FieldErrors,
-} from './recipe-form-validation'
 import { useUnsavedChanges } from '@/components/navigation-guard'
-import { useAuth } from '../../contexts/AuthContext'
-import { ApiProblem } from '@/lib/api/problem-details'
-import { computeRecipeValidation, type Stage, type WizardAllSteps } from './recipe-validation'
+import { ApiProblem, apiErrorMessage } from '@/lib/api/problem-details'
 import {
   archiveRecipe,
   createRecipe,
@@ -48,6 +42,10 @@ import {
   type RecipeStatus,
   type RecipeWrite,
 } from '@/lib/api/content-client'
+import { useAuth } from '../../contexts/AuthContext'
+import { computeRecipeValidation, type Stage, type WizardAllSteps } from './recipe-validation'
+import { formMessages } from '../../forms/messages'
+import { setServerFieldErrors } from '../../forms/server-errors'
 
 const RecipeCompositionWizard = dynamic(
   () => import('./RecipeCompositionWizard').then((module) => module.RecipeCompositionWizard),
@@ -159,12 +157,24 @@ export function RecipeEditor() {
     urlStep && ['basic', 'ingredients', 'steps', 'images', 'preview'].includes(urlStep) ? urlStep : 'basic',
   )
 
-  const [form, setForm] = useState<RecipeForm>(EMPTY_FORM)
+  const {
+    register,
+    control,
+    reset: resetForm,
+    setValue,
+    setError: setFieldError,
+    trigger,
+    formState: { errors },
+  } = useForm<RecipeForm>({
+    resolver: async (...args) => (await import('../../forms/deferred-resolvers')).recipeResolver(...args),
+    defaultValues: EMPTY_FORM,
+  })
+  const form = useWatch({ control, compute: (values) => values })
+  const { showToast } = useToast()
   const initialSnapshotRef = useRef<string>(JSON.stringify(EMPTY_FORM))
   const [version, setVersion] = useState(1)
   const [saved, setSaved] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [clientError, setClientError] = useState<string | null>(null)
   const [publishNotice, setPublishNotice] = useState<string | null>(null)
   const [publishError, setPublishError] = useState<string | null>(null)
@@ -178,10 +188,9 @@ export function RecipeEditor() {
   >(null)
   const [navGuardTarget, setNavGuardTarget] = useState<string | WizardAllSteps | null>(null)
   const [conflictModalOpen, setConflictModalOpen] = useState(false)
-  const [reloadError, setReloadError] = useState<string | null>(null)
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [compositionDirty, setCompositionDirty] = useState(false)
-  const unsavedChangesRef = useRef(false)
+  const basicDirtyRef = useRef(false)
   const loadedRecipeIdRef = useRef<string | null>(null)
   const saveBeforeLeavingRef = useRef(false)
 
@@ -196,8 +205,8 @@ export function RecipeEditor() {
   useEffect(() => {
     const recipe = recipeQuery.data
     if (!recipe) return
-    if (loadedRecipeIdRef.current === recipe.id && unsavedChangesRef.current) return
     setVersion(recipe.version)
+    if (loadedRecipeIdRef.current === recipe.id && basicDirtyRef.current) return
     const loadedForm: RecipeForm = {
       title: recipe.title,
       description: recipe.description,
@@ -209,10 +218,10 @@ export function RecipeEditor() {
       cookTime: recipe.cookTime,
       nutrition: toFormNutrition(recipe.nutrition),
     }
-    setForm(loadedForm)
+    resetForm(loadedForm)
     initialSnapshotRef.current = JSON.stringify(loadedForm)
     loadedRecipeIdRef.current = recipe.id
-  }, [recipeQuery.data])
+  }, [recipeQuery.data, resetForm])
 
   // Select default category
   useEffect(() => {
@@ -220,14 +229,14 @@ export function RecipeEditor() {
       const categoryId = categoriesQuery.data[0].id
       const initial = JSON.parse(initialSnapshotRef.current) as RecipeForm
       initialSnapshotRef.current = JSON.stringify({ ...initial, categoryId })
-      setForm((current) => ({ ...current, categoryId }))
+      setValue('categoryId', categoryId)
     }
-  }, [categoriesQuery.data, form.categoryId, isEditing])
+  }, [categoriesQuery.data, form.categoryId, isEditing, setValue])
 
   // Calculate isDirty
   const isDirty = JSON.stringify(form) !== initialSnapshotRef.current
+  basicDirtyRef.current = isDirty
   const hasUnsavedChanges = isDirty || compositionDirty
-  unsavedChangesRef.current = hasUnsavedChanges
   const onLeave = useCallback((target: string) => setNavGuardTarget(target), [])
   const allowNavigation = useUnsavedChanges(hasUnsavedChanges, onLeave)
 
@@ -237,6 +246,7 @@ export function RecipeEditor() {
     onSuccess: async (recipe) => {
       setVersion(recipe.version)
       setSaved(true)
+      showToast('Đã lưu công thức.')
       setLastSavedAt(
         new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(
           new Date(),
@@ -244,7 +254,6 @@ export function RecipeEditor() {
       )
       initialSnapshotRef.current = JSON.stringify(form)
       setClientError(null)
-      setFieldErrors({})
       setPublishNotice(null)
       setPublishError(null)
       setConflictModalOpen(false)
@@ -257,7 +266,22 @@ export function RecipeEditor() {
       }
     },
     onError: (error) => {
-      setFieldErrors(recipeFieldErrors(error))
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
+      setServerFieldErrors(error, setFieldError, {
+        Title: ['title', formMessages.recipeTitle],
+        Description: ['description', formMessages.recipeDescription],
+        CategoryId: ['categoryId', formMessages.categoryRequired],
+        Difficulty: ['difficulty', formMessages.difficulty],
+        Servings: ['servings', formMessages.servingsMinimum],
+        PrepTimeMinutes: ['prepTime', formMessages.prepTime],
+        CookTimeMinutes: ['cookTime', formMessages.cookTime],
+        ...Object.fromEntries(
+          NUTRITION_FIELDS.map(({ key }) => [
+            `Nutrition.${key}`,
+            [`nutrition.${key}`, formMessages.nutrition] as [Path<RecipeForm>, string],
+          ]),
+        ),
+      })
       if (error instanceof ApiProblem && error.problem.code === 'RECIPE_CONCURRENCY_CONFLICT') {
         setConflictModalOpen(true)
       }
@@ -270,6 +294,7 @@ export function RecipeEditor() {
       setConfirmModal(null)
       setVersion(recipe.version)
       setPublishNotice('Công thức đã được xuất bản thành công.')
+      showToast('Công thức đã được xuất bản thành công.')
       setPublishError(null)
       setSaved(false)
       setClientError(null)
@@ -278,11 +303,13 @@ export function RecipeEditor() {
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
     },
     onError: (error) => {
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
+      setConfirmModal(null)
       setPublishNotice(null)
       if (error instanceof ApiProblem && error.problem.code === 'RECIPE_PUBLISH_INCOMPLETE') {
-        setPublishError('Công thức cần ít nhất 1 nguyên liệu và 1 bước thực hiện để xuất bản.')
+        setPublishError(apiErrorMessage(error))
       } else {
-        setPublishError(recipeErrorMessage(error))
+        setPublishError(apiErrorMessage(error, 'RECIPE_PUBLISH_FAILED'))
       }
     },
   })
@@ -293,6 +320,7 @@ export function RecipeEditor() {
       setConfirmModal(null)
       setVersion(recipe.version)
       setPublishNotice('Đã gỡ xuất bản công thức (chuyển về bản nháp).')
+      showToast('Đã gỡ xuất bản công thức (chuyển về bản nháp).')
       setPublishError(null)
       setSaved(false)
       setClientError(null)
@@ -301,8 +329,10 @@ export function RecipeEditor() {
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
     },
     onError: (error) => {
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
+      setConfirmModal(null)
       setPublishNotice(null)
-      setPublishError(recipeErrorMessage(error))
+      setPublishError(apiErrorMessage(error, 'RECIPE_UNPUBLISH_FAILED'))
     },
   })
 
@@ -312,14 +342,16 @@ export function RecipeEditor() {
       setConfirmModal(null)
       setVersion(recipe.version)
       setPublishNotice('Công thức đã được đưa vào kho lưu trữ.')
+      showToast('Công thức đã được đưa vào kho lưu trữ.')
       setPublishError(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
     },
     onError: (error) => {
-      setPublishNotice(null)
-      setPublishError(recipeErrorMessage(error))
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
+      setConfirmModal(null)
+      setPublishError(apiErrorMessage(error, 'RECIPE_ARCHIVE_FAILED'))
     },
   })
 
@@ -329,14 +361,16 @@ export function RecipeEditor() {
       setConfirmModal(null)
       setVersion(recipe.version)
       setPublishNotice('Đã khôi phục công thức về bản nháp.')
+      showToast('Đã khôi phục công thức về bản nháp.')
       setPublishError(null)
       await queryClient.invalidateQueries({ queryKey: ['my-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['admin-recipes'] })
       await queryClient.invalidateQueries({ queryKey: ['my-recipe', id] })
     },
     onError: (error) => {
-      setPublishNotice(null)
-      setPublishError(recipeErrorMessage(error))
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
+      setConfirmModal(null)
+      setPublishError(apiErrorMessage(error, 'RECIPE_UNARCHIVE_FAILED'))
     },
   })
 
@@ -349,22 +383,16 @@ export function RecipeEditor() {
       navigate(returnTo)
     },
     onError: (error) => {
-      setPublishNotice(null)
-      setPublishError(recipeErrorMessage(error))
+      showToast(apiErrorMessage(error, 'CONTENT_SAVE_FAILED'))
+      setConfirmModal(null)
+      setClientError(apiErrorMessage(error, 'RECIPE_DELETE_FAILED'))
     },
   })
 
-  const update = <K extends keyof RecipeForm>(key: K, value: RecipeForm[K]) => {
-    setSaved(false)
-    setForm((current) => ({ ...current, [key]: value }))
-  }
-
   const saveBasic = async () => {
     if (save.isPending) return false
-    const errors = validateRecipe(toPayload(form))
-    setFieldErrors(errors)
-    if (Object.keys(errors).length > 0) {
-      setClientError('Vui lòng kiểm tra các trường được đánh dấu.')
+    if (!(await trigger(undefined, { shouldFocus: true }))) {
+      setClientError('Vui lòng điền tiêu đề (ít nhất 5 ký tự), mô tả, danh mục và thời gian chuẩn bị hợp lệ.')
       return false
     }
     setClientError(null)
@@ -378,7 +406,7 @@ export function RecipeEditor() {
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    void saveBasic()
+    saveBasic()
   }
 
   const handleCompositionChanged = async (nextVersion: number) => {
@@ -397,7 +425,7 @@ export function RecipeEditor() {
     }
   }
 
-  const executeNavigation = (target: string | WizardAllSteps) => {
+  function executeNavigation(target: string | WizardAllSteps) {
     setNavGuardTarget(null)
     if (target.startsWith('/')) {
       allowNavigation()
@@ -440,13 +468,16 @@ export function RecipeEditor() {
 
   const conflict =
     save.error instanceof ApiProblem && save.error.problem.code === 'RECIPE_CONCURRENCY_CONFLICT'
-  const remoteError = save.isError ? recipeErrorMessage(save.error) : null
+  const remoteError = save.error ? apiErrorMessage(save.error, 'RECIPE_SAVE_FAILED') : null
   const isPendingAction =
     publishMutation.isPending ||
     unpublishMutation.isPending ||
     archiveMutation.isPending ||
     unarchiveMutation.isPending ||
     deleteMutation.isPending
+
+  const confirmationColor =
+    confirmModal === 'publish' ? 'bg-green-700 hover:bg-green-800' : 'bg-primary hover:bg-primary/90'
 
   const inputClass =
     'w-full border border-border bg-background px-4 py-3 text-sm transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -461,7 +492,6 @@ export function RecipeEditor() {
   ]
 
   const validationChecks = recipeQuery.data ? computeRecipeValidation(recipeQuery.data) : []
-  const isPublishReady = validationChecks.filter((item) => item.id !== 'images').every((item) => item.isValid)
   const passedChecksCount = validationChecks.filter((c) => c.isValid).length
 
   if (isEditing && recipeQuery.isPending) {
@@ -472,7 +502,7 @@ export function RecipeEditor() {
     )
   }
 
-  if (isEditing && recipeQuery.isError && !recipeQuery.data) {
+  if (isEditing && recipeQuery.isError) {
     return (
       <div role="alert" className="border border-red-200 bg-red-50 p-6 text-red-700">
         Không thể tải công thức này. Bạn có thể không còn quyền truy cập hoặc công thức đã bị xóa.
@@ -538,7 +568,7 @@ export function RecipeEditor() {
                 <button
                   type="button"
                   onClick={() => setConfirmModal('publish')}
-                  disabled={isPendingAction || save.isPending || hasUnsavedChanges || !isPublishReady}
+                  disabled={publishMutation.isPending || save.isPending || hasUnsavedChanges}
                   className="flex items-center gap-1.5 border border-green-600 bg-green-50 px-3.5 py-2 text-xs uppercase tracking-widest text-green-700 hover:bg-green-100 disabled:opacity-60"
                 >
                   <Globe size={14} /> Xuất bản
@@ -644,6 +674,9 @@ export function RecipeEditor() {
           {wizardSteps.map((step) => {
             const isActive = activeStep === step.id
             const isDisabled = !isEditing && step.id !== 'basic'
+            const inactiveClass = isDisabled
+              ? 'border-border bg-secondary/30 text-muted-foreground/50 cursor-not-allowed'
+              : 'border-border bg-background hover:bg-secondary text-foreground'
 
             return (
               <button
@@ -652,17 +685,13 @@ export function RecipeEditor() {
                 disabled={isDisabled}
                 onClick={() => requestNavigation(step.id)}
                 className={`p-3 text-left border transition-all ${
-                  isActive
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : isDisabled
-                      ? 'border-border bg-secondary/30 text-muted-foreground/50 cursor-not-allowed'
-                      : 'border-border bg-background hover:bg-secondary text-foreground'
+                  isActive ? 'border-primary bg-primary text-primary-foreground' : inactiveClass
                 }`}
               >
                 <div className="text-xs font-semibold uppercase tracking-wider">{step.label}</div>
                 <div
                   className={`text-[11px] mt-0.5 line-clamp-1 ${
-                    isActive ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                    isActive ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}
                 >
                   {step.desc}
@@ -682,11 +711,14 @@ export function RecipeEditor() {
       {/* P7-05 Validation Summary Banner with Deep Linking (when editing) */}
       {isEditing && recipeQuery.data && (
         <div className="mb-8 border border-border bg-secondary/15 p-4">
-          <div
-            className="flex items-center justify-between cursor-pointer select-none"
+          <button
+            type="button"
+            aria-expanded={showValidationBanner}
+            aria-label={showValidationBanner ? 'Thu gọn điều kiện' : 'Mở rộng điều kiện'}
+            className="flex w-full items-center justify-between text-left cursor-pointer select-none"
             onClick={() => setShowValidationBanner(!showValidationBanner)}
           >
-            <div className="flex items-center gap-2">
+            <span className="flex items-center gap-2">
               <span className="font-medium text-sm text-foreground">
                 Tổng hợp điều kiện xuất bản ({passedChecksCount}/{validationChecks.length} tiêu chuẩn đạt)
               </span>
@@ -699,15 +731,14 @@ export function RecipeEditor() {
               >
                 {passedChecksCount === validationChecks.length ? 'Sẵn sàng xuất bản' : 'Chưa hoàn tất'}
               </span>
-            </div>
-            <button
-              type="button"
+            </span>
+            <span
+              aria-hidden="true"
               className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-              aria-label={showValidationBanner ? 'Thu gọn điều kiện' : 'Mở rộng điều kiện'}
             >
               {showValidationBanner ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-          </div>
+            </span>
+          </button>
 
           {showValidationBanner && (
             <div className="mt-3 pt-3 border-t border-border grid gap-2 sm:grid-cols-2 text-xs">
@@ -742,7 +773,7 @@ export function RecipeEditor() {
 
       {/* Step 1: Basic Information Form */}
       {activeStep === 'basic' && (
-        <form onSubmit={handleSubmit} noValidate>
+        <form noValidate onSubmit={handleSubmit} onChangeCapture={() => setSaved(false)}>
           <fieldset disabled={save.isPending} className="min-w-0">
             <section className="space-y-6 border-b border-border pb-10" aria-labelledby="basic-heading">
               <h2 id="basic-heading" className="font-serif text-2xl text-foreground">
@@ -755,17 +786,16 @@ export function RecipeEditor() {
                 </label>
                 <input
                   id="title"
-                  aria-invalid={Boolean(fieldErrors.title)}
-                  aria-describedby={fieldErrors.title ? 'title-error' : undefined}
                   required
                   minLength={5}
                   maxLength={200}
                   placeholder="Ví dụ: Bánh Mì Men Tự Nhiên Sourdough"
-                  value={form.title}
-                  onChange={(event) => update('title', event.target.value)}
+                  {...register('title')}
+                  aria-invalid={Boolean(errors.title)}
+                  aria-describedby={errors.title ? 'recipe-title-error' : undefined}
                   className={inputClass}
                 />
-                <FieldError id="title-error" message={fieldErrors.title} />
+                <FieldError id="recipe-title-error" message={errors.title?.message} />
                 <span className="text-[11px] text-muted-foreground mt-1 block">Tối thiểu 5 ký tự.</span>
               </div>
 
@@ -775,17 +805,16 @@ export function RecipeEditor() {
                 </label>
                 <textarea
                   id="description"
-                  aria-invalid={Boolean(fieldErrors.description)}
-                  aria-describedby={fieldErrors.description ? 'description-error' : undefined}
                   required
                   maxLength={2000}
                   rows={4}
                   placeholder="Giới thiệu về hương vị, nguồn gốc hoặc cảm hứng của món ăn…"
-                  value={form.description}
-                  onChange={(event) => update('description', event.target.value)}
+                  {...register('description')}
+                  aria-invalid={Boolean(errors.description)}
+                  aria-describedby={errors.description ? 'recipe-description-error' : undefined}
                   className={`${inputClass} resize-y`}
                 />
-                <FieldError id="description-error" message={fieldErrors.description} />
+                <FieldError id="recipe-description-error" message={errors.description?.message} />
               </div>
 
               <div>
@@ -794,15 +823,14 @@ export function RecipeEditor() {
                 </label>
                 <textarea
                   id="instructions"
-                  aria-invalid={Boolean(fieldErrors.instructions)}
-                  aria-describedby={fieldErrors.instructions ? 'instructions-error' : undefined}
                   rows={3}
                   placeholder="Mẹo nhỏ, lưu ý về nhiệt độ lò hoặc biến tấu nguyên liệu…"
-                  value={form.instructions}
-                  onChange={(event) => update('instructions', event.target.value)}
+                  {...register('instructions')}
+                  aria-invalid={Boolean(errors.instructions)}
+                  aria-describedby={errors.instructions ? 'recipe-instructions-error' : undefined}
                   className={`${inputClass} resize-y`}
                 />
-                <FieldError id="instructions-error" message={fieldErrors.instructions} />
+                <FieldError id="recipe-instructions-error" message={errors.instructions?.message} />
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -812,11 +840,10 @@ export function RecipeEditor() {
                   </label>
                   <select
                     id="category"
-                    aria-invalid={Boolean(fieldErrors.categoryId)}
-                    aria-describedby={fieldErrors.categoryId ? 'category-error' : undefined}
                     required
-                    value={form.categoryId}
-                    onChange={(event) => update('categoryId', event.target.value)}
+                    {...register('categoryId')}
+                    aria-invalid={Boolean(errors.categoryId)}
+                    aria-describedby={errors.categoryId ? 'recipe-categoryId-error' : undefined}
                     className={inputClass}
                     disabled={categoriesQuery.isPending}
                   >
@@ -827,7 +854,7 @@ export function RecipeEditor() {
                       </option>
                     ))}
                   </select>
-                  <FieldError id="category-error" message={fieldErrors.categoryId} />
+                  <FieldError id="recipe-categoryId-error" message={errors.categoryId?.message} />
                 </div>
 
                 <div>
@@ -836,10 +863,9 @@ export function RecipeEditor() {
                   </label>
                   <select
                     id="difficulty"
-                    aria-invalid={Boolean(fieldErrors.difficulty)}
-                    aria-describedby={fieldErrors.difficulty ? 'difficulty-error' : undefined}
-                    value={form.difficulty}
-                    onChange={(event) => update('difficulty', event.target.value as RecipeDifficulty)}
+                    {...register('difficulty')}
+                    aria-invalid={Boolean(errors.difficulty)}
+                    aria-describedby={errors.difficulty ? 'recipe-difficulty-error' : undefined}
                     className={inputClass}
                   >
                     <option value="easy">Dễ</option>
@@ -847,7 +873,7 @@ export function RecipeEditor() {
                     <option value="hard">Khó</option>
                     <option value="expert">Chuyên gia</option>
                   </select>
-                  <FieldError id="difficulty-error" message={fieldErrors.difficulty} />
+                  <FieldError id="recipe-difficulty-error" message={errors.difficulty?.message} />
                 </div>
 
                 <div>
@@ -856,16 +882,15 @@ export function RecipeEditor() {
                   </label>
                   <input
                     id="servings"
-                    aria-invalid={Boolean(fieldErrors.servings)}
-                    aria-describedby={fieldErrors.servings ? 'servings-error' : undefined}
                     type="number"
                     min={1}
                     required
-                    value={form.servings}
-                    onChange={(event) => update('servings', Number(event.target.value))}
+                    {...register('servings', { valueAsNumber: true })}
+                    aria-invalid={Boolean(errors.servings)}
+                    aria-describedby={errors.servings ? 'recipe-servings-error' : undefined}
                     className={inputClass}
                   />
-                  <FieldError id="servings-error" message={fieldErrors.servings} />
+                  <FieldError id="recipe-servings-error" message={errors.servings?.message} />
                 </div>
               </div>
 
@@ -876,16 +901,15 @@ export function RecipeEditor() {
                   </label>
                   <input
                     id="prepTime"
-                    aria-invalid={Boolean(fieldErrors.prepTime)}
-                    aria-describedby={fieldErrors.prepTime ? 'prepTime-error' : undefined}
                     type="number"
                     min={1}
                     required
-                    value={form.prepTime}
-                    onChange={(event) => update('prepTime', Number(event.target.value))}
+                    {...register('prepTime', { valueAsNumber: true })}
+                    aria-invalid={Boolean(errors.prepTime)}
+                    aria-describedby={errors.prepTime ? 'recipe-prepTime-error' : undefined}
                     className={inputClass}
                   />
-                  <FieldError id="prepTime-error" message={fieldErrors.prepTime} />
+                  <FieldError id="recipe-prepTime-error" message={errors.prepTime?.message} />
                 </div>
 
                 <div>
@@ -894,16 +918,15 @@ export function RecipeEditor() {
                   </label>
                   <input
                     id="cookTime"
-                    aria-invalid={Boolean(fieldErrors.cookTime)}
-                    aria-describedby={fieldErrors.cookTime ? 'cookTime-error' : undefined}
                     type="number"
                     min={0}
                     required
-                    value={form.cookTime}
-                    onChange={(event) => update('cookTime', Number(event.target.value))}
+                    {...register('cookTime', { valueAsNumber: true })}
+                    aria-invalid={Boolean(errors.cookTime)}
+                    aria-describedby={errors.cookTime ? 'recipe-cookTime-error' : undefined}
                     className={inputClass}
                   />
-                  <FieldError id="cookTime-error" message={fieldErrors.cookTime} />
+                  <FieldError id="recipe-cookTime-error" message={errors.cookTime?.message} />
                 </div>
               </div>
             </section>
@@ -925,14 +948,13 @@ export function RecipeEditor() {
                     <div className="relative">
                       <input
                         id={key}
-                        aria-invalid={Boolean(fieldErrors[`nutrition.${key}`])}
-                        aria-describedby={fieldErrors[`nutrition.${key}`] ? `${key}-error` : undefined}
                         type="number"
                         min={0}
                         step="0.01"
-                        value={form.nutrition[key]}
-                        onChange={(event) =>
-                          update('nutrition', { ...form.nutrition, [key]: event.target.value })
+                        {...register(`nutrition.${key}`)}
+                        aria-invalid={Boolean(errors.nutrition?.[key])}
+                        aria-describedby={
+                          errors.nutrition?.[key] ? `recipe-nutrition-${key}-error` : undefined
                         }
                         className={`${inputClass} pr-14`}
                       />
@@ -940,7 +962,10 @@ export function RecipeEditor() {
                         {unit}
                       </span>
                     </div>
-                    <FieldError id={`${key}-error`} message={fieldErrors[`nutrition.${key}`]} />
+                    <FieldError
+                      id={`recipe-nutrition-${key}-error`}
+                      message={errors.nutrition?.[key]?.message}
+                    />
                   </div>
                 ))}
               </div>
@@ -1004,7 +1029,7 @@ export function RecipeEditor() {
       {navGuardTarget && !conflictModalOpen && (
         <Modal
           open
-          title={'Có thay đổi chưa lưu'}
+          title="Có thay đổi chưa lưu"
           onClose={() => setNavGuardTarget(null)}
           busy={save.isPending}
         >
@@ -1090,11 +1115,6 @@ export function RecipeEditor() {
               </button>
             </div>
 
-            {reloadError && (
-              <p role="alert" className="text-sm text-red-700">
-                {reloadError}
-              </p>
-            )}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-3 border-t border-border">
               <button
                 type="button"
@@ -1112,7 +1132,7 @@ export function RecipeEditor() {
                       cookTime: recipeQuery.data.cookTime,
                       nutrition: toFormNutrition(recipeQuery.data.nutrition),
                     }
-                    setForm(loadedForm)
+                    resetForm(loadedForm)
                     initialSnapshotRef.current = JSON.stringify(loadedForm)
                     setVersion(recipeQuery.data.version)
                   }
@@ -1124,9 +1144,8 @@ export function RecipeEditor() {
               <button
                 type="button"
                 onClick={async () => {
-                  setReloadError(null)
                   const refetched = await recipeQuery.refetch()
-                  if (refetched.isSuccess && refetched.data) {
+                  if (refetched.data) {
                     const loaded = refetched.data
                     setVersion(loaded.version)
                     const loadedForm: RecipeForm = {
@@ -1140,14 +1159,11 @@ export function RecipeEditor() {
                       cookTime: loaded.cookTime,
                       nutrition: toFormNutrition(loaded.nutrition),
                     }
-                    setForm(loadedForm)
+                    resetForm(loadedForm)
                     initialSnapshotRef.current = JSON.stringify(loadedForm)
                     setConflictModalOpen(false)
-                  } else {
-                    setReloadError('Không thể tải bản mới. Nội dung đang nhập vẫn được giữ lại.')
                   }
                 }}
-                disabled={recipeQuery.isFetching}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-xs uppercase tracking-wider"
               >
                 Tải lại phiên bản mới nhất
@@ -1174,11 +1190,6 @@ export function RecipeEditor() {
           busy={isPendingAction}
         >
           <div className="space-y-4">
-            {publishError && (
-              <p role="alert" className="text-sm text-red-700">
-                {publishError}
-              </p>
-            )}
             <p className="text-sm text-muted-foreground leading-relaxed">
               {confirmModal === 'publish' && (
                 <>
@@ -1207,7 +1218,7 @@ export function RecipeEditor() {
               {confirmModal === 'delete' && (
                 <>
                   Bạn có chắc chắn muốn xóa công thức <strong>«{form.title || 'này'}»</strong>? Hành động này
-                  sẽ ẩn công thức và lên lịch dọn ảnh liên quan.
+                  sẽ xóa toàn bộ dữ liệu khỏi hệ thống.
                 </>
               )}
             </p>
@@ -1225,9 +1236,6 @@ export function RecipeEditor() {
                 type="button"
                 disabled={isPendingAction}
                 onClick={() => {
-                  if (isPendingAction) return
-                  setPublishNotice(null)
-                  setPublishError(null)
                   if (confirmModal === 'publish') publishMutation.mutate()
                   else if (confirmModal === 'unpublish') unpublishMutation.mutate()
                   else if (confirmModal === 'archive') archiveMutation.mutate()
@@ -1235,11 +1243,7 @@ export function RecipeEditor() {
                   else if (confirmModal === 'delete') deleteMutation.mutate()
                 }}
                 className={`px-5 py-2 text-xs uppercase tracking-wider text-white ${
-                  confirmModal === 'delete'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : confirmModal === 'publish'
-                      ? 'bg-green-700 hover:bg-green-800'
-                      : 'bg-primary hover:bg-primary/90'
+                  confirmModal === 'delete' ? 'bg-red-600 hover:bg-red-700' : confirmationColor
                 }`}
               >
                 {isPendingAction ? 'Đang xử lý…' : 'Xác nhận'}

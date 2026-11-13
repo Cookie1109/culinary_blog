@@ -75,18 +75,32 @@ export interface PublicRecipeFilters {
   sort: string
   page: number
   pageSize: number
+  categoryId?: string
+  maxCookTime?: number
+  minServings?: number
+  minPrepTime?: number
+  maxPrepTime?: number
+  sortBy?: string
+  sortOrder?: string
 }
 
 export function searchPublishedRecipesOnServer(filters: PublicRecipeFilters) {
   const query = new URLSearchParams({
     page: String(filters.page),
     pageSize: String(filters.pageSize),
-    sort: filters.sort,
   })
+  if (filters.sort) query.set('sort', !filters.q && filters.sort === 'relevance' ? 'newest' : filters.sort)
+  if (filters.sortBy !== undefined) query.set('sortBy', filters.sortBy)
+  if (filters.sortOrder !== undefined) query.set('sortOrder', filters.sortOrder)
   if (filters.q) query.set('q', filters.q)
   if (filters.category) query.set('category', filters.category)
   if (filters.difficulty) query.set('difficulty', filters.difficulty)
   if (filters.maxTime > 0) query.set('maxTime', String(filters.maxTime))
+  if (filters.categoryId) query.set('categoryId', filters.categoryId)
+  for (const key of ['maxCookTime', 'minServings', 'minPrepTime', 'maxPrepTime'] as const) {
+    if (filters[key] !== undefined) query.set(key, String(filters[key]))
+  }
 
-  return publicRequest<PageEnvelope<Recipe>>(`/recipes/search?${query}`, { noStore: true })
+  const path = filters.q ? '/recipes/search' : '/recipes'
+  return publicRequest<PageEnvelope<Recipe>>(`${path}?${query}`, { noStore: true })
 }

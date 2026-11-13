@@ -23,12 +23,57 @@ tags:
   - name: Health
   - name: Operations
 paths:
+  /:
+    get:
+      tags: [Operations]
+      operationId: getApiMetadata
+      security: []
+      responses:
+        '200':
+          description: API service and version
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: object
+                    required: [service, version]
+                    properties:
+                      service: {type: string}
+                      version: {type: string}
+                  meta: {type: object}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
+  /release:
+    get:
+      tags: [Operations]
+      operationId: getReleaseMetadata
+      security: []
+      responses:
+        '200':
+          description: Release provenance configured for the running instance
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      commitSha: {type: [string, 'null']}
+                      apiImageDigest: {type: [string, 'null']}
+                      webImageDigest: {type: [string, 'null']}
+                  meta: {type: object}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
   /sitemap.xml:
     get:
       tags: [Sitemap]
       operationId: getSitemap
       security: []
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200':
           description: XML sitemap gần nhất đã tạo thành công
           content:
@@ -47,6 +92,7 @@ paths:
             schema: {$ref: '#/components/schemas/RegisterRequest'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '201': {$ref: '#/components/responses/AuthCreated'}
         '400': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
@@ -66,7 +112,7 @@ paths:
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '423': {$ref: '#/components/responses/Problem'}
-        '429': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
   /auth/google:
     post:
       tags: [Auth]
@@ -83,10 +129,12 @@ paths:
                 idToken: {type: string, minLength: 1, writeOnly: true}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/AuthOk'}
         '400': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
-        '502': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
   /auth/refresh:
     post:
       tags: [Auth]
@@ -99,6 +147,7 @@ paths:
             schema: {$ref: '#/components/schemas/RefreshTokenRequest'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/AuthOk'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
@@ -106,6 +155,7 @@ paths:
     post:
       tags: [Auth]
       operationId: logout
+      description: Bearer is optional. A valid bearer must own the refresh token (403 otherwise). A correctly signed expired bearer is allowed; malformed or invalid bearers return 401. Repeated logout returns 204.
       security:
         - {}
         - bearerAuth: []
@@ -116,8 +166,11 @@ paths:
             schema: {$ref: '#/components/schemas/RefreshTokenRequest'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '204': {description: Refresh token đã được revoke hoặc vốn không còn hiệu lực}
         '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /auth/change-password:
     post:
       tags: [Auth]
@@ -134,7 +187,7 @@ paths:
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
-        '429': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
   /auth/forgot-password:
     post:
       tags: [Auth]
@@ -150,7 +203,7 @@ paths:
         '422': {$ref: '#/components/responses/Problem'}
         '202': {description: Request processed; check email if the account is eligible}
         '400': {$ref: '#/components/responses/Problem'}
-        '429': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '503': {$ref: '#/components/responses/Problem'}
   /auth/reset-password:
     post:
@@ -167,12 +220,13 @@ paths:
         '422': {$ref: '#/components/responses/Problem'}
         '204': {description: Password reset and all sessions revoked}
         '400': {$ref: '#/components/responses/Problem'}
-        '429': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
   /auth/me:
     get:
       tags: [Auth]
       operationId: getCurrentUser
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200':
           description: Hồ sơ hiện tại
           content:
@@ -190,6 +244,7 @@ paths:
             schema: {$ref: '#/components/schemas/UpdateProfileRequest'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200':
           description: Hồ sơ đã cập nhật
           content:
@@ -197,6 +252,53 @@ paths:
               schema: {$ref: '#/components/schemas/UserEnvelope'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /auth/me/avatar:
+    post:
+      tags: [Auth]
+      operationId: updateProfileAvatar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: {type: string, format: binary, description: 'JPEG, PNG, WebP or AVIF, up to 5 MB'}
+                displayName: {type: string, minLength: 2, maxLength: 100}
+                bio: {type: string, maxLength: 2000}
+      responses:
+        '200':
+          description: Profile and uploaded avatar saved
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserEnvelope'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '413': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
+  /avatars/{userId}/{fileName}:
+    get:
+      tags: [Images]
+      operationId: getProfileAvatar
+      security: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: {type: string}
+        - name: fileName
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Current public profile image
+          content:
+            application/octet-stream:
+              schema: {type: string, format: binary}
+        '404': {$ref: '#/components/responses/Problem'}
   /categories:
     get:
       tags: [Categories]
@@ -204,6 +306,7 @@ paths:
       security: []
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200':
           description: Danh sách category, sắp xếp name tăng dần
           content:
@@ -226,6 +329,7 @@ paths:
             schema: {$ref: '#/components/schemas/CategoryWrite'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '201': {$ref: '#/components/responses/CategoryResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -239,7 +343,11 @@ paths:
         - {$ref: '#/components/parameters/Slug'}
         - {$ref: '#/components/parameters/Page'}
         - {$ref: '#/components/parameters/PageSize'}
+        - {$ref: '#/components/parameters/Sort'}
+        - {$ref: '#/components/parameters/SortBy'}
+        - {$ref: '#/components/parameters/SortOrder'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200':
           description: Category và Published recipes
           content:
@@ -260,6 +368,7 @@ paths:
             schema: {$ref: '#/components/schemas/CategoryWrite'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/CategoryResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -271,6 +380,7 @@ paths:
       x-required-role: Admin
       parameters: [{$ref: '#/components/parameters/Id'}]
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '204': {description: Category đã soft-delete}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
@@ -291,6 +401,7 @@ paths:
         - {name: authorId, in: query, schema: {type: string}}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipePage'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -302,6 +413,7 @@ paths:
       parameters: [{$ref: '#/components/parameters/Id'}]
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -323,6 +435,7 @@ paths:
         - {name: search, in: query, description: Tìm theo người thực hiện, đối tượng, sự kiện hoặc mã tương quan., schema: {type: string}}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200':
           description: Nhật ký và trạng thái cấu hình giám sát.
           content:
@@ -347,18 +460,24 @@ paths:
       tags: [Recipes]
       operationId: listPublishedRecipes
       security: []
+      description: Duyệt Published theo bộ lọc AND; không cần từ khóa. newest là -createdAt, quickest là tổng thời gian tăng dần.
       parameters:
         - {$ref: '#/components/parameters/Page'}
         - {$ref: '#/components/parameters/PageSize'}
         - {$ref: '#/components/parameters/Sort'}
+        - {name: category, in: query, description: Category slug; kết hợp AND với categoryId nếu gửi cả hai., schema: {type: string, maxLength: 120}}
+        - {name: maxTime, in: query, description: Maximum total preparation and cooking time., schema: {type: integer, minimum: 1}}
         - {name: categoryId, in: query, schema: {type: string, format: uuid}}
         - {name: difficulty, in: query, schema: {$ref: '#/components/schemas/RecipeDifficulty'}}
         - {name: maxCookTime, in: query, schema: {type: integer, minimum: 0}}
         - {name: minServings, in: query, schema: {type: integer, minimum: 1}}
         - {name: minPrepTime, in: query, schema: {type: integer, minimum: 1}}
         - {name: maxPrepTime, in: query, schema: {type: integer, minimum: 1}}
+        - {$ref: '#/components/parameters/SortBy'}
+        - {$ref: '#/components/parameters/SortOrder'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipePage'}
         '400': {$ref: '#/components/responses/Problem'}
     post:
@@ -372,6 +491,7 @@ paths:
             schema: {$ref: '#/components/schemas/CreateRecipeRequest'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '201': {$ref: '#/components/responses/RecipeResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
@@ -383,19 +503,31 @@ paths:
       operationId: searchPublishedRecipes
       security: []
       description: >-
-        Search recipe titles only with every word required. Exclude description-only matches. Prefer exact words and supplied
-        Vietnamese accents; use prefixes, then approximate names only when stronger matches are absent.
-        Default keyword order is relevance. Empty and failed requests remain distinct in the UI.
+        Ưu tiên khớp đủ mọi từ và dấu tiếng Việt đã nhập; tiền tố và tên gần đúng chỉ là nhánh dự phòng.
+        Không ghép kết quả chỉ khớp một phần từ khóa vào tập khớp đủ từ.
+        Tìm không dấu theo tiêu đề và mô tả, kết hợp mọi bộ lọc bằng AND.
+        q bắt buộc có từ 2 đến 100 ký tự sau khi bỏ khoảng trắng đầu/cuối. Mặc định xếp theo ts_rank
+        giảm dần và trả relevanceScore. Duyệt không có từ khóa dùng GET /recipes.
+        sort=newest tương đương -createdAt; quickest là tổng thời gian chuẩn bị và nấu tăng dần.
+        category là slug; categoryId là UUID. Khi gửi cả hai, công thức phải khớp cả hai.
       parameters:
-        - {name: q, in: query, schema: {type: string, minLength: 2, maxLength: 100}}
+        - {name: q, in: query, required: true, schema: {type: string, minLength: 2, maxLength: 100}}
         - {$ref: '#/components/parameters/Page'}
         - {$ref: '#/components/parameters/PageSize'}
         - {name: category, in: query, description: Category slug, schema: {type: string}}
         - {name: difficulty, in: query, schema: {$ref: '#/components/schemas/RecipeDifficulty'}}
         - {name: maxTime, in: query, description: Maximum preparation plus cooking time in minutes, schema: {type: integer, minimum: 1}}
-        - {name: sort, in: query, schema: {type: string, enum: [relevance, newest, quickest, az], default: relevance}}
+        - {name: categoryId, in: query, schema: {type: string, format: uuid}}
+        - {name: maxCookTime, in: query, schema: {type: integer, minimum: 0}}
+        - {name: minServings, in: query, schema: {type: integer, minimum: 1}}
+        - {name: minPrepTime, in: query, schema: {type: integer, minimum: 1}}
+        - {name: maxPrepTime, in: query, description: Must be greater than or equal to minPrepTime when both are provided., schema: {type: integer, minimum: 1}}
+        - {name: sort, in: query, schema: {type: string, enum: [relevance, newest, oldest, quickest, az, za, createdAt, '-createdAt', title, '-title', cookTime, '-cookTime', prepTime, '-prepTime', servings, '-servings'], default: relevance}}
+        - {$ref: '#/components/parameters/SortBy'}
+        - {$ref: '#/components/parameters/SortOrder'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipePage'}
         '400': {$ref: '#/components/responses/Problem'}
   /recipes/{slug}:
@@ -406,6 +538,11 @@ paths:
       parameters: [{$ref: '#/components/parameters/Slug'}]
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '301':
+          description: Historical published slug redirects directly to its current slug
+          headers:
+            Location: {schema: {type: string}}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '404': {$ref: '#/components/responses/Problem'}
   /recipes/{id}:
@@ -423,6 +560,7 @@ paths:
             schema: {$ref: '#/components/schemas/UpdateRecipeRequest'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -436,6 +574,7 @@ paths:
         - {$ref: '#/components/parameters/Id'}
         - {$ref: '#/components/parameters/IfMatch'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '204': {description: Recipe đã soft-delete}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -450,6 +589,7 @@ paths:
         - {$ref: '#/components/parameters/Id'}
         - {$ref: '#/components/parameters/IfMatch'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -464,6 +604,7 @@ paths:
         - {$ref: '#/components/parameters/Id'}
         - {$ref: '#/components/parameters/IfMatch'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -478,6 +619,7 @@ paths:
         - {$ref: '#/components/parameters/Id'}
         - {$ref: '#/components/parameters/IfMatch'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -492,6 +634,7 @@ paths:
         - {$ref: '#/components/parameters/Id'}
         - {$ref: '#/components/parameters/IfMatch'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -511,6 +654,7 @@ paths:
           schema: {type: string, maxLength: 100}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipePage'}
         '401': {$ref: '#/components/responses/Problem'}
   /me/recipes/{id}:
@@ -520,6 +664,7 @@ paths:
       parameters: [{$ref: '#/components/parameters/Id'}]
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/RecipeResource'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -545,6 +690,7 @@ paths:
                 isPrimary: {type: boolean, default: false}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -572,6 +718,7 @@ paths:
                 orderIndex: {type: integer, minimum: 0}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -586,6 +733,7 @@ paths:
         - {name: imageId, in: path, required: true, schema: {type: string, format: uuid}}
         - {$ref: '#/components/parameters/IfMatch'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '204': {description: Image metadata deleted; object deletion queued}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -606,6 +754,7 @@ paths:
             schema: {$ref: '#/components/schemas/StepWrite'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -624,9 +773,10 @@ paths:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/StepWrite'}
+            schema: {$ref: '#/components/schemas/StepUpdateRequest'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -641,6 +791,7 @@ paths:
         - {name: stepId, in: path, required: true, schema: {type: string, format: uuid}}
         - {$ref: '#/components/parameters/IfMatch'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '204': {description: Step deleted; remaining steps renumbered}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -661,6 +812,7 @@ paths:
             schema: {$ref: '#/components/schemas/IngredientWrite'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '201': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -679,9 +831,10 @@ paths:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/IngredientWrite'}
+            schema: {$ref: '#/components/schemas/IngredientUpdateRequest'}
       responses:
         '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200': {$ref: '#/components/responses/ChildMutation'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -696,6 +849,7 @@ paths:
         - {name: ingredientId, in: path, required: true, schema: {type: string, format: uuid}}
         - {$ref: '#/components/parameters/IfMatch'}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '204': {description: Ingredient deleted}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
@@ -711,15 +865,20 @@ paths:
         - {name: imageId, in: path, required: true, schema: {type: string, format: uuid}}
         - {name: variant, in: path, required: true, schema: {type: string, enum: [original, medium, thumbnail]}}
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200':
           description: Image bytes
           content:
             image/jpeg: {schema: {type: string, format: binary}}
             image/png: {schema: {type: string, format: binary}}
             image/webp: {schema: {type: string, format: binary}}
+            image/avif: {schema: {type: string, format: binary}}
         '404': {$ref: '#/components/responses/Problem'}
         '503': {$ref: '#/components/responses/Problem'}
   /health:
+    servers:
+      - url: http://localhost:5000
+      - url: https://api.culinaryblog.com
     get:
       tags: [Health]
       operationId: health
@@ -733,12 +892,16 @@ paths:
       operationId: getMaintenanceWindow
       security: []
       responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
         '200':
           description: Planned maintenance announcement configured at runtime
           content:
             application/json:
               schema: {$ref: '#/components/schemas/MaintenanceEnvelope'}
   /health/live:
+    servers:
+      - url: http://localhost:5000
+      - url: https://api.culinaryblog.com
     get:
       tags: [Health]
       operationId: liveness
@@ -746,6 +909,9 @@ paths:
       responses:
         '200': {description: Process alive}
   /health/ready:
+    servers:
+      - url: http://localhost:5000
+      - url: https://api.culinaryblog.com
     get:
       tags: [Health]
       operationId: readiness
@@ -764,9 +930,34 @@ components:
     Slug: {name: slug, in: path, required: true, schema: {type: string, minLength: 1}}
     Page: {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
     PageSize: {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 50, default: 12}}
-    Sort: {name: sort, in: query, schema: {type: string, default: -createdAt}}
+    Sort: {name: sort, in: query, schema: {type: string, enum: [newest, oldest, quickest, az, za, createdAt, '-createdAt', title, '-title', cookTime, '-cookTime', prepTime, '-prepTime', servings, '-servings'], default: -createdAt}}
+    SortBy: {name: sortBy, in: query, schema: {type: string, enum: [createdAt, title, cookTime, prepTime, servings, relevance]}, description: 'Field form of sort. Direction defaults to asc for a supplied field (relevance desc); without a field, createdAt desc. Equivalent forms may coexist; conflicting forms return 400.'}
+    SortOrder: {name: sortOrder, in: query, schema: {type: string, enum: [asc, desc]}}
     IfMatch: {name: If-Match, in: header, required: true, schema: {type: string}, description: Quoted aggregate version ETag}
+  headers:
+    RateLimitLimit:
+      description: Binding shared per-IP quota (global fixed 100/minute, auth sliding 10/minute, upload fixed 5/minute).
+      schema: {type: integer, format: int64, minimum: 1}
+    RateLimitRemaining:
+      description: Requests remaining in the binding window. Auth/upload also consume the global quota.
+      schema: {type: integer, format: int64, minimum: 0}
+    RateLimitReset:
+      description: Unix timestamp in seconds when the binding window next admits a request (shared PostgreSQL clock). PostgreSQL quota remains enforced when Redis is unavailable.
+      schema: {type: integer, format: int64}
+    RetryAfter:
+      description: Seconds until retry when HTTP 429.
+      schema: {type: integer, minimum: 1}
   responses:
+    RateLimitExceeded:
+      description: Shared IP quota exceeded. Health endpoints are exempt.
+      headers:
+        X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+        X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+        X-RateLimit-Reset: {$ref: '#/components/headers/RateLimitReset'}
+        Retry-After: {$ref: '#/components/headers/RetryAfter'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ProblemDetails'}
     Problem:
       description: RFC 7807 Problem Details
       content:
@@ -774,16 +965,28 @@ components:
           schema: {$ref: '#/components/schemas/ProblemDetails'}
     AuthCreated:
       description: Account created and session issued
+      headers:
+        X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+        X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+        X-RateLimit-Reset: {$ref: '#/components/headers/RateLimitReset'}
       content:
         application/json:
           schema: {$ref: '#/components/schemas/AuthEnvelope'}
     AuthOk:
       description: Session issued
+      headers:
+        X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+        X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+        X-RateLimit-Reset: {$ref: '#/components/headers/RateLimitReset'}
       content:
         application/json:
           schema: {$ref: '#/components/schemas/AuthEnvelope'}
     CategoryResource:
       description: Category resource
+      headers:
+        X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+        X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+        X-RateLimit-Reset: {$ref: '#/components/headers/RateLimitReset'}
       content:
         application/json:
           schema:
@@ -793,6 +996,9 @@ components:
     RecipeResource:
       description: Recipe resource
       headers:
+        X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+        X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+        X-RateLimit-Reset: {$ref: '#/components/headers/RateLimitReset'}
         ETag: {schema: {type: string}}
       content:
         application/json:
@@ -802,12 +1008,19 @@ components:
             properties: {data: {$ref: '#/components/schemas/RecipeDetail'}}
     RecipePage:
       description: Paged recipe results; public operations constrain data to Published
+      headers:
+        X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+        X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+        X-RateLimit-Reset: {$ref: '#/components/headers/RateLimitReset'}
       content:
         application/json:
           schema: {$ref: '#/components/schemas/RecipePage'}
     ChildMutation:
       description: Recipe child resource created or updated
       headers:
+        X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+        X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+        X-RateLimit-Reset: {$ref: '#/components/headers/RateLimitReset'}
         ETag: {schema: {type: string}}
       content:
         application/json:
@@ -894,7 +1107,7 @@ components:
         bio: {type: [string, 'null'], maxLength: 2000}
     User:
       type: object
-      required: [id, email, displayName, roles, isActive, createdAt]
+      required: [id, email, displayName, roles, isActive, createdAt, hasPassword]
       properties:
         id: {type: string}
         email: {type: string, format: email}
@@ -905,6 +1118,7 @@ components:
         emailConfirmed: {type: boolean}
         isActive: {type: boolean}
         createdAt: {type: string, format: date-time}
+        hasPassword: {type: boolean, description: Whether the account has a local password}
     UserEnvelope:
       type: object
       required: [data]
@@ -917,8 +1131,8 @@ components:
           type: object
           required: [accessToken, refreshToken, expiresAt, user]
           properties:
-            accessToken: {type: string, writeOnly: true}
-            refreshToken: {type: string, writeOnly: true}
+            accessToken: {type: string}
+            refreshToken: {type: string}
             expiresAt: {type: string, format: date-time}
             user: {$ref: '#/components/schemas/User'}
     Category:
@@ -960,18 +1174,28 @@ components:
         author: {$ref: '#/components/schemas/User'}
         createdAt: {type: string, format: date-time}
         publishedAt: {type: [string, 'null'], format: date-time}
+        relevanceScore: {type: [number, 'null'], format: float, minimum: 0, description: ts_rank for keyword search; null for browsing or non-search resources.}
         version: {type: integer, format: int64, minimum: 1}
     RecipeDetail:
       allOf:
         - {$ref: '#/components/schemas/RecipeSummary'}
         - type: object
-          required: [ingredients, steps, images]
+          required: [instructions, ingredients, steps, images]
           properties:
-            instructions: {type: [string, 'null']}
-            nutrition: {type: [object, 'null'], additionalProperties: true}
+            instructions: {type: string, description: Empty when no legacy instructions are supplied}
+            nutrition: {anyOf: [{$ref: '#/components/schemas/Nutrition'}, {type: 'null'}]}
             ingredients: {type: array, items: {$ref: '#/components/schemas/Ingredient'}}
             steps: {type: array, items: {$ref: '#/components/schemas/Step'}}
             images: {type: array, items: {$ref: '#/components/schemas/RecipeImage'}}
+    Nutrition:
+      type: object
+      properties:
+        calories: {type: [number, 'null'], minimum: 0, maximum: 999999.99, multipleOf: 0.01}
+        protein: {type: [number, 'null'], minimum: 0, maximum: 999999.99, multipleOf: 0.01}
+        carbohydrates: {type: [number, 'null'], minimum: 0, maximum: 999999.99, multipleOf: 0.01}
+        fat: {type: [number, 'null'], minimum: 0, maximum: 999999.99, multipleOf: 0.01}
+        fiber: {type: [number, 'null'], minimum: 0, maximum: 999999.99, multipleOf: 0.01}
+        sodium: {type: [number, 'null'], minimum: 0, maximum: 999999.99, multipleOf: 0.01}
     CreateRecipeRequest:
       type: object
       required: [title, description, categoryId, prepTime, cookTime, servings, difficulty]
@@ -984,18 +1208,37 @@ components:
         servings: {type: integer, minimum: 1}
         difficulty: {$ref: '#/components/schemas/RecipeDifficulty'}
         instructions: {type: [string, 'null']}
-        nutrition: {type: [object, 'null'], additionalProperties: true}
+        nutrition: {anyOf: [{$ref: '#/components/schemas/Nutrition'}, {type: 'null'}]}
         steps: {type: array, items: {$ref: '#/components/schemas/StepWrite'}}
         ingredients: {type: array, items: {$ref: '#/components/schemas/IngredientWrite'}}
     UpdateRecipeRequest:
-      allOf: [{$ref: '#/components/schemas/CreateRecipeRequest'}]
+      type: object
+      description: Omitted fields retain their values. Null clears optional content; nutrition merges its supplied fields. Empty object is a no-op.
+      properties:
+        title: {type: string, minLength: 5, maxLength: 200}
+        description: {type: string, minLength: 1, maxLength: 2000}
+        categoryId: {type: string, format: uuid}
+        prepTime: {type: integer, minimum: 1}
+        cookTime: {type: integer, minimum: 0}
+        servings: {type: integer, minimum: 1}
+        difficulty: {$ref: '#/components/schemas/RecipeDifficulty'}
+        instructions: {type: [string, 'null']}
+        nutrition: {anyOf: [{$ref: '#/components/schemas/Nutrition'}, {type: 'null'}]}
+    StepUpdateRequest:
+      type: object
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, minLength: 1, maxLength: 2000}
+        timerMinutes: {type: [number, 'null'], minimum: 0, description: 'Thời gian theo phút, hỗ trợ phần lẻ để biểu diễn giây'}
+        imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
+        stepNumber: {type: integer, minimum: 1, description: Chỉ dùng khi PUT để đổi vị trí}
     StepWrite:
       type: object
       required: [title, description]
       properties:
         title: {type: string, minLength: 1, maxLength: 200}
         description: {type: string, minLength: 1, maxLength: 2000}
-        timerMinutes: {type: [integer, 'null'], minimum: 0}
+        timerMinutes: {type: [number, 'null'], minimum: 0, description: 'Thời gian theo phút, hỗ trợ phần lẻ để biểu diễn giây'}
         imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
         stepNumber: {type: integer, minimum: 1, description: Chỉ dùng khi PUT để đổi vị trí}
     Step:
@@ -1004,12 +1247,20 @@ components:
         - type: object
           required: [id, stepNumber]
           properties: {id: {type: string, format: uuid}}
+    IngredientUpdateRequest:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 200}
+        quantity: {type: [number, 'null'], exclusiveMinimum: 0, maximum: 9999999.999, multipleOf: 0.001}
+        unit: {type: [string, 'null'], maxLength: 50}
+        notes: {type: [string, 'null'], maxLength: 500}
+        orderIndex: {type: integer, minimum: 0}
     IngredientWrite:
       type: object
       required: [name]
       properties:
         name: {type: string, minLength: 1, maxLength: 100}
-        quantity: {type: [number, 'null'], exclusiveMinimum: 0}
+        quantity: {type: [number, 'null'], exclusiveMinimum: 0, maximum: 9999999.999, multipleOf: 0.001}
         unit: {type: [string, 'null'], maxLength: 50}
         notes: {type: [string, 'null'], maxLength: 500}
         orderIndex: {type: integer, minimum: 0, default: 0}
@@ -1025,10 +1276,10 @@ components:
         orderIndex: {type: integer, minimum: 0, default: 0}
     RecipeImage:
       type: object
-      required: [id, isPrimary, orderIndex]
+      required: [id, originalUrl, isPrimary, orderIndex]
       properties:
         id: {type: string, format: uuid}
-        originalUrl: {type: [string, 'null'], description: Controlled API media path}
+        originalUrl: {type: string, maxLength: 500, description: Controlled API media path}
         mediumUrl: {type: [string, 'null'], description: Controlled API media path when ready}
         thumbnailUrl: {type: [string, 'null'], description: Controlled API media path when ready}
         altText: {type: [string, 'null']}
@@ -1064,6 +1315,7 @@ components:
       required: [data, meta]
       properties:
         data: {type: array, items: {$ref: '#/components/schemas/RecipeSummary'}}
+        message: {type: string, description: Suggested keyword or filter changes when a search page is empty}
         meta: {$ref: '#/components/schemas/PageMeta'}
     CategoryDetailEnvelope:
       type: object

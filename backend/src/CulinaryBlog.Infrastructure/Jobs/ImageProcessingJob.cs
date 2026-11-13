@@ -1,3 +1,7 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
+using CulinaryBlog.Application.Abstractions.Caching;
+using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Media;
 using CulinaryBlog.Domain.Recipes;
 using CulinaryBlog.Infrastructure.Media;
@@ -9,19 +13,36 @@ using SkiaSharp;
 
 namespace CulinaryBlog.Infrastructure.Jobs;
 
+/// <summary>Represents the image processing job.</summary>
+/// <param name="dbContext">The db context supplied to this operation.</param>
+/// <param name="fileStorage">The file storage supplied to this operation.</param>
+/// <param name="cache">The cache supplied to this operation.</param>
+/// <param name="publicContentRefresh">The public content refresh supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
 public sealed class ImageProcessingJob(
     AppDbContext dbContext,
     IFileStorageService fileStorage,
+    IApplicationCache cache,
+    IPublicContentRefresh publicContentRefresh,
     ILogger<ImageProcessingJob> logger)
 {
     private static readonly Action<ILogger, Guid, Guid, Exception?> ProcessingCompleted =
-        LoggerMessage.Define<Guid, Guid>(LogLevel.Information, new EventId(4101, nameof(ProcessingCompleted)),
+        LoggerMessage.Define<Guid, Guid>(
+            LogLevel.Information,
+            new EventId(4101, nameof(ProcessingCompleted)),
             "Image resize job {OutboxId} completed for image {ImageId}");
 
     private static readonly Action<ILogger, Guid, Guid, Exception?> ProcessingFailed =
-        LoggerMessage.Define<Guid, Guid>(LogLevel.Error, new EventId(4102, nameof(ProcessingFailed)),
+        LoggerMessage.Define<Guid, Guid>(
+            LogLevel.Error,
+            new EventId(4102, nameof(ProcessingFailed)),
             "Image resize job {OutboxId} failed for image {ImageId}");
 
+    /// <summary>Performs the process operation.</summary>
+    /// <param name="outboxId">The outbox id supplied to this operation.</param>
+    /// <param name="imageId">The image id supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = [60, 300, 1800])]
     public async Task ProcessAsync(Guid outboxId, Guid imageId, CancellationToken cancellationToken)
     {
@@ -30,22 +51,27 @@ public sealed class ImageProcessingJob(
         var imageRecord = await dbContext.RecipeImages.IgnoreQueryFilters()
             .SingleOrDefaultAsync(image => image.Id == imageId, cancellationToken)
             .ConfigureAwait(false);
-        if (imageRecord is null || imageRecord.IsDeleted || imageRecord.ProcessingStatus == ImageProcessingStatus.Ready)
+        if (imageRecord is null || imageRecord.IsDeleted)
         {
+            return;
+        }
+
+        if (imageRecord.ProcessingStatus == ImageProcessingStatus.Ready)
+        {
+            await this.RefreshPublicContentAsync().ConfigureAwait(false);
             return;
         }
 
         try
         {
             await using var original = await fileStorage.OpenReadAsync(imageRecord.ObjectKey, cancellationToken).ConfigureAwait(false);
-            using var decoded = imageRecord.ContentType == "image/avif" ? AvifImage.Decode(original) : SKBitmap.Decode(original)
-                ?? throw new InvalidDataException("The original image cannot be decoded.");
-            var prefix = $"recipes/{imageRecord.RecipeId:N}/{imageRecord.Id:N}";
-            var mediumKey = $"{prefix}/medium.webp";
-            var thumbnailKey = $"{prefix}/thumbnail.webp";
+            using var decoded = imageRecord.ContentType == "image/avif" ? AvifImage.Decode(original) : SKBitmap.Decode(original) ?? throw new InvalidDataException("The original image cannot be decoded.");
+            string prefix = $"recipes/{imageRecord.RecipeId:N}/{imageRecord.Id:N}";
+            string mediumKey = $"{prefix}/medium.webp";
+            string thumbnailKey = $"{prefix}/thumbnail.webp";
 
-            await UploadVariantAsync(decoded, mediumKey, 800, 600, cancellationToken).ConfigureAwait(false);
-            await UploadVariantAsync(decoded, thumbnailKey, 300, 300, cancellationToken).ConfigureAwait(false);
+            await this.UploadVariantAsync(decoded, mediumKey, 800, 600, cancellationToken).ConfigureAwait(false);
+            await this.UploadVariantAsync(decoded, thumbnailKey, 300, 300, cancellationToken).ConfigureAwait(false);
 
             // Deletion may finish while binary uploads are in flight.
             await dbContext.Entry(imageRecord).ReloadAsync(cancellationToken).ConfigureAwait(false);
@@ -70,6 +96,15 @@ public sealed class ImageProcessingJob(
             ProcessingFailed(logger, outboxId, imageId, exception);
             throw;
         }
+
+        await this.RefreshPublicContentAsync().ConfigureAwait(false);
+    }
+
+    private async Task RefreshPublicContentAsync()
+    {
+        await cache.RemoveByTagAsync(PublicCacheKeys.RecipesTag, CancellationToken.None).ConfigureAwait(false);
+        await cache.RemoveByTagAsync(PublicCacheKeys.CategoriesTag, CancellationToken.None).ConfigureAwait(false);
+        await publicContentRefresh.ScheduleAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     private async Task UploadVariantAsync(
@@ -79,16 +114,18 @@ public sealed class ImageProcessingJob(
         int height,
         CancellationToken cancellationToken)
     {
+        // A fixed-size canvas preserves the source aspect ratio without stretching or cropping it.
         using var variant = new SKBitmap(width, height);
         using (var canvas = new SKCanvas(variant))
         {
             canvas.Clear(SKColors.White);
-            var scale = Math.Min(width / (float)source.Width, height / (float)source.Height);
-            var targetWidth = source.Width * scale;
-            var targetHeight = source.Height * scale;
-            canvas.DrawBitmap(source, SKRect.Create((width - targetWidth) / 2, (height - targetHeight) / 2, targetWidth, targetHeight),
-                new SKSamplingOptions(SKCubicResampler.Mitchell));
+            float scale = Math.Min(width / (float)source.Width, height / (float)source.Height);
+            float targetWidth = source.Width * scale;
+            float targetHeight = source.Height * scale;
+            var destination = SKRect.Create((width - targetWidth) / 2, (height - targetHeight) / 2, targetWidth, targetHeight);
+            canvas.DrawBitmap(source, destination, new SKSamplingOptions(SKCubicResampler.Mitchell));
         }
+
         using var variantImage = SKImage.FromBitmap(variant);
         using var encoded = variantImage.Encode(SKEncodedImageFormat.Webp, 90);
         await using var output = new MemoryStream();

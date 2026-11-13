@@ -98,22 +98,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-culinary}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
       BACKUP_RETENTION_DAYS: "30"
-      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
       BACKUP_RETRY_SECONDS: ${BACKUP_RETRY_SECONDS:-300}
     volumes:
       - ./infra/operations/postgres-backup.sh:/opt/operations/postgres-backup.sh:ro
+      - ./infra/operations/backup-scheduler.sh:/opt/operations/backup-scheduler.sh:ro
       - postgres-backups:/backups
-    entrypoint:
-      - /bin/sh
-      - -ec
-      - |
-        while true; do
-          if /bin/sh /opt/operations/postgres-backup.sh; then
-            sleep "$${BACKUP_INTERVAL_SECONDS}"
-          else
-            sleep "$${BACKUP_RETRY_SECONDS}"
-          fi
-        done
+    entrypoint: ["/bin/sh", "/opt/operations/backup-scheduler.sh", "/opt/operations/postgres-backup.sh"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -131,22 +121,12 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-local-development-only}
       MINIO_BUCKET: ${MINIO_BUCKET:-culinary-media}
       BACKUP_RETENTION_DAYS: "30"
-      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
       BACKUP_RETRY_SECONDS: ${BACKUP_RETRY_SECONDS:-300}
     volumes:
       - ./infra/operations/minio-backup.sh:/opt/operations/minio-backup.sh:ro
+      - ./infra/operations/backup-scheduler.sh:/opt/operations/backup-scheduler.sh:ro
       - minio-backups:/backups
-    entrypoint:
-      - /bin/sh
-      - -ec
-      - |
-        while true; do
-          if /bin/sh /opt/operations/minio-backup.sh; then
-            sleep "$${BACKUP_INTERVAL_SECONDS}"
-          else
-            sleep "$${BACKUP_RETRY_SECONDS}"
-          fi
-        done
+    entrypoint: ["/bin/sh", "/opt/operations/backup-scheduler.sh", "/opt/operations/minio-backup.sh"]
     depends_on:
       minio-bootstrap:
         condition: service_completed_successfully

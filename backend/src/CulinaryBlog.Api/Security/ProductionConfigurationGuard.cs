@@ -1,5 +1,8 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 namespace CulinaryBlog.Api.Security;
 
+/// <summary>Represents the production configuration guard.</summary>
 public static class ProductionConfigurationGuard
 {
     private static readonly string[] PlaceholderFragments =
@@ -10,6 +13,9 @@ public static class ProductionConfigurationGuard
         "replace-with",
     ];
 
+    /// <summary>Validates the production configuration guard.</summary>
+    /// <param name="isProduction">The is production supplied to this operation.</param>
+    /// <param name="configuration">The configuration supplied to this operation.</param>
     public static void Validate(bool isProduction, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -33,10 +39,16 @@ public static class ProductionConfigurationGuard
         }
 
         ValidateHttpsUrl(configuration["Sitemap:PublicBaseUrl"], "Sitemap:PublicBaseUrl", failures);
+        if (configuration.GetValue<bool>("Email:Enabled") && !configuration.GetValue<bool>("Email:EnableSsl"))
+        {
+            failures.Add("Email:EnableSsl must be true when production email is enabled");
+        }
+
         foreach (var origin in configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
         {
             ValidateHttpsUrl(origin, "Cors:AllowedOrigins", failures);
         }
+
         ValidateMaintenanceAnnouncement(configuration.GetSection("Operations:Maintenance"), failures);
 
         if (failures.Count > 0)
@@ -81,10 +93,12 @@ public static class ProductionConfigurationGuard
         {
             failures.Add("Operations:Maintenance:Message is required when maintenance is enabled");
         }
+
         if (announcedAtUtc is null || startsAtUtc is null || startsAtUtc - announcedAtUtc < TimeSpan.FromHours(48))
         {
             failures.Add("Operations:Maintenance must be announced at least 48 hours before it starts");
         }
+
         if (startsAtUtc is null || endsAtUtc is null || endsAtUtc <= startsAtUtc)
         {
             failures.Add("Operations:Maintenance:EndsAtUtc must be later than StartsAtUtc");

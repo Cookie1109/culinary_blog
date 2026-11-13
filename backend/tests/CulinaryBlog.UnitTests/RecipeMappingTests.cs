@@ -1,10 +1,14 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Recipes;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for recipe mapping tests.</summary>
 public sealed class RecipeMappingTests
 {
+    /// <summary>Verifies that nutrition mapping preserves values and nulls.</summary>
     [Fact]
     public void NutritionMappingPreservesValuesAndNulls()
     {

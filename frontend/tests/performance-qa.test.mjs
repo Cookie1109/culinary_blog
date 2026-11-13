@@ -60,7 +60,7 @@ test('P6-22: lighthouserc.json specifies required public URLs and assertions mat
     'Collect URLs must include category detail',
   )
   // Check assertions
-  const assertions = lhrc.ci.assert.assertions
+  const { assertions } = lhrc.ci.assert
   assert.ok(assertions['largest-contentful-paint'], 'Must assert LCP')
   assert.equal(assertions['largest-contentful-paint'][1].maxNumericValue, 2500)
 

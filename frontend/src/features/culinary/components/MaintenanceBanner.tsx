@@ -34,7 +34,7 @@ export function MaintenanceBanner() {
       }
     }
 
-    void load()
+    load()
     const interval = window.setInterval(load, 60_000)
     return () => {
       active = false

@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto'
-import { gzipSync } from 'node:zlib'
 import { format as formatCliOutput } from 'node:util'
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -43,31 +41,8 @@ for (const { route, rawBytes: totalRawBytes, gzipBytes: totalGzipBytes } of firs
     route,
     rawKb: Number.parseFloat(rawKb),
     gzipKb: Number.parseFloat(gzipKb),
-    gzipBytes: totalGzipBytes,
     status: passed ? 'PASS' : 'FAIL',
   })
-}
-
-// Machine-readable proof binds this provider build to its public client artifacts.
-console.log(
-  JSON.stringify({
-    event: 'g06-bundle-manifest',
-    sha256: createHash('sha256').update(readFileSync(MANIFEST_PATH)).digest('hex'),
-  }),
-)
-for (const row of report) console.log(JSON.stringify({ event: 'g06-bundle-route', ...row }))
-for (const chunk of new Set(Object.values(pages).flat())) {
-  if (!chunk.endsWith('.js')) continue
-  const content = readFileSync(join(NEXT_DIR, chunk))
-  console.log(
-    JSON.stringify({
-      event: 'g06-bundle-asset',
-      chunk,
-      sha256: createHash('sha256').update(content).digest('hex'),
-      bytes: content.length,
-      gzipBytes: gzipSync(content).length,
-    }),
-  )
 }
 
 // Print formatted table

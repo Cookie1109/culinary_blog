@@ -1,12 +1,17 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Text;
 using System.Xml;
 
 namespace CulinaryBlog.Infrastructure.Jobs;
 
-internal sealed record SitemapEntry(string PathAndQuery, DateTimeOffset? LastModified = null);
-
+/// <summary>Represents the sitemap xml.</summary>
 internal static class SitemapXml
 {
+    /// <summary>Builds the sitemap xml.</summary>
+    /// <param name="publicBaseUrl">The public base url supplied to this operation.</param>
+    /// <param name="entries">The entries supplied to this operation.</param>
+    /// <returns>The build result.</returns>
     public static byte[] Build(Uri publicBaseUrl, IReadOnlyCollection<SitemapEntry> entries)
     {
         using var output = new MemoryStream();
@@ -29,6 +34,9 @@ internal static class SitemapXml
                 {
                     writer.WriteElementString("lastmod", entry.LastModified.Value.UtcDateTime.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
                 }
+
+                writer.WriteElementString("changefreq", entry.PathAndQuery.StartsWith("/recipes/", StringComparison.Ordinal) ? "weekly" : "daily");
+                writer.WriteElementString("priority", entry.PathAndQuery == "/" ? "1.0" : "0.8");
 
                 writer.WriteEndElement();
             }

@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -7,11 +9,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for password lifecycle tests.</summary>
+/// <param name="factory">The factory supplied to this operation.</param>
 public sealed class PasswordLifecycleTests(AuthApiFactory factory) : IClassFixture<AuthApiFactory>
 {
     private const string OldPassword = "Old#Password1";
     private const string NewPassword = "New#Password2";
 
+    /// <summary>Verifies that change requires current password and revokes every session.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ChangeRequiresCurrentPasswordAndRevokesEverySession()
     {
@@ -32,6 +38,8 @@ public sealed class PasswordLifecycleTests(AuthApiFactory factory) : IClassFixtu
         await AssertPasswordChangedAsync(client, email);
     }
 
+    /// <summary>Verifies that forgot does not disclose unknown accounts and reset token is bound and single use.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ForgotDoesNotDiscloseUnknownAccountsAndResetTokenIsBoundAndSingleUse()
     {
@@ -61,6 +69,8 @@ public sealed class PasswordLifecycleTests(AuthApiFactory factory) : IClassFixtu
         await AssertPasswordChangedAsync(client, email);
     }
 
+    /// <summary>Verifies that expired reset token is rejected.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ExpiredResetTokenIsRejected()
     {
@@ -76,6 +86,8 @@ public sealed class PasswordLifecycleTests(AuthApiFactory factory) : IClassFixtu
         Assert.Equal(HttpStatusCode.BadRequest, reset.StatusCode);
     }
 
+    /// <summary>Verifies that change requires authentication and recovery validates input.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ChangeRequiresAuthenticationAndRecoveryValidatesInput()
     {
@@ -86,6 +98,35 @@ public sealed class PasswordLifecycleTests(AuthApiFactory factory) : IClassFixtu
         Assert.Equal(HttpStatusCode.UnprocessableEntity, invalid.StatusCode);
         using var missingPassword = await client.PostAsJsonAsync("/api/v1/auth/reset-password", new { email = "a@example.test", token = "token" });
         Assert.Equal(HttpStatusCode.UnprocessableEntity, missingPassword.StatusCode);
+    }
+
+    /// <summary>Verifies that reset lifetime is thirty minutes and smtp failure still does not disclose accounts.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Fact]
+    public async Task ResetLifetimeIsThirtyMinutesAndSmtpFailureStillDoesNotDiscloseAccounts()
+    {
+        await using var smtpFailure = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Email:Enabled", "true");
+            builder.UseSetting("Email:Host", "127.0.0.1");
+            builder.UseSetting("Email:Port", "1");
+            builder.ConfigureTestServices(services =>
+            {
+                Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.RemoveAll<CulinaryBlog.Application.Auth.IPasswordResetEmailSender>(services);
+                services.AddScoped<CulinaryBlog.Application.Auth.IPasswordResetEmailSender, CulinaryBlog.Infrastructure.Email.PasswordResetEmailSender>();
+            });
+        });
+        using var client = smtpFailure.CreateClient();
+        var email = $"smtp-failure-{Guid.NewGuid():N}@example.test";
+        await RegisterAsync(client, email);
+        using var known = await client.PostAsJsonAsync("/api/v1/auth/forgot-password", new { email });
+        using var unknown = await client.PostAsJsonAsync("/api/v1/auth/forgot-password", new { email = $"unknown-{Guid.NewGuid():N}@example.test" });
+        Assert.Equal(HttpStatusCode.Accepted, known.StatusCode);
+        Assert.Equal(known.StatusCode, unknown.StatusCode);
+        Assert.Equal(await known.Content.ReadAsStringAsync(), await unknown.Content.ReadAsStringAsync());
+        await using var scope = smtpFailure.Services.CreateAsyncScope();
+        var options = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<DataProtectionTokenProviderOptions>>();
+        Assert.Equal(TimeSpan.FromMinutes(30), options.Value.TokenLifespan);
     }
 
     private static async Task<Session> RegisterAsync(HttpClient client, string email)
@@ -114,5 +155,6 @@ public sealed class PasswordLifecycleTests(AuthApiFactory factory) : IClassFixtu
     }
 
     private sealed record Envelope<T>(T Data);
+
     private sealed record Session(string AccessToken, string RefreshToken);
 }

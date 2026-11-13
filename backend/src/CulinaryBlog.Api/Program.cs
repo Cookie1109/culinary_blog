@@ -1,7 +1,7 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Globalization;
-using System.Security.Claims;
 using CulinaryBlog.Api.Health;
-using CulinaryBlog.Api.Logging;
 using CulinaryBlog.Api.Middleware;
 using CulinaryBlog.Api.Presentation;
 using CulinaryBlog.Api.Security;
@@ -11,6 +11,7 @@ using CulinaryBlog.Infrastructure;
 using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Jobs;
 using CulinaryBlog.Infrastructure.Persistence;
+using CulinaryBlog.Infrastructure.RateLimiting;
 using Hangfire;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -37,7 +38,7 @@ try
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
-            .Enrich.With(new RequestContextEnricher(services.GetRequiredService<IHttpContextAccessor>()))
+            .Enrich.With(new CulinaryBlog.Api.Logging.RequestContextEnricher(services.GetRequiredService<IHttpContextAccessor>()))
             .Enrich.WithProperty("Application", "CulinaryBlog.Api")
             .WriteTo.Console(new RenderedCompactJsonFormatter())
             .WriteTo.File(
@@ -46,7 +47,7 @@ try
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 14);
 
-        var seqUrl = context.Configuration["Seq:ServerUrl"];
+        string? seqUrl = context.Configuration["Seq:ServerUrl"];
         if (!string.IsNullOrWhiteSpace(seqUrl))
         {
             loggerConfiguration.WriteTo.Seq(seqUrl, formatProvider: CultureInfo.InvariantCulture);
@@ -66,6 +67,7 @@ try
     {
         app.UseForwardedHeaders();
     }
+
     if (app.Environment.IsProduction())
     {
         app.UseHsts();
@@ -79,7 +81,7 @@ try
             diagnosticContext.Set("CorrelationId", httpContext.TraceIdentifier);
             diagnosticContext.Set("RequestMethod", httpContext.Request.Method);
             diagnosticContext.Set("RequestPath", httpContext.Request.Path.Value ?? string.Empty);
-            diagnosticContext.Set("UserId", httpContext.User.FindFirstValue("sub") ?? httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous");
+            diagnosticContext.Set("UserId", httpContext.User.FindFirst("sub")?.Value ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous");
         };
     });
     app.UseExceptionHandler();
@@ -87,9 +89,21 @@ try
     app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
+    app.Use(async (context, next) =>
+    {
+        if (context.User.Identity?.IsAuthenticated == true ||
+            context.Request.Path.StartsWithSegments("/api/v1/me") ||
+            context.Request.Path.StartsWithSegments("/api/v1/admin"))
+        {
+            context.Response.Headers.CacheControl = "private, no-store";
+        }
+
+        await next(context).ConfigureAwait(false);
+    });
+    app.UseOutputCache();
     app.UseMiddleware<AuditMutationMiddleware>();
 
-    var backgroundJobsEnabled = builder.Configuration.GetValue("BackgroundJobs:Enabled", true);
+    bool backgroundJobsEnabled = builder.Configuration.GetValue("BackgroundJobs:Enabled", true);
     if (backgroundJobsEnabled)
     {
         app.UseHangfireDashboard("/jobs", new DashboardOptions
@@ -137,6 +151,8 @@ try
 
     if (backgroundJobsEnabled)
     {
+        RecurringJob.AddOrUpdate<RateLimitStateCleanupJob>(
+            "rate-limit-state-cleanup", job => job.RunAsync(CancellationToken.None), Cron.Minutely);
         RecurringJob.AddOrUpdate<ImageReconciliationJob>(
             "media-reconciliation",
             job => job.RunAsync(CancellationToken.None),
@@ -162,7 +178,7 @@ try
     app.MapGet("/api/v1/operations/maintenance", (IConfiguration configuration) =>
     {
         var section = configuration.GetSection("Operations:Maintenance");
-        var enabled = section.GetValue<bool>("Enabled");
+        bool enabled = section.GetValue<bool>("Enabled");
         var endsAtUtc = section.GetValue<DateTimeOffset?>("EndsAtUtc");
 
         return Results.Ok(new
@@ -207,8 +223,10 @@ finally
     await Log.CloseAndFlushAsync().ConfigureAwait(false);
 }
 
+/// <summary>Represents the program.</summary>
 public partial class Program
 {
+    /// <summary>Initializes a new instance of the <see cref="Program"/> class.</summary>
     protected Program()
     {
     }

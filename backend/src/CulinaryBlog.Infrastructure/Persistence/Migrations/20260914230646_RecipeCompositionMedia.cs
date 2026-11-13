@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
@@ -27,7 +29,7 @@ public partial class RecipeCompositionMedia : Migration
                 CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                 NextAttemptAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                 ProcessedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                LastError = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true)
+                LastError = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
             },
             constraints: table =>
             {
@@ -55,7 +57,7 @@ public partial class RecipeCompositionMedia : Migration
                 IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                 DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                 DeletedBy = table.Column<string>(type: "text", nullable: true),
-                Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L)
+                Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L),
             },
             constraints: table =>
             {
@@ -87,7 +89,7 @@ public partial class RecipeCompositionMedia : Migration
                 IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                 DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                 DeletedBy = table.Column<string>(type: "text", nullable: true),
-                Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L)
+                Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L),
             },
             constraints: table =>
             {
@@ -120,7 +122,7 @@ public partial class RecipeCompositionMedia : Migration
                 IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                 DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                 DeletedBy = table.Column<string>(type: "text", nullable: true),
-                Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L)
+                Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L),
             },
             constraints: table =>
             {

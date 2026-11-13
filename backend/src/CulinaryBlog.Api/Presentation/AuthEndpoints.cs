@@ -1,14 +1,26 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
 using CulinaryBlog.Application.Auth;
 using FluentValidation;
-using FluentValidation.Results;
+using MediatR;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using ValidationFailure = FluentValidation.Results.ValidationFailure;
 
 namespace CulinaryBlog.Api.Presentation;
 
+/// <summary>Represents the auth endpoints.</summary>
 internal static class AuthEndpoints
 {
+    /// <summary>Maps auth endpoints.</summary>
+    /// <param name="endpoints">The endpoints supplied to this operation.</param>
+    /// <returns>The map auth endpoints result.</returns>
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var auth = endpoints.MapGroup("/api/v1/auth")
@@ -34,14 +46,18 @@ internal static class AuthEndpoints
         auth.MapPost("/google", GoogleLoginAsync).AllowAnonymous()
             .WithSummary("Exchange a Google ID token for a local session")
             .Produces<DataEnvelope<AuthSessionDto>>()
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
         auth.MapPost("/refresh", RefreshAsync).AllowAnonymous()
             .WithSummary("Rotate the refresh token and issue a new session")
             .Produces<DataEnvelope<AuthSessionDto>>()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
         auth.MapPost("/logout", LogoutAsync).AllowAnonymous()
             .WithSummary("Revoke a refresh token")
-            .Produces(StatusCodes.Status204NoContent);
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
         auth.MapPost("/change-password", ChangePasswordAsync).RequireAuthorization("AuthorPolicy")
             .WithSummary("Change the password and revoke all sessions")
             .Produces(StatusCodes.Status204NoContent)
@@ -71,133 +87,128 @@ internal static class AuthEndpoints
         return endpoints;
     }
 
-    private sealed record ProfileUpdateBody(string? DisplayName = null, string? AvatarUrl = null, string? Bio = null);
-
     private static async Task<IResult> ChangePasswordAsync(
         ChangePasswordRequest request,
         ClaimsPrincipal principal,
-        IValidator<ChangePasswordRequest> validator,
-        IAuthService authService,
+        ISender sender,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        await authService.ChangePasswordAsync(GetUserId(principal), request, cancellationToken).ConfigureAwait(false);
+        await sender.Send(new ChangePasswordCommand(GetUserId(principal), request), cancellationToken).ConfigureAwait(false);
         return Results.NoContent();
     }
 
     private static async Task<IResult> ForgotPasswordAsync(
         ForgotPasswordRequest request,
-        IValidator<ForgotPasswordRequest> validator,
-        IAuthService authService,
+        ISender sender,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        await authService.ForgotPasswordAsync(request, cancellationToken).ConfigureAwait(false);
+        await sender.Send(new ForgotPasswordCommand(request), cancellationToken).ConfigureAwait(false);
         return Results.Accepted();
     }
 
     private static async Task<IResult> ResetPasswordAsync(
         ResetPasswordRequest request,
-        IValidator<ResetPasswordRequest> validator,
-        IAuthService authService,
+        ISender sender,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        await authService.ResetPasswordAsync(request, cancellationToken).ConfigureAwait(false);
+        await sender.Send(new ResetPasswordCommand(request), cancellationToken).ConfigureAwait(false);
         return Results.NoContent();
     }
 
     private static async Task<IResult> RegisterAsync(
         RegisterRequest request,
-        IValidator<RegisterRequest> validator,
-        IAuthService authService,
+        ISender sender,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        var session = await authService.RegisterAsync(
-            request,
-            GetIpAddress(httpContext),
-            GetUserAgent(httpContext),
-            cancellationToken).ConfigureAwait(false);
+        var session = await sender.Send(new RegisterCommand(request, GetIpAddress(httpContext), GetUserAgent(httpContext)), cancellationToken).ConfigureAwait(false);
         return Results.Created("/api/v1/auth/me", new DataEnvelope<AuthSessionDto>(session));
     }
 
     private static async Task<IResult> LoginAsync(
         LoginRequest request,
-        IValidator<LoginRequest> validator,
-        IAuthService authService,
+        ISender sender,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        var session = await authService.LoginAsync(
-            request,
-            GetIpAddress(httpContext),
-            GetUserAgent(httpContext),
-            cancellationToken).ConfigureAwait(false);
+        var session = await sender.Send(new LoginCommand(request, GetIpAddress(httpContext), GetUserAgent(httpContext)), cancellationToken).ConfigureAwait(false);
         return Results.Ok(new DataEnvelope<AuthSessionDto>(session));
     }
 
     private static async Task<IResult> GoogleLoginAsync(
         GoogleLoginRequest request,
-        IValidator<GoogleLoginRequest> validator,
-        IAuthService authService,
+        ISender sender,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        var session = await authService.LoginWithGoogleAsync(
-            request.IdToken,
-            GetIpAddress(httpContext),
-            GetUserAgent(httpContext),
-            cancellationToken).ConfigureAwait(false);
+        var session = await sender.Send(new GoogleLoginCommand(request, GetIpAddress(httpContext), GetUserAgent(httpContext)), cancellationToken).ConfigureAwait(false);
         return Results.Ok(new DataEnvelope<AuthSessionDto>(session));
     }
 
     private static async Task<IResult> RefreshAsync(
         RefreshTokenRequest request,
-        IValidator<RefreshTokenRequest> validator,
-        IAuthService authService,
+        ISender sender,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        var session = await authService.RefreshAsync(
-            request.RefreshToken,
-            GetIpAddress(httpContext),
-            GetUserAgent(httpContext),
-            cancellationToken).ConfigureAwait(false);
+        var session = await sender.Send(new RefreshSessionCommand(request, GetIpAddress(httpContext), GetUserAgent(httpContext)), cancellationToken).ConfigureAwait(false);
         return Results.Ok(new DataEnvelope<AuthSessionDto>(session));
     }
 
     private static async Task<IResult> LogoutAsync(
         RefreshTokenRequest request,
-        IValidator<RefreshTokenRequest> validator,
-        IAuthService authService,
+        ISender sender,
         HttpContext httpContext,
+        IOptionsMonitor<JwtBearerOptions> bearerOptions,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        await authService.LogoutAsync(request.RefreshToken, GetIpAddress(httpContext), cancellationToken)
+        var authentication = await httpContext.AuthenticateAsync(JwtBearerDefaults.AuthenticationScheme).ConfigureAwait(false);
+        string? owner = null;
+        if (authentication.Succeeded)
+        {
+            owner = GetUserId(authentication.Principal);
+        }
+        else if (httpContext.Request.Headers.ContainsKey("Authorization"))
+        {
+            // Only a correctly signed, otherwise valid expired JWT may use the expiry exception.
+            var header = httpContext.Request.Headers.Authorization.ToString();
+            if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new AuthProblemException("AUTH_TOKEN_INVALID", "The access token is invalid.");
+            }
+
+            var parameters = bearerOptions.Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters.Clone();
+            parameters.LifetimeValidator = (notBefore, expires, _, _) =>
+                expires.HasValue && expires.Value < DateTime.UtcNow &&
+                (!notBefore.HasValue || notBefore.Value <= DateTime.UtcNow);
+            try
+            {
+                new JwtSecurityTokenHandler().ValidateToken(header[7..].Trim(), parameters, out _);
+            }
+            catch (Exception exception) when (exception is SecurityTokenException or ArgumentException)
+            {
+                throw new AuthProblemException("AUTH_TOKEN_INVALID", "The access token is invalid.");
+            }
+        }
+
+        await sender.Send(new LogoutCommand(request, GetIpAddress(httpContext), owner), cancellationToken)
             .ConfigureAwait(false);
         return Results.NoContent();
     }
 
     private static async Task<IResult> GetMeAsync(
         ClaimsPrincipal principal,
-        IAuthService authService,
+        ISender sender,
         CancellationToken cancellationToken)
     {
-        var user = await authService.GetCurrentUserAsync(GetUserId(principal), cancellationToken).ConfigureAwait(false);
+        var user = await sender.Send(new GetCurrentUserQuery(GetUserId(principal)), cancellationToken).ConfigureAwait(false);
         return Results.Ok(new DataEnvelope<UserDto>(user));
     }
 
     private static async Task<IResult> UpdateMeAsync(
         JsonElement body,
         ClaimsPrincipal principal,
-        IValidator<UpdateProfileRequest> validator,
-        IAuthService authService,
+        ISender sender,
         CancellationToken cancellationToken)
     {
         var hasDisplayName = body.TryGetProperty("displayName", out var displayNameElement);
@@ -210,8 +221,7 @@ internal static class AuthEndpoints
             hasDisplayName,
             hasAvatarUrl,
             hasBio);
-        await validator.ValidateAndThrowAsync(request, cancellationToken).ConfigureAwait(false);
-        var user = await authService.UpdateCurrentUserAsync(GetUserId(principal), request, cancellationToken)
+        var user = await sender.Send(new UpdateProfileCommand(GetUserId(principal), request), cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(new DataEnvelope<UserDto>(user));
     }
@@ -241,4 +251,6 @@ internal static class AuthEndpoints
 
         throw new ValidationException([new ValidationFailure(propertyName, $"{propertyName} must be a string or null.")]);
     }
+
+    private sealed record ProfileUpdateBody(string? DisplayName = null, string? AvatarUrl = null, string? Bio = null);
 }

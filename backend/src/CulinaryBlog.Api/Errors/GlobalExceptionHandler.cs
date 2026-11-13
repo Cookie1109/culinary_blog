@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Common;
@@ -8,6 +10,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CulinaryBlog.Api.Errors;
 
+/// <summary>Represents the global exception handler.</summary>
+/// <param name="problemDetailsService">The problem details service supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
 internal sealed class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,
     ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
@@ -21,6 +26,11 @@ internal sealed class GlobalExceptionHandler(
             new EventId(2002, nameof(RequestFailed)),
             "Request failed with {ErrorCode}");
 
+    /// <summary>Performs the try handle operation.</summary>
+    /// <param name="httpContext">The http context supplied to this operation.</param>
+    /// <param name="exception">The exception supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
@@ -32,8 +42,7 @@ internal sealed class GlobalExceptionHandler(
             AuthProblemException authException => MapAuthProblem(authException),
             ContentProblemException contentException => MapContentProblem(contentException),
             DomainException domainException =>
-                (domainException.Code.Contains("TRANSITION", StringComparison.Ordinal) ?
-                    StatusCodes.Status409Conflict : StatusCodes.Status422UnprocessableEntity,
+                (domainException.Code.Contains("TRANSITION", StringComparison.Ordinal) ? StatusCodes.Status409Conflict : StatusCodes.Status422UnprocessableEntity,
                     domainException.Code,
                     "Business rule violation"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "RESOURCE_NOT_FOUND", "Resource not found"),
@@ -105,7 +114,7 @@ internal sealed class GlobalExceptionHandler(
             "AUTH_ACCOUNT_LOCKED" => StatusCodes.Status423Locked,
             "AUTH_ACCOUNT_DISABLED" => StatusCodes.Status403Forbidden,
             "AUTH_GOOGLE_UNAVAILABLE" or "AUTH_EMAIL_UNAVAILABLE" => StatusCodes.Status503ServiceUnavailable,
-            "AUTH_CURRENT_PASSWORD_INVALID" or "AUTH_RESET_TOKEN_INVALID" => StatusCodes.Status400BadRequest,
+            "AUTH_CURRENT_PASSWORD_INVALID" or "AUTH_RESET_TOKEN_INVALID" or "AUTH_PASSWORD_NOT_SET" => StatusCodes.Status400BadRequest,
             "USER_NOT_FOUND" => StatusCodes.Status404NotFound,
             "AUTH_GOOGLE_TOKEN_INVALID" or "AUTH_GOOGLE_EMAIL_UNVERIFIED" => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status401Unauthorized,

@@ -1,11 +1,18 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace CulinaryBlog.Domain.Common;
 
+/// <summary>Represents the slug.</summary>
 public static partial class Slug
 {
+    /// <summary>Performs the from operation.</summary>
+    /// <param name="value">The value supplied to this operation.</param>
+    /// <param name="maxLength">The max length supplied to this operation.</param>
+    /// <returns>The from result.</returns>
     public static string From(string value, int maxLength)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);

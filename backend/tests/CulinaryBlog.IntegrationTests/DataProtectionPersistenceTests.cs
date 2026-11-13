@@ -76,9 +76,9 @@ public sealed class DataProtectionPersistenceTests : IAsyncLifetime
                 await keyDb.Database.MigrateAsync();
                 Assert.Equal(applicationMigrations, (await db.Database.GetAppliedMigrationsAsync()).ToArray());
                 var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                var user = new ApplicationUser { Id = Guid.NewGuid(), UserName = "keyring@example.test", Email = "keyring@example.test", DisplayName = "G06 fixture" };
+                var user = new ApplicationUser { Id = Guid.NewGuid().ToString(), UserName = "keyring@example.test", Email = "keyring@example.test", DisplayName = "G06 fixture" };
                 Assert.True((await users.CreateAsync(user, "Synthetic#G06Password1")).Succeeded);
-                userId = user.Id.ToString();
+                userId = user.Id;
                 resetToken = await users.GeneratePasswordResetTokenAsync(user);
                 payload = first.GetRequiredService<IDataProtectionProvider>().CreateProtector("G06 fixture").Protect("synthetic payload");
                 var xml = await keyDb.DataProtectionKeys.Select(key => key.Xml!).ToArrayAsync();

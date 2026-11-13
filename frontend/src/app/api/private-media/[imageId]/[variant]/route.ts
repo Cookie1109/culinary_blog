@@ -9,10 +9,11 @@ export async function GET(
   { params }: { params: Promise<{ imageId: string; variant: string }> },
 ) {
   const session = await auth()
-  if (!session?.accessToken) return new Response(null, { status: 401 })
+  const privateHeaders = { 'Cache-Control': 'private, no-store' }
+  if (!session?.accessToken) return new Response(null, { status: 401, headers: privateHeaders })
 
   const { imageId, variant } = await params
-  if (!allowedVariants.has(variant)) return new Response(null, { status: 404 })
+  if (!allowedVariants.has(variant)) return new Response(null, { status: 404, headers: privateHeaders })
 
   const apiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? 'http://localhost:5000/api/v1'
   const response = await fetch(
@@ -23,7 +24,8 @@ export async function GET(
     },
   )
 
-  if (!response.ok || !response.body) return new Response(null, { status: response.status })
+  if (!response.ok || !response.body)
+    return new Response(null, { status: response.status, headers: privateHeaders })
 
   return new Response(response.body, {
     headers: {

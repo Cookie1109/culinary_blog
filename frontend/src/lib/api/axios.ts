@@ -19,7 +19,7 @@ export const authenticatedAxios = axios.create({
 authenticatedAxios.interceptors.request.use(async (config) => {
   const session = await getSession()
   if (session?.accessToken && !config.headers.has('Authorization')) {
-    config.headers.set('Authorization', 'Bearer ' + session.accessToken)
+    config.headers.set('Authorization', `Bearer ${session.accessToken}`)
   }
   return config
 })
@@ -32,7 +32,7 @@ authenticatedAxios.interceptors.response.use(
       config.retried = true
       const session = await refreshSession()
       if (session?.accessToken) {
-        config.headers.set('Authorization', 'Bearer ' + session.accessToken)
+        config.headers.set('Authorization', `Bearer ${session.accessToken}`)
         return authenticatedAxios(config)
       }
     }

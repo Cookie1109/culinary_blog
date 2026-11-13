@@ -21,9 +21,21 @@ function positiveInteger(value: string, fallback: number) {
 export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
   const query = await searchParams
   const page = positiveInteger(first(query.page), 1)
-  const hasFilters = ['q', 'category', 'difficulty', 'maxTime', 'sort'].some((key) =>
-    Boolean(first(query[key])),
-  )
+  const hasFilters = [
+    'q',
+    'category',
+    'categoryId',
+    'difficulty',
+    'maxTime',
+    'maxCookTime',
+    'minServings',
+    'minPrepTime',
+    'maxPrepTime',
+    'sort',
+    'sortBy',
+    'sortOrder',
+    'pageSize',
+  ].some((key) => Boolean(first(query[key])))
   const suffix = page > 1 ? ` – Trang ${page}` : ''
 
   return createPageMetadata({
@@ -41,8 +53,8 @@ export default async function RecipesPage({ searchParams }: { searchParams: Sear
   const difficulty = first(query.difficulty)
   const maxTime = positiveInteger(first(query.maxTime), 0)
   const q = normalizeRecipeSearch(first(query.q))
-  const requestedSort = first(query.sort)
-  const sort = !q && requestedSort === 'relevance' ? 'newest' : requestedSort || (q ? 'relevance' : 'newest')
+  const defaultSort = q ? 'relevance' : 'newest'
+  const sort = first(query.sort) || (query.sortBy || query.sortOrder ? '' : defaultSort)
   const page = positiveInteger(first(query.page), 1)
   const initialSearchError = recipeSearchValidation(q)
   let result: PageEnvelope<Recipe> = {
@@ -61,8 +73,15 @@ export default async function RecipesPage({ searchParams }: { searchParams: Sear
             difficulty,
             maxTime,
             sort,
+            sortBy: query.sortBy === undefined ? undefined : first(query.sortBy),
+            sortOrder: query.sortOrder === undefined ? undefined : first(query.sortOrder),
             page,
-            pageSize: 12,
+            pageSize: positiveInteger(first(query.pageSize), 12),
+            categoryId: first(query.categoryId) || undefined,
+            maxCookTime: first(query.maxCookTime) === '' ? undefined : Number(first(query.maxCookTime)),
+            minServings: first(query.minServings) === '' ? undefined : Number(first(query.minServings)),
+            minPrepTime: first(query.minPrepTime) === '' ? undefined : Number(first(query.minPrepTime)),
+            maxPrepTime: first(query.maxPrepTime) === '' ? undefined : Number(first(query.maxPrepTime)),
           }),
       getPublicCategories(1800),
     ])

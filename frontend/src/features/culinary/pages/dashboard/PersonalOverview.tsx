@@ -56,6 +56,7 @@ export function PersonalOverview() {
       <div className="py-16 text-center">
         <p className="mb-4 font-serif text-2xl">Bạn cần đăng nhập để truy cập bảng điều khiển.</p>
         <button
+          type="button"
           onClick={() => navigate('/login')}
           className="bg-primary px-8 py-3 text-sm uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90"
         >
@@ -160,11 +161,12 @@ export function PersonalOverview() {
           <div className="border-b border-red-200 bg-red-50 p-6 text-red-700" role="alert">
             <p>Không thể tải dữ liệu bảng điều khiển.</p>
             <button
+              type="button"
               onClick={() => {
-                void recentQuery.refetch()
-                void publishedQuery.refetch()
-                void draftQuery.refetch()
-                void archivedQuery.refetch()
+                recentQuery.refetch()
+                publishedQuery.refetch()
+                draftQuery.refetch()
+                archivedQuery.refetch()
               }}
               className="mt-3 flex items-center gap-1.5 text-sm font-medium underline"
             >

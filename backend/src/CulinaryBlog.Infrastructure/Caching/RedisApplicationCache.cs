@@ -1,17 +1,28 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text.Json;
 using CulinaryBlog.Application.Abstractions.Caching;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace CulinaryBlog.Infrastructure.Caching;
 
+/// <summary>Represents the redis application cache.</summary>
+/// <param name="cache">The cache supplied to this operation.</param>
+/// <param name="connection">The connection supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
+/// <param name="outputCache">The output cache supplied to this operation.</param>
+/// <param name="version">The recipe version used to reject concurrent changes.</param>
 internal sealed class RedisApplicationCache(
     IDistributedCache cache,
     IConnectionMultiplexer connection,
-    ILogger<RedisApplicationCache> logger) : IApplicationCache
+    ILogger<RedisApplicationCache> logger,
+    IOutputCacheStore outputCache,
+    IPublicCacheVersion version) : IApplicationCache
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
     private static readonly Action<ILogger, string, Exception?> CacheUnavailable =
@@ -20,12 +31,18 @@ internal sealed class RedisApplicationCache(
             new EventId(5001, nameof(CacheUnavailable)),
             "Redis cache operation {Operation} failed; continuing without cache");
 
+    /// <summary>Gets the redis application cache.</summary>
+    /// <param name="key">The key supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <typeparam name="T">The  type.</typeparam>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            if (IsDisconnected())
+            key = DataKey(key, await version.GetAsync(cancellationToken).ConfigureAwait(false));
+            if (this.IsDisconnected())
             {
                 CacheMetrics.Misses.Add(1);
                 CacheMetrics.OperationFailures.Add(1, new KeyValuePair<string, object?>("operation", "get"));
@@ -58,6 +75,14 @@ internal sealed class RedisApplicationCache(
         }
     }
 
+    /// <summary>Performs the set operation.</summary>
+    /// <param name="key">The key supplied to this operation.</param>
+    /// <param name="value">The value supplied to this operation.</param>
+    /// <param name="absoluteExpiration">The absolute expiration supplied to this operation.</param>
+    /// <param name="tags">The tags supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <typeparam name="T">The  type.</typeparam>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task SetAsync<T>(
         string key,
         T value,
@@ -68,13 +93,14 @@ internal sealed class RedisApplicationCache(
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            if (IsDisconnected())
+            if (this.IsDisconnected())
             {
                 CacheMetrics.OperationFailures.Add(1, new KeyValuePair<string, object?>("operation", "set"));
                 CacheUnavailable(logger, "set", null);
                 return;
             }
 
+            key = DataKey(key, await version.GetAsync(cancellationToken).ConfigureAwait(false));
             var payload = JsonSerializer.Serialize(value, SerializerOptions);
             await cache.SetStringAsync(
                 key,
@@ -94,7 +120,7 @@ internal sealed class RedisApplicationCache(
         {
             CacheMetrics.OperationFailures.Add(1, new KeyValuePair<string, object?>("operation", "set"));
             CacheUnavailable(logger, "set", exception);
-            await TryRemoveAfterFailedTagRegistrationAsync(key).ConfigureAwait(false);
+            await this.TryRemoveAfterFailedTagRegistrationAsync(key).ConfigureAwait(false);
         }
         finally
         {
@@ -104,17 +130,22 @@ internal sealed class RedisApplicationCache(
         }
     }
 
+    /// <summary>Removes the redis application cache.</summary>
+    /// <param name="key">The key supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         try
         {
-            if (IsDisconnected())
+            if (this.IsDisconnected())
             {
                 CacheMetrics.InvalidationFailures.Add(1);
                 CacheUnavailable(logger, "remove", null);
                 return;
             }
 
+            key = DataKey(key, await version.GetAsync(cancellationToken).ConfigureAwait(false));
             await cache.RemoveAsync(key, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (IsRedisFailure(exception, cancellationToken))
@@ -124,11 +155,16 @@ internal sealed class RedisApplicationCache(
         }
     }
 
+    /// <summary>Removes by tag.</summary>
+    /// <param name="tag">The tag supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task RemoveByTagAsync(string tag, CancellationToken cancellationToken = default)
     {
+        await outputCache.EvictByTagAsync(tag, cancellationToken).ConfigureAwait(false);
         try
         {
-            if (IsDisconnected())
+            if (this.IsDisconnected())
             {
                 CacheMetrics.InvalidationFailures.Add(1);
                 CacheUnavailable(logger, "remove-by-tag", null);
@@ -152,6 +188,17 @@ internal sealed class RedisApplicationCache(
         }
     }
 
+    /// <summary>Performs the data key operation.</summary>
+    /// <param name="key">The key supplied to this operation.</param>
+    /// <param name="generation">The generation supplied to this operation.</param>
+    /// <returns>The data key result.</returns>
+    internal static string DataKey(string key, long generation) => $"{key}:generation={generation}";
+
+    private static string GetTagKey(string tag) => $"culinary:v1:tag:{tag}";
+
+    private static bool IsRedisFailure(Exception exception, CancellationToken cancellationToken) =>
+        !cancellationToken.IsCancellationRequested && exception is RedisException or TimeoutException;
+
     private async Task TryRemoveAfterFailedTagRegistrationAsync(string key)
     {
         try
@@ -164,23 +211,5 @@ internal sealed class RedisApplicationCache(
         }
     }
 
-    private static string GetTagKey(string tag) => $"culinary:v1:tag:{tag}";
-
     private bool IsDisconnected() => connection is not null && !connection.IsConnected;
-
-    private static bool IsRedisFailure(Exception exception, CancellationToken cancellationToken) =>
-        !cancellationToken.IsCancellationRequested && exception is RedisException or TimeoutException;
-}
-
-public static class CacheMetrics
-{
-    public const string MeterName = "CulinaryBlog.Cache";
-
-    private static readonly Meter Meter = new(MeterName);
-
-    internal static readonly Counter<long> Hits = Meter.CreateCounter<long>("cache.hits");
-    internal static readonly Counter<long> Misses = Meter.CreateCounter<long>("cache.misses");
-    internal static readonly Counter<long> OperationFailures = Meter.CreateCounter<long>("cache.operation.failures");
-    internal static readonly Counter<long> InvalidationFailures = Meter.CreateCounter<long>("cache.invalidation.failures");
-    internal static readonly Histogram<double> Latency = Meter.CreateHistogram<double>("cache.operation.duration", "ms");
 }

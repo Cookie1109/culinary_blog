@@ -1,10 +1,14 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Api.Security;
 using Microsoft.Extensions.Configuration;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for release metadata tests.</summary>
 public sealed class ReleaseMetadataTests
 {
+    /// <summary>Verifies that render uses platform revision without inventing image digests or frontend deployment.</summary>
     [Fact]
     public void RenderUsesPlatformRevisionWithoutInventingImageDigestsOrFrontendDeployment()
     {
@@ -21,6 +25,9 @@ public sealed class ReleaseMetadataTests
         Assert.Null(metadata.WebDeploymentId);
     }
 
+    /// <summary>Verifies that render rejects missing or invalid platform identity.</summary>
+    /// <param name="key">The key supplied to this operation.</param>
+    /// <param name="value">The value supplied to this operation.</param>
     [Theory]
     [InlineData("RENDER", null)]
     [InlineData("RENDER", "false")]
@@ -34,6 +41,7 @@ public sealed class ReleaseMetadataTests
         Assert.Contains(key, exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that render rejects declared revision that differs from platform revision.</summary>
     [Fact]
     public void RenderRejectsDeclaredRevisionThatDiffersFromPlatformRevision()
     {
@@ -45,6 +53,9 @@ public sealed class ReleaseMetadataTests
         Assert.Contains("must match RENDER_GIT_COMMIT", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that render keeps existing secret host and https guards.</summary>
+    /// <param name="key">The key supplied to this operation.</param>
+    /// <param name="value">The value supplied to this operation.</param>
     [Theory]
     [InlineData("ConnectionStrings:Database", "Host=localhost;Password=local-development-only")]
     [InlineData("Jwt:SigningKey", "local-development-only")]
@@ -58,6 +69,7 @@ public sealed class ReleaseMetadataTests
         Assert.Throws<InvalidOperationException>(() => ProductionConfigurationGuard.Validate(true, configuration));
     }
 
+    /// <summary>Verifies that optional vercel identity is validated when supplied.</summary>
     [Fact]
     public void OptionalVercelIdentityIsValidatedWhenSupplied()
     {
@@ -69,6 +81,7 @@ public sealed class ReleaseMetadataTests
         Assert.Contains("Release:WebDeploymentId", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that render does not mislabel configured legacy digests as evidence for this deployment.</summary>
     [Fact]
     public void RenderDoesNotMislabelConfiguredLegacyDigestsAsEvidenceForThisDeployment()
     {
@@ -83,6 +96,7 @@ public sealed class ReleaseMetadataTests
         Assert.Null(metadata.WebImageDigest);
     }
 
+    /// <summary>Verifies that render environment does not automatically bypass default docker release contract.</summary>
     [Fact]
     public void RenderEnvironmentDoesNotAutomaticallyBypassDefaultDockerReleaseContract()
     {
@@ -96,6 +110,8 @@ public sealed class ReleaseMetadataTests
         Assert.Contains("Release:WebImageDigest", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that unknown provider fails closed.</summary>
+    /// <param name="provider">The provider supplied to this operation.</param>
     [Theory]
     [InlineData("")]
     [InlineData("Unknown")]
@@ -127,6 +143,7 @@ public sealed class ReleaseMetadataTests
         {
             foreach (var (key, value) in overrides) values[key] = value;
         }
+
         return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
     }
 }

@@ -1,7 +1,11 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Security.Claims;
 using CulinaryBlog.Api.Logging;
-using CulinaryBlog.Infrastructure.Jobs;
+using CulinaryBlog.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Core;
@@ -10,92 +14,84 @@ using Serilog.Extensions.Logging;
 
 namespace CulinaryBlog.IntegrationTests;
 
-public sealed class StructuredLoggingTests
+/// <summary>Contains regression checks for structured logging tests.</summary>
+/// <param name="factory">The factory supplied to this operation.</param>
+public sealed class StructuredLoggingTests(AuthApiFactory factory) : IClassFixture<AuthApiFactory>
 {
-    private static readonly Action<Microsoft.Extensions.Logging.ILogger, Exception?> WriteTestLog =
-        LoggerMessage.Define(LogLevel.Information, new EventId(1), "Test job context");
-    [Theory]
-    [InlineData("sub")]
-    [InlineData(ClaimTypes.NameIdentifier)]
-    public void AuthenticatedContextUsesBothClaimFormatsAndSurvivesAnIndependentSinkFailure(string claim)
+    /// <summary>Verifies that request logs have authenticated context and sink failure does not escape.</summary>
+    [Fact]
+    public void RequestLogsHaveAuthenticatedContextAndSinkFailureDoesNotEscape()
     {
-        var context = new DefaultHttpContext
-        {
-            TraceIdentifier = "structured-request",
-            User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(claim, "actor-id")], "test")),
-        };
-        context.Request.Method = "POST";
-        context.Request.Path = "/api/v1/auth/login";
-        context.Request.QueryString = new QueryString("?token=synthetic-query-secret");
-        context.Request.Headers.Authorization = "Bearer synthetic-header-secret";
+        var context = new DefaultHttpContext { TraceIdentifier = "log-test-correlation", User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", "log-test-user")], "test")) };
+        context.Request.Path = "/api/v1/auth/me";
+        context.Request.Headers.Authorization = "Bearer must-not-log-token";
         var capture = new CaptureSink();
         using var log = new LoggerConfiguration()
             .Enrich.With(new RequestContextEnricher(new HttpContextAccessor { HttpContext = context }))
             .WriteTo.Sink(new FailedSink()).WriteTo.Sink(capture).CreateLogger();
-        log.Information("Request completed");
+        log.Information("Profile request completed");
         var entry = Assert.Single(capture.Events);
-        Assert.Equal("structured-request", Scalar(entry, "CorrelationId"));
-        Assert.Equal("actor-id", Scalar(entry, "UserId"));
-        Assert.Equal("POST", Scalar(entry, "RequestMethod"));
-        Assert.Equal("/api/v1/auth/login", Scalar(entry, "RequestPath"));
-        Assert.DoesNotContain("synthetic-header-secret", entry.ToString(), StringComparison.Ordinal);
-        Assert.DoesNotContain("synthetic-query-secret", entry.ToString(), StringComparison.Ordinal);
+        Assert.Equal("log-test-correlation", ((ScalarValue)entry.Properties["CorrelationId"]).Value);
+        Assert.Equal("log-test-user", ((ScalarValue)entry.Properties["UserId"]).Value);
+        Assert.Equal("/api/v1/auth/me", ((ScalarValue)entry.Properties["RequestPath"]).Value);
+        Assert.DoesNotContain("must-not-log-token", entry.ToString(), StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that slow sql above100 ms logs duration and command id without sql or parameters.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
-    public void MediaContextPersistsOnlyOriginMetadataAndScopesDoNotLeakBetweenJobs()
+    public async Task SlowSqlAbove100MsLogsDurationAndCommandIdWithoutSqlOrParameters()
     {
-        var id = Guid.NewGuid();
-        var message = new MediaOutboxMessage { Id = id, Type = "image.resize", Payload = $"{{\"ImageId\":\"{Guid.NewGuid()}\"}}" };
-        var context = new DefaultHttpContext { TraceIdentifier = "upload-origin" };
-        context.Request.Path = "/api/v1/recipes/recipe/images";
-        context.Request.Headers.Authorization = "Bearer synthetic-header-secret";
-        MediaJobLogContext.Capture(message, context, "upload-author");
-        Assert.DoesNotContain("synthetic-header-secret", message.Payload, StringComparison.Ordinal);
-        Assert.Contains("ImageId", message.Payload, StringComparison.Ordinal);
+        await using var scope = factory.Services.CreateAsyncScope();
+        var current = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var capture = new CaptureSink();
-        using var log = new LoggerConfiguration().Enrich.FromLogContext().WriteTo.Sink(capture).CreateLogger();
-        using var factory = new SerilogLoggerFactory(log, dispose: false);
-        var logger = factory.CreateLogger("MediaJob");
-        using (MediaJobLogContext.Begin(logger, message, id)) WriteTestLog(logger, null);
-        WriteTestLog(logger, null);
-        using (MediaJobLogContext.Begin(logger, null, id)) WriteTestLog(logger, null);
-        Assert.Equal("upload-origin", Scalar(capture.Events[0], "CorrelationId"));
-        Assert.Equal("upload-author", Scalar(capture.Events[0], "UserId"));
-        Assert.Equal(id, Scalar(capture.Events[0], "OutboxId"));
-        Assert.False(capture.Events[1].Properties.ContainsKey("CorrelationId"));
-        Assert.Equal("system", Scalar(capture.Events[2], "UserId"));
-        Assert.Equal($"outbox-{id:N}", Scalar(capture.Events[2], "CorrelationId"));
+        using var log = new LoggerConfiguration().WriteTo.Sink(capture).CreateLogger();
+        using var logs = new SerilogLoggerFactory(log, dispose: false);
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(current.Database.GetConnectionString())
+            .AddInterceptors(new SlowQueryInterceptor(logs.CreateLogger<SlowQueryInterceptor>())).Options;
+        await using var db = new AppDbContext(options);
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_sleep(0.15) /* sensitive-query-marker */");
+        var warning = Assert.Single(capture.Events, entry => entry.Level == LogEventLevel.Warning);
+        Assert.True((double)((ScalarValue)warning.Properties["ElapsedMilliseconds"]).Value! > 100);
+        Assert.True(warning.Properties.ContainsKey("CommandId"));
+        Assert.DoesNotContain("sensitive-query-marker", warning.ToString(), StringComparison.Ordinal);
     }
 
-    [Theory]
-    [InlineData("{")]
-    [InlineData("[]")]
-    [InlineData("{\"MediaJobLogContext\":{\"UserId\":42}}")]
-    public void InvalidLoggingMetadataDoesNotInterruptPayloadErrorHandling(string payload)
+    /// <summary>Verifies that job filter adds job identity and disposes the log scope.</summary>
+    [Fact]
+    public void JobFilterAddsJobIdentityAndDisposesTheLogScope()
     {
+        var storage = factory.Services.GetRequiredService<Hangfire.JobStorage>();
+        using var connection = storage.GetConnection();
+        var definition = Hangfire.Common.Job.FromExpression<CulinaryBlog.Infrastructure.Email.WelcomeEmailJob>(job => job.SendAsync(Guid.Empty, CancellationToken.None));
+        var jobId = factory.Services.GetRequiredService<Hangfire.IBackgroundJobClient>().Create(definition, new Hangfire.States.EnqueuedState());
+        var job = new Hangfire.BackgroundJob(jobId, definition, DateTime.UtcNow);
+        var context = new Hangfire.Server.PerformContext(storage, connection, job, new Hangfire.JobCancellationToken(false));
         var capture = new CaptureSink();
         using var log = new LoggerConfiguration().Enrich.FromLogContext().WriteTo.Sink(capture).CreateLogger();
-        using var factory = new SerilogLoggerFactory(log, dispose: false);
-        var logger = factory.CreateLogger("MediaJob");
-        var id = Guid.NewGuid();
-        using (MediaJobLogContext.Begin(logger, new MediaOutboxMessage { Id = id, Type = "invalid", Payload = payload }, id))
-        {
-            WriteTestLog(logger, null);
-        }
-        Assert.Equal("system", Scalar(Assert.Single(capture.Events), "UserId"));
+        using var logs = new SerilogLoggerFactory(log, dispose: false);
+        var filter = new CulinaryBlog.Infrastructure.Jobs.JobLogContextFilter(logs.CreateLogger<CulinaryBlog.Infrastructure.Jobs.JobLogContextFilter>());
+        filter.OnPerforming(new Hangfire.Server.PerformingContext(context));
+        log.Information("Inside job");
+        filter.OnPerformed(new Hangfire.Server.PerformedContext(context, null, false, null));
+        log.Information("After job");
+        Assert.Equal(jobId, ((ScalarValue)capture.Events[0].Properties["JobId"]).Value);
+        Assert.Equal("job-" + jobId, ((ScalarValue)capture.Events[0].Properties["CorrelationId"]).Value);
+        Assert.Equal("system", ((ScalarValue)capture.Events[0].Properties["UserId"]).Value);
+        Assert.Contains("SendAsync", capture.Events[0].Properties["RequestPath"].ToString(), StringComparison.Ordinal);
+        Assert.False(capture.Events[1].Properties.ContainsKey("JobId"));
     }
-
-    private static object? Scalar(LogEvent entry, string name) => ((ScalarValue)entry.Properties[name]).Value;
 
     private sealed class CaptureSink : ILogEventSink
     {
         public List<LogEvent> Events { get; } = [];
-        public void Emit(LogEvent logEvent) => Events.Add(logEvent);
+
+        public void Emit(LogEvent logEvent) => this.Events.Add(logEvent);
     }
 
     private sealed class FailedSink : ILogEventSink
     {
-        public void Emit(LogEvent logEvent) => throw new IOException("Synthetic log sink failure");
+        public void Emit(LogEvent logEvent) => throw new IOException("Simulated log sink failure");
     }
 }

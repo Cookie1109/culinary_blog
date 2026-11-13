@@ -1,10 +1,21 @@
 #!/bin/sh
 set -eu
 
+command -v find >/dev/null
+command -v sha256sum >/dev/null
+
 set -- /backups/minio/????????T??????Z
 test -d "$1"
 for snapshot; do latest_backup=$snapshot; done
 test -f "$latest_backup.completed-at"
+verify_files() {
+  if test -s "$latest_backup.sha256"; then
+    (cd "$1" && sha256sum -c "$latest_backup.sha256")
+  else
+    test -z "$(find "$1" -type f -print -quit)"
+  fi
+}
+verify_files "$latest_backup"
 
 mc alias set restored http://minio-restore:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null
 mc mb --ignore-existing "restored/$MINIO_BUCKET" >/dev/null
@@ -19,6 +30,10 @@ restored_stats=$(mc du --json "restored/$MINIO_BUCKET")
 restored_count=${restored_stats#*\"objects\":}
 restored_count=${restored_count%%,*}
 test "$source_count" = "$restored_count"
+verification_path=$(mktemp -d)
+trap 'rm -rf -- "$verification_path"' EXIT HUP INT TERM
+mc mirror --overwrite "restored/$MINIO_BUCKET" "$verification_path"
+verify_files "$verification_path"
 case "$(mc version info "restored/$MINIO_BUCKET")" in
   *enabled*) ;;
   *) echo "Restored bucket versioning is not enabled" >&2; exit 1 ;;

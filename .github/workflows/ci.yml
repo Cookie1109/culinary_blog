@@ -56,21 +56,84 @@ jobs:
           node-version: 22.23.3
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
       - uses: actions/download-artifact@v4
         with:
           name: backend-verification
           path: artifacts/backend
-      - run: npm run generate:api
-      - run: npm run generate:users-api -- ../artifacts/backend/openapi.json
-      - run: git diff --exit-code -- src/lib/api/schema.d.ts src/lib/api/admin-users-schema.d.ts
-      - run: npm run format
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run build
-      - run: npm test
-      - run: npm run test:components
-      - run: npm audit --audit-level=high
+      - name: Frontend gates with failure logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../artifacts/frontend
+          npm ci 2>&1 | tee ../artifacts/frontend/restore.log
+          npm run generate:api 2>&1 | tee ../artifacts/frontend/api-generation.log
+          npm run generate:users-api -- ../artifacts/backend/openapi.json
+          git diff --exit-code -- src/lib/api/schema.d.ts src/lib/api/admin-users-schema.d.ts
+          for gate in format lint typecheck build test test:components; do
+            npm run "$gate" 2>&1 | tee "../artifacts/frontend/${gate//:/-}.log"
+          done
+          npm audit --audit-level=high 2>&1 | tee ../artifacts/frontend/audit.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-results
+          path: artifacts/frontend/
+
+  browser:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.402
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.3
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: dotnet restore backend/CulinaryBlog.slnx --locked-mode
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-results
+          path: |
+            tmp/package-G05/e2e/**/playwright.json
+            tmp/package-G05/e2e/**/browser/
+            tmp/package-G05/e2e/**/*.log
+            tmp/package-G05/e2e/**/run.json
+            tmp/package-G05/e2e/**/cleanup.json
+
+  analyzers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.402
+      - run: dotnet restore backend/CulinaryBlog.slnx --locked-mode
+      - run: dotnet restore tools/QualityAnalyzers/QualityAnalyzers.csproj --locked-mode
+      - name: SonarAnalyzer and StyleCop (warnings are errors)
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p artifacts
+          python scripts/test-srs-analyzers.py 2>&1 | tee artifacts/analyzer-controls.log
+          dotnet build backend/CulinaryBlog.slnx -c Release --no-restore -warnaserror -t:Rebuild -p:CustomAfterMicrosoftCommonTargets="$GITHUB_WORKSPACE/scripts/srs-analyzers.targets" 2>&1 | tee artifacts/analyzers.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: analyzer-results
+          path: |
+            artifacts/analyzers.log
+            artifacts/analyzer-controls.log
+            tmp/package-G05/analyzer-controls/**/*.log
 
   functional-browser:
     needs: [backend, frontend]
@@ -105,6 +168,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose config --quiet
+      - name: Verify UTC backup schedule and retry boundaries
+        run: python scripts/test-backup-scheduler.py
       - name: Validate production release template
         shell: pwsh
         run: ./scripts/release-gate.ps1 -EnvFile infra/production/release.env.example -Template

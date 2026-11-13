@@ -1,11 +1,18 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Domain.Common;
 using CulinaryBlog.Domain.Recipes;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for ingredient name validation tests.</summary>
 public sealed class IngredientNameValidationTests
 {
+    /// <summary>Verifies that ingredient input uses business limit without changing storage.</summary>
+    /// <param name="length">The length supplied to this operation.</param>
+    /// <param name="valid">The valid supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [Theory]
     [InlineData(0, false)]
     [InlineData(1, true)]

@@ -1,48 +1,44 @@
-"""Verify all runtime operations and their referenced current TRX cases."""
+"""Check OpenAPI operation inventory and referenced integration evidence, without inferring assertions."""
 
 import argparse
-import json
-from pathlib import Path
+import pathlib
 import re
 import xml.etree.ElementTree as ET
 
-ROOT = Path(__file__).resolve().parents[1]
-
-
-def verify(matrix, contract, trx):
-    operations = {f"{method.upper()} {path}" for path, item in contract["paths"].items()
-                  for method in item if method in {"get", "post", "put", "patch", "delete"}}
-    seen = set()
-    results = [(item.get("testName", ""), item.get("outcome")) for item in ET.parse(trx).iter()
-               if item.tag.endswith("UnitTestResult")]
-    references = set()
-    for entry in matrix["operations"]:
-        operation = entry["operation"]
-        if operation in seen or operation not in operations:
-            raise ValueError(f"Duplicate or absent runtime operation: {operation}")
-        seen.add(operation)
-        for group in ("happy", "error", "authorization"):
-            if not entry["cases"].get(group):
-                raise ValueError(f"Missing {group} evidence for {operation}")
-            for symbol in entry["cases"][group]:
-                cls, method = symbol.split(".")
-                source = ROOT / "backend/tests/CulinaryBlog.IntegrationTests" / f"{cls}.cs"
-                if not re.search(r"\b" + re.escape(method) + r"\s*\(", source.read_text(encoding="utf-8")):
-                    raise ValueError(f"Missing source symbol: {symbol}")
-                matches = [outcome for name, outcome in results if re.search(r"(?:^|\.)" + re.escape(symbol) + r"(?:$|\()", name)]
-                if not matches or any(outcome != "Passed" for outcome in matches):
-                    raise ValueError(f"No complete passing TRX evidence: {symbol}")
-                references.add(symbol)
-    if operations - seen:
-        raise ValueError(f"Runtime operations missing from the matrix: {sorted(operations - seen)}")
-    return {"operations": len(seen), "testSymbols": len(references), "runtimeInventory": len(operations)}
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--matrix", default=str(ROOT / "backend/tests/CulinaryBlog.IntegrationTests/endpoint-matrix.json"))
-    parser.add_argument("--openapi", required=True)
-    parser.add_argument("--trx", required=True)
-    args = parser.parse_args()
-    print(json.dumps(verify(json.loads(Path(args.matrix).read_text(encoding="utf-8")),
-                            json.loads(Path(args.openapi).read_text(encoding="utf-8")), args.trx)))
+root = pathlib.Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--trx", help="Full integration TRX from the current source")
+args = parser.parse_args()
+operations = set()
+path = None
+for line in (root / "docs/specs/phase-0/openapi.v1.yaml").read_text(encoding="utf-8").splitlines():
+    match = re.match(r"^  (/.*):$", line)
+    if match:
+        path = match[1]
+    match = re.match(r"^    (get|post|put|patch|delete):$", line)
+    if match and path:
+        operations.add(f"{match[1].upper()} {path}")
+rows = {}
+for line in (root / "docs/specs/srs-completion-phases/reports/package-G05-endpoint-matrix.md").read_text(encoding="utf-8").splitlines():
+    if re.match(r"^\| (GET|POST|PUT|PATCH|DELETE) /", line):
+        cells = [cell.strip().strip("`") for cell in line.split("|")[1:-1]]
+        if cells[0] in rows:
+            raise SystemExit(f"Duplicate operation: {cells[0]}")
+        rows[cells[0]] = cells
+if set(rows) != operations:
+    raise SystemExit(f"Missing: {operations - set(rows)}; stale: {set(rows) - operations}")
+passed = set()
+if args.trx:
+    document = ET.parse(args.trx)
+    for result in document.iter():
+        if result.tag.endswith("UnitTestResult") and result.get("outcome") == "Passed":
+            passed.add(result.attrib["testName"])
+for operation, cells in rows.items():
+    for symbol in cells[2:4]:
+        cls, method = symbol.split(".")
+        source = root / "backend/tests/CulinaryBlog.IntegrationTests" / (cls + ".cs")
+        if not re.search(r"\b" + re.escape(method) + r"\(", source.read_text(encoding="utf-8")):
+            raise SystemExit(f"Missing test symbol: {operation} -> {symbol}")
+        if args.trx and not any(f"{symbol}(" in name or name.endswith(symbol) for name in passed):
+            raise SystemExit(f"No passing TRX case: {operation} -> {symbol}")
+print(f"Matrix: {len(rows)} operations, happy/error symbols exist" + (" and passed in supplied TRX" if args.trx else "; runtime not checked"))

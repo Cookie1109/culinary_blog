@@ -188,6 +188,7 @@ export function AuditLogAdmin() {
         <div className="flex flex-wrap border border-border bg-background">
           {LEVEL_FILTERS.map((item) => (
             <button
+              type="button"
               key={item.value}
               onClick={() => {
                 setLevel(item.value)
@@ -218,138 +219,137 @@ export function AuditLogAdmin() {
       {logsQuery.isError && (
         <div role="alert" className="border border-red-200 bg-red-50 p-6 text-red-700">
           Không thể tải nhật ký kiểm toán.{' '}
-          <button className="underline font-medium" onClick={() => logsQuery.refetch()}>
+          <button type="button" className="underline font-medium" onClick={() => logsQuery.refetch()}>
             Thử lại
           </button>
         </div>
       )}
 
-      {logsQuery.isSuccess && (
-        <>
-          {logs.length === 0 ? (
-            <div className="border border-border p-12 text-center text-muted-foreground bg-background">
-              Không tìm thấy nhật ký kiểm toán nào phù hợp với bộ lọc hiện tại.
-            </div>
-          ) : (
-            <div className="overflow-hidden border border-border bg-background">
-              <div className="hidden overflow-x-auto md:block">
-                <table className="w-full text-sm">
-                  <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
-                    <tr>
-                      <th className="px-5 py-3 font-medium">Thời gian (UTC+7)</th>
-                      <th className="px-5 py-3 font-medium">Người thực hiện</th>
-                      <th className="px-5 py-3 font-medium">Thao tác</th>
-                      <th className="px-5 py-3 font-medium">Nội dung</th>
-                      <th className="px-5 py-3 font-medium">Mức độ</th>
-                      <th className="px-5 py-3 text-right font-medium">Chi tiết</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {logs.map((entry) => (
-                      <tr
-                        key={entry.id}
-                        className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors"
-                      >
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                          {formatTime(entry.timestamp)}
-                        </td>
-                        <td className="px-5 py-3" title={entry.userId ?? undefined}>
-                          {actorLabel(entry)}
-                        </td>
-                        <td className="px-5 py-3 whitespace-nowrap">{eventLabel(entry)}</td>
-                        <td className="max-w-xs px-5 py-3 break-words">
-                          {targetLabel(entry)}
-                          {entry.properties?.Source === 'snapshot' && (
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              Tổng hợp từ dữ liệu hiện có
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span
-                            className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
-                              LEVEL_BADGE[entry.level] ??
-                              'bg-secondary text-muted-foreground border border-border'
-                            }`}
-                          >
-                            {LEVEL_FILTERS.find((item) => item.value === entry.level)?.label ?? entry.level}
+      {logsQuery.isSuccess &&
+        (logs.length === 0 ? (
+          <div className="border border-border p-12 text-center text-muted-foreground bg-background">
+            Không tìm thấy nhật ký kiểm toán nào phù hợp với bộ lọc hiện tại.
+          </div>
+        ) : (
+          <div className="overflow-hidden border border-border bg-background">
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-sm">
+                <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
+                  <tr>
+                    <th className="px-5 py-3 font-medium">Thời gian (UTC+7)</th>
+                    <th className="px-5 py-3 font-medium">Người thực hiện</th>
+                    <th className="px-5 py-3 font-medium">Thao tác</th>
+                    <th className="px-5 py-3 font-medium">Nội dung</th>
+                    <th className="px-5 py-3 font-medium">Mức độ</th>
+                    <th className="px-5 py-3 text-right font-medium">Chi tiết</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((entry) => (
+                    <tr
+                      key={entry.id}
+                      className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors"
+                    >
+                      <td className="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                        {formatTime(entry.timestamp)}
+                      </td>
+                      <td className="px-5 py-3" title={entry.userId ?? undefined}>
+                        {actorLabel(entry)}
+                      </td>
+                      <td className="px-5 py-3 whitespace-nowrap">{eventLabel(entry)}</td>
+                      <td className="max-w-xs px-5 py-3 break-words">
+                        {targetLabel(entry)}
+                        {entry.properties?.Source === 'snapshot' && (
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            Tổng hợp từ dữ liệu hiện có
                           </span>
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedEntry(entry)}
-                            className="border border-border px-3 py-1 text-xs uppercase tracking-wider hover:bg-secondary transition-colors"
-                          >
-                            Xem
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                            LEVEL_BADGE[entry.level] ??
+                            'bg-secondary text-muted-foreground border border-border'
+                          }`}
+                        >
+                          {LEVEL_FILTERS.find((item) => item.value === entry.level)?.label ?? entry.level}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEntry(entry)}
+                          className="border border-border px-3 py-1 text-xs uppercase tracking-wider hover:bg-secondary transition-colors"
+                        >
+                          Xem
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-              <div className="divide-y divide-border md:hidden">
-                {logs.map((entry) => (
-                  <article key={entry.id} className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="font-medium">{eventLabel(entry)}</p>
-                      <span
-                        className={`shrink-0 border px-2 py-1 text-xs ${LEVEL_BADGE[entry.level] ?? 'border-border text-muted-foreground'}`}
-                      >
-                        {LEVEL_FILTERS.find((item) => item.value === entry.level)?.label ?? entry.level}
-                      </span>
-                    </div>
-                    <p className="mt-2 break-words text-sm">{targetLabel(entry)}</p>
-                    <p className="mt-2 break-words text-sm text-muted-foreground">{actorLabel(entry)}</p>
-                    {entry.properties?.Source === 'snapshot' && (
-                      <p className="mt-1 text-xs text-muted-foreground">Tổng hợp từ dữ liệu hiện có</p>
-                    )}
-                    <div className="mt-3 flex items-center justify-between gap-3">
-                      <time dateTime={entry.timestamp} className="text-xs text-muted-foreground">
-                        {formatTime(entry.timestamp)} (UTC+7)
-                      </time>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedEntry(entry)}
-                        className="min-h-11 shrink-0 border border-border px-3 text-sm hover:bg-secondary"
-                      >
-                        Chi tiết
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-border px-6 py-4">
-                  <p className="text-xs text-muted-foreground">
-                    Trang {page} / {totalPages} (Tổng số {total} bản ghi)
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      disabled={page <= 1}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      className="flex items-center gap-1 border border-border px-3 py-1.5 text-xs font-medium uppercase tracking-wider disabled:opacity-40"
+            <div className="divide-y divide-border md:hidden">
+              {logs.map((entry) => (
+                <article key={entry.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-medium">{eventLabel(entry)}</p>
+                    <span
+                      className={`shrink-0 border px-2 py-1 text-xs ${LEVEL_BADGE[entry.level] ?? 'border-border text-muted-foreground'}`}
                     >
-                      <ArrowLeft size={14} /> Trước
-                    </button>
+                      {LEVEL_FILTERS.find((item) => item.value === entry.level)?.label ?? entry.level}
+                    </span>
+                  </div>
+                  <p className="mt-2 break-words text-sm">{targetLabel(entry)}</p>
+                  <p className="mt-2 break-words text-sm text-muted-foreground">{actorLabel(entry)}</p>
+                  {entry.properties?.Source === 'snapshot' && (
+                    <p className="mt-1 text-xs text-muted-foreground">Tổng hợp từ dữ liệu hiện có</p>
+                  )}
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <time dateTime={entry.timestamp} className="text-xs text-muted-foreground">
+                      {formatTime(entry.timestamp)} (UTC+7)
+                    </time>
                     <button
-                      disabled={page >= totalPages}
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      className="flex items-center gap-1 border border-border px-3 py-1.5 text-xs font-medium uppercase tracking-wider disabled:opacity-40"
+                      type="button"
+                      onClick={() => setSelectedEntry(entry)}
+                      className="min-h-11 shrink-0 border border-border px-3 text-sm hover:bg-secondary"
                     >
-                      Sau <ArrowRight size={14} />
+                      Chi tiết
                     </button>
                   </div>
-                </div>
-              )}
+                </article>
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-border px-6 py-4">
+                <p className="text-xs text-muted-foreground">
+                  Trang {page} / {totalPages} (Tổng số {total} bản ghi)
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="flex items-center gap-1 border border-border px-3 py-1.5 text-xs font-medium uppercase tracking-wider disabled:opacity-40"
+                  >
+                    <ArrowLeft size={14} /> Trước
+                  </button>
+                  <button
+                    type="button"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="flex items-center gap-1 border border-border px-3 py-1.5 text-xs font-medium uppercase tracking-wider disabled:opacity-40"
+                  >
+                    Sau <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
 
       {/* Detail Modal Dialog */}
       {selectedEntry && (

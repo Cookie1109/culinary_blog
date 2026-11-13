@@ -3,9 +3,9 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 const publicPages = [
-  ['src/app/(public)/page.tsx', 'getPublishedRecipes'],
+  ['src/app/(public)/render-public/home/[key]/page.tsx', 'getPublishedRecipes'],
   ['src/app/(public)/recipes/page.tsx', 'searchPublishedRecipesOnServer'],
-  ['src/app/(public)/categories/page.tsx', 'getPublicCategories'],
+  ['src/app/(public)/render-public/categories/[key]/page.tsx', 'getPublicCategories'],
 ]
 
 test('public pages use API data instead of bundled recipe fixtures', async () => {

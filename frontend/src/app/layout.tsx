@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Inter, Playfair_Display as PlayfairDisplay } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { Providers } from '@/components/providers'
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo'
@@ -13,7 +13,7 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
-const playfairDisplay = Playfair_Display({
+const playfairDisplay = PlayfairDisplay({
   subsets: ['latin', 'vietnamese'],
   weight: 'variable',
   style: ['normal', 'italic'],
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   metadataBase: SITE_URL,
   title: {
     default: SITE_NAME,
-    template: `%s · ${SITE_NAME}`,
+    template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,

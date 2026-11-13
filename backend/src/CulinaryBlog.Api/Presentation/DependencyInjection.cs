@@ -1,3 +1,6 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -5,6 +8,7 @@ using System.Threading.RateLimiting;
 using CulinaryBlog.Api.Errors;
 using CulinaryBlog.Api.Health;
 using CulinaryBlog.Api.Telemetry;
+using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
@@ -15,13 +19,15 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace CulinaryBlog.Api.Presentation;
 
+/// <summary>Represents the dependency injection.</summary>
 public static class DependencyInjection
 {
+    /// <summary>Adds presentation.</summary>
+    /// <param name="services">The services supplied to this operation.</param>
+    /// <param name="configuration">The configuration supplied to this operation.</param>
+    /// <returns>The add presentation result.</returns>
     public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
-        var authPermitLimit = configuration.GetValue("RateLimiting:AuthPermitLimit", 10);
-        var globalPermitLimit = configuration.GetValue("RateLimiting:GlobalPermitLimit", 100);
-        var uploadPermitLimit = configuration.GetValue("RateLimiting:UploadPermitLimit", 5);
         var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
         if (allowedOrigins.Any(origin =>
             !Uri.TryCreate(origin, UriKind.Absolute, out var uri) ||
@@ -34,8 +40,15 @@ public static class DependencyInjection
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             options.ForwardLimit = 1;
-            options.KnownIPNetworks.Clear();
-            options.KnownProxies.Clear();
+            foreach (var proxy in configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [])
+            {
+                options.KnownProxies.Add(System.Net.IPAddress.Parse(proxy));
+            }
+
+            foreach (var network in configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [])
+            {
+                options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+            }
         });
         services.AddHsts(options =>
         {
@@ -57,7 +70,13 @@ public static class DependencyInjection
             policy
                 .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .WithHeaders("Authorization", "Content-Type", "If-Match", "X-Correlation-ID")
-                .WithExposedHeaders("ETag", "Retry-After", "X-Correlation-ID");
+                .WithExposedHeaders(
+                    "ETag",
+                    "Retry-After",
+                    "X-Correlation-ID",
+                    "X-RateLimit-Limit",
+                    "X-RateLimit-Remaining",
+                    "X-RateLimit-Reset");
         }));
         services.AddProblemDetails(options =>
         {
@@ -76,6 +95,20 @@ public static class DependencyInjection
             options.MultipartBodyLengthLimit = 6 * 1024 * 1024;
         });
         services.AddHttpContextAccessor();
+        services.AddOutputCache(options =>
+        {
+            options.MaximumBodySize = 1024 * 1024;
+            options.AddPolicy("Categories", policy => policy.Expire(TimeSpan.FromMinutes(30))
+                .Tag(PublicCacheKeys.CategoriesTag, PublicCacheKeys.RecipesTag).VaryByValue(ContentVersionAsync));
+            options.AddPolicy("RecipeList", policy => policy.Expire(TimeSpan.FromMinutes(15))
+                .Tag(PublicCacheKeys.RecipesTag, PublicCacheKeys.CategoriesTag).VaryByValue(ContentVersionAsync));
+
+            // FR-RCP-002 specifies HTTP output 60 minutes; NFR-PERF-003 specifies data cache 5 minutes.
+            options.AddPolicy("RecipeDetail", policy => policy.Expire(TimeSpan.FromMinutes(60))
+                .Tag(PublicCacheKeys.RecipesTag, PublicCacheKeys.CategoriesTag, "recipes").VaryByValue(ContentVersionAsync));
+            options.AddPolicy("Search", policy => policy.Expire(TimeSpan.FromMinutes(1))
+                .Tag(PublicCacheKeys.RecipesTag, PublicCacheKeys.CategoriesTag).VaryByValue(ContentVersionAsync));
+        });
         services.AddTransient<CorrelationIdDelegatingHandler>();
         services.AddHttpClient("default").AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
 
@@ -119,42 +152,12 @@ public static class DependencyInjection
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                context.Request.Path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase)
-                    ? RateLimitPartition.GetNoLimiter("health")
-                    : RateLimitPartition.GetFixedWindowLimiter(
-                        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                        _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = globalPermitLimit,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueLimit = 0,
-                            AutoReplenishment = true,
-                        }));
-            options.AddPolicy("auth", context =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = authPermitLimit,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0,
-                        AutoReplenishment = true,
-                    }));
-            options.AddPolicy("upload", context =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = uploadPermitLimit,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0,
-                        AutoReplenishment = true,
-                    }));
+
+            // Endpoint metadata selects the additional shared window in the global limiter.
+            options.AddPolicy("auth", _ => RateLimitPartition.GetNoLimiter("auth"));
+            options.AddPolicy("upload", _ => RateLimitPartition.GetNoLimiter("upload"));
             options.OnRejected = async (context, cancellationToken) =>
             {
-                context.HttpContext.Response.Headers.RetryAfter = "60";
-                context.HttpContext.Response.ContentType = "application/problem+json";
                 await context.HttpContext.Response.WriteAsJsonAsync(
                     new
                     {
@@ -164,9 +167,13 @@ public static class DependencyInjection
                         code = "RATE_LIMIT_EXCEEDED",
                         traceId = context.HttpContext.TraceIdentifier,
                     },
+                    options: null,
+                    contentType: "application/problem+json",
                     cancellationToken).ConfigureAwait(false);
             };
         });
+        services.AddSingleton<DistributedRateLimiter>();
+        services.AddOptions<RateLimiterOptions>().Configure<DistributedRateLimiter>((options, limiter) => options.GlobalLimiter = limiter);
 
         services.AddSingleton<IHealthCheckPublisher, HealthMetricsPublisher>();
         services.Configure<HealthCheckPublisherOptions>(options =>
@@ -177,5 +184,11 @@ public static class DependencyInjection
         services.AddHealthChecks().AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
 
         return services;
+    }
+
+    private static async ValueTask<KeyValuePair<string, string>> ContentVersionAsync(HttpContext context, CancellationToken cancellationToken)
+    {
+        var version = await context.RequestServices.GetRequiredService<IPublicCacheVersion>().GetAsync(cancellationToken).ConfigureAwait(false);
+        return new("public-content-generation", version.ToString(CultureInfo.InvariantCulture));
     }
 }

@@ -7,14 +7,22 @@ import {
   useRouter,
   useSearchParams as useNextSearchParams,
 } from 'next/navigation'
-import { createContext, useCallback, useContext, useMemo, type ComponentProps, type ReactNode } from 'react'
+import {
+  Suspense,
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  type ComponentProps,
+  type ReactNode,
+} from 'react'
 
 type LinkProps = Omit<ComponentProps<typeof NextLink>, 'href'> & {
   to: ComponentProps<typeof NextLink>['href']
 }
 
 export function Link({ to, ...props }: LinkProps) {
-  return <NextLink href={to} {...props} />
+  return <NextLink href={to} prefetch={false} {...props} />
 }
 
 type NavLinkState = { isActive: boolean }
@@ -23,7 +31,16 @@ type NavLinkProps = Omit<LinkProps, 'className'> & {
   className?: string | ((state: NavLinkState) => string)
 }
 
-export function NavLink({ to, end = false, className, ...props }: NavLinkProps) {
+export function NavLink({ to, end = false, className = undefined, ...props }: NavLinkProps) {
+  const fallbackClass = typeof className === 'function' ? className({ isActive: false }) : className
+  return (
+    <Suspense fallback={<NextLink href={to} prefetch={false} className={fallbackClass} {...props} />}>
+      <QueryNavLink to={to} end={end} className={className} {...props} />
+    </Suspense>
+  )
+}
+
+function QueryNavLink({ to, end = false, className = undefined, ...props }: NavLinkProps) {
   const pathname = usePathname()
   const searchParams = useNextSearchParams()
   const targetUrl = typeof to === 'string' ? to : (to.pathname?.toString() ?? '/')
@@ -35,7 +52,7 @@ export function NavLink({ to, end = false, className, ...props }: NavLinkProps) 
     queryMatches && (end ? pathname === target : pathname === target || pathname.startsWith(`${target}/`))
   const resolvedClassName = typeof className === 'function' ? className({ isActive }) : className
 
-  return <NextLink href={to} className={resolvedClassName} {...props} />
+  return <NextLink href={to} prefetch={false} className={resolvedClassName} {...props} />
 }
 
 export function useNavigate() {

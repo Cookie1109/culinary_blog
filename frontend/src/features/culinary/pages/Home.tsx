@@ -23,12 +23,9 @@ function scrollCarousel(element: HTMLDivElement | null, direction: -1 | 1) {
   const maxScroll = element.scrollWidth - element.clientWidth
   const atStart = element.scrollLeft <= 4
   const atEnd = element.scrollLeft >= maxScroll - 4
-  const left =
-    direction === 1 && atEnd
-      ? 0
-      : direction === -1 && atStart
-        ? maxScroll
-        : element.scrollLeft + direction * element.clientWidth
+  let left = element.scrollLeft + direction * element.clientWidth
+  if (direction === 1 && atEnd) left = 0
+  else if (direction === -1 && atStart) left = maxScroll
 
   element.scrollTo({ left, behavior: 'smooth' })
 }
@@ -57,9 +54,6 @@ export function Home({
   const collectionRef = useRef<HTMLDivElement>(null)
   const categoriesRef = useRef<HTMLDivElement>(null)
   const loadingMoreRecipesRef = useRef(false)
-  const featured = latestRecipes[currentRecipeIndex]
-  const featuredImage = featured ? recipeImage(featured) : null
-  void featuredImage
 
   const dragDistanceThreshold = 50
 
@@ -72,7 +66,7 @@ export function Home({
   }, [])
 
   useEffect(() => {
-    if (latestRecipes.length <= 1 || isDragging || hovering || focused || reducedMotion) return
+    if (latestRecipes.length <= 1 || isDragging || hovering || focused || reducedMotion) return undefined
 
     const timer = window.setInterval(() => {
       setCurrentRecipeIndex((current) => (current + 1) % latestRecipes.length)
@@ -185,13 +179,6 @@ export function Home({
         className="relative w-full overflow-hidden bg-stone-950 text-white min-h-[520px] sm:min-h-[580px] lg:min-h-[640px] flex items-center select-none cursor-grab active:cursor-grabbing touch-pan-y"
         aria-label="Công thức mới nhất"
         aria-roledescription="carousel"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         onMouseEnter={() => setHovering(true)}
         onFocusCapture={() => setFocused(true)}
@@ -199,120 +186,132 @@ export function Home({
           if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
         }}
       >
-        {/* Sliding Track for horizontal swipe effect */}
         <div
-          id="latest-recipes-carousel"
-          className="flex w-full h-[520px] sm:h-[580px] lg:h-[640px]"
-          style={{
-            transform: `translateX(calc(-${currentRecipeIndex * 100}% + ${dragOffset}px))`,
-            transition:
-              isDragging || reducedMotion ? 'none' : 'transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1)',
-          }}
+          role="presentation"
+          className="contents"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
         >
-          {latestRecipes.map((recipe, index) => {
-            const isActive = index === currentRecipeIndex
-            const image = recipeImage(recipe)
-            return (
-              <div
-                key={recipe.id}
-                className="relative min-w-full w-full h-full shrink-0 overflow-hidden"
-                aria-hidden={!isActive}
-                inert={!isActive}
-              >
-                {/* Full-width background image */}
-                {image ? (
-                  <Image
-                    src={`${publicMediaUrl(image)}?v=${recipe.version}`}
-                    alt={recipe.title}
-                    fill
-                    priority={index === 0}
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                    quality={90}
-                    sizes="100vw"
-                    placeholder="blur"
-                    blurDataURL={IMAGE_PLACEHOLDER}
-                    draggable={false}
-                    className="object-cover select-none pointer-events-none"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-stone-900 font-serif text-3xl text-stone-500">
-                    {recipe.title}
-                  </div>
-                )}
-
-                {/* Reduced Opacity Gradient Overlay for clearer and brighter dish visuals */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-black/5 lg:bg-gradient-to-r lg:from-black/70 lg:via-black/25 lg:to-transparent pointer-events-none" />
-
-                {/* Text overlay content without frame/box on subtitle */}
-                <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end lg:justify-center px-4 py-16 sm:px-6 lg:px-8 pointer-events-none">
-                  <div className="max-w-2xl">
-                    <span className="mb-3 block text-sm font-semibold uppercase tracking-widest text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                      Công thức mới nhất
-                    </span>
-                    <h1 className="mb-4 font-serif text-3xl sm:text-5xl leading-[1.1] text-white lg:text-7xl break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
-                      {recipe.title}
-                    </h1>
-                    <p className="mb-8 max-w-xl text-base sm:text-lg text-stone-200 line-clamp-3 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-                      {recipe.description}
-                    </p>
-                    <div className="pointer-events-auto">
-                      <Link
-                        to={`/recipes/${recipe.slug}`}
-                        tabIndex={isActive ? 0 : -1}
-                        aria-label={`Khám phá công thức: ${recipe.title}`}
-                        onClick={(e) => {
-                          if (Math.abs(dragOffset) > 5) e.preventDefault()
-                          else setOpeningRecipeSlug(recipe.slug)
-                        }}
-                        className="inline-flex items-center gap-2.5 bg-primary px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-white shadow-lg shadow-primary/30 transition-all duration-200 hover:bg-primary/90 hover:gap-3.5 hover:shadow-xl active:scale-95 cursor-pointer"
-                      >
-                        {openingRecipeSlug === recipe.slug ? (
-                          <>
-                            <LoaderCircle size={18} className="animate-spin" aria-hidden="true" />
-                            Đang mở
-                          </>
-                        ) : (
-                          <>
-                            Khám phá công thức
-                            <ArrowRight size={18} aria-hidden="true" />
-                          </>
-                        )}
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* 5 Dots Indicator: Clean floating dots without outer frame */}
-        {latestRecipes.length > 1 && (
+          {/* Sliding Track for horizontal swipe effect */}
           <div
-            className="absolute bottom-4 sm:bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center"
-            role="group"
-            aria-label="Chọn công thức mới nhất"
+            id="latest-recipes-carousel"
+            className="flex w-full h-[520px] sm:h-[580px] lg:h-[640px]"
+            style={{
+              transform: `translateX(calc(-${currentRecipeIndex * 100}% + ${dragOffset}px))`,
+              transition:
+                isDragging || reducedMotion ? 'none' : 'transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+            }}
           >
             {latestRecipes.map((recipe, index) => {
               const isActive = index === currentRecipeIndex
+              const image = recipeImage(recipe)
               return (
-                <button
+                <div
                   key={recipe.id}
-                  type="button"
-                  aria-pressed={isActive}
-                  aria-label={`Chuyển đến công thức ${index + 1}: ${recipe.title}`}
-                  onClick={() => setCurrentRecipeIndex(index)}
-                  className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-white cursor-pointer"
+                  className="relative min-w-full w-full h-full shrink-0 overflow-hidden"
+                  aria-hidden={!isActive}
+                  inert={!isActive}
                 >
-                  <span
-                    aria-hidden="true"
-                    className={`rounded-full transition-all duration-300 drop-shadow-md ${isActive ? 'h-3.5 w-8 bg-primary shadow-md' : 'h-2.5 w-2.5 bg-white/60 hover:bg-white'}`}
-                  />
-                </button>
+                  {/* Full-width background image */}
+                  {image ? (
+                    <Image
+                      src={`${publicMediaUrl(image)}?v=${recipe.version}`}
+                      alt={recipe.title}
+                      fill
+                      priority={index === 0}
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      quality={90}
+                      sizes="100vw"
+                      placeholder="blur"
+                      blurDataURL={IMAGE_PLACEHOLDER}
+                      draggable={false}
+                      className="object-cover select-none pointer-events-none"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-stone-900 font-serif text-3xl text-stone-500">
+                      {recipe.title}
+                    </div>
+                  )}
+
+                  {/* Reduced Opacity Gradient Overlay for clearer and brighter dish visuals */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-black/5 lg:bg-gradient-to-r lg:from-black/70 lg:via-black/25 lg:to-transparent pointer-events-none" />
+
+                  {/* Text overlay content without frame/box on subtitle */}
+                  <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end lg:justify-center px-4 py-16 sm:px-6 lg:px-8 pointer-events-none">
+                    <div className="max-w-2xl">
+                      <span className="mb-3 block text-sm font-semibold uppercase tracking-widest text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                        Công thức mới nhất
+                      </span>
+                      <h1 className="mb-4 font-serif text-3xl sm:text-5xl leading-[1.1] text-white lg:text-7xl break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
+                        {recipe.title}
+                      </h1>
+                      <p className="mb-8 max-w-xl text-base sm:text-lg text-stone-200 line-clamp-3 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                        {recipe.description}
+                      </p>
+                      <div className="pointer-events-auto">
+                        <Link
+                          to={`/recipes/${recipe.slug}`}
+                          tabIndex={isActive ? 0 : -1}
+                          aria-label={`Khám phá công thức: ${recipe.title}`}
+                          onClick={(e) => {
+                            if (Math.abs(dragOffset) > 5) e.preventDefault()
+                            else setOpeningRecipeSlug(recipe.slug)
+                          }}
+                          className="inline-flex items-center gap-2.5 bg-primary px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-white shadow-lg shadow-primary/30 transition-all duration-200 hover:bg-primary/90 hover:gap-3.5 hover:shadow-xl active:scale-95 cursor-pointer"
+                        >
+                          {openingRecipeSlug === recipe.slug ? (
+                            <>
+                              <LoaderCircle size={18} className="animate-spin" aria-hidden="true" />
+                              Đang mở
+                            </>
+                          ) : (
+                            <>
+                              Khám phá công thức
+                              <ArrowRight size={18} aria-hidden="true" />
+                            </>
+                          )}
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )
             })}
           </div>
-        )}
+
+          {/* 5 Dots Indicator: Clean floating dots without outer frame */}
+          {latestRecipes.length > 1 && (
+            <div
+              className="absolute bottom-4 sm:bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center"
+              role="group"
+              aria-label="Chọn công thức mới nhất"
+            >
+              {latestRecipes.map((recipe, index) => {
+                const isActive = index === currentRecipeIndex
+                return (
+                  <button
+                    key={recipe.id}
+                    type="button"
+                    aria-pressed={isActive}
+                    aria-label={`Chuyển đến công thức ${index + 1}: ${recipe.title}`}
+                    onClick={() => setCurrentRecipeIndex(index)}
+                    className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-white cursor-pointer"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`rounded-full transition-all duration-300 drop-shadow-md ${isActive ? 'h-3.5 w-8 bg-primary shadow-md' : 'h-2.5 w-2.5 bg-white/60 hover:bg-white'}`}
+                    />
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Featured Recipes Collection */}
@@ -347,7 +346,9 @@ export function Home({
 
               <button
                 type="button"
-                onClick={() => void showNextCollectionRecipes()}
+                onClick={() => {
+                  showNextCollectionRecipes()
+                }}
                 aria-label="Xem thêm công thức nổi bật"
                 aria-controls="featured-recipes-carousel"
                 aria-busy={loadingMoreRecipes}

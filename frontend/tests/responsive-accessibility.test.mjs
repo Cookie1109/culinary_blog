@@ -13,7 +13,7 @@ function getLuminance(hex) {
   const g = Number.parseInt(cleanHex.slice(2, 4), 16) / 255
   const b = Number.parseInt(cleanHex.slice(4, 6), 16) / 255
 
-  const srgb = [r, g, b].map((val) => (val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4)))
+  const srgb = [r, g, b].map((val) => (val <= 0.03928 ? val / 12.92 : ((val + 0.055) / 1.055) ** 2.4))
   return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2]
 }
 

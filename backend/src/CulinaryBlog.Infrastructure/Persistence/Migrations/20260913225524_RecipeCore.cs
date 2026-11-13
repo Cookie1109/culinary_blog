@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
@@ -30,7 +32,7 @@ namespace CulinaryBlog.Infrastructure.Persistence.Migrations
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L)
+                    Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L),
                 },
                 constraints: table =>
                 {
@@ -69,7 +71,7 @@ namespace CulinaryBlog.Infrastructure.Persistence.Migrations
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedBy = table.Column<string>(type: "text", nullable: true),
-                    Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L)
+                    Version = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L),
                 },
                 constraints: table =>
                 {

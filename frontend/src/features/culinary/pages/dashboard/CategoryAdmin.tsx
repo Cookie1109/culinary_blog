@@ -2,10 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, CheckCircle2, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { FieldError } from '@/components/ui/field-error'
+import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/features/culinary/contexts/AuthContext'
 import { Modal } from '@/components/ui/modal'
-import { ApiProblem } from '@/lib/api/problem-details'
+import { ApiProblem, apiErrorMessage } from '@/lib/api/problem-details'
 import {
   createCategory,
   deleteCategory,
@@ -13,22 +16,28 @@ import {
   updateCategory,
   type Category,
 } from '@/lib/api/content-client'
+import { formMessages } from '../../forms/messages'
+import { setServerFieldErrors } from '../../forms/server-errors'
+import type { CategoryValues } from '../../forms/content-schemas'
 
-interface CategoryForm {
-  name: string
-  description: string
-  imageUrl: string
-  orderIndex: number
-}
-
-const EMPTY_FORM: CategoryForm = { name: '', description: '', imageUrl: '', orderIndex: 0 }
+const EMPTY_FORM: CategoryValues = { name: '', description: '', imageUrl: '', orderIndex: 0 }
 
 export function CategoryAdmin() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
-  const [form, setForm] = useState<CategoryForm>(EMPTY_FORM)
+  const {
+    register,
+    handleSubmit,
+    reset: resetForm,
+    setError: setFieldError,
+    formState: { errors },
+  } = useForm<CategoryValues>({
+    resolver: async (...args) => (await import('../../forms/deferred-resolvers')).categoryResolver(...args),
+    defaultValues: EMPTY_FORM,
+  })
+  const { showToast } = useToast()
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
   const [actionNotice, setActionNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -40,7 +49,7 @@ export function CategoryAdmin() {
   })
 
   const save = useMutation({
-    mutationFn: () => {
+    mutationFn: (form: CategoryValues) => {
       const payload = {
         name: form.name.trim(),
         description: form.description.trim() || null,
@@ -49,22 +58,42 @@ export function CategoryAdmin() {
       }
       return editing ? updateCategory(editing.id, payload) : createCategory(payload)
     },
+    onMutate: async (form) => {
+      if (!editing) return undefined
+      await queryClient.cancelQueries({ queryKey: ['categories'] })
+      const previous = queryClient.getQueryData<Category[]>(['categories'])
+      queryClient.setQueryData<Category[]>(['categories'], (current) =>
+        current?.map((category) => (category.id === editing.id ? { ...category, ...form } : category)),
+      )
+      return { previous }
+    },
     onSuccess: async () => {
       const isEditing = Boolean(editing)
       setEditing(null)
       setFormOpen(false)
-      setForm(EMPTY_FORM)
+      resetForm(EMPTY_FORM)
       setActionError(null)
-      setActionNotice(isEditing ? 'Đã cập nhật danh mục thành công.' : 'Đã thêm danh mục mới thành công.')
+      const message = isEditing ? 'Đã cập nhật danh mục thành công.' : 'Đã thêm danh mục mới thành công.'
+      setActionNotice(message)
+      showToast(message)
       await queryClient.invalidateQueries({ queryKey: ['categories'] })
     },
-    onError: (error) => {
-      setActionNotice(null)
-      setActionError(
-        error instanceof ApiProblem
-          ? (error.problem.detail ?? error.problem.title)
-          : 'Không thể lưu danh mục. Vui lòng thử lại.',
+    onError: (error, _form, context) => {
+      showToast(apiErrorMessage(error, 'CATEGORY_SAVE_FAILED'))
+      if (context?.previous) queryClient.setQueryData(['categories'], context.previous)
+      setServerFieldErrors(error, setFieldError, {
+        Name: ['name', formMessages.categoryName],
+        Description: ['description', formMessages.descriptionLength],
+        ImageUrl: ['imageUrl', formMessages.imageUrlInvalid],
+        OrderIndex: ['orderIndex', formMessages.orderMinimum],
+      })
+      if (
+        error instanceof ApiProblem &&
+        ['CATEGORY_NAME_EXISTS', 'CATEGORY_SLUG_EXISTS'].includes(error.problem.code)
       )
+        setFieldError('name', { type: 'server', message: apiErrorMessage(error) })
+      setActionNotice(null)
+      setActionError(apiErrorMessage(error, 'CATEGORY_SAVE_FAILED'))
     },
   })
 
@@ -74,21 +103,21 @@ export function CategoryAdmin() {
       setDeleteTarget(null)
       setActionError(null)
       setActionNotice('Đã xóa danh mục thành công.')
+      showToast('Đã xóa danh mục thành công.')
       await queryClient.invalidateQueries({ queryKey: ['categories'] })
     },
     onError: (error) => {
+      showToast(apiErrorMessage(error, 'CATEGORY_DELETE_FAILED'))
       setActionNotice(null)
       if (error instanceof ApiProblem && error.problem.code === 'CATEGORY_DELETE_HAS_RECIPES') {
-        setActionError('Xung đột dữ liệu: Danh mục này đang chứa công thức nên không thể xóa.')
+        setActionError(apiErrorMessage(error))
       } else {
-        setActionError(
-          error instanceof ApiProblem
-            ? (error.problem.detail ?? error.problem.title)
-            : 'Không thể xóa danh mục.',
-        )
+        setActionError(apiErrorMessage(error, 'CATEGORY_DELETE_FAILED'))
       }
     },
   })
+
+  const saveLabel = editing ? 'Lưu thay đổi' : 'Thêm danh mục'
 
   if (user?.role !== 'admin') {
     return (
@@ -101,7 +130,7 @@ export function CategoryAdmin() {
   const beginEdit = (category: Category) => {
     setFormOpen(true)
     setEditing(category)
-    setForm({
+    resetForm({
       name: category.name,
       description: category.description ?? '',
       imageUrl: category.imageUrl ?? '',
@@ -115,23 +144,13 @@ export function CategoryAdmin() {
     setFormOpen(false)
     setActionError(null)
     setEditing(null)
-    setForm(EMPTY_FORM)
+    resetForm(EMPTY_FORM)
   }
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
+  const submit = (values: CategoryValues) => {
     setActionNotice(null)
     setActionError(null)
-    const name = form.name.trim()
-    if (name.length < 2 || name.length > 50) {
-      setActionError('Tên danh mục cần từ 2 đến 50 ký tự.')
-      return
-    }
-    if (/<[^>]*>/.test(name)) {
-      setActionError('Tên danh mục không được chứa HTML.')
-      return
-    }
-    save.mutate()
+    save.mutate(values)
   }
 
   // Sort categories by orderIndex ascending, then name
@@ -145,7 +164,7 @@ export function CategoryAdmin() {
         <div>
           <h1 className="font-serif text-3xl lg:text-4xl">Quản lý danh mục</h1>
           <p className="mt-1 text-muted-foreground">
-            Sắp xếp và quản lý danh mục công thức trên toàn hệ thống.
+            Quản lý danh mục công thức. Trang công khai hiển thị danh mục theo tên A–Z.
           </p>
         </div>
         <button
@@ -188,7 +207,7 @@ export function CategoryAdmin() {
           busy={save.isPending}
           size="lg"
         >
-          <form onSubmit={submit}>
+          <form noValidate onSubmit={handleSubmit(submit)}>
             {actionError && (
               <p role="alert" className="mb-4 border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {actionError}
@@ -202,45 +221,53 @@ export function CategoryAdmin() {
                     required
                     minLength={2}
                     maxLength={50}
-                    value={form.name}
-                    onChange={(event) => setForm({ ...form, name: event.target.value })}
+                    {...register('name')}
+                    aria-invalid={Boolean(errors.name)}
+                    aria-describedby={errors.name ? 'category-name-error' : undefined}
                     className="mt-2 w-full border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
                     placeholder="VD: Món chay, Tráng miệng..."
                   />
+                  <FieldError id="category-name-error" message={errors.name?.message} />
                 </label>
                 <label className="text-xs uppercase tracking-widest text-muted-foreground">
-                  Thứ tự hiển thị <span className="text-red-500">*</span>
+                  Thứ tự quản trị <span className="text-red-500">*</span>
                   <input
                     required
                     type="number"
                     min={0}
-                    value={form.orderIndex}
-                    onChange={(event) => setForm({ ...form, orderIndex: Number(event.target.value) })}
+                    {...register('orderIndex', { valueAsNumber: true })}
+                    aria-invalid={Boolean(errors.orderIndex)}
+                    aria-describedby={errors.orderIndex ? 'category-orderIndex-error' : undefined}
                     className="mt-2 w-full border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
                     placeholder="0, 1, 2..."
                   />
+                  <FieldError id="category-orderIndex-error" message={errors.orderIndex?.message} />
                 </label>
                 <label className="text-xs uppercase tracking-widest text-muted-foreground md:col-span-2">
                   Mô tả
                   <textarea
                     maxLength={2000}
                     rows={3}
-                    value={form.description}
-                    onChange={(event) => setForm({ ...form, description: event.target.value })}
+                    {...register('description')}
+                    aria-invalid={Boolean(errors.description)}
+                    aria-describedby={errors.description ? 'category-description-error' : undefined}
                     className="mt-2 w-full resize-y border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
                     placeholder="Mô tả tóm tắt về danh mục này..."
                   />
+                  <FieldError id="category-description-error" message={errors.description?.message} />
                 </label>
                 <label className="text-xs uppercase tracking-widest text-muted-foreground md:col-span-2">
                   URL hình ảnh
                   <input
                     type="url"
                     maxLength={500}
-                    value={form.imageUrl}
-                    onChange={(event) => setForm({ ...form, imageUrl: event.target.value })}
+                    {...register('imageUrl')}
+                    aria-invalid={Boolean(errors.imageUrl)}
+                    aria-describedby={errors.imageUrl ? 'category-imageUrl-error' : undefined}
                     className="mt-2 w-full border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
                     placeholder="https://example.com/images/category.jpg"
                   />
+                  <FieldError id="category-imageUrl-error" message={errors.imageUrl?.message} />
                 </label>
               </div>
             </fieldset>
@@ -254,11 +281,12 @@ export function CategoryAdmin() {
                 Hủy
               </button>
               <button
+                type="submit"
                 disabled={save.isPending}
                 className="flex items-center gap-2 bg-primary px-5 py-2.5 text-sm uppercase tracking-widest text-primary-foreground transition-opacity hover:opacity-95 disabled:opacity-60"
               >
                 {editing ? <Pencil size={15} /> : <Plus size={15} />}{' '}
-                {save.isPending ? 'Đang lưu…' : editing ? 'Lưu thay đổi' : 'Thêm danh mục'}
+                {save.isPending ? 'Đang lưu…' : saveLabel}
               </button>
             </div>
           </form>
@@ -274,7 +302,7 @@ export function CategoryAdmin() {
       {categories.isError && (
         <div role="alert" className="border border-red-200 bg-red-50 p-5 text-red-700">
           Không thể tải danh mục.{' '}
-          <button className="underline" onClick={() => categories.refetch()}>
+          <button type="button" className="underline" onClick={() => categories.refetch()}>
             Thử lại
           </button>
         </div>
@@ -368,6 +396,7 @@ export function CategoryAdmin() {
                     <td className="px-5 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
+                          type="button"
                           onClick={() => beginEdit(category)}
                           aria-label={`Sửa ${category.name}`}
                           className="inline-grid h-11 w-11 place-items-center text-muted-foreground hover:text-primary transition-colors"
@@ -376,6 +405,7 @@ export function CategoryAdmin() {
                           <Pencil size={15} />
                         </button>
                         <button
+                          type="button"
                           className="inline-grid h-11 w-11 place-items-center text-muted-foreground hover:text-red-600 transition-colors"
                           onClick={() => setDeleteTarget(category)}
                           aria-label={`Xóa ${category.name}`}

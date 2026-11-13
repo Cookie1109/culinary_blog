@@ -79,29 +79,45 @@ const nextConfig = {
         source: '/register',
         headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
       },
-    ]
-  },
-  async redirects() {
-    return [
-      { source: '/auth/login', destination: '/login', permanent: false },
-      { source: '/auth/register', destination: '/register', permanent: false },
-      { source: '/search', destination: '/recipes', permanent: true },
+      {
+        source: '/auth/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
     ]
   },
   async rewrites() {
-    return process.env.NODE_ENV === 'development' || isVercel
-      ? [
-          {
-            source: '/api/v1/:path*',
-            destination: `${apiBaseUrl}/:path*`,
-          },
-        ]
-      : []
+    return {
+      beforeFiles: [
+        {
+          source: '/categories/:slug',
+          has: [{ type: 'query', key: 'page', value: '(?<page>[1-9][0-9]*)' }],
+          destination: '/render-public/category/:slug/:page',
+        },
+        { source: '/', destination: '/render-public/home/index' },
+        { source: '/categories', destination: '/render-public/categories/index' },
+        ...(process.env.NODE_ENV === 'development' || isVercel
+          ? [
+              {
+                source: '/api/v1/:path*',
+                destination: `${apiBaseUrl}/:path*`,
+              },
+            ]
+          : []),
+      ],
+    }
   },
   webpack(config) {
-    config.resolve.modules = [path.join(currentDirectory, 'node_modules'), ...config.resolve.modules]
-    config.resolve.alias['react-router'] = path.join(currentDirectory, 'src/lib/router-compat.tsx')
-    return config
+    return {
+      ...config,
+      resolve: {
+        ...config.resolve,
+        modules: [path.join(currentDirectory, 'node_modules'), ...config.resolve.modules],
+        alias: {
+          ...config.resolve.alias,
+          'react-router': path.join(currentDirectory, 'src/lib/router-compat.tsx'),
+        },
+      },
+    }
   },
 }
 

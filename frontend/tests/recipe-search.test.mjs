@@ -17,10 +17,11 @@ function compile(file, dependencies = {}) {
     },
   }).outputText
   const exports = {}
-  vm.runInNewContext(`(function(require,exports){${js}\n})`, { console, URLSearchParams })(
-    (name) => dependencies[name] ?? require(name),
-    exports,
-  )
+  vm.runInNewContext(`(function(require,exports){${js}\n})`, { console, URLSearchParams })((name) => {
+    if (name in dependencies) return dependencies[name]
+    if (name === 'react/jsx-runtime') return require('react/jsx-runtime')
+    throw new Error(`Unexpected search fixture dependency: ${name}`)
+  }, exports)
   return exports
 }
 const search = compile('../src/lib/recipe-search.ts')

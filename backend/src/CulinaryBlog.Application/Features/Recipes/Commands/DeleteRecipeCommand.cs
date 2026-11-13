@@ -1,32 +1,14 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Content;
 using MediatR;
 
 namespace CulinaryBlog.Application.Features.Recipes.Commands;
 
-public sealed record DeleteRecipeCommand(Guid Id, Guid UserId, bool IsAdmin, long ExpectedVersion) : IRequest;
-
-internal sealed class DeleteRecipeCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler<DeleteRecipeCommand>
-{
-    public async Task Handle(DeleteRecipeCommand command, CancellationToken cancellationToken)
-    {
-        var recipe = await unitOfWork.Recipes.GetByIdAsync(command.Id, cancellationToken).ConfigureAwait(false)
-            ?? throw new ContentProblemException(
-                "RECIPE_NOT_FOUND", "Recipe was not found.", ContentProblemKind.NotFound);
-        if (!command.IsAdmin && recipe.AuthorId != command.UserId)
-        {
-            throw new ContentProblemException(
-                "FORBIDDEN", "You cannot edit this recipe.", ContentProblemKind.Forbidden);
-        }
-
-        if (recipe.Version != command.ExpectedVersion)
-        {
-            throw new ContentProblemException(
-                "RECIPE_CONCURRENCY_CONFLICT", "The recipe version is stale.",
-                ContentProblemKind.Conflict, recipe.Version);
-        }
-
-        recipe.Delete();
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-}
+/// <summary>Carries delete recipe command data.</summary>
+/// <param name="Id">The identifier of the requested resource.</param>
+/// <param name="UserId">The identifier of the user performing or owning the operation.</param>
+/// <param name="IsAdmin">The is admin supplied to this operation.</param>
+/// <param name="ExpectedVersion">The recipe version used to reject concurrent changes.</param>
+public sealed record DeleteRecipeCommand(Guid Id, string UserId, bool IsAdmin, long ExpectedVersion) : IRequest, IContentMutation;

@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,10 +12,20 @@ using Microsoft.Extensions.Configuration;
 
 namespace CulinaryBlog.Infrastructure.Audit;
 
+/// <summary>Represents the audit log service.</summary>
+/// <param name="dbContext">The db context supplied to this operation.</param>
+/// <param name="configuration">The configuration supplied to this operation.</param>
 public sealed class AuditLogService(
     AppDbContext dbContext,
     IConfiguration configuration) : IAuditLogService
 {
+    /// <summary>Lists audit logs.</summary>
+    /// <param name="level">The level supplied to this operation.</param>
+    /// <param name="search">The search supplied to this operation.</param>
+    /// <param name="page">The page supplied to this operation.</param>
+    /// <param name="pageSize">The page size supplied to this operation.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     public async Task<AuditLogsEnvelope> ListAuditLogsAsync(
         string? level,
         string? search,
@@ -21,8 +33,8 @@ public sealed class AuditLogService(
         int pageSize,
         CancellationToken cancellationToken)
     {
-        var targetPage = Math.Max(1, page);
-        var targetPageSize = Math.Clamp(pageSize, 1, 100);
+        int targetPage = Math.Max(1, page);
+        int targetPageSize = Math.Clamp(pageSize, 1, 100);
 
         var entries = new List<AuditLogEntryDto>();
 
@@ -30,7 +42,7 @@ public sealed class AuditLogService(
         try
         {
             var logFiles = GetLogFiles();
-            foreach (var file in logFiles)
+            foreach (string file in logFiles)
             {
                 var fileEntries = ReadEntriesFromFile(file);
                 entries.AddRange(fileEntries);
@@ -46,7 +58,8 @@ public sealed class AuditLogService(
         }
 
         // 2. Synthesize audit entries from entity change tracking in database
-        var dbEntries = await GetDatabaseAuditEntriesAsync(cancellationToken).ConfigureAwait(false);
+        var dbEntries = await this.GetDatabaseAuditEntriesAsync(cancellationToken).ConfigureAwait(false);
+
         // Snapshots describe current state, not additional historical edits or transitions.
         // Once recorded history exists for an entity, keep that history as the sole source.
         var recordedIds = entries.Where(entry => entry.Properties?.ContainsKey("AuditEvent") == true)
@@ -55,21 +68,22 @@ public sealed class AuditLogService(
         entries.AddRange(dbEntries.Where(snapshot => !recordedIds.Contains(
             snapshot.Properties?.GetValueOrDefault("RecipeId") ?? snapshot.Properties?.GetValueOrDefault("CategoryId") ?? string.Empty)));
 
-        var userIds = entries.Select(entry => Guid.TryParse(entry.UserId, out var id) ? id : Guid.Empty)
-            .Where(id => id != Guid.Empty).Distinct().ToArray();
+        string?[] userIds = [.. entries.Select(entry => entry.UserId)
+            .Where(id => id != null).Distinct(),];
         var userNames = await dbContext.Users.AsNoTracking().Where(user => userIds.Contains(user.Id))
             .ToDictionaryAsync(user => user.Id.ToString(), user => user.DisplayName, cancellationToken).ConfigureAwait(false);
-        entries = entries.Select(entry =>
+        entries = [.. entries.Select(entry =>
         {
             var properties = entry.Properties is null
-                ? new Dictionary<string, string>()
+                ? []
                 : new Dictionary<string, string>(entry.Properties);
-            if (string.IsNullOrWhiteSpace(properties.GetValueOrDefault("UserName")) && entry.UserId is not null && userNames.TryGetValue(entry.UserId, out var name))
+            if (string.IsNullOrWhiteSpace(properties.GetValueOrDefault("UserName")) && entry.UserId is not null && userNames.TryGetValue(entry.UserId, out string? name))
             {
                 properties["UserName"] = name;
             }
+
             return entry with { Properties = properties };
-        }).ToList();
+        }),];
 
         // Deduplicate and order by timestamp descending
         var query = entries
@@ -84,19 +98,19 @@ public sealed class AuditLogService(
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
+            string term = search.Trim();
             query = query.Where(e =>
                 e.Message.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                 (e.CorrelationId?.Contains(term, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.UserId?.Contains(term, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.RequestPath?.Contains(term, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.Properties?.Values.Any(value => value.Contains(term, StringComparison.OrdinalIgnoreCase)) == true) ||
-                (e.EventName.Contains(term, StringComparison.OrdinalIgnoreCase)));
+                e.EventName.Contains(term, StringComparison.OrdinalIgnoreCase));
         }
 
         var ordered = query.OrderByDescending(e => e.Timestamp).ThenBy(e => e.Id).ToList();
-        var total = ordered.Count;
-        var totalPages = total == 0 ? 1 : (int)Math.Ceiling((double)total / targetPageSize);
+        int total = ordered.Count;
+        int totalPages = total == 0 ? 1 : (int)Math.Ceiling((double)total / targetPageSize);
 
         var pagedData = ordered
             .Skip((targetPage - 1) * targetPageSize)
@@ -121,16 +135,20 @@ public sealed class AuditLogService(
 
     private static IEnumerable<string> GetLogFiles()
     {
-        var logDirs = new[]
-        {
+        string[] logDirs =
+        [
             Path.Combine(Directory.GetCurrentDirectory(), "logs"),
             Path.Combine(AppContext.BaseDirectory, "logs"),
-        };
+        ];
 
-        var dir = Array.Find(logDirs, Directory.Exists);
-        return dir is null
-            ? []
-            : Directory.GetFiles(dir, "api-*.json").OrderByDescending(File.GetLastWriteTimeUtc);
+        string? dir = logDirs.FirstOrDefault(Directory.Exists);
+        if (dir is not null)
+        {
+            return Directory.GetFiles(dir, "api-*.json")
+                .OrderByDescending(File.GetLastWriteTimeUtc);
+        }
+
+        return [];
     }
 
     private static List<AuditLogEntryDto> ReadEntriesFromFile(string filePath)
@@ -142,7 +160,10 @@ public sealed class AuditLogService(
         string? line;
         while ((line = reader.ReadLine()) is not null)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
 
             try
             {
@@ -153,21 +174,27 @@ public sealed class AuditLogService(
                     ? dto
                     : DateTimeOffset.UtcNow;
 
-                var level = root.TryGetProperty("@l", out var lProp)
+                string level = root.TryGetProperty("@l", out var lProp)
                     ? lProp.GetString() ?? "Information"
                     : "Information";
 
-                var hasMessage = root.TryGetProperty("@m", out var messageProperty)
-                    || root.TryGetProperty("@mt", out messageProperty);
-                var message = hasMessage ? messageProperty.GetString() ?? string.Empty : string.Empty;
+                string message = string.Empty;
+                if (root.TryGetProperty("@m", out var mProp))
+                {
+                    message = mProp.GetString() ?? string.Empty;
+                }
+                else if (root.TryGetProperty("@mt", out var mtProp))
+                {
+                    message = mtProp.GetString() ?? string.Empty;
+                }
 
-                var correlationId = root.TryGetProperty("CorrelationId", out var cProp) ? cProp.GetString() : null;
-                var userId = root.TryGetProperty("UserId", out var uProp) ? uProp.GetString() : null;
-                var requestPath = root.TryGetProperty("RequestPath", out var pProp) ? pProp.GetString() : null;
-                var requestMethod = root.TryGetProperty("RequestMethod", out var rProp) ? rProp.GetString() : null;
-                int? statusCode = root.TryGetProperty("StatusCode", out var sProp) && sProp.TryGetInt32(out var sc) ? sc : null;
+                string? correlationId = root.TryGetProperty("CorrelationId", out var cProp) ? cProp.GetString() : null;
+                string? userId = root.TryGetProperty("UserId", out var uProp) ? uProp.GetString() : null;
+                string? requestPath = root.TryGetProperty("RequestPath", out var pProp) ? pProp.GetString() : null;
+                string? requestMethod = root.TryGetProperty("RequestMethod", out var rProp) ? rProp.GetString() : null;
+                int? statusCode = root.TryGetProperty("StatusCode", out var sProp) && sProp.TryGetInt32(out int sc) ? sc : null;
 
-                var eventName = root.TryGetProperty("AuditEvent", out var auditEventProp)
+                string eventName = root.TryGetProperty("AuditEvent", out var auditEventProp)
                     ? auditEventProp.GetString() ?? "ContentAudit"
                     : "AppLog";
                 if (eventName == "AppLog" && root.TryGetProperty("EventId", out var evProp))
@@ -183,8 +210,8 @@ public sealed class AuditLogService(
                 }
                 else if (eventName == "AppLog" && message.Contains("Audit event", StringComparison.OrdinalIgnoreCase))
                 {
-                    var parts = message.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    var idx = Array.FindIndex(parts, p => string.Equals(p, "event", StringComparison.OrdinalIgnoreCase));
+                    string[] parts = message.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    int idx = Array.FindIndex(parts, p => string.Equals(p, "event", StringComparison.OrdinalIgnoreCase));
                     if (idx >= 0 && idx + 1 < parts.Length)
                     {
                         eventName = parts[idx + 1];
@@ -198,7 +225,7 @@ public sealed class AuditLogService(
                 }
 
                 var properties = new Dictionary<string, string>();
-                foreach (var prop in root.EnumerateObject().Where(property => !property.Name.StartsWith('@')))
+                foreach (var prop in root.EnumerateObject().Where(prop => !prop.Name.StartsWith('@')))
                 {
                     properties[prop.Name] = prop.Value.ToString();
                 }
@@ -359,9 +386,9 @@ public sealed class AuditLogService(
                 new Dictionary<string, string> { ["CategoryId"] = c.Id.ToString(), ["Name"] = c.Name }));
         }
 
-        return result.Select(entry => entry with
+        return [.. result.Select(entry => entry with
         {
             Properties = new Dictionary<string, string>(entry.Properties!) { ["Source"] = "snapshot" },
-        }).ToList();
+        }),];
     }
 }

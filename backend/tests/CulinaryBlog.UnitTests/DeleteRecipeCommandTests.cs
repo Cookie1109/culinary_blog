@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Content;
 using CulinaryBlog.Application.Features.Recipes.Commands;
@@ -5,12 +7,15 @@ using CulinaryBlog.Domain.Recipes;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for delete recipe command tests.</summary>
 public sealed class DeleteRecipeCommandTests
 {
+    /// <summary>Verifies that owner can soft delete recipe.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task OwnerCanSoftDeleteRecipe()
     {
-        var ownerId = Guid.NewGuid();
+        var ownerId = Guid.NewGuid().ToString();
         var recipe = CreateRecipe(ownerId);
         var unitOfWork = new FakeUnitOfWork(recipe);
 
@@ -21,25 +26,29 @@ public sealed class DeleteRecipeCommandTests
         Assert.Equal(1, unitOfWork.SaveCount);
     }
 
+    /// <summary>Verifies that other author cannot delete recipe.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task OtherAuthorCannotDeleteRecipe()
     {
-        var recipe = CreateRecipe(Guid.NewGuid());
+        var recipe = CreateRecipe(Guid.NewGuid().ToString());
         var unitOfWork = new FakeUnitOfWork(recipe);
 
         var exception = await Assert.ThrowsAsync<ContentProblemException>(() =>
             new DeleteRecipeCommandHandler(unitOfWork).Handle(
-                new DeleteRecipeCommand(recipe.Id, Guid.NewGuid(), false, recipe.Version), CancellationToken.None));
+                new DeleteRecipeCommand(recipe.Id, Guid.NewGuid().ToString(), false, recipe.Version), CancellationToken.None));
 
         Assert.Equal(ContentProblemKind.Forbidden, exception.Kind);
         Assert.False(recipe.IsDeleted);
         Assert.Equal(0, unitOfWork.SaveCount);
     }
 
+    /// <summary>Verifies that stale version does not delete recipe.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task StaleVersionDoesNotDeleteRecipe()
     {
-        var ownerId = Guid.NewGuid();
+        var ownerId = Guid.NewGuid().ToString();
         var recipe = CreateRecipe(ownerId);
         var unitOfWork = new FakeUnitOfWork(recipe);
 
@@ -53,21 +62,25 @@ public sealed class DeleteRecipeCommandTests
         Assert.Equal(0, unitOfWork.SaveCount);
     }
 
+    /// <summary>Verifies that admin can soft delete recipe of other author.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task AdminCanSoftDeleteRecipeOfOtherAuthor()
     {
-        var ownerId = Guid.NewGuid();
+        var ownerId = Guid.NewGuid().ToString();
         var adminId = Guid.NewGuid();
         var recipe = CreateRecipe(ownerId);
         var unitOfWork = new FakeUnitOfWork(recipe);
 
         await new DeleteRecipeCommandHandler(unitOfWork).Handle(
-            new DeleteRecipeCommand(recipe.Id, adminId, true, recipe.Version), CancellationToken.None);
+            new DeleteRecipeCommand(recipe.Id, adminId.ToString(), true, recipe.Version), CancellationToken.None);
 
         Assert.True(recipe.IsDeleted);
         Assert.Equal(1, unitOfWork.SaveCount);
     }
 
+    /// <summary>Verifies that non existent recipe throws not found.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task NonExistentRecipeThrowsNotFound()
     {
@@ -75,16 +88,26 @@ public sealed class DeleteRecipeCommandTests
 
         var exception = await Assert.ThrowsAsync<ContentProblemException>(() =>
             new DeleteRecipeCommandHandler(unitOfWork).Handle(
-                new DeleteRecipeCommand(Guid.NewGuid(), Guid.NewGuid(), false, 1), CancellationToken.None));
+                new DeleteRecipeCommand(Guid.NewGuid(), Guid.NewGuid().ToString(), false, 1), CancellationToken.None));
 
         Assert.Equal(ContentProblemKind.NotFound, exception.Kind);
         Assert.Equal("RECIPE_NOT_FOUND", exception.Code);
         Assert.Equal(0, unitOfWork.SaveCount);
     }
 
-    private static Recipe CreateRecipe(Guid ownerId) => Recipe.Create(
-        Guid.NewGuid(), ownerId, "sample-recipe", "Sample recipe", "Description",
-        Guid.NewGuid(), 10, 10, 2, RecipeDifficulty.Easy, null, null);
+    private static Recipe CreateRecipe(string ownerId) => Recipe.Create(
+        Guid.NewGuid(),
+        ownerId,
+        "sample-recipe",
+        "Sample recipe",
+        "Description",
+        Guid.NewGuid(),
+        10,
+        10,
+        2,
+        RecipeDifficulty.Easy,
+        null,
+        null);
 
     private sealed class FakeUnitOfWork(Recipe? recipe) : IUnitOfWork
     {
@@ -94,7 +117,7 @@ public sealed class DeleteRecipeCommandTests
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
         {
-            SaveCount++;
+            this.SaveCount++;
             return Task.FromResult(1);
         }
     }

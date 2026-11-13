@@ -1,21 +1,13 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Reflection;
-using ArchUnitNET.Loader;
-using ArchUnitNET.xUnit;
-using static ArchUnitNET.Fluent.ArchRuleDefinition;
-using Architecture = ArchUnitNET.Domain.Architecture;
 
 namespace CulinaryBlog.ArchitectureTests;
 
+/// <summary>Contains regression checks for dependency direction tests.</summary>
 public sealed class DependencyDirectionTests
 {
-    private static readonly Assembly Domain = CulinaryBlog.Domain.AssemblyReference.Assembly;
-    private static readonly Assembly Application = CulinaryBlog.Application.AssemblyReference.Assembly;
-    private static readonly Assembly Infrastructure = typeof(CulinaryBlog.Infrastructure.DependencyInjection).Assembly;
-    private static readonly Assembly Api = typeof(Program).Assembly;
-    private static readonly Architecture Architecture = new ArchLoader()
-        .LoadAssemblies(Domain, Application, Infrastructure, Api)
-        .Build();
-
+    /// <summary>Verifies that domain has no project or third party dependencies.</summary>
     [Fact]
     public void DomainHasNoProjectOrThirdPartyDependencies()
     {
@@ -24,23 +16,23 @@ public sealed class DependencyDirectionTests
         Assert.Empty(disallowed);
     }
 
+    /// <summary>Verifies that application does not reference infrastructure or api.</summary>
     [Fact]
     public void ApplicationDoesNotReferenceInfrastructureOrApi()
     {
-        Types().That().ResideInAssembly(Application).Should()
-            .NotDependOnAny(Types().That().ResideInAssembly(Infrastructure))
-            .Check(Architecture);
-        Types().That().ResideInAssembly(Application).Should()
-            .NotDependOnAny(Types().That().ResideInAssembly(Api))
-            .Check(Architecture);
+        var references = GetReferenceNames(CulinaryBlog.Application.AssemblyReference.Assembly);
+
+        Assert.DoesNotContain("CulinaryBlog.Infrastructure", references);
+        Assert.DoesNotContain("CulinaryBlog.Api", references);
     }
 
+    /// <summary>Verifies that infrastructure does not reference api.</summary>
     [Fact]
     public void InfrastructureDoesNotReferenceApi()
     {
-        Types().That().ResideInAssembly(Infrastructure).Should()
-            .NotDependOnAny(Types().That().ResideInAssembly(Api))
-            .Check(Architecture);
+        var references = GetReferenceNames(typeof(CulinaryBlog.Infrastructure.DependencyInjection).Assembly);
+
+        Assert.DoesNotContain("CulinaryBlog.Api", references);
     }
 
     private static string[] GetNonPlatformReferences(Assembly assembly) =>
@@ -48,7 +40,12 @@ public sealed class DependencyDirectionTests
             .Select(reference => reference.Name ?? string.Empty)
             .Where(name =>
                 !name.StartsWith("System", StringComparison.Ordinal) &&
-                !name.StartsWith("Microsoft", StringComparison.Ordinal) &&
+                !name.Equals("Microsoft.CSharp", StringComparison.Ordinal) &&
                 !name.Equals("netstandard", StringComparison.Ordinal))
+            .ToArray();
+
+    private static string[] GetReferenceNames(Assembly assembly) =>
+        assembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
             .ToArray();
 }

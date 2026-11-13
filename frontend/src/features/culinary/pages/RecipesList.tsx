@@ -1,14 +1,17 @@
 'use client'
 
 import { LoaderCircle, Search as SearchIcon, X } from 'lucide-react'
-import { useEffect, useRef, useState, useTransition, type FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, useTransition, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
 import { useRouter } from 'next/navigation'
 import { normalizeRecipeSearch, recipeSearchPages, recipeSearchValidation } from '@/lib/recipe-search'
+import { useForm } from 'react-hook-form'
 import { FieldError } from '@/components/ui/field-error'
-import { Modal } from '@/components/ui/modal'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
 import type { Category, PageEnvelope, Recipe } from '@/lib/api/content-client'
+import type { PublicRecipeFilterValues } from '../forms/content-schemas'
+
+const Modal = lazy(() => import('@/components/ui/modal').then((module) => ({ default: module.Modal })))
 
 const difficulties = [
   { value: 'easy', label: 'Dễ' },
@@ -18,6 +21,12 @@ const difficulties = [
 ]
 
 const MAX_TIME_SLIDER_VALUE = 190
+const sortAliases: Record<string, string> = {
+  '-createdAt': 'newest',
+  createdAt: 'oldest',
+  title: 'az',
+  '-title': 'za',
+}
 
 export function RecipesList({
   categories,
@@ -32,12 +41,39 @@ export function RecipesList({
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const q = normalizeRecipeSearch(searchParams.get('q') ?? '')
-  const category = searchParams.get('category') ?? ''
+  const categoryId = searchParams.get('categoryId')?.toLowerCase() ?? ''
+  const category =
+    searchParams.get('category')?.normalize('NFKC').trim().toLowerCase() ??
+    categories.find((item) => item.id === categoryId)?.slug ??
+    ''
   const difficulty = searchParams.get('difficulty') ?? ''
   const requestedMaxTime = Number.parseInt(searchParams.get('maxTime') ?? '0', 10)
   const maxTime = Number.isFinite(requestedMaxTime) && requestedMaxTime > 0 ? requestedMaxTime : 0
-  const requestedSort = searchParams.get('sort') ?? ''
-  const sort = !q && requestedSort === 'relevance' ? 'newest' : requestedSort || (q ? 'relevance' : 'newest')
+  const sortBy = searchParams.get('sortBy')
+  const sortOrder = searchParams.get('sortOrder')?.toLowerCase() ?? (sortBy ? 'asc' : 'desc')
+  const aliasSort =
+    sortBy === 'relevance' ? 'relevance' : `${sortOrder === 'desc' ? '-' : ''}${sortBy ?? 'createdAt'}`
+  const requestedSort = searchParams.get('sort') ?? (sortBy || searchParams.has('sortOrder') ? aliasSort : '')
+  const sort =
+    !q && requestedSort === 'relevance'
+      ? 'newest'
+      : (sortAliases[requestedSort] ?? (requestedSort || (q ? 'relevance' : 'newest')))
+  const maxCookTime = searchParams.get('maxCookTime') ?? ''
+  const minServings = searchParams.get('minServings') ?? ''
+  const minPrepTime = searchParams.get('minPrepTime') ?? ''
+  const maxPrepTime = searchParams.get('maxPrepTime') ?? ''
+  const pageSize = searchParams.get('pageSize') ?? '12'
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PublicRecipeFilterValues>({
+    resolver: async (...args) =>
+      (await import('../forms/deferred-resolvers')).publicRecipeFiltersResolver(...args),
+    defaultValues: { maxCookTime, minServings, minPrepTime, maxPrepTime },
+  })
+  const [searchError, setSearchError] = useState(initialSearchError)
   const requestedPage = Number.parseInt(searchParams.get('page') ?? '1', 10)
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
   const recipes = result.data
@@ -56,7 +92,6 @@ export function RecipesList({
       )}
     </>
   )
-  const [searchError, setSearchError] = useState(initialSearchError)
   const [searchValue, setSearchValue] = useState(q)
   const [timeValue, setTimeValue] = useState(maxTime ? Math.min(maxTime, 180) : MAX_TIME_SLIDER_VALUE)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
@@ -95,6 +130,11 @@ export function RecipesList({
   }, [isPending, result])
   useEffect(() => setTimeValue(maxTime ? Math.min(maxTime, 180) : MAX_TIME_SLIDER_VALUE), [maxTime])
 
+  useEffect(
+    () => reset({ maxCookTime, minServings, minPrepTime, maxPrepTime }),
+    [maxCookTime, minServings, minPrepTime, maxPrepTime, reset],
+  )
+
   const setFilter = (key: string, value: string) => {
     if (key === 'q' || key === 'page') {
       setFiltersOpen(false)
@@ -109,6 +149,12 @@ export function RecipesList({
       next.delete('sortBy')
       next.delete('sortOrder')
     }
+    if (key === 'category') next.delete('categoryId')
+    if (key === 'sort') {
+      next.delete('sortBy')
+      next.delete('sortOrder')
+    }
+    if (key === 'q' && !value && next.get('sort') === 'relevance') next.delete('sort')
     const destination = next.toString()
     if (destination === searchParams.toString()) {
       focusResults.current = false
@@ -149,6 +195,17 @@ export function RecipesList({
     inputRef.current?.focus()
   }
 
+  const applyAdvancedFilters = (values: PublicRecipeFilterValues) => {
+    const next = new URLSearchParams(searchParams)
+    for (const key of ['maxCookTime', 'minServings', 'minPrepTime', 'maxPrepTime'] as const) {
+      if (values[key]) next.set(key, values[key])
+      else next.delete(key)
+    }
+    next.delete('page')
+    setFiltersOpen(false)
+    startTransition(() => setSearchParams(next, { replace: false, scroll: false }))
+  }
+
   const applyTimeFilter = (value: number) => {
     setFilter('maxTime', value === MAX_TIME_SLIDER_VALUE ? '' : String(value))
   }
@@ -157,6 +214,8 @@ export function RecipesList({
     setCategoryModalOpen(false)
     setFilter('category', slug)
   }
+
+  const browseLabel = hasActiveFilters ? 'Bỏ bộ lọc' : 'Xem tất cả công thức'
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -252,19 +311,15 @@ export function RecipesList({
         </button>
       </div>
       <div className="mb-6 flex h-14 items-center gap-3">
-        <div
-          className="flex min-w-0 flex-1 gap-2 overflow-x-auto"
-          role="group"
-          aria-label="Bộ lọc đang áp dụng"
-        >
+        <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto" aria-label="Bộ lọc đang áp dụng">
           {q && (
             <button
               type="button"
+              aria-label="Bỏ từ khóa"
               onClick={clearSearch}
               className="flex max-w-full shrink-0 items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm text-foreground"
             >
               <span className="truncate">Từ khóa: {q}</span>
-              <span className="sr-only">, bỏ từ khóa</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -273,9 +328,9 @@ export function RecipesList({
               type="button"
               onClick={() => setFilter('category', '')}
               className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-sm"
+              aria-label="Bỏ lọc danh mục"
             >
               {selectedCategory?.name ?? category}
-              <span className="sr-only">, bỏ lọc danh mục</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -284,9 +339,9 @@ export function RecipesList({
               type="button"
               onClick={() => setFilter('difficulty', '')}
               className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-sm"
+              aria-label="Bỏ lọc độ khó"
             >
               {difficulties.find((item) => item.value === difficulty)?.label ?? difficulty}
-              <span className="sr-only">, bỏ lọc độ khó</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -295,18 +350,29 @@ export function RecipesList({
               type="button"
               onClick={() => setFilter('maxTime', '')}
               className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-sm"
+              aria-label="Bỏ lọc thời gian"
             >
               Tối đa {maxTime} phút
-              <span className="sr-only">, bỏ lọc thời gian</span>
               <X size={14} aria-hidden="true" />
             </button>
           )}
         </div>
-        {(q || category || difficulty || maxTime || sort !== 'newest') && (
+        {(q ||
+          category ||
+          categoryId ||
+          difficulty ||
+          maxTime ||
+          maxCookTime ||
+          minServings ||
+          minPrepTime ||
+          maxPrepTime ||
+          sort !== 'newest' ||
+          pageSize !== '12') && (
           <button
             type="button"
             onClick={() => {
               setFiltersOpen(false)
+              setSearchError('')
               startTransition(() => setSearchParams(new URLSearchParams(), { replace: false, scroll: false }))
             }}
             className="shrink-0 text-sm text-primary underline"
@@ -411,6 +477,45 @@ export function RecipesList({
               <span>{timeValue === MAX_TIME_SLIDER_VALUE ? '3+ giờ' : `${timeValue} phút`}</span>
             </div>
           </fieldset>
+          <form noValidate onSubmit={handleSubmit(applyAdvancedFilters)} className="sm:col-span-3 lg:mt-6">
+            <fieldset className="space-y-4">
+              <legend className="mb-3 w-full border-b border-border pb-3 font-serif text-xs uppercase tracking-widest text-muted-foreground lg:pb-2">
+                Khẩu phần và thời gian
+              </legend>
+              {(
+                [
+                  ['maxCookTime', 'Thời gian nấu tối đa (phút)', 0],
+                  ['minServings', 'Khẩu phần tối thiểu (người)', 1],
+                  ['minPrepTime', 'Chuẩn bị từ (phút)', 1],
+                  ['maxPrepTime', 'Chuẩn bị đến (phút)', 1],
+                ] as const
+              ).map(([key, label, minimum]) => (
+                <div key={key}>
+                  <label htmlFor={`filter-${key}`} className="mb-1 block text-sm">
+                    {label}
+                  </label>
+                  <input
+                    id={`filter-${key}`}
+                    type="number"
+                    min={minimum}
+                    step={1}
+                    {...register(key)}
+                    aria-invalid={Boolean(errors[key])}
+                    aria-describedby={errors[key] ? `filter-${key}-error` : undefined}
+                    placeholder="Không giới hạn"
+                    className="w-full border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                  />
+                  <FieldError id={`filter-${key}-error`} message={errors[key]?.message} />
+                </div>
+              ))}
+              <button
+                type="submit"
+                className="w-full bg-primary px-3 py-2.5 text-sm text-primary-foreground hover:bg-primary/90"
+              >
+                Áp dụng bộ lọc
+              </button>
+            </fieldset>
+          </form>
           <button
             type="button"
             disabled={isPending}
@@ -447,10 +552,36 @@ export function RecipesList({
               onChange={(event) => setFilter('sort', event.target.value)}
               className="border border-border bg-background px-4 py-2.5 text-sm"
             >
+              <option value="relevance" disabled={!q}>
+                Phù hợp nhất
+              </option>
               {q && <option value="relevance">Phù hợp nhất</option>}
               <option value="newest">Mới nhất</option>
+              <option value="oldest">Cũ nhất</option>
               <option value="quickest">Nấu nhanh nhất</option>
               <option value="az">Tên A–Z</option>
+              <option value="za">Tên Z–A</option>
+              <option value="cookTime">Thời gian nấu tăng dần</option>
+              <option value="-cookTime">Thời gian nấu giảm dần</option>
+              <option value="prepTime">Thời gian chuẩn bị tăng dần</option>
+              <option value="-prepTime">Thời gian chuẩn bị giảm dần</option>
+              <option value="servings">Khẩu phần tăng dần</option>
+              <option value="-servings">Khẩu phần giảm dần</option>
+            </select>
+            <label htmlFor="recipes-page-size" className="sr-only">
+              Số công thức mỗi trang
+            </label>
+            <select
+              id="recipes-page-size"
+              value={pageSize}
+              onChange={(event) => setFilter('pageSize', event.target.value)}
+              className="border border-border bg-background px-3 py-2.5 text-sm"
+            >
+              {Array.from(new Set(['12', '24', '50', pageSize])).map((size) => (
+                <option key={size} value={size}>
+                  {size} công thức / trang
+                </option>
+              ))}
             </select>
           </div>
 
@@ -460,7 +591,7 @@ export function RecipesList({
               : `Hiển thị ${recipes.length} trên tổng số ${result.meta.total} công thức, trang ${result.meta.page} trên ${result.meta.totalPages}`}
           </div>
 
-          {loadError ? (
+          {loadError && (
             <div role="alert" className="border border-border bg-card p-8 text-center">
               <h2 className="font-serif text-2xl">Chưa tải được kết quả</h2>
               <p className="mt-3 text-sm text-muted-foreground">
@@ -475,7 +606,8 @@ export function RecipesList({
                 Thử lại
               </button>
             </div>
-          ) : initialSearchError ? (
+          )}
+          {!loadError && initialSearchError && (
             <div className="border border-border bg-card px-6 py-12 text-center">
               <p className="text-muted-foreground">Điều chỉnh từ khóa để xem công thức phù hợp.</p>
               <button
@@ -486,7 +618,8 @@ export function RecipesList({
                 Sửa từ khóa
               </button>
             </div>
-          ) : recipes.length === 0 ? (
+          )}
+          {!loadError && !initialSearchError && recipes.length === 0 && (
             <div role="status" className="border border-border bg-card px-6 py-12 text-center">
               <SearchIcon size={28} className="mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
               <h2 className="font-serif text-2xl">
@@ -519,11 +652,12 @@ export function RecipesList({
                   }
                   className="bg-primary px-4 py-2 text-sm text-primary-foreground"
                 >
-                  {pageOutOfRange ? 'Về trang đầu' : hasActiveFilters ? 'Bỏ bộ lọc' : 'Xem tất cả công thức'}
+                  {pageOutOfRange ? 'Về trang đầu' : browseLabel}
                 </button>
               </div>
             </div>
-          ) : (
+          )}
+          {!loadError && !initialSearchError && !(recipes.length === 0) && (
             <div className="grid grid-cols-1 gap-x-6 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
               {recipes.map((recipe) => (
                 <RecipeCard key={recipe.id} recipe={recipe} searchQuery={q} />
@@ -576,37 +710,39 @@ export function RecipesList({
       </div>
 
       {categoryModalOpen && (
-        <Modal open title="Tất cả danh mục" onClose={() => setCategoryModalOpen(false)}>
-          <div className="grid max-h-[60vh] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-            <button
-              type="button"
-              aria-pressed={!category}
-              onClick={() => selectCategory('')}
-              className={`border px-4 py-3 text-left text-sm transition-colors ${
-                !category
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border hover:border-primary hover:text-primary'
-              }`}
-            >
-              Tất cả
-            </button>
-            {categories.map((item) => (
+        <Suspense fallback={null}>
+          <Modal open title="Tất cả danh mục" onClose={() => setCategoryModalOpen(false)}>
+            <div className="grid max-h-[60vh] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
               <button
-                key={item.id}
                 type="button"
-                aria-pressed={category === item.slug}
-                onClick={() => selectCategory(item.slug)}
+                aria-pressed={!category}
+                onClick={() => selectCategory('')}
                 className={`border px-4 py-3 text-left text-sm transition-colors ${
-                  category === item.slug
+                  !category
                     ? 'border-primary bg-primary text-primary-foreground'
                     : 'border-border hover:border-primary hover:text-primary'
                 }`}
               >
-                {item.name}
+                Tất cả
               </button>
-            ))}
-          </div>
-        </Modal>
+              {categories.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={category === item.slug}
+                  onClick={() => selectCategory(item.slug)}
+                  className={`border px-4 py-3 text-left text-sm transition-colors ${
+                    category === item.slug
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </div>
+          </Modal>
+        </Suspense>
       )}
     </div>
   )

@@ -6,15 +6,17 @@ import { createPageMetadata, summarize } from '@/lib/seo'
 
 export const revalidate = 600
 
-type CategoryPageProps = {
-  params: Promise<{ slug: string }>
-  searchParams: Promise<{ page?: string | string[] }>
+export function generateStaticParams() {
+  return []
 }
 
-async function routeState({ params, searchParams }: CategoryPageProps) {
-  const { slug } = await params
-  const rawPage = (await searchParams).page
-  const requestedPage = Number.parseInt(Array.isArray(rawPage) ? (rawPage[0] ?? '1') : (rawPage ?? '1'), 10)
+type CategoryPageProps = {
+  params: Promise<{ slug: string; page?: string }>
+}
+
+async function routeState({ params }: CategoryPageProps) {
+  const { slug, page: rawPage } = await params
+  const requestedPage = Number(rawPage ?? '1')
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
   return { slug, page }
 }
@@ -22,9 +24,7 @@ async function routeState({ params, searchParams }: CategoryPageProps) {
 export async function generateMetadata(props: CategoryPageProps): Promise<Metadata> {
   const { slug, page } = await routeState(props)
   const result = await getPublishedCategory(slug, page, revalidate)
-  if (!result) {
-    return { title: 'Không tìm thấy danh mục', robots: { index: false, follow: false } }
-  }
+  if (!result) notFound()
 
   const { category } = result.data
   const suffix = page > 1 ? ` – Trang ${page}` : ''
@@ -40,8 +40,8 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
   })
 }
 
-export default async function CategoryPage(props: CategoryPageProps) {
-  const { slug, page } = await routeState(props)
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const { slug, page } = await routeState({ params })
   const result = await getPublishedCategory(slug, page, revalidate)
   if (!result) notFound()
 

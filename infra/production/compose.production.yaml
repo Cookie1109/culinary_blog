@@ -90,6 +90,8 @@ services:
     <<: *runtime
     image: ${OTEL_IMAGE:?Set OTEL_IMAGE to a verified image@sha256 digest}
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    environment:
+      OTEL_TRACE_BACKEND_ENDPOINT: ${OTEL_TRACE_BACKEND_ENDPOINT:?Set the Jaeger or Tempo OTLP HTTP base URL}
     volumes:
       - ../observability/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
     networks: [backend]
@@ -173,6 +175,7 @@ services:
       ObjectStorage__BucketName: ${MINIO_BUCKET:?Set MINIO_BUCKET}
       Telemetry__OtlpEndpoint: http://otel-collector:4317
       ReverseProxy__TrustForwardedHeaders: "true"
+      ReverseProxy__KnownNetworks__0: ${TRUSTED_PROXY_CIDR:?Set the CIDR of the trusted Nginx network}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?Inject JWT_SIGNING_KEY from the deployment secret store}
       DataProtection__KeyPath: /app/data-protection
       Google__ClientId: ${AUTH_GOOGLE_ID:-}
@@ -280,12 +283,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Inject POSTGRES_PASSWORD from the deployment secret store}
       BACKUP_RETENTION_DAYS: "30"
-      BACKUP_INTERVAL_SECONDS: "86400"
       BACKUP_RETRY_SECONDS: "300"
     volumes:
       - ../operations/postgres-backup.sh:/opt/operations/postgres-backup.sh:ro
+      - ../operations/backup-scheduler.sh:/opt/operations/backup-scheduler.sh:ro
       - postgres-backups:/backups
-    entrypoint: ["/bin/sh", "-ec", "while true; do /bin/sh /opt/operations/postgres-backup.sh && sleep 86400 || sleep 300; done"]
+    entrypoint: ["/bin/sh", "/opt/operations/backup-scheduler.sh", "/opt/operations/postgres-backup.sh"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -303,12 +306,12 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Inject MINIO_ROOT_PASSWORD from the deployment secret store}
       MINIO_BUCKET: ${MINIO_BUCKET:?Set MINIO_BUCKET}
       BACKUP_RETENTION_DAYS: "30"
-      BACKUP_INTERVAL_SECONDS: "86400"
       BACKUP_RETRY_SECONDS: "300"
     volumes:
       - ../operations/minio-backup.sh:/opt/operations/minio-backup.sh:ro
+      - ../operations/backup-scheduler.sh:/opt/operations/backup-scheduler.sh:ro
       - minio-backups:/backups
-    entrypoint: ["/bin/sh", "-ec", "while true; do /bin/sh /opt/operations/minio-backup.sh && sleep 86400 || sleep 300; done"]
+    entrypoint: ["/bin/sh", "/opt/operations/backup-scheduler.sh", "/opt/operations/minio-backup.sh"]
     depends_on:
       minio-bootstrap:
         condition: service_completed_successfully

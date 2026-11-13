@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Application.Media;
 using CulinaryBlog.Infrastructure.Persistence;
 using Hangfire;
@@ -6,6 +8,12 @@ using Microsoft.Extensions.Logging;
 
 namespace CulinaryBlog.Infrastructure.Jobs;
 
+/// <summary>Represents the image reconciliation job.</summary>
+/// <param name="dbContext">The db context supplied to this operation.</param>
+/// <param name="fileStorage">The file storage supplied to this operation.</param>
+/// <param name="jobs">The jobs supplied to this operation.</param>
+/// <param name="timeProvider">The time provider supplied to this operation.</param>
+/// <param name="logger">The logger supplied to this operation.</param>
 public sealed class ImageReconciliationJob(
     AppDbContext dbContext,
     IFileStorageService fileStorage,
@@ -14,13 +22,20 @@ public sealed class ImageReconciliationJob(
     ILogger<ImageReconciliationJob> logger)
 {
     private static readonly Action<ILogger, Guid, string, Exception?> MissingObject =
-        LoggerMessage.Define<Guid, string>(LogLevel.Warning, new EventId(4401, nameof(MissingObject)),
+        LoggerMessage.Define<Guid, string>(
+            LogLevel.Warning,
+            new EventId(4401, nameof(MissingObject)),
             "Image record {ImageId} has no original object {ObjectKey}");
 
     private static readonly Action<ILogger, string, Exception?> OrphanObject =
-        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4402, nameof(OrphanObject)),
+        LoggerMessage.Define<string>(
+            LogLevel.Warning,
+            new EventId(4402, nameof(OrphanObject)),
             "Orphan media object found at {ObjectKey}");
 
+    /// <summary>Performs the run operation.</summary>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>A task representing the operation and its result.</returns>
     [AutomaticRetry(Attempts = 1)]
     public async Task RunAsync(CancellationToken cancellationToken)
     {

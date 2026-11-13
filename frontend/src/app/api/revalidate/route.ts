@@ -22,8 +22,11 @@ export async function POST(request: Request) {
   }
 
   for (const path of paths) revalidatePath(path)
+  revalidatePath('/render-public/home/[key]', 'page')
+  revalidatePath('/render-public/categories/[key]', 'page')
   revalidatePath('/recipes/[slug]', 'page')
   revalidatePath('/categories/[slug]', 'page')
+  revalidatePath('/render-public/category/[slug]/[page]', 'page')
   revalidateTag(PUBLIC_CONTENT_TAG)
 
   return Response.json({ revalidated: true })

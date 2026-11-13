@@ -2,7 +2,16 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { signIn, signOut, useSession } from 'next-auth/react'
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import {
   loginWithPassword,
   registerWithPassword,
@@ -50,7 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: session, status, update } = useSession()
   const [busy, setBusy] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(true)
-  const user = session?.backendUser ? mapUser(session.backendUser) : null
+  const refreshing = useRef<Promise<Awaited<ReturnType<typeof update>> | null> | null>(null)
+  const backendUser = session?.backendUser
+  const user = useMemo(() => (backendUser ? mapUser(backendUser) : null), [backendUser])
 
   const establishAuthSession = useCallback(
     async (backendSession: Awaited<ReturnType<typeof rotateBackendSession>>) => {
@@ -76,16 +87,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [update],
   )
 
-  const refreshSession = useCallback(async () => {
-    const refreshToken = readRefreshToken()
-    if (!refreshToken) return null
-    try {
-      return await establishAuthSession(await rotateBackendSession(refreshToken))
-    } catch {
-      clearRefreshToken()
-      await signOut({ redirect: false })
-      return null
-    }
+  const refreshSession = useCallback(() => {
+    if (refreshing.current) return refreshing.current
+    refreshing.current = (async () => {
+      const refreshToken = readRefreshToken()
+      if (!refreshToken) return null
+      try {
+        return await establishAuthSession(await rotateBackendSession(refreshToken))
+      } catch {
+        clearRefreshToken()
+        await signOut({ redirect: false })
+        return null
+      }
+    })().finally(() => {
+      refreshing.current = null
+    })
+    return refreshing.current
   }, [establishAuthSession])
 
   useEffect(() => {
@@ -98,35 +115,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const expiresSoon =
       !session?.accessTokenExpiresAt || Date.now() >= Date.parse(session.accessTokenExpiresAt) - 30_000
     if (readRefreshToken() && (!session?.accessToken || expiresSoon)) {
-      void refreshSession().finally(() => setBootstrapping(false))
+      refreshSession().finally(() => setBootstrapping(false))
       return
     }
     if (session?.backendUser && (!session.accessToken || expiresSoon)) {
-      void signOut({ redirect: false }).finally(() => setBootstrapping(false))
+      signOut({ redirect: false }).finally(() => setBootstrapping(false))
       return
     }
     setBootstrapping(false)
   }, [refreshSession, session?.accessToken, session?.accessTokenExpiresAt, session?.backendUser, status])
 
-  const login = async (email: string, password: string) => {
-    setBusy(true)
-    try {
-      await establishAuthSession(await loginWithPassword(email, password))
-    } finally {
-      setBusy(false)
-    }
-  }
+  const login = useCallback(
+    async (email: string, password: string) => {
+      setBusy(true)
+      try {
+        await establishAuthSession(await loginWithPassword(email, password))
+      } finally {
+        setBusy(false)
+      }
+    },
+    [establishAuthSession],
+  )
 
-  const register = async (name: string, email: string, password: string) => {
-    setBusy(true)
-    try {
-      await establishAuthSession(await registerWithPassword(name, email, password))
-    } finally {
-      setBusy(false)
-    }
-  }
+  const register = useCallback(
+    async (name: string, email: string, password: string) => {
+      setBusy(true)
+      try {
+        await establishAuthSession(await registerWithPassword(name, email, password))
+      } finally {
+        setBusy(false)
+      }
+    },
+    [establishAuthSession],
+  )
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
+    // Finish an in-flight rotation before revoking the tab's latest token.
+    await refreshing.current
     const refreshToken = readRefreshToken()
     clearRefreshToken()
     if (refreshToken) {
@@ -138,31 +163,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     await signOut({ redirect: false })
     queryClient.removeQueries()
-  }
+  }, [queryClient])
 
-  const updateProfile = async (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => {
-    await updateRemoteProfile({
-      displayName: data.name ?? user?.name ?? '',
-      ...(data.bio !== undefined ? { bio: data.bio } : {}),
-      ...(data.avatar !== undefined ? { avatarUrl: data.avatar } : {}),
-    })
-    await update()
-  }
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading: status === 'loading' || bootstrapping || busy,
-        login,
-        logout,
-        register,
-        updateProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const updateProfile = useCallback(
+    async (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>) => {
+      await updateRemoteProfile({
+        displayName: data.name ?? user?.name ?? '',
+        ...(data.bio !== undefined ? { bio: data.bio } : {}),
+        ...(data.avatar !== undefined ? { avatarUrl: data.avatar || null } : {}),
+      })
+      await update({})
+    },
+    [update, user?.name],
   )
+
+  const value = useMemo(
+    () => ({
+      user,
+      isLoading: status === 'loading' || bootstrapping || busy,
+      login,
+      logout,
+      register,
+      updateProfile,
+    }),
+    [user, status, bootstrapping, busy, login, logout, register, updateProfile],
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

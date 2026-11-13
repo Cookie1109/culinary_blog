@@ -50,7 +50,6 @@ test('receiver is opt-in, requires build identity, and records only validated me
   delete process.env.WEB_VITALS_BUILD_ID
   expect((await POST(request())).status).toBe(503)
   process.env.VERCEL_GIT_COMMIT_SHA = 'a'.repeat(40)
-  process.env.WEB_VITALS_BUILD_ID = 'manual-build'
   const response = await POST(request())
   expect(response.status).toBe(204)
   expect(response.headers.get('cache-control')).toBe('no-store')

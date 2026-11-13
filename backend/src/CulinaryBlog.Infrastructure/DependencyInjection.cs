@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Security.Cryptography.X509Certificates;
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Abstractions.Persistence;
@@ -16,28 +18,38 @@ using CulinaryBlog.Infrastructure.Identity;
 using CulinaryBlog.Infrastructure.Jobs;
 using CulinaryBlog.Infrastructure.Media;
 using CulinaryBlog.Infrastructure.Persistence;
+using CulinaryBlog.Infrastructure.RateLimiting;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Minio;
+using RedLockNet;
+using RedLockNet.SERedis;
+using RedLockNet.SERedis.Configuration;
 using StackExchange.Redis;
 
 namespace CulinaryBlog.Infrastructure;
 
+/// <summary>Represents the dependency injection.</summary>
 public static class DependencyInjection
 {
+    /// <summary>Adds infrastructure.</summary>
+    /// <param name="services">The services supplied to this operation.</param>
+    /// <param name="configuration">The configuration supplied to this operation.</param>
+    /// <returns>The add infrastructure result.</returns>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var databaseConnection = RequireConnectionString(configuration, "Database");
-        var redisConnection = RequireConnectionString(configuration, "Redis");
-        var backgroundJobsEnabled = configuration.GetValue("BackgroundJobs:Enabled", true);
+        string databaseConnection = RequireConnectionString(configuration, "Database");
+        string redisConnection = RequireConnectionString(configuration, "Redis");
+        bool backgroundJobsEnabled = configuration.GetValue("BackgroundJobs:Enabled", true);
 
         services.AddOptions<ObjectStorageOptions>()
             .Bind(configuration.GetRequiredSection(ObjectStorageOptions.SectionName))
@@ -55,6 +67,7 @@ public static class DependencyInjection
         services.AddOptions<EmailOptions>()
             .Bind(configuration.GetSection(EmailOptions.SectionName))
             .ValidateDataAnnotations()
+            .Validate(options => !options.Enabled || SmtpClientFactory.IsTransportAllowed(options), "SMTP requires TLS except for local capture.")
             .ValidateOnStart();
         services.AddOptions<SitemapOptions>()
             .Bind(configuration.GetSection(SitemapOptions.SectionName))
@@ -66,9 +79,10 @@ public static class DependencyInjection
             .ValidateOnStart();
 
         services.AddScoped<AuditSaveChangesInterceptor>();
+        services.AddScoped<SlowQueryInterceptor>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) => options
-            .UseNpgsql(databaseConnection)
-            .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));
+            .UseNpgsql(databaseConnection, provider => provider.CommandTimeout(30))
+            .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(), serviceProvider.GetRequiredService<SlowQueryInterceptor>()));
         services.AddDbContext<DataProtectionKeyDbContext>(options => options.UseNpgsql(
             databaseConnection, provider => provider.MigrationsHistoryTable("__DataProtectionMigrations").CommandTimeout(30)));
         services.AddIdentityCore<ApplicationUser>(options =>
@@ -84,7 +98,7 @@ public static class DependencyInjection
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
-            .AddRoles<IdentityRole<Guid>>()
+            .AddRoles<IdentityRole>()
             .AddSignInManager()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
@@ -92,7 +106,7 @@ public static class DependencyInjection
         var dataProtection = services.AddDataProtection().SetApplicationName("CulinaryBlog");
         if (configuration.GetValue("DataProtection:PersistKeysToDatabase", false))
         {
-            var certificateBase64 = configuration["DataProtection:CertificateBase64"];
+            string? certificateBase64 = configuration["DataProtection:CertificateBase64"];
             if (string.IsNullOrWhiteSpace(certificateBase64))
             {
                 throw new InvalidOperationException("Database key storage requires DataProtection:CertificateBase64 from secret configuration.");
@@ -125,32 +139,41 @@ public static class DependencyInjection
         services.AddScoped<IRecipeRepository, RecipeRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IApplicationActor, HttpApplicationActor>();
         services.AddScoped<IPasswordResetEmailSender, PasswordResetEmailSender>();
+        services.AddScoped<IAdminUserDirectory, AdminUserDirectory>();
         services.AddScoped<ContentService>();
         services.AddScoped<IContentService>(provider => provider.GetRequiredService<ContentService>());
         services.AddScoped<IRecipeSearchRepository>(provider => provider.GetRequiredService<ContentService>());
         services.AddScoped<IAuditLogService, AuditLogService>();
-        services.AddScoped<IAdminUserDirectory, AdminUserDirectory>();
+        services.AddSingleton<ISitemapLocation, SitemapLocation>();
         services.AddSingleton<IFileStorageService, MinioFileStorageService>();
         services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
         services.AddScoped<IAuthorizationHandler, RecipeAuthorizationHandler>();
         services.AddScoped<DatabaseInitializer>();
-        services.AddHostedService<WelcomeEmailWorker>();
+        services.AddTransient<WelcomeEmailJob>();
         services.AddTransient<ImageProcessingJob>();
         services.AddTransient<ObjectDeletionJob>();
         services.AddTransient<ImageReconciliationJob>();
         services.AddTransient<SitemapGenerationJob>();
         services.AddTransient<PublicContentRefreshJob>();
         services.AddTransient<PublicContentRefreshScheduler>();
+        services.AddSingleton<PostgresRateLimitCounter>();
+        services.AddTransient<RateLimitStateCleanupJob>();
+        services.AddTransient<IPublicContentRefresh>(provider => provider.GetRequiredService<PublicContentRefreshScheduler>());
 
-        services.AddHangfire(configurationBuilder => configurationBuilder
+        services.AddSingleton<JobLogContextFilter>();
+        services.AddHangfire((provider, configurationBuilder) => configurationBuilder
+            .UseFilter(provider.GetRequiredService<JobLogContextFilter>())
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
-            .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(databaseConnection),
+            .UsePostgreSqlStorage(
+                options => options.UseNpgsqlConnection(databaseConnection),
                 new PostgreSqlStorageOptions { PrepareSchemaIfNecessary = backgroundJobsEnabled }));
         if (backgroundJobsEnabled)
         {
+            services.AddHostedService<WelcomeEmailWorker>();
             services.AddHostedService<MediaOutboxDispatcher>();
             services.AddHangfireServer(options => options.WorkerCount = Math.Max(1, Environment.ProcessorCount / 2));
         }
@@ -166,7 +189,22 @@ public static class DependencyInjection
             options.AbortOnConnectFail = false;
             return ConnectionMultiplexer.Connect(options);
         });
-        services.AddSingleton<IApplicationCache, RedisApplicationCache>();
+        services.AddScoped<IPublicCacheVersion, DatabasePublicCacheVersion>();
+        services.AddSingleton<IDistributedLockFactory>(provider => RedLockFactory.Create(
+            [new RedLockMultiplexer(provider.GetRequiredService<IConnectionMultiplexer>())]));
+        services.AddScoped<IApplicationCache, RedisApplicationCache>();
+        services.AddStackExchangeRedisOutputCache(options =>
+        {
+            options.Configuration = redisConnection;
+            options.InstanceName = "culinary:output:v1:";
+        });
+        var outputStore = services.Last(descriptor => descriptor.ServiceType == typeof(IOutputCacheStore));
+        services.Remove(outputStore);
+        services.AddSingleton<IOutputCacheStore>(provider => new ResilientOutputCacheStore(
+            (IOutputCacheStore)(outputStore.ImplementationFactory?.Invoke(provider) ??
+                ActivatorUtilities.CreateInstance(provider, outputStore.ImplementationType!)),
+            provider.GetRequiredService<IConnectionMultiplexer>(),
+            provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResilientOutputCacheStore>>()));
 
         services.AddSingleton<IMinioClient>(serviceProvider =>
         {
@@ -192,7 +230,7 @@ public static class DependencyInjection
 
     private static string RequireConnectionString(IConfiguration configuration, string name)
     {
-        var value = configuration.GetConnectionString(name);
+        string? value = configuration.GetConnectionString(name);
         return !string.IsNullOrWhiteSpace(value)
             ? value
             : throw new InvalidOperationException($"Connection string '{name}' is required.");

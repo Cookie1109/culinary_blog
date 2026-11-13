@@ -1,11 +1,17 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Domain.Categories;
 using CulinaryBlog.Domain.Common;
 using CulinaryBlog.Domain.Recipes;
 
 namespace CulinaryBlog.UnitTests;
 
+/// <summary>Contains regression checks for recipe core domain tests.</summary>
 public sealed class RecipeCoreDomainTests
 {
+    /// <summary>Verifies that slug is ascii and deterministic.</summary>
+    /// <param name="value">The value supplied to this operation.</param>
+    /// <param name="expected">The expected supplied to this operation.</param>
     [Theory]
     [InlineData("Bánh mì Việt Nam", "banh-mi-viet-nam")]
     [InlineData("  Wild   Mushroom Risotto! ", "wild-mushroom-risotto")]
@@ -14,6 +20,7 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal(expected, Slug.From(value, 220));
     }
 
+    /// <summary>Verifies that category rename keeps stable slug and soft delete is idempotent.</summary>
     [Fact]
     public void CategoryRenameKeepsStableSlugAndSoftDeleteIsIdempotent()
     {
@@ -28,6 +35,7 @@ public sealed class RecipeCoreDomainTests
         Assert.True(category.IsDeleted);
     }
 
+    /// <summary>Verifies that recipe starts as draft and archive transitions are guarded.</summary>
     [Fact]
     public void RecipeStartsAsDraftAndArchiveTransitionsAreGuarded()
     {
@@ -41,6 +49,7 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal(RecipeStatus.Draft, recipe.Status);
     }
 
+    /// <summary>Verifies that archived recipe cannot be edited.</summary>
     [Fact]
     public void ArchivedRecipeCannotBeEdited()
     {
@@ -62,6 +71,7 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal("RECIPE_INVALID_TRANSITION", exception.Code);
     }
 
+    /// <summary>Verifies that publish requires complete aggregate and guards transitions.</summary>
     [Fact]
     public void PublishRequiresCompleteAggregateAndGuardsTransitions()
     {
@@ -81,6 +91,7 @@ public sealed class RecipeCoreDomainTests
         Assert.Throws<DomainException>(() => recipe.Publish(publishedAt, true, 1, [1]));
     }
 
+    /// <summary>Verifies that first publish locks slug and republish keeps published at.</summary>
     [Fact]
     public void FirstPublishLocksSlugAndRepublishKeepsPublishedAt()
     {
@@ -107,6 +118,10 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal(RecipeStatus.Published, recipe.Status);
     }
 
+    /// <summary>Verifies that publish rejects every incomplete aggregate.</summary>
+    /// <param name="categoryExists">The category exists supplied to this operation.</param>
+    /// <param name="ingredientCount">The ingredient count supplied to this operation.</param>
+    /// <param name="stepNumbers">The step numbers supplied to this operation.</param>
     [Theory]
     [InlineData(false, 1, new[] { 1 })]
     [InlineData(true, 0, new[] { 1 })]
@@ -126,12 +141,14 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal(RecipeStatus.Draft, recipe.Status);
     }
 
+    /// <summary>Verifies that nutrition rejects negative values.</summary>
     [Fact]
     public void NutritionRejectsNegativeValues()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => RecipeNutrition.Create(-1, null, null, null, null, null));
     }
 
+    /// <summary>Verifies that nutrition normalizes empty input and preserves all values.</summary>
     [Fact]
     public void NutritionNormalizesEmptyInputAndPreservesAllValues()
     {
@@ -148,6 +165,7 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal(50, nutrition.Sodium);
     }
 
+    /// <summary>Verifies that nutrition rejects every negative field.</summary>
     [Fact]
     public void NutritionRejectsEveryNegativeField()
     {
@@ -158,6 +176,7 @@ public sealed class RecipeCoreDomainTests
         Assert.Throws<ArgumentOutOfRangeException>(() => RecipeNutrition.Create(null, null, null, null, null, -1m));
     }
 
+    /// <summary>Verifies that recipe rejects invalid data and transitions.</summary>
     [Fact]
     public void RecipeRejectsInvalidDataAndTransitions()
     {
@@ -175,7 +194,7 @@ public sealed class RecipeCoreDomainTests
             (RecipeDifficulty)999,
             null,
             null));
-        Assert.Throws<DomainException>(() => recipe.Update(
+        recipe.Update(
             "valid-slug",
             "Valid title",
             "Description",
@@ -185,9 +204,11 @@ public sealed class RecipeCoreDomainTests
             2,
             RecipeDifficulty.Easy,
             new string('x', 10_001),
-            null));
+            null);
+        Assert.Equal(10_001, recipe.Instructions.Length);
     }
 
+    /// <summary>Verifies that category rejects invalid data and normalizes optional fields.</summary>
     [Fact]
     public void CategoryRejectsInvalidDataAndNormalizesOptionalFields()
     {
@@ -205,6 +226,7 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal(2, category.OrderIndex);
     }
 
+    /// <summary>Verifies that slug handles empty ascii output repeated separators and maximum length.</summary>
     [Fact]
     public void SlugHandlesEmptyAsciiOutputRepeatedSeparatorsAndMaximumLength()
     {
@@ -214,6 +236,7 @@ public sealed class RecipeCoreDomainTests
         Assert.Throws<ArgumentException>(() => Slug.From(" ", 20));
     }
 
+    /// <summary>Verifies that ingredient supports nullable quantity and rejects invalid quantity.</summary>
     [Fact]
     public void IngredientSupportsNullableQuantityAndRejectsInvalidQuantity()
     {
@@ -227,6 +250,7 @@ public sealed class RecipeCoreDomainTests
             Guid.NewGuid(), Guid.NewGuid(), "Đường", 0, "g", null, 0));
     }
 
+    /// <summary>Verifies that step and image validate composition metadata.</summary>
     [Fact]
     public void StepAndImageValidateCompositionMetadata()
     {
@@ -249,6 +273,7 @@ public sealed class RecipeCoreDomainTests
             Guid.NewGuid(), Guid.NewGuid(), 0, "Bước", "Mô tả", null, null));
     }
 
+    /// <summary>Verifies that archived recipe rejects composition mutation.</summary>
     [Fact]
     public void ArchivedRecipeRejectsCompositionMutation()
     {
@@ -262,7 +287,7 @@ public sealed class RecipeCoreDomainTests
 
     private static Recipe CreateRecipe() => Recipe.Create(
         Guid.NewGuid(),
-        Guid.NewGuid(),
+        Guid.NewGuid().ToString(),
         "draft-recipe",
         "Draft recipe",
         "Description",

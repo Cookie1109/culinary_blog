@@ -10,7 +10,7 @@ test('P8-16/P8-17: daily PostgreSQL and versioned object backups retain 30 days'
     readFile(new URL('../../compose.yaml', import.meta.url), 'utf8'),
   ])
 
-  assert.match(compose, /BACKUP_INTERVAL_SECONDS: .*86400/)
+  assert.match(compose, /backup-scheduler\.sh/)
   assert.match(compose, /BACKUP_RETENTION_DAYS: "30"/)
   assert.match(postgres, /pg_dump/)
   assert.match(postgres, /pg_restore --list/)

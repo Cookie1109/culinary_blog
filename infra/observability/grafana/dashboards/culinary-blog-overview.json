@@ -118,7 +118,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(cache_hits_total[5m])) / clamp_min(sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m])), 0.001)",
+          "expr": "sum(rate(output_cache_hits_total[5m])) / clamp_min(sum(rate(output_cache_hits_total[5m])) + sum(rate(output_cache_misses_total[5m])), 0.001)",
           "legendFormat": "hit rate",
           "refId": "A"
         }

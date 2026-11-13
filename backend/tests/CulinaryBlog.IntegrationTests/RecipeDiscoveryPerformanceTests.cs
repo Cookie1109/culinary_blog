@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Data.Common;
 using System.Text.Json;
 using CulinaryBlog.Domain.Categories;
@@ -12,6 +14,9 @@ using Xunit.Abstractions;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for recipe discovery performance tests.</summary>
+/// <param name="factory">The factory supplied to this operation.</param>
+/// <param name="output">The output supplied to this operation.</param>
 public sealed class RecipeDiscoveryPerformanceTests(
     AuthApiFactory factory,
     ITestOutputHelper output) : IClassFixture<AuthApiFactory>
@@ -20,17 +25,21 @@ public sealed class RecipeDiscoveryPerformanceTests(
     private const int ApplicationSeedRecipeCount = 1_000;
     private const double QueryBudgetMilliseconds = 100;
 
+    /// <summary>Verifies that main discovery queries have reviewed plans and meet baseline latency.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task MainDiscoveryQueriesHaveReviewedPlansAndMeetBaselineLatency()
     {
         await using var scope = factory.Services.CreateAsyncScope();
         var services = scope.ServiceProvider;
         var dbContext = services.GetRequiredService<AppDbContext>();
+        Assert.Equal(100, new NpgsqlConnectionStringBuilder(dbContext.Database.GetConnectionString()).MaxPoolSize);
+        Assert.Equal(30, dbContext.Database.GetCommandTimeout());
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var suffix = Guid.NewGuid().ToString("N");
         var author = new ApplicationUser
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.NewGuid().ToString(),
             UserName = $"performance-{suffix}@example.com",
             Email = $"performance-{suffix}@example.com",
             DisplayName = "Performance Author",
@@ -120,6 +129,28 @@ public sealed class RecipeDiscoveryPerformanceTests(
               "PublishedAt" DESC
             LIMIT 50;
             """);
+
+        var titlePlans = await MeasurePlansAsync(
+            dbContext.Database.GetDbConnection(),
+            """
+            EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+            SELECT * FROM "Recipes" WHERE NOT "IsDeleted" AND "Status" = 1
+            ORDER BY "Title", "Id" LIMIT 50;
+            """);
+        var quickestPlans = await MeasurePlansAsync(
+            dbContext.Database.GetDbConnection(),
+            """
+            EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+            SELECT * FROM "Recipes" WHERE NOT "IsDeleted" AND "Status" = 1
+            ORDER BY "PrepTime" + "CookTime", "PublishedAt" DESC, "Id" LIMIT 50;
+            """);
+        Assert.Contains("IX_Recipes_Status_Title_Id", titlePlans[^1].Json, StringComparison.Ordinal);
+        var titleLatency = Percentile95(titlePlans.Select(plan => plan.ExecutionTimeMilliseconds));
+        var quickestLatency = Percentile95(quickestPlans.Select(plan => plan.ExecutionTimeMilliseconds));
+        output.WriteLine("Title query p95: {0:F3} ms; plan: {1}", titleLatency, titlePlans[^1].Json);
+        output.WriteLine("Quickest query p95: {0:F3} ms; plan: {1}", quickestLatency, quickestPlans[^1].Json);
+        Assert.True(titleLatency <= QueryBudgetMilliseconds, $"Title query p95 was {titleLatency:F3} ms.");
+        Assert.True(quickestLatency <= QueryBudgetMilliseconds, $"Quickest query p95 was {quickestLatency:F3} ms.");
 
         var listLatency = Percentile95(listPlans.Select(plan => plan.ExecutionTimeMilliseconds));
         var searchLatency = Percentile95(searchPlans.Select(plan => plan.ExecutionTimeMilliseconds));

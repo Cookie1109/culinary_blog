@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
@@ -5,12 +7,42 @@ using System.Net.Http.Json;
 using CulinaryBlog.Api.Security;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 
 namespace CulinaryBlog.IntegrationTests;
 
+/// <summary>Contains regression checks for security hardening tests.</summary>
 public sealed class SecurityHardeningTests
 {
+    /// <summary>Verifies that production requires TLS for enabled SMTP, including local hosts.</summary>
+    /// <param name="enabled">Whether outbound email is enabled.</param>
+    /// <param name="tls">Whether the configured SMTP transport uses TLS.</param>
+    /// <param name="rejected">Whether startup must reject the configuration.</param>
+    [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(false, false, false)]
+    public void ProductionEmailRequiresTls(bool enabled, bool tls, bool rejected)
+    {
+        var configuration = CreateValidProductionConfiguration(new Dictionary<string, string?>
+        {
+            ["Email:Enabled"] = enabled.ToString(CultureInfo.InvariantCulture),
+            ["Email:EnableSsl"] = tls.ToString(CultureInfo.InvariantCulture),
+            ["Email:Host"] = "localhost",
+        });
+        if (rejected)
+        {
+            var exception = Assert.Throws<InvalidOperationException>(() => ProductionConfigurationGuard.Validate(true, configuration));
+            Assert.Contains("Email:EnableSsl", exception.Message, StringComparison.Ordinal);
+        }
+        else
+        {
+            ProductionConfigurationGuard.Validate(true, configuration);
+        }
+    }
+
+    /// <summary>Verifies that production rejects development secrets and insecure public urls.</summary>
     [Fact]
     public void ProductionRejectsDevelopmentSecretsAndInsecurePublicUrls()
     {
@@ -37,6 +69,7 @@ public sealed class SecurityHardeningTests
         Assert.Contains("Release:WebImageDigest", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that production accepts explicit secrets hosts and https origins.</summary>
     [Fact]
     public void ProductionAcceptsExplicitSecretsHostsAndHttpsOrigins()
     {
@@ -59,6 +92,7 @@ public sealed class SecurityHardeningTests
         ProductionConfigurationGuard.Validate(isProduction: true, configuration);
     }
 
+    /// <summary>Verifies that production rejects maintenance announced less than forty eight hours ahead.</summary>
     [Fact]
     public void ProductionRejectsMaintenanceAnnouncedLessThanFortyEightHoursAhead()
     {
@@ -77,6 +111,8 @@ public sealed class SecurityHardeningTests
         Assert.Contains("at least 48 hours", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that release endpoint exposes immutable deployment identity.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task ReleaseEndpointExposesImmutableDeploymentIdentity()
     {
@@ -91,6 +127,35 @@ public sealed class SecurityHardeningTests
         Assert.Equal($"sha256:{new string('c', 64)}", response.Data.WebImageDigest);
     }
 
+    /// <summary>Verifies that render release endpoint reports source and instance identity with null image digests.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Fact]
+    public async Task RenderReleaseEndpointReportsSourceAndInstanceIdentityWithNullImageDigests()
+    {
+        using var original = new SecurityApiFactory();
+        using var factory = original.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Release:Provider", "Render");
+            builder.UseSetting("Release:CommitSha", string.Empty);
+            builder.UseSetting("RENDER", "true");
+            builder.UseSetting("RENDER_GIT_COMMIT", new string('b', 40));
+            builder.UseSetting("RENDER_SERVICE_ID", "srv-test123");
+            builder.UseSetting("RENDER_INSTANCE_ID", "instance-test123");
+        });
+        using var client = factory.CreateClient();
+        var response = await client.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/v1/release");
+        var data = response.GetProperty("data");
+        Assert.Equal("Render", data.GetProperty("provider").GetString());
+        Assert.Equal(new string('b', 40), data.GetProperty("commitSha").GetString());
+        Assert.Equal("srv-test123", data.GetProperty("apiServiceId").GetString());
+        Assert.Equal("instance-test123", data.GetProperty("apiInstanceId").GetString());
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, data.GetProperty("apiImageDigest").ValueKind);
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, data.GetProperty("webImageDigest").ValueKind);
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, data.GetProperty("webDeploymentId").ValueKind);
+    }
+
+    /// <summary>Verifies that maintenance endpoint exposes runtime announcement.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task RenderReleaseEndpointReportsSourceAndInstanceIdentityWithNullImageDigests()
     {
@@ -132,6 +197,8 @@ public sealed class SecurityHardeningTests
             response.Data.StartsAtUtc);
     }
 
+    /// <summary>Verifies that cors preflight allows configured origin only.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task CorsPreflightAllowsConfiguredOriginOnly()
     {
@@ -151,6 +218,8 @@ public sealed class SecurityHardeningTests
         Assert.False(blockedResponse.Headers.Contains("Access-Control-Allow-Origin"));
     }
 
+    /// <summary>Verifies that auth responses are never cacheable.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task AuthResponsesAreNeverCacheable()
     {
@@ -206,6 +275,8 @@ public sealed class SecurityHardeningTests
         {
             builder.UseEnvironment("Testing");
             builder.UseSetting("BackgroundJobs:Enabled", "false");
+            builder.ConfigureTestServices(AdapterRateLimit.Disable);
+            builder.UseSetting("ConnectionStrings:Redis", "127.0.0.1:1,abortConnect=false,connectTimeout=100,syncTimeout=100");
             builder.UseSetting("Cors:AllowedOrigins:0", "https://app.example.test");
             builder.UseSetting("Release:CommitSha", new string('a', 40));
             builder.UseSetting("Release:ApiImageDigest", $"sha256:{new string('b', 64)}");

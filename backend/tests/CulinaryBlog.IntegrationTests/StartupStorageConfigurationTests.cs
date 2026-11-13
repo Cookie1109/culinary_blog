@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using CulinaryBlog.Infrastructure;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -6,12 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CulinaryBlog.IntegrationTests;
 
-[CollectionDefinition(nameof(StartupStorageConfigurationScope), DisableParallelization = true)]
-public sealed class StartupStorageConfigurationScope;
-
+/// <summary>Contains regression checks for startup storage configuration tests.</summary>
 [Collection(nameof(StartupStorageConfigurationScope))]
 public sealed class StartupStorageConfigurationTests
 {
+    /// <summary>Verifies that disabled jobs resolve storage without connecting to postgres for schema preparation.</summary>
+    /// <returns>A task representing the operation and its result.</returns>
     [Fact]
     public async Task DisabledJobsResolveStorageWithoutConnectingToPostgresForSchemaPreparation()
     {
