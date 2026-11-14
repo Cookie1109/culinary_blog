@@ -10,6 +10,16 @@ IMAGE = "postgres:16.10-bookworm"
 
 
 class BackupSchedulerTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Download the fixture before starting each scenario's scheduler timeout.
+        image = subprocess.run(
+            ["docker", "image", "inspect", "--format", "{{.Id}}", IMAGE],
+            capture_output=True, text=True, timeout=15,
+        )
+        if image.returncode:
+            subprocess.run(["docker", "pull", IMAGE], check=True, timeout=180)
+
     def scenario(self, start, runtime=0, failures=0):
         with tempfile.TemporaryDirectory(dir=ROOT / "tmp") as directory:
             work = pathlib.Path(directory)
