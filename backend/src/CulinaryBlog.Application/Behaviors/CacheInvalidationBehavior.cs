@@ -9,12 +9,14 @@ namespace CulinaryBlog.Application.Behaviors;
 
 /// <summary>Represents the cache invalidation behavior.</summary>
 /// <param name="cache">The cache supplied to this operation.</param>
+/// <param name="version">Tracks changes to publicly visible content.</param>
 /// <param name="publicContentRefresh">The public content refresh supplied to this operation.</param>
 /// <param name="logger">The logger supplied to this operation.</param>
 /// <typeparam name="TRequest">The request type.</typeparam>
 /// <typeparam name="TResponse">The response type.</typeparam>
 internal sealed class CacheInvalidationBehavior<TRequest, TResponse>(
     IApplicationCache cache,
+    IPublicCacheVersion version,
     IPublicContentRefresh publicContentRefresh,
     ILogger<CacheInvalidationBehavior<TRequest, TResponse>> logger) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
@@ -31,19 +33,36 @@ internal sealed class CacheInvalidationBehavior<TRequest, TResponse>(
     /// <returns>A task representing the operation and its result.</returns>
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
+        var generationBefore = request is IContentMutation
+            ? await version.GetAsync(cancellationToken).ConfigureAwait(false)
+            : (long?)null;
         var response = await next(cancellationToken).ConfigureAwait(false);
         if (request is IContentMutation)
         {
-            // The write has committed: finish invalidation even if the browser disconnects.
-            foreach (var tag in new[] { PublicCacheKeys.RecipesTag, PublicCacheKeys.CategoriesTag })
+            var publicContentChanged = true;
+            try
             {
-                try
+                publicContentChanged = await version.RefreshAsync(CancellationToken.None).ConfigureAwait(false) != generationBefore;
+            }
+            catch (Exception exception)
+            {
+                // A committed write must still evict conservatively if the metadata read fails.
+                InvalidationFailed(logger, "generation", exception);
+            }
+
+            // The write has committed: finish invalidation even if the browser disconnects.
+            if (publicContentChanged)
+            {
+                foreach (var tag in new[] { PublicCacheKeys.RecipesTag, PublicCacheKeys.CategoriesTag })
                 {
-                    await cache.RemoveByTagAsync(tag, CancellationToken.None).ConfigureAwait(false);
-                }
-                catch (Exception exception)
-                {
-                    InvalidationFailed(logger, tag, exception);
+                    try
+                    {
+                        await cache.RemoveByTagAsync(tag, CancellationToken.None).ConfigureAwait(false);
+                    }
+                    catch (Exception exception)
+                    {
+                        InvalidationFailed(logger, tag, exception);
+                    }
                 }
             }
 

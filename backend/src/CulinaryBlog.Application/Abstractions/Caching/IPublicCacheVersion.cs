@@ -9,4 +9,9 @@ public interface IPublicCacheVersion
     /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
     /// <returns>A task representing the operation and its result.</returns>
     Task<long> GetAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Reads the committed generation again after a content mutation.</summary>
+    /// <param name="cancellationToken">Cancels the metadata read.</param>
+    /// <returns>The current committed generation.</returns>
+    Task<long> RefreshAsync(CancellationToken cancellationToken = default);
 }

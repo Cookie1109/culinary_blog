@@ -286,10 +286,24 @@ public sealed class OutputCacheApiTests(AuthApiFactory factory) : IClassFixture<
                 await Task.Delay(100);
             }
 
-            using var recovered = await client.GetAsync("/api/v1/recipes?probe=recovered-" + suffix);
-            using var cachedAgain = await client.GetAsync("/api/v1/recipes?probe=recovered-" + suffix);
-            Assert.Equal(HttpStatusCode.OK, recovered.StatusCode);
-            Assert.NotNull(cachedAgain.Headers.Age);
+            // The output-cache connection can recover after the application's Redis connection.
+            var cacheRecovered = false;
+            while (DateTimeOffset.UtcNow < deadline)
+            {
+                using var recovered = await client.GetAsync("/api/v1/recipes?probe=recovered-" + suffix);
+                using var cachedAgain = await client.GetAsync("/api/v1/recipes?probe=recovered-" + suffix);
+                Assert.Equal(HttpStatusCode.OK, recovered.StatusCode);
+                Assert.Equal(HttpStatusCode.OK, cachedAgain.StatusCode);
+                if (cachedAgain.Headers.Age is not null)
+                {
+                    cacheRecovered = true;
+                    break;
+                }
+
+                await Task.Delay(100);
+            }
+
+            Assert.True(cacheRecovered, "Output cache did not recover within the existing 15-second deadline.");
         }
         finally
         {

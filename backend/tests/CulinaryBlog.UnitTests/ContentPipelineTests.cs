@@ -170,6 +170,9 @@ public sealed class ContentPipelineTests
         services.AddSingleton(this.content);
         services.AddSingleton(this.cache);
         services.AddSingleton(this.refresh);
+        var version = Substitute.For<IPublicCacheVersion>();
+        version.RefreshAsync(Arg.Any<CancellationToken>()).Returns(1L);
+        services.AddSingleton(version);
         var actor = Substitute.For<IApplicationActor>();
         actor.GetAsync(Arg.Any<CancellationToken>()).Returns(new ApplicationActor(Guid.NewGuid().ToString(), true, ["Admin"]));
         services.AddSingleton(actor);

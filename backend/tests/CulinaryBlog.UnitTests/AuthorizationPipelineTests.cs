@@ -53,6 +53,9 @@ public sealed class AuthorizationPipelineTests
         services.AddSingleton(content);
         services.AddSingleton(cache);
         services.AddSingleton(refresh);
+        var version = Substitute.For<IPublicCacheVersion>();
+        version.RefreshAsync(Arg.Any<CancellationToken>()).Returns(1L);
+        services.AddSingleton(version);
         using var provider = services.BuildServiceProvider();
         var command = new PublishRecipeCommand(recipe.Id, claimedId, claimedAdmin, recipe.Version);
         var sender = provider.GetRequiredService<ISender>();

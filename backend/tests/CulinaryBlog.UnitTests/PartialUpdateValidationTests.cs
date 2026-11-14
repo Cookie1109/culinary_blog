@@ -44,6 +44,8 @@ public sealed class PartialUpdateValidationTests
     [InlineData("{}", true)]
     [InlineData("{\"title\":\"Boil\",\"description\":\"Boil water\",\"timerMinutes\":0,\"imageUrl\":\"https://example.test/step.jpg\",\"stepNumber\":1}", true)]
     [InlineData("{\"timerMinutes\":null,\"imageUrl\":null}", true)]
+    [InlineData("{\"timerMinutes\":0.016666666666666666}", true)]
+    [InlineData("{\"timerMinutes\":0.5}", true)]
     [InlineData("{\"title\":\"\",\"description\":null,\"timerMinutes\":-1,\"imageUrl\":\"javascript:alert(1)\",\"stepNumber\":0}", false)]
     public void StepUpdatesRejectUnsafeUrlsAndInvalidOrder(string body, bool valid) =>
         AssertValidation<StepUpdateRequest>(body, valid);

@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using CulinaryBlog.Application.Auth;
 using CulinaryBlog.Application.Media;
+using Hangfire;
 using Hangfire.PostgreSql;
 using Hangfire.PostgreSql.Factories;
 using Microsoft.AspNetCore.Hosting;
@@ -27,6 +28,8 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifet
 
     private readonly RedisContainer redis = new RedisBuilder("redis:7.4.5-alpine").Build();
 
+    private JobStorage? jobStorage;
+
     /// <summary>Gets the password reset emails.</summary>
     public ConcurrentQueue<(string Email, string Token)> PasswordResetEmails { get; } = new();
 
@@ -41,7 +44,7 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifet
         var storageOptions = new PostgreSqlStorageOptions { PrepareSchemaIfNecessary = true };
 
         // Workers stay disabled; manual job tests still need an isolated Hangfire schema.
-        _ = new PostgreSqlStorage(
+        this.jobStorage = new PostgreSqlStorage(
             new NpgsqlConnectionFactory(this.postgresSql.GetConnectionString(), storageOptions, null), storageOptions);
     }
 
@@ -61,6 +64,7 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifet
     /// <returns>A task representing the operation and its result.</returns>
     async Task IAsyncLifetime.DisposeAsync()
     {
+        (this.jobStorage as IDisposable)?.Dispose();
         await Task.WhenAll(this.postgresSql.DisposeAsync().AsTask(), this.redis.DisposeAsync().AsTask());
     }
 
@@ -78,6 +82,9 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>, IAsyncLifet
         builder.UseSetting("Email:Enabled", "false");
         builder.ConfigureTestServices(services =>
         {
+            // Multiple test hosts must not inherit another host's process-global storage.
+            services.RemoveAll<JobStorage>();
+            services.AddSingleton(this.jobStorage ?? throw new InvalidOperationException("Initialize the isolated job storage before starting the test host."));
             services.RemoveAll<IPasswordResetEmailSender>();
             services.AddSingleton<IPasswordResetEmailSender>(new CapturedPasswordResetEmailSender(this.PasswordResetEmails));
             services.RemoveAll<IFileStorageService>();

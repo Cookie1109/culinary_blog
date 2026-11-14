@@ -93,8 +93,8 @@ public sealed class MigrationUpgradeTests : IAsyncLifetime
             VALUES ({{tokenId}}, {{authorId}}, repeat('A', 64), {{familyId}}, {{createdAt}}, {{createdAt.AddDays(7)}}, '2001:db8::1', 'Synthetic legacy agent');
             INSERT INTO "RecipeIngredients" ("Id", "RecipeId", "Name", "Quantity", "OrderIndex", "CreatedAt", "IsDeleted", "Version")
             VALUES ({{imageId}}, {{recipeId}}, 'Salt', 1.125, 0, {{createdAt}}, FALSE, 1);
-            INSERT INTO "RecipeSteps" ("Id", "RecipeId", "StepNumber", "Title", "Description", "CreatedAt", "IsDeleted", "Version")
-            VALUES ({{imageId}}, {{recipeId}}, 1, 'Prepare', 'Keep this step', {{createdAt}}, FALSE, 1);
+            INSERT INTO "RecipeSteps" ("Id", "RecipeId", "StepNumber", "Title", "Description", "TimerMinutes", "CreatedAt", "IsDeleted", "Version")
+            VALUES ({{imageId}}, {{recipeId}}, 1, 'Prepare', 'Keep this step', 5, {{createdAt}}, FALSE, 1);
             INSERT INTO "RecipeImages" ("Id", "RecipeId", "ObjectKey", "ContentType", "IsPrimary", "OrderIndex", "ProcessingStatus", "CreatedAt", "IsDeleted", "Version")
             VALUES ({{imageId}}, {{recipeId}}, 'synthetic/original.png', 'image/png', TRUE, 0, 0, {{createdAt}}, FALSE, 1);
             INSERT INTO "MediaOutbox" ("Id", "Type", "Payload", "CreatedAt", "Attempts", "NextAttemptAt")
@@ -137,6 +137,7 @@ public sealed class MigrationUpgradeTests : IAsyncLifetime
         Assert.Equal("Synthetic legacy agent", token.UserAgent);
         Assert.Equal(1.125m, (await dbContext.RecipeIngredients.SingleAsync(item => item.Id == imageId)).Quantity);
         Assert.Equal("Keep this step", (await dbContext.RecipeSteps.SingleAsync(item => item.Id == imageId)).Description);
+        Assert.Equal(5d, (await dbContext.RecipeSteps.SingleAsync(item => item.Id == imageId)).TimerMinutes);
         Assert.Equal($"/api/v1/media/{imageId}/original", (await dbContext.RecipeImages.SingleAsync(item => item.Id == imageId)).OriginalUrl);
         Assert.Equal("image.resize", (await dbContext.MediaOutbox.SingleAsync(item => item.Id == mediaOutboxId)).Type);
         Assert.Equal(roleId.ToString(), (await dbContext.UserRoles.SingleAsync()).RoleId);

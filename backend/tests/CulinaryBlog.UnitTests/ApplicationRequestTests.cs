@@ -42,6 +42,9 @@ public sealed class ApplicationRequestTests : IDisposable
         services.AddSingleton(this.auth).AddSingleton(this.content).AddSingleton(this.cache).AddSingleton(this.actor)
             .AddSingleton(this.unit).AddSingleton(this.storage).AddSingleton(this.audit).AddSingleton(this.search);
         services.AddSingleton(Substitute.For<IPublicContentRefresh>());
+        var version = Substitute.For<IPublicCacheVersion>();
+        version.RefreshAsync(Arg.Any<CancellationToken>()).Returns(1L);
+        services.AddSingleton(version);
         var location = Substitute.For<ISitemapLocation>();
         location.ObjectKey.Returns("sitemap.xml");
         services.AddSingleton(location);

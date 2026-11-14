@@ -3,6 +3,7 @@
 using CulinaryBlog.Application;
 using CulinaryBlog.Application.Abstractions.Caching;
 using CulinaryBlog.Application.Behaviors;
+using CulinaryBlog.Application.Content;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,52 @@ namespace CulinaryBlog.UnitTests;
 /// <summary>Contains regression checks for application behavior tests.</summary>
 public sealed class ApplicationBehaviorTests
 {
+    /// <summary>Preserves cached responses and existing refresh scheduling for private writes.</summary>
+    /// <returns>A task representing the regression check.</returns>
+    [Fact]
+    public async Task UnchangedPublicGenerationPreservesCacheAndRefreshScheduling()
+    {
+        var cache = new StubCache { Value = "cached" };
+        var refresh = new StubPublicRefresh();
+        var behavior = new CacheInvalidationBehavior<MutationTestRequest, string>(
+            cache,
+            new StableVersion(),
+            refresh,
+            NullLogger<CacheInvalidationBehavior<MutationTestRequest, string>>.Instance);
+
+        Assert.Equal("committed", await behavior.Handle(new MutationTestRequest(), _ => Task.FromResult("committed"), default));
+        Assert.Equal("cached", cache.Value);
+        Assert.Empty(cache.RemovedTags);
+        Assert.Equal(1, refresh.Calls);
+    }
+
+    /// <summary>Preserves a committed response when the post-write generation read fails.</summary>
+    /// <returns>A task representing the regression check.</returns>
+    [Fact]
+    public async Task PostCommitMetadataFailureStillInvalidatesPublicCaches()
+    {
+        var cache = new StubCache { Value = "cached" };
+        var refresh = new StubPublicRefresh();
+        var behavior = new CacheInvalidationBehavior<MutationTestRequest, string>(
+            cache,
+            new UnavailablePostCommitVersion(),
+            refresh,
+            NullLogger<CacheInvalidationBehavior<MutationTestRequest, string>>.Instance);
+        using var caller = new CancellationTokenSource();
+        var result = await behavior.Handle(
+            new MutationTestRequest(),
+            _ =>
+            {
+                caller.Cancel();
+                return Task.FromResult("committed");
+            },
+            caller.Token);
+
+        Assert.Equal("committed", result);
+        Assert.Equal([PublicCacheKeys.RecipesTag, PublicCacheKeys.CategoriesTag], cache.RemovedTags);
+        Assert.Equal(1, refresh.Calls);
+    }
+
     /// <summary>Verifies that validation behavior runs next when valid and throws when invalid.</summary>
     /// <returns>A task representing the operation and its result.</returns>
     [Fact]
@@ -159,6 +206,38 @@ public sealed class ApplicationBehaviorTests
 
     private sealed record TestRequest(string Value);
 
+    private sealed record MutationTestRequest : IContentMutation;
+
+    private sealed class StableVersion : IPublicCacheVersion
+    {
+        public Task<long> GetAsync(CancellationToken cancellationToken = default) => Task.FromResult(1L);
+
+        public Task<long> RefreshAsync(CancellationToken cancellationToken = default) => this.GetAsync(cancellationToken);
+    }
+
+    private sealed class UnavailablePostCommitVersion : IPublicCacheVersion
+    {
+        public Task<long> GetAsync(CancellationToken cancellationToken = default) => Task.FromResult(1L);
+
+        public Task<long> RefreshAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromException<long>(new IOException("Synthetic metadata outage after commit."));
+        }
+    }
+
+    private sealed class StubPublicRefresh : IPublicContentRefresh
+    {
+        public int Calls { get; private set; }
+
+        public Task ScheduleAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            this.Calls++;
+            return Task.CompletedTask;
+        }
+    }
+
     private sealed record CacheableTestRequest : ICacheableRequest<string>
     {
         public string CacheKey => "test";
@@ -184,6 +263,8 @@ public sealed class ApplicationBehaviorTests
 
         public IReadOnlyCollection<string> LastTags { get; private set; } = [];
 
+        public List<string> RemovedTags { get; } = [];
+
         public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) =>
             Task.FromResult((T?)this.Value);
 
@@ -208,6 +289,8 @@ public sealed class ApplicationBehaviorTests
 
         public Task RemoveByTagAsync(string tag, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            this.RemovedTags.Add(tag);
             this.Value = null;
             return Task.CompletedTask;
         }

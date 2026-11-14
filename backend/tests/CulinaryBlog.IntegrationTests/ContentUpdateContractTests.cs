@@ -153,6 +153,39 @@ public sealed class ContentUpdateContractTests(AuthApiFactory factory) : IClassF
         Assert.Equal(HttpStatusCode.NotFound, afterUnpublish.StatusCode);
     }
 
+    /// <summary>Verifies that timers retain hours and seconds through create, update and reload.</summary>
+    /// <param name="timerMinutes">The duration in minutes.</param>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Theory]
+    [InlineData(120d)]
+    [InlineData(0.5d)]
+    [InlineData(1d / 60)]
+    public async Task StepTimersRetainHoursAndSeconds(double timerMinutes)
+    {
+        using var client = factory.CreateClient();
+        var recipe = await CreateAsync(client);
+        var recipeId = recipe.GetProperty("id").GetGuid();
+        var path = $"/api/v1/recipes/{recipeId}/steps";
+        using var created = await Mutation(client, HttpMethod.Post, path, 1, new
+        {
+            title = "Timed step",
+            description = "Cook for the selected duration.",
+            timerMinutes,
+        });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var step = await Data(created);
+        Assert.Equal(timerMinutes, step.GetProperty("timerMinutes").GetDouble());
+        var stepId = step.GetProperty("id").GetGuid();
+        using var loaded = await client.GetAsync($"/api/v1/me/recipes/{recipeId}");
+        var savedStep = (await Data(loaded)).GetProperty("steps").EnumerateArray().Single(item => item.GetProperty("id").GetGuid() == stepId);
+        Assert.Equal(timerMinutes, savedStep.GetProperty("timerMinutes").GetDouble());
+        using var updated = await Mutation(client, HttpMethod.Put, $"{path}/{stepId}", 2, new { timerMinutes = 1d / 60 });
+        Assert.Equal(1d / 60, (await Data(updated)).GetProperty("timerMinutes").GetDouble());
+        using var reloaded = await client.GetAsync($"/api/v1/me/recipes/{recipeId}");
+        var updatedStep = (await Data(reloaded)).GetProperty("steps").EnumerateArray().Single(item => item.GetProperty("id").GetGuid() == stepId);
+        Assert.Equal(1d / 60, updatedStep.GetProperty("timerMinutes").GetDouble());
+    }
+
     private static async Task<JsonElement> CreateAsync(HttpClient client)
     {
         using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new

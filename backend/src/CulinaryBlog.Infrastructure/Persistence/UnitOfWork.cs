@@ -1,5 +1,6 @@
 // Culinary Blog. Authorship is recorded in the repository history.
 
+using System.Diagnostics;
 using System.Text.Json;
 using CulinaryBlog.Application.Abstractions.Persistence;
 using CulinaryBlog.Application.Content;
@@ -85,6 +86,8 @@ internal sealed class UnitOfWork(AppDbContext dbContext, IRecipeRepository recip
         var now = timeProvider.GetUtcNow();
         dbContext.MediaOutbox.Add(new MediaOutboxMessage
         {
+            TraceParent = Activity.Current?.Id,
+            CorrelationId = Activity.Current?.GetBaggageItem("correlation.id"),
             Id = Guid.NewGuid(),
             Type = MediaOutboxTypes.DeleteObjects,
             Payload = JsonSerializer.Serialize(new DeleteObjectsPayload(keys)),

@@ -31,6 +31,8 @@ public sealed class RedisApplicationCacheTests
     private sealed class FixedVersion : IPublicCacheVersion
     {
         public Task<long> GetAsync(CancellationToken cancellationToken = default) => Task.FromResult(0L);
+
+        public Task<long> RefreshAsync(CancellationToken cancellationToken = default) => Task.FromResult(0L);
     }
 
     private sealed class UnavailableDistributedCache : IDistributedCache
