@@ -599,7 +599,7 @@ export function RecipeEditor() {
                     setPublishNotice(null)
                     setConfirmModal('unpublish')
                   }}
-                  disabled={unpublishMutation.isPending || save.isPending}
+                  disabled={isPendingAction || save.isPending}
                   className="flex items-center gap-1.5 border border-amber-600 bg-amber-50 px-3.5 py-2 text-xs uppercase tracking-widest text-amber-700 hover:bg-amber-100 disabled:opacity-60"
                 >
                   <EyeOff size={14} /> Gỡ
@@ -613,7 +613,7 @@ export function RecipeEditor() {
                     setPublishNotice(null)
                     setConfirmModal('archive')
                   }}
-                  disabled={archiveMutation.isPending || save.isPending}
+                  disabled={isPendingAction || save.isPending}
                   className="flex items-center gap-1.5 border border-border px-3.5 py-2 text-xs uppercase tracking-widest text-muted-foreground hover:bg-secondary disabled:opacity-60"
                   title="Lưu trữ công thức"
                 >
@@ -628,7 +628,7 @@ export function RecipeEditor() {
                     setPublishNotice(null)
                     setConfirmModal('unarchive')
                   }}
-                  disabled={unarchiveMutation.isPending}
+                  disabled={isPendingAction || save.isPending}
                   className="flex items-center gap-1.5 border border-primary bg-primary px-3.5 py-2 text-xs uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
                   <RotateCcw size={14} /> Khôi phục
@@ -642,6 +642,7 @@ export function RecipeEditor() {
                   setConfirmModal('delete')
                 }}
                 aria-label="Xóa công thức"
+                disabled={isPendingAction || save.isPending}
                 className="p-2 border border-border text-muted-foreground hover:text-red-600 hover:border-red-300 transition-colors"
                 title="Xóa công thức"
               >

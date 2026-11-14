@@ -666,6 +666,61 @@ test('public search validates ranges and restores form values from back-forward 
   }
 })
 
+test('recipe lifecycle actions stay locked until the preceding mutation and refresh finish', async () => {
+  const h = await setup()
+  try {
+    let recipe = {
+      ...fixture,
+      ingredients: [{ id: 'ingredient', name: 'Muối' }],
+      steps: [{ id: 'step', stepNumber: 1, title: 'Nấu', description: 'Nấu chín' }],
+    }
+    let finishPublish
+    let finishRefresh
+    h.setApi('getAdminRecipe', async () => recipe)
+    h.setApi(
+      'publishRecipe',
+      () =>
+        new Promise((resolve) => {
+          finishPublish = resolve
+        }),
+    )
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await click(button('Xuất bản'))
+    await click(button('Xác nhận', document.querySelector('[role="dialog"]')))
+    recipe = { ...recipe, status: 'published', version: 2 }
+    h.setApi(
+      'getAdminRecipe',
+      () =>
+        new Promise((resolve) => {
+          finishRefresh = resolve
+        }),
+    )
+    await act(async () => {
+      finishPublish(recipe)
+      h.client.setQueryData(['my-recipe', recipe.id, 'admin'], recipe)
+      await new Promise((resolve) => {
+        setTimeout(resolve, 30)
+      })
+    })
+    assert.equal(button('Gỡ').disabled, true)
+    assert.equal(button('Lưu trữ').disabled, true)
+    assert.equal(document.querySelector('[aria-label="Xóa công thức"]').disabled, true)
+    await act(async () => {
+      finishRefresh(recipe)
+      await new Promise((resolve) => {
+        setTimeout(resolve, 30)
+      })
+    })
+    assert.equal(button('Lưu trữ').disabled, false)
+    await click(button('Lưu trữ'))
+    assert.match(document.querySelector('[role="dialog"]').textContent, /Xác nhận lưu trữ/)
+  } finally {
+    await h.close()
+  }
+})
+
 test('invalid save-and-leave keeps the editor and describes the error inside the dialog', async () => {
   const h = await setup()
   try {
