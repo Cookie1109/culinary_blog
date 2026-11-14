@@ -42,6 +42,10 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 docker compose up --detach --build --wait
 ```
 
+Mở ứng dụng tại **http://localhost:8080**. MinIO và công cụ tạo bucket được build từ binary bản phát hành chính thức đã ghim phiên bản và SHA-256; không cần có sẵn image MinIO hoặc nạp file tar trên máy. Hai container này chạy Linux AMD64; Docker Desktop trên máy ARM cần bật khả năng chạy image AMD64.
+
+Trên macOS/Linux, tạo cấu hình bằng `cp .env.example .env` rồi chạy cùng lệnh Docker Compose ở trên.
+
 | Dịch vụ           | Địa chỉ                      |
 | ----------------- | ---------------------------- |
 | Ứng dụng          | http://localhost:8080        |
@@ -70,6 +74,8 @@ Giữ nguyên `.env` và tên Compose project. Không dùng `docker compose down
 Initializer chỉ bổ sung dữ liệu mẫu còn thiếu, không xóa công thức/danh mục do người dùng tạo, không ghi đè nội dung mẫu đã sửa và không khôi phục bản ghi đã xóa mềm. Migration local vẫn tự chạy khi API khởi động; quy trình production riêng ở mục Cấu hình.
 
 Git clone không sao chép `.env`, database, ảnh người dùng tải lên hoặc lịch sử đang lưu trên máy cũ. Nếu cần chuyển cả dữ liệu sang máy khác, phải sao lưu/khôi phục PostgreSQL và MinIO; khôi phục thêm volume nhật ký khi cần giữ lịch sử thao tác.
+
+Bản clone mới có đủ mã nguồn, migration và dữ liệu mẫu để sử dụng công thức, nguyên liệu, kéo thả các bước, hẹn giờ, tải ảnh, hồ sơ/avatar, tìm kiếm và quản trị. Thư chào mừng và đặt lại mật khẩu mặc định được nhận trong MailHog; dùng SMTP và Google OAuth của riêng bạn để bật gửi email thật hoặc đăng nhập Google.
 
 ### Phát triển giao diện
 
@@ -104,7 +110,7 @@ API sử dụng tiền tố `/api/v1`. [Scalar](http://localhost:8080/scalar) v�
 
 ## Kiểm tra chất lượng
 
-Để chạy kiểm tra trên máy, cần .NET SDK `10.0.402`, Node.js `22.23.3` và Docker Desktop:
+Để chạy kiểm tra trên máy, cần .NET SDK `10.0.402`, Node.js `22.23.3`, Python 3 và Docker Desktop:
 
 ```powershell
 ./scripts/verify.ps1

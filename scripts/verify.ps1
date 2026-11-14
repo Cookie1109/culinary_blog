@@ -23,8 +23,17 @@ try {
     Invoke-CheckedCommand python @('../scripts/check-application-coverage.py', $coverageResults)
     Invoke-CheckedCommand dotnet @('test', 'tests/CulinaryBlog.ArchitectureTests', '--configuration', 'Release', '--no-build', '--no-restore')
     $integrationResults = Join-Path $coverageResults 'integration'
-    Invoke-CheckedCommand dotnet @('test', 'tests/CulinaryBlog.IntegrationTests', '--configuration', 'Release', '--no-build', '--no-restore', '--logger', 'trx;LogFileName=integration.trx', '--results-directory', $integrationResults)
-    Invoke-CheckedCommand python @('../scripts/verify-endpoint-matrix.py', '--trx', (Join-Path $integrationResults 'integration.trx'))
+    $contractPath = Join-Path $coverageResults 'openapi.json'
+    $previousContractOutput = $env:CULINARY_CONTRACT_OUTPUT
+    try {
+        $env:CULINARY_CONTRACT_OUTPUT = $contractPath
+        Invoke-CheckedCommand dotnet @('test', 'tests/CulinaryBlog.IntegrationTests', '--configuration', 'Release', '--no-build', '--no-restore', '--logger', 'trx;LogFileName=integration.trx', '--results-directory', $integrationResults)
+    }
+    finally {
+        $env:CULINARY_CONTRACT_OUTPUT = $previousContractOutput
+    }
+    Invoke-CheckedCommand python @('../scripts/test-endpoint-matrix.py')
+    Invoke-CheckedCommand python @('../scripts/verify-endpoint-matrix.py', '--openapi', $contractPath, '--trx', (Join-Path $integrationResults 'integration.trx'))
 }
 finally {
     Pop-Location
@@ -38,6 +47,12 @@ try {
     Invoke-CheckedCommand $npmCommand @('run', 'generate:api')
     if ((Get-FileHash -LiteralPath $schemaPath -Algorithm SHA256).Hash -ne $schemaHash) {
         throw 'Generated API types changed; review and regenerate the contract before accepting gates'
+    }
+    $usersSchemaPath = Join-Path (Get-Location) 'src/lib/api/admin-users-schema.d.ts'
+    $usersSchemaHash = (Get-FileHash -LiteralPath $usersSchemaPath -Algorithm SHA256).Hash
+    Invoke-CheckedCommand $npmCommand @('run', 'generate:users-api', '--', $contractPath)
+    if ((Get-FileHash -LiteralPath $usersSchemaPath -Algorithm SHA256).Hash -ne $usersSchemaHash) {
+        throw 'Generated user-directory API types changed; review the runtime contract before accepting gates'
     }
     Invoke-CheckedCommand $npmCommand @('run', 'format')
     Invoke-CheckedCommand $npmCommand @('test')

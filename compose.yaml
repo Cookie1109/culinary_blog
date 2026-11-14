@@ -33,7 +33,14 @@ services:
     restart: unless-stopped
 
   minio:
-    image: ${MINIO_IMAGE:-minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e}
+    image: culinary-blog-minio:local
+    pull_policy: build
+    platform: linux/amd64
+    # Keep the UID used by the previous local image so existing media volumes remain writable.
+    user: "0:0"
+    build:
+      context: ./infra/testing
+      dockerfile: minio.Dockerfile
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-culinary-local}
@@ -44,14 +51,19 @@ services:
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/minio/health/live"]
       interval: 5s
       timeout: 3s
       retries: 12
     restart: unless-stopped
 
   minio-bootstrap:
-    image: ${MINIO_MC_IMAGE:-minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727}
+    image: culinary-blog-minio-client:local
+    pull_policy: build
+    platform: linux/amd64
+    build:
+      context: ./infra/testing
+      dockerfile: minio.Dockerfile
     depends_on:
       minio:
         condition: service_healthy

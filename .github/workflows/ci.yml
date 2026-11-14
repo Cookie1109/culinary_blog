@@ -173,7 +173,19 @@ jobs:
       - name: Validate production release template
         shell: pwsh
         run: ./scripts/release-gate.ps1 -EnvFile infra/production/release.env.example -Template
-      - run: docker compose build api web
+      - run: docker compose build api web minio minio-bootstrap
+      - name: Verify first startup with empty database and storage
+        shell: bash
+        run: |
+          cp .env.example .env
+          docker compose up --detach --no-build --wait nginx
+          python scripts/check-local-startup.py http://localhost:8080
+      - name: Collect startup diagnostics
+        if: failure()
+        run: docker compose logs --no-color --tail 100 postgres redis minio minio-bootstrap api web nginx
+      - name: Stop isolated CI stack
+        if: always()
+        run: docker compose down --volumes
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: culinary-blog-api:local
