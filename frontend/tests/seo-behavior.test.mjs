@@ -54,7 +54,7 @@ test('the real recipe page renders parseable JSON-LD without allowing a closing-
         return {
           getPublishedRecipe: async (slug, ttl) => {
             assert.equal(slug, 'pho')
-            assert.equal(ttl, 300)
+            assert.equal(ttl, undefined, 'recipe pages are never cached')
             return recipe
           },
         }

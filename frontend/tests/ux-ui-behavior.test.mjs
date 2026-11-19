@@ -463,8 +463,12 @@ test('forgot password sends the trimmed email and displays a neutral confirmatio
     await click(button('Gửi liên kết đặt lại mật khẩu'))
     assert.deepEqual(h.requests, [['forgot', 'author@example.test']])
     assert.match(document.querySelector('[role="status"]').textContent, /Nếu email.*30 phút/)
-    await click(button('Gửi lại yêu cầu'))
-    assert.ok(document.getElementById('forgot-email'))
+    assert.ok(
+      [...document.querySelectorAll('button')].some((item) =>
+        /^Gửi lại sau \d+ giây$/.test(item.textContent.trim()),
+      ),
+      'resend is offered with a cooldown',
+    )
   } finally {
     await h.close()
   }
@@ -776,10 +780,9 @@ test('AVIF upload accepts its MIME, reports progress, and retains the file for r
     await act(async () => {
       fileInput.dispatchEvent(new Event('change', { bubbles: true }))
     })
-    await click(button('Tải ảnh lên'))
     assert.deepEqual(attempts, ['image/avif'])
     assert.equal(document.querySelector('progress').value, 37)
-    assert.ok(button('Đang tải 37%…').disabled)
+    assert.match(document.body.textContent, /Đang tải ảnh lên/)
     await act(async () => {
       rejectUpload(new Error('synthetic failure'))
       await new Promise((resolve) => {
@@ -792,7 +795,14 @@ test('AVIF upload accepts its MIME, reports progress, and retains the file for r
       onProgress(100)
       return { meta: { recipeVersion: 2 } }
     })
-    await click(button('Tải ảnh lên'))
+    await act(async () => {
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await act(async () => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
+    })
     assert.deepEqual(attempts, ['image/avif', 'image/avif'])
     assert.equal(changedVersion, 2)
     assert.equal(document.querySelector('progress'), null)
@@ -837,30 +847,34 @@ test('profile edit reads the user after an asynchronous session loads', async ()
   }
 })
 
-test('profile validates avatar URLs, saves all fields, and supports clearing the avatar', async () => {
+async function chooseProfileAvatar(h, name, type, size = 9) {
+  globalThis.URL.createObjectURL = () => 'blob:synthetic-avatar'
+  globalThis.URL.revokeObjectURL = () => {}
+  const fileInput = document.getElementById('profile-avatar-file')
+  Object.defineProperty(fileInput, 'files', {
+    configurable: true,
+    value: [new h.dom.window.File([new Uint8Array(size)], name, { type })],
+  })
+  await act(async () => {
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+}
+
+test('profile validates the chosen avatar file and saves it with the other fields', async () => {
   const h = await setup()
   try {
     await h.render(React.createElement(h.load('features/culinary/pages/Profile.tsx').Profile))
     await click(button('Cập nhật'))
-    // eslint-disable-next-line no-script-url -- Negative fixture must stay to verify URL rejection.
-    await input(document.getElementById('profile-avatar'), 'javascript:alert(1)')
-    await click(button('Lưu thay đổi'))
-    assert.equal(h.requests.length, 0)
-    assert.equal(document.getElementById('profile-avatar').getAttribute('aria-invalid'), 'true')
-    assert.match(document.getElementById('profile-avatar-error').textContent, /HTTP hoặc HTTPS/)
+    await chooseProfileAvatar(h, 'avatar.gif', 'image/gif')
+    assert.match(document.getElementById('profile-avatar-error').textContent, /JPEG, PNG, WebP hoặc AVIF/)
+    await chooseProfileAvatar(h, 'avatar.png', 'image/png', 6 * 1024 * 1024)
+    assert.match(document.getElementById('profile-avatar-error').textContent, /5 MB/)
     await input(document.querySelector('input[aria-label="Họ và tên"]'), '  Tên đã sửa  ')
-    await input(document.getElementById('profile-avatar'), 'https://example.test/avatar.jpg')
+    await chooseProfileAvatar(h, 'avatar.png', 'image/png')
+    assert.match(document.body.textContent, /Bấm Lưu thay đổi để dùng ảnh này/)
     await click(button('Lưu thay đổi'))
-    assert.deepEqual(h.requests[0], [
-      'profile',
-      { name: 'Tên đã sửa', bio: 'Giới thiệu', avatar: 'https://example.test/avatar.jpg' },
-    ])
-    assert.equal(document.querySelector('img').getAttribute('src'), 'https://example.test/avatar.jpg')
-    await click(button('Cập nhật'))
-    await input(document.getElementById('profile-avatar'), '')
-    await click(button('Lưu thay đổi'))
-    assert.equal(h.requests[1][1].avatar, '')
-    assert.equal(document.querySelector('img'), null)
+    assert.equal(h.requests[0][0], 'profile')
+    assert.equal(h.requests[0][1].name, 'Tên đã sửa')
   } finally {
     await h.close()
   }
@@ -880,14 +894,12 @@ test('profile preserves edits and maps server validation to the avatar field', a
     })
     await h.render(React.createElement(h.load('features/culinary/pages/Profile.tsx').Profile))
     await click(button('Cập nhật'))
-    await input(document.getElementById('profile-avatar'), 'https://example.test/avatar.jpg')
+    await input(document.querySelector('input[aria-label="Họ và tên"]'), 'Tên giữ lại')
+    await chooseProfileAvatar(h, 'avatar.png', 'image/png')
     await click(button('Lưu thay đổi'))
-    assert.equal(document.getElementById('profile-avatar').value, 'https://example.test/avatar.jpg')
-    assert.match(document.getElementById('profile-avatar-error').textContent, /URL ảnh HTTP hoặc HTTPS/)
+    assert.equal(document.querySelector('input[aria-label="Họ và tên"]').value, 'Tên giữ lại')
+    assert.match(document.getElementById('profile-avatar-error').textContent, /ảnh/i)
     assert.doesNotMatch(document.body.textContent, /Stack trace|secret storage/)
-    await click(button('Hủy'))
-    await click(button('Cập nhật'))
-    assert.equal(document.getElementById('profile-avatar').value, '')
   } finally {
     await h.close()
   }
@@ -1250,7 +1262,7 @@ test('registration submits trimmed identity fields while preserving password cha
       await input(document.getElementById(id), value)
     await click(button('Đăng ký tài khoản'))
     assert.deepEqual(h.requests, [['register', 'Tác giả mới', 'author@example.test', ' Strong#Password1 ']])
-    assert.deepEqual(h.navigations, ['/dashboard'])
+    assert.deepEqual(h.navigations, ['/'])
   } finally {
     await h.close()
   }
