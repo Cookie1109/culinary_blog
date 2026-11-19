@@ -6,7 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Eye,
-  EyeOff,
+  Undo2,
   Globe,
   Pencil,
   PlusCircle,
@@ -46,9 +46,9 @@ const STATUS_LABELS: Record<RecipeStatus, string> = {
 }
 
 const STATUS_BADGE: Record<RecipeStatus, string> = {
-  published: 'bg-emerald-50 text-emerald-700',
-  draft: 'bg-amber-50 text-amber-700',
-  archived: 'bg-secondary text-muted-foreground',
+  published: 'border border-emerald-200 bg-emerald-50 text-emerald-700',
+  draft: 'border border-amber-200 bg-amber-50 text-amber-700',
+  archived: 'border border-border bg-secondary text-muted-foreground',
 }
 
 type ConfirmActionType = 'publish' | 'unpublish' | 'archive' | 'unarchive' | 'delete'
@@ -352,14 +352,14 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
               <div className="hidden overflow-hidden border border-border bg-card md:block">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="border-b border-border bg-background/60 text-left text-xs tracking-wide text-muted-foreground">
+                    <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
                       <tr>
-                        <th className="px-6 py-3 font-medium">Tiêu đề</th>
-                        {scope === 'all' && <th className="px-6 py-3 font-medium">Tác giả</th>}
-                        <th className="px-6 py-3 font-medium">Danh mục</th>
-                        <th className="px-6 py-3 font-medium">Trạng thái</th>
-                        <th className="px-6 py-3 text-right font-medium">Ngày tạo</th>
-                        <th className="px-6 py-3 text-right font-medium">Thao tác</th>
+                        <th className="px-5 py-3 font-medium">Tiêu đề</th>
+                        {scope === 'all' && <th className="px-5 py-3 font-medium">Tác giả</th>}
+                        <th className="px-5 py-3 font-medium">Danh mục</th>
+                        <th className="px-5 py-3 font-medium">Trạng thái</th>
+                        <th className="px-5 py-3 text-right font-medium">Ngày tạo</th>
+                        <th className="px-5 py-3 text-right font-medium">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -392,9 +392,9 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                           <td className="px-6 py-4 text-muted-foreground">{recipe.category.name}</td>
                           <td className="px-6 py-4">
                             <span
-                              className={`inline-flex min-w-28 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs ${STATUS_BADGE[recipe.status]}`}
+                              className={`inline-flex min-w-28 items-center justify-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 text-xs ${STATUS_BADGE[recipe.status]}`}
                             >
-                              <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+                              <span aria-hidden="true" className="size-1.5 bg-current" />
                               {STATUS_LABELS[recipe.status]}
                             </span>
                           </td>
@@ -402,106 +402,104 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                             {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              {/* Preview link */}
-                              <Link
-                                to={`/dashboard/recipes/${recipe.id}/preview${originSuffix}`}
-                                aria-label={`Xem trước ${recipe.title}`}
-                                title="Xem trước riêng tư"
-                                className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary"
-                              >
-                                <Eye size={17} aria-hidden="true" />
-                              </Link>
+                            <div className="flex items-center justify-end gap-3">
+                              {/* Primary state action: one fixed-width slot so rows stay aligned */}
+                              <div className="w-32">
+                                {recipe.status === 'draft' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionError(null)
+                                      setConfirmDialog({ type: 'publish', recipe })
+                                    }}
+                                    aria-label={`Xuất bản ${recipe.title}`}
+                                    title="Xuất bản công thức"
+                                    className="flex min-h-10 w-full items-center justify-center gap-1.5 whitespace-nowrap border border-emerald-300 px-3 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
+                                  >
+                                    <Globe size={14} aria-hidden="true" /> Xuất bản
+                                  </button>
+                                )}
+                                {recipe.status === 'published' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionError(null)
+                                      setConfirmDialog({ type: 'unpublish', recipe })
+                                    }}
+                                    aria-label={`Gỡ xuất bản ${recipe.title}`}
+                                    title="Gỡ xuất bản"
+                                    className="flex min-h-10 w-full items-center justify-center gap-1.5 whitespace-nowrap border border-amber-300 px-3 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50"
+                                  >
+                                    <Undo2 size={14} aria-hidden="true" /> Gỡ xuất bản
+                                  </button>
+                                )}
+                                {recipe.status === 'archived' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionError(null)
+                                      setConfirmDialog({ type: 'unarchive', recipe })
+                                    }}
+                                    aria-label={`Khôi phục ${recipe.title}`}
+                                    title="Khôi phục về bản nháp"
+                                    className="flex min-h-10 w-full items-center justify-center gap-1.5 whitespace-nowrap border border-primary/40 px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
+                                  >
+                                    <RotateCcw size={14} aria-hidden="true" /> Khôi phục
+                                  </button>
+                                )}
+                              </div>
 
-                              {/* Edit link - disabled/blocked for archived recipes */}
-                              {recipe.status !== 'archived' && (
+                              {/* Tools: fixed slots, hidden ones keep their space */}
+                              <div className="flex items-center border-l border-border pl-3">
                                 <Link
-                                  to={`/dashboard/recipes/${recipe.id}/edit${originSuffix}`}
-                                  aria-label={`Chỉnh sửa ${recipe.title}`}
-                                  title="Chỉnh sửa công thức"
-                                  className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary"
+                                  to={`/dashboard/recipes/${recipe.id}/preview${originSuffix}`}
+                                  aria-label={`Xem trước ${recipe.title}`}
+                                  title="Xem trước riêng tư"
+                                  className="grid size-10 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
                                 >
-                                  <Pencil size={16} />
+                                  <Eye size={17} aria-hidden="true" />
                                 </Link>
-                              )}
-
-                              {/* Publish (Draft -> Published) */}
-                              {recipe.status === 'draft' && (
+                                {recipe.status !== 'archived' ? (
+                                  <Link
+                                    to={`/dashboard/recipes/${recipe.id}/edit${originSuffix}`}
+                                    aria-label={`Chỉnh sửa ${recipe.title}`}
+                                    title="Chỉnh sửa công thức"
+                                    className="grid size-10 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
+                                  >
+                                    <Pencil size={16} />
+                                  </Link>
+                                ) : (
+                                  <span aria-hidden="true" className="size-10" />
+                                )}
+                                {recipe.status !== 'archived' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionError(null)
+                                      setConfirmDialog({ type: 'archive', recipe })
+                                    }}
+                                    aria-label={`Lưu trữ ${recipe.title}`}
+                                    title="Lưu trữ công thức"
+                                    className="grid size-10 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                  >
+                                    <Archive size={16} />
+                                  </button>
+                                ) : (
+                                  <span aria-hidden="true" className="size-10" />
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setActionError(null)
-                                    setConfirmDialog({ type: 'publish', recipe })
+                                    setConfirmDialog({ type: 'delete', recipe })
                                   }}
-                                  aria-label={`Xuất bản ${recipe.title}`}
-                                  title="Xuất bản công thức"
-                                  className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-green-600"
+                                  aria-label={`Xóa ${recipe.title}`}
+                                  title="Xóa công thức"
+                                  className="grid size-10 place-items-center text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
                                 >
-                                  <Globe size={16} />
+                                  <Trash2 size={16} />
                                 </button>
-                              )}
-
-                              {/* Unpublish (Published -> Draft) */}
-                              {recipe.status === 'published' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActionError(null)
-                                    setConfirmDialog({ type: 'unpublish', recipe })
-                                  }}
-                                  aria-label={`Gỡ xuất bản ${recipe.title}`}
-                                  title="Gỡ xuất bản"
-                                  className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-amber-600"
-                                >
-                                  <EyeOff size={16} />
-                                </button>
-                              )}
-
-                              {/* Archive (Draft / Published -> Archived) */}
-                              {recipe.status !== 'archived' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActionError(null)
-                                    setConfirmDialog({ type: 'archive', recipe })
-                                  }}
-                                  aria-label={`Lưu trữ ${recipe.title}`}
-                                  title="Lưu trữ công thức"
-                                  className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
-                                >
-                                  <Archive size={16} />
-                                </button>
-                              )}
-
-                              {/* Unarchive (Archived -> Draft) */}
-                              {recipe.status === 'archived' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActionError(null)
-                                    setConfirmDialog({ type: 'unarchive', recipe })
-                                  }}
-                                  aria-label={`Khôi phục ${recipe.title}`}
-                                  title="Khôi phục về bản nháp"
-                                  className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-sm px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                                >
-                                  <RotateCcw size={14} /> Khôi phục
-                                </button>
-                              )}
-
-                              {/* Delete button */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActionError(null)
-                                  setConfirmDialog({ type: 'delete', recipe })
-                                }}
-                                aria-label={`Xóa ${recipe.title}`}
-                                title="Xóa công thức"
-                                className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-red-600"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -525,7 +523,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                         </h2>
                       </div>
                       <span
-                        className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs ${STATUS_BADGE[recipe.status]}`}
+                        className={`shrink-0 whitespace-nowrap px-2.5 py-1 text-xs ${STATUS_BADGE[recipe.status]}`}
                       >
                         {STATUS_LABELS[recipe.status]}
                       </span>

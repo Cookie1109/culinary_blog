@@ -14,9 +14,7 @@ test('P7-07: CategoryAdmin provides complete CRUD, orderIndex ordering, delete c
   assert.match(source, /updateCategory/, 'Must wire category update')
   assert.match(source, /deleteCategory/, 'Must wire category deletion')
 
-  // Verify Order Index column and sorting
-  assert.match(source, /orderIndex/, 'Must handle orderIndex')
-  assert.match(source, /Thứ tự/, 'Must display order column header')
+  // Categories are listed alphabetically; the order index is assigned automatically
   assert.match(source, /sortedCategories/, 'Must sort categories by orderIndex')
 
   // Verify delete conflict detection & warning

@@ -2,25 +2,24 @@
 
 import { useQuery } from '@tanstack/react-query'
 import {
-  Archive,
   ArrowRight,
   BookOpen,
-  CheckCircle,
   Clock3,
   Eye,
   FileText,
   Pencil,
   PlusCircle,
   RefreshCw,
+  UserRound,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import { listMyRecipes, type RecipeStatus } from '@/lib/api/content-client'
 import { useAuth } from '../../contexts/AuthContext'
 
-const STATUS_BADGE: Record<RecipeStatus, string> = {
-  published: 'bg-emerald-50 text-emerald-700',
-  draft: 'bg-amber-50 text-amber-700',
-  archived: 'bg-secondary text-muted-foreground',
+const STATUS_DOT: Record<RecipeStatus, string> = {
+  published: 'bg-emerald-600',
+  draft: 'bg-amber-500',
+  archived: 'bg-border',
 }
 
 const STATUS_LABEL: Record<RecipeStatus, string> = {
@@ -77,36 +76,12 @@ export function PersonalOverview() {
   const draftCount = draftQuery.data?.meta.total ?? 0
   const archivedCount = archivedQuery.data?.meta.total ?? 0
 
-  const stats = [
-    {
-      label: 'Tổng số công thức',
-      value: isLoading ? '…' : String(totalRecipes),
-      icon: BookOpen,
-      color: 'text-foreground',
-      filter: undefined,
-    },
-    {
-      label: 'Đã xuất bản',
-      value: isLoading ? '…' : String(publishedCount),
-      icon: CheckCircle,
-      color: 'text-green-600',
-      filter: 'published',
-    },
-    {
-      label: 'Bản nháp',
-      value: isLoading ? '…' : String(draftCount),
-      icon: FileText,
-      color: 'text-amber-600',
-      filter: 'draft',
-    },
-    {
-      label: 'Đã lưu trữ',
-      value: isLoading ? '…' : String(archivedCount),
-      icon: Archive,
-      color: 'text-muted-foreground',
-      filter: 'archived',
-    },
+  const pipeline = [
+    { label: 'Đã xuất bản', value: publishedCount, filter: 'published', bar: 'bg-emerald-600' },
+    { label: 'Bản nháp', value: draftCount, filter: 'draft', bar: 'bg-amber-500' },
+    { label: 'Đã lưu trữ', value: archivedCount, filter: 'archived', bar: 'bg-border' },
   ]
+  const counted = publishedCount + draftCount + archivedCount
 
   const recentRecipes = recentQuery.data?.data ?? []
 
@@ -117,7 +92,7 @@ export function PersonalOverview() {
         <div>
           <h1 className="mb-2 font-serif text-3xl text-foreground lg:text-4xl">Tổng quan cá nhân</h1>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Xin chào, {user.name.split(' ')[0]}. Đây là các công thức của bạn.
+            Xin chào, {user.name.split(' ')[0]}. Đây là bức tranh nhanh về tiến độ viết của bạn.
           </p>
         </div>
         <Link
@@ -128,131 +103,170 @@ export function PersonalOverview() {
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
-        {stats.map(({ label, value, icon: Icon, color, filter }) => (
-          <Link
-            key={label}
-            to={filter ? `/dashboard/recipes?status=${filter}` : '/dashboard/recipes'}
-            className="group flex min-w-0 items-center justify-between gap-3 border border-border bg-card p-4 transition-colors hover:border-primary/50 sm:p-5 lg:p-6"
-          >
-            <div className="min-w-0">
-              <p className="mb-3 text-sm text-muted-foreground group-hover:text-foreground">{label}</p>
-              <p className="font-serif text-4xl leading-none tabular-nums text-foreground">{value}</p>
-            </div>
-            <span
-              className={`hidden size-11 shrink-0 items-center justify-center bg-background sm:flex ${color}`}
-            >
-              <Icon size={21} strokeWidth={1.5} aria-hidden="true" />
+      {/* Attention */}
+      {!isLoading && !isError && draftCount > 0 && (
+        <Link
+          to="/dashboard/recipes?status=draft"
+          className="mb-8 flex items-center justify-between gap-4 border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-900 transition-colors hover:bg-amber-100"
+        >
+          <span className="flex items-center gap-3">
+            <FileText size={18} strokeWidth={1.5} aria-hidden="true" />
+            <span>
+              Bạn có <strong>{draftCount}</strong> bản nháp chưa xuất bản.
             </span>
-          </Link>
-        ))}
-      </div>
+          </span>
+          <span className="flex shrink-0 items-center gap-1.5 text-xs uppercase tracking-widest">
+            Xem bản nháp <ArrowRight size={13} aria-hidden="true" />
+          </span>
+        </Link>
+      )}
 
-      {/* Recent recipes */}
-      <div className="overflow-hidden border border-border bg-card">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/50 px-4 py-5 sm:px-6">
-          <h2 className="flex items-center gap-3 font-serif text-xl">
-            <Clock3 size={17} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
-            Công thức gần đây
-          </h2>
-          <Link
-            to="/dashboard/recipes"
-            className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-primary transition-colors hover:text-primary/80"
-          >
-            Xem tất cả <ArrowRight size={13} />
-          </Link>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        {/* Recent activity */}
+        <div className="order-2 min-w-0 lg:order-1">
+          <div className="overflow-hidden border border-border bg-card">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/50 px-4 py-5 sm:px-6">
+              <h2 className="flex items-center gap-3 font-serif text-xl">
+                <Clock3 size={17} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
+                Công thức gần đây
+              </h2>
+              <Link
+                to="/dashboard/recipes"
+                className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-primary transition-colors hover:text-primary/80"
+              >
+                Quản lý tất cả <ArrowRight size={13} aria-hidden="true" />
+              </Link>
+            </div>
+
+            {isError && (
+              <div className="border-b border-red-200 bg-red-50 p-6 text-red-700" role="alert">
+                <p>Không thể tải dữ liệu bảng điều khiển.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    recentQuery.refetch()
+                    publishedQuery.refetch()
+                    draftQuery.refetch()
+                    archivedQuery.refetch()
+                  }}
+                  className="mt-3 flex items-center gap-1.5 text-sm font-medium underline"
+                >
+                  <RefreshCw size={14} /> Thử lại
+                </button>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="p-12 text-center text-muted-foreground" role="status">
+                Đang tải dữ liệu tổng quan…
+              </div>
+            )}
+
+            {!isLoading && !isError && recentRecipes.length === 0 && (
+              <div className="px-6 py-16 text-center">
+                <BookOpen className="mx-auto mb-3 text-muted-foreground" size={32} />
+                <p className="mb-2 font-serif text-xl">Bạn chưa có công thức nào</p>
+                <p className="text-sm text-muted-foreground">
+                  Bắt đầu hành trình sáng tạo ẩm thực bằng cách tạo bản nháp đầu tiên.
+                </p>
+              </div>
+            )}
+
+            {!isLoading && !isError && recentRecipes.length > 0 && (
+              <ol className="px-4 py-2 sm:px-6">
+                {recentRecipes.map((recipe) => (
+                  <li
+                    key={recipe.id}
+                    className="grid grid-cols-[0.75rem_minmax(0,1fr)] gap-x-4 border-b border-border py-4 last:border-0"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`mt-1.5 size-2.5 rounded-full ${STATUS_DOT[recipe.status]}`}
+                    />
+                    <div className="min-w-0">
+                      <Link
+                        to={`/dashboard/recipes/${recipe.id}/preview`}
+                        className="block break-words font-medium text-foreground hover:text-primary"
+                      >
+                        {recipe.title}
+                      </Link>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                        <span>{STATUS_LABEL[recipe.status] ?? recipe.status}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{recipe.category.name}</span>
+                        <span aria-hidden="true">·</span>
+                        <time dateTime={recipe.createdAt}>
+                          {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
+                        </time>
+                        {recipe.status === 'draft' && (
+                          <Link
+                            to={`/dashboard/recipes/${recipe.id}/edit`}
+                            aria-label={`Chỉnh sửa ${recipe.title}`}
+                            className="ml-auto inline-flex min-h-11 items-center gap-1.5 text-primary hover:underline"
+                          >
+                            <Pencil size={13} strokeWidth={1.5} aria-hidden="true" /> Tiếp tục viết
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         </div>
 
-        {isError && (
-          <div className="border-b border-red-200 bg-red-50 p-6 text-red-700" role="alert">
-            <p>Không thể tải dữ liệu bảng điều khiển.</p>
-            <button
-              type="button"
-              onClick={() => {
-                recentQuery.refetch()
-                publishedQuery.refetch()
-                draftQuery.refetch()
-                archivedQuery.refetch()
-              }}
-              className="mt-3 flex items-center gap-1.5 text-sm font-medium underline"
-            >
-              <RefreshCw size={14} /> Thử lại
-            </button>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="p-12 text-center text-muted-foreground" role="status">
-            Đang tải dữ liệu tổng quan…
-          </div>
-        )}
-
-        {!isLoading && !isError && recentRecipes.length === 0 && (
-          <div className="px-6 py-16 text-center">
-            <BookOpen className="mx-auto mb-3 text-muted-foreground" size={32} />
-            <p className="mb-2 font-serif text-xl">Bạn chưa có công thức nào</p>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Bắt đầu hành trình sáng tạo ẩm thực bằng cách tạo bản nháp đầu tiên.
+        <aside className="order-1 min-w-0 space-y-6 lg:order-2">
+          {/* Pipeline */}
+          <section className="border border-border bg-card p-5" aria-label="Tình trạng công thức">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Tổng số công thức</p>
+            <p className="mt-2 font-serif text-5xl leading-none tabular-nums">
+              {isLoading ? '…' : totalRecipes}
             </p>
-          </div>
-        )}
-
-        {!isLoading && !isError && recentRecipes.length > 0 && (
-          <ul className="divide-y divide-border">
-            {recentRecipes.map((recipe) => (
-              <li
-                key={recipe.id}
-                className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-4 gap-y-2 px-4 py-5 transition-colors hover:bg-background/70 sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:px-6"
-              >
+            <div className="mt-5 flex h-2 overflow-hidden bg-secondary" aria-hidden="true">
+              {pipeline.map(({ label, value, bar }) => (
                 <span
-                  aria-hidden="true"
-                  className="flex size-12 shrink-0 items-center justify-center border border-border/60 bg-background font-serif text-xl text-primary"
-                >
-                  {Array.from(recipe.title.trim())[0]?.toLocaleUpperCase('vi-VN')}
-                </span>
-                <div className="min-w-0">
+                  key={label}
+                  className={bar}
+                  style={{ width: `${counted ? (value / counted) * 100 : 0}%` }}
+                />
+              ))}
+            </div>
+            <ul className="mt-4 divide-y divide-border text-sm">
+              {pipeline.map(({ label, value, filter, bar }) => (
+                <li key={label}>
                   <Link
-                    to={`/dashboard/recipes/${recipe.id}/preview`}
-                    className="block break-words text-base font-medium text-foreground hover:text-primary"
+                    to={`/dashboard/recipes?status=${filter}`}
+                    className="flex min-h-11 items-center justify-between gap-3 hover:text-primary"
                   >
-                    {recipe.title}
+                    <span className="flex items-center gap-2.5">
+                      <span aria-hidden="true" className={`size-2.5 ${bar}`} />
+                      {label}
+                    </span>
+                    <span className="font-serif text-lg tabular-nums">{isLoading ? '…' : value}</span>
                   </Link>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-1 text-xs leading-relaxed text-muted-foreground">
-                    {recipe.category.name} ·{' '}
-                    <time dateTime={recipe.createdAt}>
-                      {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
-                    </time>
-                  </p>
-                </div>
-                <div className="col-start-2 flex items-center justify-between gap-2 sm:col-auto sm:justify-end sm:gap-3">
-                  <Link
-                    to={`/dashboard/recipes/${recipe.id}/preview`}
-                    aria-label={`Xem trước riêng tư ${recipe.title}`}
-                    title="Xem trước"
-                    className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary"
-                  >
-                    <Eye size={15} strokeWidth={1.5} aria-hidden="true" />
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* Shortcuts */}
+          <section className="border border-border bg-card p-5">
+            <h2 className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Lối tắt</h2>
+            <ul className="divide-y divide-border text-sm">
+              {[
+                { to: '/recipes', label: 'Xem trang công khai', icon: Eye },
+                { to: '/profile', label: 'Hồ sơ của tôi', icon: UserRound },
+              ].map(({ to, label, icon: Icon }) => (
+                <li key={to}>
+                  <Link to={to} className="flex min-h-11 items-center gap-3 hover:text-primary">
+                    <Icon size={16} strokeWidth={1.5} aria-hidden="true" /> {label}
                   </Link>
-                  <span
-                    className={`inline-flex w-28 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs ${STATUS_BADGE[recipe.status]}`}
-                  >
-                    <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
-                    {STATUS_LABEL[recipe.status] ?? recipe.status}
-                  </span>
-                  <Link
-                    to={`/dashboard/recipes/${recipe.id}/edit`}
-                    aria-label={`Chỉnh sửa ${recipe.title}`}
-                    title="Chỉnh sửa"
-                    className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary"
-                  >
-                    <Pencil size={17} strokeWidth={1.5} aria-hidden="true" />
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
       </div>
     </div>
   )

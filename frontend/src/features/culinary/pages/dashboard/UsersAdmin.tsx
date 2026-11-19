@@ -6,6 +6,7 @@ import { listAdminUsers, type UserRole } from '@/lib/api/admin-users-client'
 import { useAuth } from '../../contexts/AuthContext'
 
 const roleLabels: Record<string, string> = { Admin: 'Quản trị viên', Author: 'Tác giả' }
+const PAGE_SIZE = 7
 const dateFormat = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Bangkok' })
 
 export function UsersAdmin() {
@@ -18,7 +19,12 @@ export function UsersAdmin() {
 
 function UserDirectory({ userId }: { userId: string }) {
   const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState({ search: '', role: '' as UserRole | '', page: 1, pageSize: 20 })
+  const [filters, setFilters] = useState({
+    search: '',
+    role: '' as UserRole | '',
+    page: 1,
+    pageSize: PAGE_SIZE,
+  })
   const usersQuery = useQuery({
     queryKey: ['admin-users', userId, filters],
     queryFn: () => listAdminUsers({ ...filters, role: filters.role || undefined }),
@@ -29,20 +35,21 @@ function UserDirectory({ userId }: { userId: string }) {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-foreground">Danh sách người dùng</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Xem tài khoản quản trị viên và tác giả trong hệ thống.
-      </p>
+      <h1 className="font-serif text-3xl text-foreground lg:text-4xl">Danh sách người dùng</h1>
+      <p className="mt-1 text-muted-foreground">Xem tài khoản quản trị viên và tác giả trong hệ thống.</p>
 
       <form
-        className="my-6 flex flex-wrap items-end gap-3"
+        className="my-6 flex flex-wrap items-end gap-3 border border-border bg-card p-4"
         onSubmit={(event) => {
           event.preventDefault()
           setFilters((current) => ({ ...current, search: search.trim(), page: 1 }))
         }}
       >
         <div className="min-w-0 flex-1 basis-60">
-          <label htmlFor="user-search" className="mb-1 block text-sm font-medium">
+          <label
+            htmlFor="user-search"
+            className="mb-1 block text-xs uppercase tracking-widest text-muted-foreground"
+          >
             Tìm tên hoặc email
           </label>
           <input
@@ -51,14 +58,20 @@ function UserDirectory({ userId }: { userId: string }) {
             maxLength={100}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="w-full border border-border bg-background px-3 py-2"
+            className="min-h-11 w-full border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
           />
         </div>
-        <button type="submit" className="border border-primary bg-primary px-4 py-2 text-primary-foreground">
+        <button
+          type="submit"
+          className="min-h-11 bg-primary px-5 py-2 text-sm uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
+        >
           Tìm kiếm
         </button>
         <div>
-          <label htmlFor="user-role" className="mb-1 block text-sm font-medium">
+          <label
+            htmlFor="user-role"
+            className="mb-1 block text-xs uppercase tracking-widest text-muted-foreground"
+          >
             Vai trò
           </label>
           <select
@@ -67,30 +80,11 @@ function UserDirectory({ userId }: { userId: string }) {
             onChange={(event) =>
               setFilters((current) => ({ ...current, role: event.target.value as UserRole | '', page: 1 }))
             }
-            className="border border-border bg-background px-3 py-2"
+            className="min-h-11 border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
           >
             <option value="">Tất cả vai trò</option>
             <option value="Admin">Quản trị viên</option>
             <option value="Author">Tác giả</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="users-page-size" className="mb-1 block text-sm font-medium">
-            Số dòng mỗi trang
-          </label>
-          <select
-            id="users-page-size"
-            value={filters.pageSize}
-            onChange={(event) =>
-              setFilters((current) => ({ ...current, pageSize: Number(event.target.value), page: 1 }))
-            }
-            className="border border-border bg-background px-3 py-2"
-          >
-            {[20, 50, 100].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
           </select>
         </div>
       </form>
@@ -106,20 +100,20 @@ function UserDirectory({ userId }: { userId: string }) {
       )}
       {usersQuery.isSuccess && (
         <>
-          <p role="status" className="mb-3 text-sm">
+          <p role="status" className="mb-3 text-sm text-muted-foreground">
             Tổng cộng {meta?.total} người dùng
           </p>
           {users.length === 0 ? (
             <p className="border border-border p-6">Không tìm thấy người dùng phù hợp.</p>
           ) : (
             <>
-              <div className="hidden overflow-x-auto border border-border md:block">
+              <div className="hidden overflow-x-auto border border-border bg-background md:block">
                 <table className="w-full text-left text-sm">
                   <caption className="sr-only">Tài khoản quản trị viên và tác giả</caption>
-                  <thead className="bg-secondary">
+                  <thead className="border-b border-border bg-secondary/30 text-xs uppercase tracking-widest text-muted-foreground">
                     <tr>
                       {['Họ tên', 'Email', 'Vai trò', 'Trạng thái', 'Ngày tạo'].map((label) => (
-                        <th key={label} scope="col" className="px-4 py-3">
+                        <th key={label} scope="col" className="px-5 py-3 font-medium">
                           {label}
                         </th>
                       ))}
@@ -127,14 +121,29 @@ function UserDirectory({ userId }: { userId: string }) {
                   </thead>
                   <tbody>
                     {users.map((user) => (
-                      <tr key={user.id} className="border-t border-border">
-                        <td className="break-words px-4 py-3">{user.displayName}</td>
-                        <td className="break-all px-4 py-3">{user.email ?? '—'}</td>
-                        <td className="px-4 py-3">
+                      <tr
+                        key={user.id}
+                        className="border-b border-border transition-colors last:border-0 hover:bg-secondary/20"
+                      >
+                        <td className="break-words px-5 py-3 font-medium text-foreground">
+                          {user.displayName}
+                        </td>
+                        <td className="break-all px-5 py-3 text-muted-foreground">{user.email ?? '—'}</td>
+                        <td className="px-5 py-3">
                           {user.roles.map((role) => roleLabels[role] ?? role).join(', ') || '—'}
                         </td>
-                        <td className="px-4 py-3">{user.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}</td>
-                        <td className="whitespace-nowrap px-4 py-3">
+                        <td className="px-5 py-3">
+                          <span
+                            className={`inline-block border px-2.5 py-1 text-xs ${
+                              user.isActive
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                : 'border-border bg-secondary text-muted-foreground'
+                            }`}
+                          >
+                            {user.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-3 text-muted-foreground">
                           {dateFormat.format(new Date(user.createdAt))}
                         </td>
                       </tr>
@@ -159,13 +168,13 @@ function UserDirectory({ userId }: { userId: string }) {
           )}
           <nav
             aria-label="Phân trang người dùng"
-            className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm"
+            className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm"
           >
             <button
               type="button"
               disabled={!meta?.hasPreviousPage}
               onClick={() => setFilters((current) => ({ ...current, page: current.page - 1 }))}
-              className="border border-border px-3 py-2 disabled:opacity-50"
+              className="min-h-11 border border-border px-4 py-2 text-xs uppercase tracking-widest hover:bg-secondary disabled:opacity-50"
             >
               Trang trước
             </button>
@@ -176,7 +185,7 @@ function UserDirectory({ userId }: { userId: string }) {
               type="button"
               disabled={!meta?.hasNextPage}
               onClick={() => setFilters((current) => ({ ...current, page: current.page + 1 }))}
-              className="border border-border px-3 py-2 disabled:opacity-50"
+              className="min-h-11 border border-border px-4 py-2 text-xs uppercase tracking-widest hover:bg-secondary disabled:opacity-50"
             >
               Trang sau
             </button>
