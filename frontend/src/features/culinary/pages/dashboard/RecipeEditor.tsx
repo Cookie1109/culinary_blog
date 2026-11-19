@@ -483,8 +483,8 @@ export function RecipeEditor() {
     confirmModal === 'publish' ? 'bg-green-700 hover:bg-green-800' : 'bg-primary hover:bg-primary/90'
 
   const inputClass =
-    'w-full border border-border bg-background px-4 py-3 text-sm transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
-  const labelClass = 'mb-2 block text-xs uppercase tracking-widest text-muted-foreground font-medium'
+    'min-h-11 w-full border border-border bg-background px-4 py-3 text-sm transition-colors placeholder:text-muted-foreground/70 hover:border-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
+  const labelClass = 'mb-2 block text-xs font-medium uppercase tracking-widest text-foreground/80'
 
   const wizardSteps: { id: WizardAllSteps; label: string; desc: string }[] = [
     { id: 'basic', label: '1. Thông tin cơ bản', desc: 'Tiêu đề, danh mục, thời gian' },
@@ -521,7 +521,7 @@ export function RecipeEditor() {
       className={`max-w-7xl mx-auto ${fitWorkspace ? 'xl:flex xl:h-full xl:min-h-0 xl:flex-col' : ''}`}
     >
       {/* Header */}
-      <div className="mb-6 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-6 flex shrink-0 flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <button
             type="button"
@@ -704,13 +704,16 @@ export function RecipeEditor() {
 
       {/* P7-03 Unified 5-Step Wizard Navigation Bar */}
       <div className="mb-8 shrink-0">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="Các bước của Wizard">
+        <div
+          className="grid grid-cols-2 divide-x divide-y divide-border border border-border bg-card sm:grid-cols-5 sm:divide-y-0"
+          aria-label="Các bước của Wizard"
+        >
           {wizardSteps.map((step) => {
             const isActive = activeStep === step.id
             const isDisabled = !isEditing && step.id !== 'basic'
             const inactiveClass = isDisabled
-              ? 'border-border bg-secondary/30 text-muted-foreground/50 cursor-not-allowed'
-              : 'border-border bg-background hover:bg-secondary text-foreground'
+              ? 'cursor-not-allowed border-t-transparent text-muted-foreground/50'
+              : 'border-t-transparent text-foreground hover:bg-secondary/40'
 
             return (
               <button
@@ -719,18 +722,16 @@ export function RecipeEditor() {
                 disabled={isDisabled}
                 aria-current={isActive ? 'step' : undefined}
                 onClick={() => requestNavigation(step.id)}
-                className={`p-3 text-left border transition-all ${
-                  isActive ? 'border-primary bg-primary text-primary-foreground' : inactiveClass
+                className={`border-t-2 px-4 py-3.5 text-left transition-colors ${
+                  isActive ? 'border-t-primary bg-background' : inactiveClass
                 }`}
               >
-                <div className="text-xs font-semibold uppercase tracking-wider">{step.label}</div>
                 <div
-                  className={`text-[11px] mt-0.5 line-clamp-1 ${
-                    isActive ? 'text-primary-foreground' : 'text-muted-foreground'
-                  }`}
+                  className={`text-xs font-semibold uppercase tracking-wider ${isActive ? 'text-primary' : ''}`}
                 >
-                  {step.desc}
+                  {step.label}
                 </div>
+                <div className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{step.desc}</div>
               </button>
             )
           })}
@@ -750,7 +751,7 @@ export function RecipeEditor() {
         {isEditing && recipeQuery.data && (
           <aside
             aria-label="Điều kiện xuất bản"
-            className={`min-w-0 border border-border bg-secondary/15 p-4 xl:sticky xl:top-24 ${fitWorkspace ? 'xl:max-h-full xl:overflow-y-auto xl:overscroll-contain' : ''}`}
+            className={`min-w-0 border border-border bg-card p-5 xl:sticky xl:top-24 ${fitWorkspace ? 'xl:max-h-full xl:overflow-y-auto xl:overscroll-contain' : ''}`}
           >
             <button
               type="button"
@@ -763,6 +764,16 @@ export function RecipeEditor() {
                 <span className="block font-medium text-sm text-foreground">Tổng hợp điều kiện xuất bản</span>
                 <span className="block text-xs text-muted-foreground">
                   {passedChecksCount}/{validationChecks.length} tiêu chuẩn đạt
+                </span>
+                <span className="block h-1.5 w-full bg-secondary" aria-hidden="true">
+                  <span
+                    className={`block h-full transition-[width] ${
+                      passedChecksCount === validationChecks.length ? 'bg-green-600' : 'bg-primary'
+                    }`}
+                    style={{
+                      width: `${validationChecks.length ? (passedChecksCount / validationChecks.length) * 100 : 0}%`,
+                    }}
+                  />
                 </span>
                 <span
                   className={`inline-flex text-[11px] px-2 py-0.5 border ${
@@ -787,7 +798,7 @@ export function RecipeEditor() {
                 {validationChecks.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-2 p-2 border border-border bg-background rounded"
+                    className="flex flex-wrap items-center justify-between gap-2 border border-border bg-background p-2.5"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {item.isValid ? (
@@ -818,10 +829,16 @@ export function RecipeEditor() {
           {activeStep === 'basic' && (
             <form noValidate onSubmit={handleSubmit} onChangeCapture={() => setSaved(false)}>
               <fieldset disabled={save.isPending} className="min-w-0">
-                <section className="space-y-6 border-b border-border pb-10" aria-labelledby="basic-heading">
-                  <h2 id="basic-heading" className="font-serif text-2xl text-foreground">
-                    Thông tin cơ bản của món ăn
-                  </h2>
+                <section
+                  className="space-y-6 border border-border bg-card p-6 sm:p-8"
+                  aria-labelledby="basic-heading"
+                >
+                  <div className="border-b border-border pb-4">
+                    <p className="mb-1 text-xs font-medium uppercase tracking-widest text-primary">Bước 1</p>
+                    <h2 id="basic-heading" className="font-serif text-2xl text-foreground">
+                      Thông tin cơ bản của món ăn
+                    </h2>
+                  </div>
 
                   <div>
                     <label htmlFor="title" className={labelClass}>
@@ -876,7 +893,7 @@ export function RecipeEditor() {
                     <FieldError id="recipe-instructions-error" message={errors.instructions?.message} />
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 border border-border bg-secondary/20 p-5 sm:grid-cols-3">
                     <div>
                       <label htmlFor="category" className={labelClass}>
                         Danh mục <span className="text-red-600">*</span>
@@ -936,49 +953,13 @@ export function RecipeEditor() {
                       <FieldError id="recipe-servings-error" message={errors.servings?.message} />
                     </div>
                   </div>
-
-                  <p className="text-sm text-muted-foreground">
-                    Thời gian tự động tính từ các bước Chuẩn bị và Nấu.
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="prepTime" className={labelClass}>
-                        Chuẩn bị (phút) <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        id="prepTime"
-                        type="number"
-                        min={0}
-                        readOnly
-                        {...register('prepTime', { valueAsNumber: true })}
-                        aria-invalid={Boolean(errors.prepTime)}
-                        aria-describedby={errors.prepTime ? 'recipe-prepTime-error' : undefined}
-                        className={inputClass}
-                      />
-                      <FieldError id="recipe-prepTime-error" message={errors.prepTime?.message} />
-                    </div>
-
-                    <div>
-                      <label htmlFor="cookTime" className={labelClass}>
-                        Nấu / nướng (phút) <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        id="cookTime"
-                        type="number"
-                        min={0}
-                        readOnly
-                        {...register('cookTime', { valueAsNumber: true })}
-                        aria-invalid={Boolean(errors.cookTime)}
-                        aria-describedby={errors.cookTime ? 'recipe-cookTime-error' : undefined}
-                        className={inputClass}
-                      />
-                      <FieldError id="recipe-cookTime-error" message={errors.cookTime?.message} />
-                    </div>
-                  </div>
                 </section>
 
                 {/* Nutrition Section */}
-                <section className="mt-10" aria-labelledby="nutrition-heading">
+                <section
+                  className="mt-6 border border-border bg-card p-6 sm:p-8"
+                  aria-labelledby="nutrition-heading"
+                >
                   <h2 id="nutrition-heading" className="font-serif text-2xl text-foreground">
                     Dinh dưỡng mỗi khẩu phần
                   </h2>
@@ -1018,7 +999,7 @@ export function RecipeEditor() {
                 </section>
 
                 {/* Stepper Navigation / Save Button */}
-                <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
+                <div className="mt-6 flex items-center justify-between border border-border bg-card px-6 py-4">
                   <button
                     type="button"
                     onClick={() => requestNavigation(returnTo)}
@@ -1030,7 +1011,7 @@ export function RecipeEditor() {
                     <button
                       type="submit"
                       disabled={save.isPending}
-                      className="flex items-center gap-2 bg-primary px-6 py-2.5 text-sm uppercase tracking-widest text-primary-foreground disabled:opacity-60 hover:bg-primary/90 font-medium"
+                      className="flex min-h-11 items-center gap-2 bg-primary px-6 py-2.5 text-sm font-medium uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                     >
                       <Save size={15} /> {save.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}
                     </button>
@@ -1038,7 +1019,7 @@ export function RecipeEditor() {
                       <button
                         type="button"
                         onClick={() => requestNavigation('ingredients')}
-                        className="flex items-center gap-1.5 border border-border px-5 py-2.5 text-sm uppercase tracking-widest hover:bg-secondary"
+                        className="flex min-h-11 items-center gap-1.5 border border-border px-5 py-2.5 text-sm uppercase tracking-widest hover:bg-secondary"
                       >
                         Bước tiếp theo <ArrowRight size={14} />
                       </button>

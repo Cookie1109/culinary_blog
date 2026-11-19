@@ -51,7 +51,7 @@ function SortableStep({
       ref={setNodeRef}
       data-step-id={step.id}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={`flex gap-3 border border-border bg-background p-4 ${isDragging ? 'opacity-30' : ''}`}
+      className={`flex gap-3 border border-border bg-card p-4 transition-colors hover:border-primary/40 ${isDragging ? 'opacity-30' : ''}`}
     >
       <button
         ref={setActivatorNodeRef}
@@ -60,17 +60,21 @@ function SortableStep({
         {...listeners}
         disabled={disabled}
         aria-label={`Kéo để đổi vị trí bước ${step.stepNumber}`}
-        className="touch-none self-start cursor-grab p-1 text-muted-foreground hover:text-primary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
+        className="grid size-9 touch-none cursor-grab place-items-center self-start text-muted-foreground hover:text-primary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
       >
         <GripVertical size={18} aria-hidden="true" />
       </button>
-      <span className="shrink-0 font-serif text-2xl text-primary">{step.stepNumber}</span>
+      <span className="grid size-9 shrink-0 place-items-center border border-primary/30 bg-primary/5 font-serif text-lg text-primary">
+        {step.stepNumber}
+      </span>
       <div className="min-w-0 flex-1 wrap-anywhere">
         <strong className="block text-sm text-foreground">{step.title}</strong>
         <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{step.description}</p>
-        <span className="text-xs text-muted-foreground">{step.stepType === 'prep' ? 'Chuẩn bị' : 'Nấu'}</span>
+        <span className="mr-2 mt-2 inline-block border border-border px-2 py-0.5 text-xs uppercase tracking-wider text-muted-foreground">
+          {step.stepType === 'prep' ? 'Chuẩn bị' : 'Nấu'}
+        </span>
         {step.timerMinutes != null && (
-          <span className="mt-1.5 inline-block border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+          <span className="mt-2 inline-block border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
             ⏱ {formatTimerDuration(step.timerMinutes)}
           </span>
         )}
@@ -81,7 +85,7 @@ function SortableStep({
           aria-label="Đưa bước lên"
           disabled={actionsDisabled || step.stepNumber === 1}
           onClick={() => onMove(step, step.stepNumber - 1)}
-          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-40"
+          className="grid size-9 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-40"
         >
           <ArrowUp size={15} />
         </button>
@@ -90,7 +94,7 @@ function SortableStep({
           aria-label="Đưa bước xuống"
           disabled={actionsDisabled || step.stepNumber === count}
           onClick={() => onMove(step, step.stepNumber + 1)}
-          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-40"
+          className="grid size-9 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-40"
         >
           <ArrowDown size={15} />
         </button>
@@ -98,7 +102,7 @@ function SortableStep({
           type="button"
           disabled={actionsDisabled}
           onClick={() => onEdit(step)}
-          className="py-1 text-xs text-muted-foreground underline hover:text-primary disabled:opacity-40"
+          className="min-h-9 px-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-secondary hover:text-primary disabled:opacity-40"
         >
           Sửa
         </button>
@@ -107,7 +111,7 @@ function SortableStep({
           aria-label="Xóa bước"
           disabled={actionsDisabled}
           onClick={() => onDelete(step)}
-          className="p-1 text-muted-foreground hover:text-red-600 disabled:opacity-40"
+          className="grid size-9 place-items-center text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
         >
           <Trash2 size={15} />
         </button>
