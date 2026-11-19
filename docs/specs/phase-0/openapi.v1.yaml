@@ -317,6 +317,41 @@ paths:
             application/octet-stream:
               schema: {type: string, format: binary}
         '404': {$ref: '#/components/responses/Problem'}
+  /categories/image:
+    post:
+      tags: [Categories]
+      operationId: uploadCategoryImage
+      description: Admin only. Returns the path to store as the category imageUrl.
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: {type: string, format: binary, description: 'JPEG, PNG, WebP or AVIF, up to 5 MB'}
+      responses:
+        '201':
+          description: Image stored
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [url]
+                    properties:
+                      url: {type: string, format: uri-reference, example: /api/v1/media/category/0123456789abcdef0123456789abcdef.jpg}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '413': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
+        '503': {$ref: '#/components/responses/Problem'}
   /categories:
     get:
       tags: [Categories]
@@ -873,6 +908,24 @@ paths:
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
+  /media/category/{fileName}:
+    get:
+      tags: [Images]
+      operationId: getCategoryImage
+      security: []
+      parameters:
+        - {name: fileName, in: path, required: true, schema: {type: string, pattern: '^[0-9a-f]{32}\.(jpg|png|webp|avif)$'}}
+      responses:
+        '429': {$ref: '#/components/responses/RateLimitExceeded'}
+        '200':
+          description: Image bytes
+          content:
+            image/jpeg: {schema: {type: string, format: binary}}
+            image/png: {schema: {type: string, format: binary}}
+            image/webp: {schema: {type: string, format: binary}}
+            image/avif: {schema: {type: string, format: binary}}
+        '404': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
   /media/{imageId}/{variant}:
     get:
       tags: [Images]
@@ -1161,7 +1214,7 @@ components:
         name: {type: string, minLength: 2, maxLength: 100}
         slug: {type: string, maxLength: 120}
         description: {type: [string, 'null'], maxLength: 2000}
-        imageUrl: {type: [string, 'null'], format: uri}
+        imageUrl: {type: [string, 'null'], format: uri-reference, description: Absolute HTTP(S) URL or an uploaded /api/v1/media/ path}
         orderIndex: {type: integer, minimum: 0}
         recipeCount: {type: integer, minimum: 0}
     CategoryWrite:
@@ -1170,7 +1223,7 @@ components:
       properties:
         name: {type: string, minLength: 2, maxLength: 50, description: "2–50 characters; HTML tags are not allowed."}
         description: {type: [string, 'null'], maxLength: 2000}
-        imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
+        imageUrl: {type: [string, 'null'], format: uri-reference, maxLength: 500, description: Absolute HTTP(S) URL or an uploaded /api/v1/media/ path}
         orderIndex: {type: integer, minimum: 0}
     RecipeStatus: {type: string, enum: [draft, published, archived]}
     RecipeDifficulty: {type: string, enum: [easy, medium, hard, expert]}

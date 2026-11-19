@@ -301,4 +301,18 @@ public interface IContentService
     /// <returns>A task representing the operation and its result.</returns>
     Task<MediaFileDto> OpenMediaAsync(
         Guid imageId, string variant, string? userId, bool isAdmin, CancellationToken cancellationToken);
+
+    /// <summary>Validates and stores a category image.</summary>
+    /// <param name="content">The uploaded image stream.</param>
+    /// <param name="length">The declared image length in bytes.</param>
+    /// <param name="contentType">The declared image MIME type.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>The stored image location.</returns>
+    Task<CategoryImageDto> UploadCategoryImageAsync(Stream content, long length, string contentType, CancellationToken cancellationToken);
+
+    /// <summary>Reads a stored category image.</summary>
+    /// <param name="fileName">The stored file name including its extension.</param>
+    /// <param name="cancellationToken">Cancels the operation when requested by the caller.</param>
+    /// <returns>The image stream and content type.</returns>
+    Task<MediaFileDto> OpenCategoryImageAsync(string fileName, CancellationToken cancellationToken);
 }

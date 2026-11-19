@@ -1,13 +1,15 @@
 export const dynamic = 'force-dynamic'
 
 const allowedVariants = new Set(['original', 'medium', 'thumbnail'])
+const categoryImageName = /^[0-9a-f]{32}\.(?:jpg|png|webp|avif)$/
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ imageId: string; variant: string }> },
 ) {
   const { imageId, variant } = await params
-  if (!allowedVariants.has(variant)) return new Response(null, { status: 404 })
+  const isCategoryImage = imageId === 'category' && categoryImageName.test(variant)
+  if (!isCategoryImage && !allowedVariants.has(variant)) return new Response(null, { status: 404 })
 
   const apiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? 'http://localhost:5000/api/v1'
   const response = await fetch(

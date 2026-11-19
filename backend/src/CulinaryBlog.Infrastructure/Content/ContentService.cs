@@ -170,6 +170,7 @@ internal sealed partial class ContentService(
             throw Conflict("CATEGORY_NAME_EXISTS", "A category with this name already exists.");
         }
 
+        var previousImageUrl = category.ImageUrl;
         category.Update(request.Name, request.Description, request.ImageUrl, request.OrderIndex);
         try
         {
@@ -178,6 +179,11 @@ internal sealed partial class ContentService(
         catch (DbUpdateException exception) when (IsUniqueViolation(exception, "NormalizedName"))
         {
             throw Conflict("CATEGORY_NAME_EXISTS", "A category with this name already exists.");
+        }
+
+        if (!string.Equals(previousImageUrl, category.ImageUrl, StringComparison.Ordinal))
+        {
+            await this.RemoveUnusedCategoryImageAsync(previousImageUrl, cancellationToken).ConfigureAwait(false);
         }
 
         var count = await dbContext.Recipes.CountAsync(

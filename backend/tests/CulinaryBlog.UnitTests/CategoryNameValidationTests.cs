@@ -54,4 +54,38 @@ public sealed class CategoryNameValidationTests
         Assert.Throws<DomainException>(() => category.Update(name, null, null, 0));
         Assert.Equal("Món chay", category.Name);
     }
+
+    /// <summary>Verifies that only absolute HTTP(S) URLs and uploaded media paths are accepted as category images.</summary>
+    /// <param name="imageUrl">The image URL supplied to this operation.</param>
+    /// <param name="valid">The valid supplied to this operation.</param>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Theory]
+    [InlineData("https://example.com/a.jpg", true)]
+    [InlineData("/api/v1/media/category/0123456789abcdef0123456789abcdef.jpg", true)]
+    [InlineData("/api/v1/media/../secret", false)]
+    [InlineData("/api/v1/media/category/a b.png", false)]
+    [InlineData("/api/v1/media/category/x.png?y=1", false)]
+    [InlineData("/api/v1/media/23eb2624-5315-9249-d357-a2b65a00c95c/medium", true)]
+    [InlineData("/other/path.jpg", false)]
+    [InlineData("javascript:alert(1)", false)]
+    public async Task CategoryImageUrlAcceptsOnlyHttpUrlsAndUploadedMediaPaths(string imageUrl, bool valid)
+    {
+        var validation = await new CategoryWriteRequestValidator().ValidateAsync(new CategoryWriteRequest("Món chay", null, imageUrl, 0));
+        Assert.Equal(valid, validation.IsValid);
+    }
+
+    /// <summary>Verifies that a step timer cannot exceed 24 hours.</summary>
+    /// <param name="minutes">The timer length in minutes.</param>
+    /// <param name="valid">Whether the timer should be accepted.</param>
+    /// <returns>A task representing the operation and its result.</returns>
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(1440, true)]
+    [InlineData(1440.5, false)]
+    [InlineData(20_000_000_000, false)]
+    public async Task StepTimerIsLimitedToTwentyFourHours(double minutes, bool valid)
+    {
+        var validation = await new StepWriteRequestValidator().ValidateAsync(new StepWriteRequest("Cook", "Cook rice", minutes));
+        Assert.Equal(valid, validation.IsValid);
+    }
 }
