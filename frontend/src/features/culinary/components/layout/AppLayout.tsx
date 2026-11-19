@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
-import { Outlet, Link, useNavigate, NavLink } from 'react-router'
+import { Outlet, Link, NavLink } from 'react-router'
 import { ChefHat, Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react'
 import { NetworkStatusBanner } from '@/features/culinary/components/NetworkStatusBanner'
 import { MaintenanceBanner } from '@/features/culinary/components/MaintenanceBanner'
@@ -18,7 +18,6 @@ export function AppLayout() {
   const mobileOpen = useUIStore((state) => state.sidebarOpen)
   const setMobileOpen = useUIStore((state) => state.setSidebarOpen)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const navigate = useNavigate()
   const userMenuRef = useRef<HTMLDivElement>(null)
   const userMenuButtonRef = useRef<HTMLButtonElement>(null)
   const hamburgerButtonRef = useRef<HTMLButtonElement>(null)
@@ -105,9 +104,8 @@ export function AppLayout() {
   }, [mobileOpen, setMobileOpen])
 
   const handleLogout = async () => {
-    await logout()
     setUserMenuOpen(false)
-    navigate('/')
+    await logout('/')
   }
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>

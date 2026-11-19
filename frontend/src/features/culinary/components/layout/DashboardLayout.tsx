@@ -1,32 +1,23 @@
 import Image from 'next/image'
-import { Outlet, Link, useNavigate, useSearchParams } from 'react-router'
+import { Outlet, Link, useSearchParams } from 'react-router'
 import { usePathname } from 'next/navigation'
-import {
-  LayoutDashboard,
-  BookOpen,
-  Tag,
-  LogOut,
-  ChevronDown,
-  Shield,
-  Users,
-} from 'lucide-react'
+import { LayoutDashboard, BookOpen, PlusCircle, Tag, LogOut, ChevronDown, Shield, Users } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Tổng quan', icon: LayoutDashboard, end: true },
   { to: '/dashboard/recipes', label: 'Công thức của tôi', icon: BookOpen, end: true },
+  { to: '/dashboard/recipes/new', label: 'Tạo công thức', icon: PlusCircle, end: true },
 ]
 
 export function DashboardLayout() {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
   const pathname = usePathname()
   const [searchParams] = useSearchParams()
   const systemRecipe = user?.role === 'admin' && searchParams.get('from') === 'system'
 
   const handleLogout = async () => {
-    await logout()
-    navigate('/')
+    await logout('/')
   }
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -56,7 +47,10 @@ export function DashboardLayout() {
   const isActive = (to: string, end: boolean) => {
     const target = to.split('?')[0]
     const pathMatches = end ? pathname === target : pathname === target || pathname.startsWith(`${target}/`)
-    if (to === '/dashboard/recipes') return pathname.startsWith('/dashboard/recipes') && !systemRecipe
+    if (to === '/dashboard/recipes')
+      return (
+        pathname.startsWith('/dashboard/recipes') && pathname !== '/dashboard/recipes/new' && !systemRecipe
+      )
     return (
       pathMatches ||
       (to === '/dashboard/system' &&
@@ -128,7 +122,6 @@ export function DashboardLayout() {
               </ul>
             </section>
           ))}
-
         </nav>
 
         {/* Sign out */}
