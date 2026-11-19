@@ -160,8 +160,8 @@ public sealed class Recipe : BaseEntity
     public void RecalculateTimes(IEnumerable<RecipeStep> steps)
     {
         var active = steps.Where(step => !step.IsDeleted).ToArray();
-        this.PrepTime = (int)Math.Min(int.MaxValue, Math.Ceiling(active.Where(step => step.StepType == "prep").Sum(step => step.TimerMinutes ?? 0)));
-        this.CookTime = (int)Math.Min(int.MaxValue, Math.Ceiling(active.Where(step => step.StepType == "cook").Sum(step => step.TimerMinutes ?? 0)));
+        this.PrepTime = (int)Math.Min(int.MaxValue, Math.Floor(active.Where(step => step.StepType == "prep").Sum(step => step.TimerMinutes ?? 0)));
+        this.CookTime = (int)Math.Min(int.MaxValue, Math.Floor(active.Where(step => step.StepType == "cook").Sum(step => step.TimerMinutes ?? 0)));
     }
 
     /// <summary>Publishes a draft only when it contains ingredients and steps.</summary>

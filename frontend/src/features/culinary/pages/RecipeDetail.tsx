@@ -1,7 +1,7 @@
 import { ChefHat, Clock, Timer, Users } from 'lucide-react'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
-import { formatTimerDuration } from '@/lib/recipe-timer'
+import { formatMinutes, formatTimerDuration } from '@/lib/recipe-timer'
 import { Link } from 'react-router'
 import type { Nutrition, Recipe } from '@/lib/api/content-client'
 import { privateMediaUrl, publicMediaUrl } from '@/lib/media-url'
@@ -36,6 +36,11 @@ export function RecipeDetail({
 }) {
   const ingredients = [...recipe.ingredients].sort((left, right) => left.orderIndex - right.orderIndex)
   const steps = [...recipe.steps].sort((left, right) => left.stepNumber - right.stepNumber)
+  // Whole minutes hide short timers; say so instead of showing "0 phút".
+  const formatStageTime = (minutes: number, stage: 'prep' | 'cook') =>
+    minutes === 0 && steps.some((step) => (step.stepType ?? 'cook') === stage && (step.timerMinutes ?? 0) > 0)
+      ? 'Dưới 1 phút'
+      : formatMinutes(minutes)
   const images = [...recipe.images].sort(
     (left, right) => Number(right.isPrimary) - Number(left.isPrimary) || left.orderIndex - right.orderIndex,
   )
@@ -149,13 +154,13 @@ export function RecipeDetail({
                 <dt className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                   <Clock size={15} aria-hidden="true" /> Chuẩn bị
                 </dt>
-                <dd className="font-serif text-lg">{recipe.prepTime} phút</dd>
+                <dd className="font-serif text-lg">{formatStageTime(recipe.prepTime, 'prep')}</dd>
               </div>
               <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-4">
                 <dt className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                   <ChefHat size={15} aria-hidden="true" /> Nấu
                 </dt>
-                <dd className="font-serif text-lg">{recipe.cookTime} phút</dd>
+                <dd className="font-serif text-lg">{formatStageTime(recipe.cookTime, 'cook')}</dd>
               </div>
               <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-4">
                 <dt className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">

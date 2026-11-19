@@ -993,7 +993,7 @@ test('editing a step restores hours or seconds and retains the chosen unit after
     ).RecipeCompositionWizard
     const dirtyStates = []
     for (const [timerMinutes, expectedValue, expectedUnit, label] of [
-      [120, '2', 'hours', '2 giờ'],
+      [120, '2', 'hours', '2 tiếng'],
       [15, '15', 'minutes', '15 phút'],
       [1 / 60, '1', 'seconds', '1 giây'],
     ]) {
