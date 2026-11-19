@@ -76,7 +76,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Sear
             sortBy: query.sortBy === undefined ? undefined : first(query.sortBy),
             sortOrder: query.sortOrder === undefined ? undefined : first(query.sortOrder),
             page,
-            pageSize: positiveInteger(first(query.pageSize), 12),
+            pageSize: 12,
             categoryId: first(query.categoryId) || undefined,
             maxCookTime: first(query.maxCookTime) === '' ? undefined : Number(first(query.maxCookTime)),
             minServings: first(query.minServings) === '' ? undefined : Number(first(query.minServings)),

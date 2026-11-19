@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { createHash, randomBytes } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -67,14 +68,16 @@ async function sources() {
   const files = {}
   for (const name of [...new Set(listing.split('\0'))]
     .filter(
-      (fileName) =>
-        /\.(cs|csproj|props|targets|slnx|ts|tsx|js|jsx|mjs|json|yml|yaml|py|config)$/.test(fileName) ||
-        fileName === '.editorconfig',
+      (candidate) =>
+        /\.(cs|csproj|props|targets|slnx|ts|tsx|js|jsx|mjs|json|yml|yaml|py|config)$/.test(candidate) ||
+        candidate === '.editorconfig',
     )
     .sort()) {
-    files[name] = createHash('sha256')
-      .update((await readFile(path.join(root, name))).toString('utf8').replaceAll('\r\n', '\n'))
-      .digest('hex')
+    files[name] = existsSync(path.join(root, name))
+      ? createHash('sha256')
+          .update((await readFile(path.join(root, name))).toString('utf8').replaceAll('\r\n', '\n'))
+          .digest('hex')
+      : null
   }
   return { sha256: createHash('sha256').update(JSON.stringify(files)).digest('hex'), files }
 }

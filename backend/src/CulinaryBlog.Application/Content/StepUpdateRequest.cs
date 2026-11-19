@@ -7,6 +7,9 @@ namespace CulinaryBlog.Application.Content;
 /// <summary>Carries step update request data.</summary>
 public sealed record StepUpdateRequest
 {
+    /// <summary>Gets or initializes the classification.</summary>
+    public InputField<string?> StepType { get; init; }
+
     /// <summary>Gets or initializes the title.</summary>
     public InputField<string?> Title { get; init; }
 

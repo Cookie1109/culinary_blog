@@ -231,7 +231,7 @@ internal sealed partial class ContentService
             var recipe = await this.FindRecipeForMutationAsync(recipeId, userId, isAdmin, cancellationToken).ConfigureAwait(false);
             EnsureVersion(recipe, expectedVersion);
             int number = await dbContext.RecipeSteps.CountAsync(item => item.RecipeId == recipeId, cancellationToken).ConfigureAwait(false) + 1;
-            var step = RecipeStep.Create(Guid.NewGuid(), recipeId, number, request.Title, request.Description, request.TimerMinutes, request.ImageUrl);
+            var step = RecipeStep.Create(Guid.NewGuid(), recipeId, number, request.Title, request.Description, request.TimerMinutes, request.ImageUrl, request.StepType);
             dbContext.RecipeSteps.Add(step);
             recipe.MarkCompositionChanged();
             await this.SaveRecipeMutationAsync(cancellationToken).ConfigureAwait(false);
@@ -304,7 +304,8 @@ internal sealed partial class ContentService
                 request.Title.Or(step.Title)!,
                 request.Description.Or(step.Description)!,
                 request.TimerMinutes.Or(step.TimerMinutes),
-                request.ImageUrl.Or(step.ImageUrl));
+                request.ImageUrl.Or(step.ImageUrl),
+                request.StepType.Or(step.StepType)!);
             if (targetNumber != step.StepNumber)
             {
                 foreach (var item in steps)
@@ -757,7 +758,7 @@ internal sealed partial class ContentService
         new(item.Id, item.Name, item.Quantity, item.Unit, item.Notes, item.OrderIndex);
 
     private static StepDto ToStepDto(RecipeStep item) =>
-        new(item.Id, item.StepNumber, item.Title, item.Description, item.TimerMinutes, item.ImageUrl);
+        new(item.Id, item.StepNumber, item.Title, item.Description, item.TimerMinutes, item.ImageUrl, item.StepType);
 
     private static RecipeImageDto ToImageDto(RecipeImage item) => new(
         item.Id,

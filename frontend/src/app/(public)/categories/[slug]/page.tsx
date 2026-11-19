@@ -4,11 +4,8 @@ import { CategoryDetail } from '@/features/culinary/pages/CategoryDetail'
 import { getPublishedCategory } from '@/lib/api/public-content-server'
 import { createPageMetadata, summarize } from '@/lib/seo'
 
-export const revalidate = 600
-
-export function generateStaticParams() {
-  return []
-}
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 type CategoryPageProps = {
   params: Promise<{ slug: string; page?: string }>
@@ -23,7 +20,7 @@ async function routeState({ params }: CategoryPageProps) {
 
 export async function generateMetadata(props: CategoryPageProps): Promise<Metadata> {
   const { slug, page } = await routeState(props)
-  const result = await getPublishedCategory(slug, page, revalidate)
+  const result = await getPublishedCategory(slug, page)
   if (!result) notFound()
 
   const { category } = result.data
@@ -42,7 +39,7 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug, page } = await routeState({ params })
-  const result = await getPublishedCategory(slug, page, revalidate)
+  const result = await getPublishedCategory(slug, page)
   if (!result) notFound()
 
   return <CategoryDetail result={result} />

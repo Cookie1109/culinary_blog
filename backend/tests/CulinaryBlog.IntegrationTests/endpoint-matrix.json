@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "scope": "All operations in the runtime OpenAPI document. Google sign-in uses an HTTP adapter test; external provider acceptance is separate.",
-  "source": "Runtime OpenAPI and passing integration TRX. Functional requirements and screens are linked in docs/specs/phase-0/06_Traceability_Matrix.md.",
+  "scope": "Four functional requirements; test references are evidence links, not an assertion of exhaustive branch coverage. Historical G05 evidence is unchanged.",
+  "source": "Current branch runtime OpenAPI plus current integration TRX; excludes unrelated uncommitted SRS changes.",
   "operations": [
     {
       "operation": "GET /api/v1/categories",
@@ -127,8 +127,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -142,8 +141,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -157,8 +155,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -172,8 +169,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -187,8 +183,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -202,8 +197,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -217,8 +211,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -232,8 +225,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -247,8 +239,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -262,8 +253,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -277,8 +267,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -292,8 +281,7 @@
           "RecipeCoreApiTests.StaleRecipeUpdateReturnsConflictAndCurrentEtag"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -307,8 +295,7 @@
           "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -322,8 +309,7 @@
           "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -337,8 +323,7 @@
           "RecipeMediaUploadTests.InvalidUploadsAndStorageFailureLeaveNoRowsObjectsOrVersionChange"
         ],
         "authorization": [
-          "EndpointMatrixTests.ProtectedOperationsRejectGuestsBeforeReadingOrWritingResources",
-          "EndpointMatrixTests.OtherAuthorCannotMutateAnyRecipeComponentAndNoVersionChanges"
+          "FourRequirementsEndpointMatrixTests.ProtectedRecipeMutationsRejectGuestsAndOtherAuthors"
         ]
       }
     },
@@ -410,272 +395,6 @@
         "authorization": [
           "AdminAuditLogsApiTests.AnonymousRequestIsRejectedWithUnauthorized",
           "AdminAuditLogsApiTests.AuthorRequestIsRejectedWithForbidden"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/register",
-      "cases": {
-        "happy": [
-          "AuthLifecycleTests.RegisterProfileRefreshLogoutLifecycleIsSecure"
-        ],
-        "error": [
-          "EndpointMatrixTests.AccountEndpointsRejectDuplicateInvalidAndUnauthenticatedRequests"
-        ],
-        "authorization": [
-          "AuthLifecycleTests.RegisterProfileRefreshLogoutLifecycleIsSecure"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/login",
-      "cases": {
-        "happy": [
-          "PasswordLifecycleTests.ChangeRequiresCurrentPasswordAndRevokesEverySession"
-        ],
-        "error": [
-          "AuthLifecycleTests.FiveInvalidPasswordsLockTheAccountWithoutEnumeratingIt"
-        ],
-        "authorization": [
-          "AuthLifecycleTests.FiveInvalidPasswordsLockTheAccountWithoutEnumeratingIt"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/google",
-      "cases": {
-        "happy": [
-          "EndpointMatrixTests.GoogleHttpAdapterReturnsSessionAndRejectsInvalidBodyWithoutCallingProvider"
-        ],
-        "error": [
-          "EndpointMatrixTests.GoogleHttpAdapterReturnsSessionAndRejectsInvalidBodyWithoutCallingProvider"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.GoogleHttpAdapterReturnsSessionAndRejectsInvalidBodyWithoutCallingProvider"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/refresh",
-      "cases": {
-        "happy": [
-          "AuthLifecycleTests.RegisterProfileRefreshLogoutLifecycleIsSecure"
-        ],
-        "error": [
-          "AuthLifecycleTests.RegisterProfileRefreshLogoutLifecycleIsSecure"
-        ],
-        "authorization": [
-          "AuthLifecycleTests.ExpiredRefreshAndTamperedAccessTokensAreRejected"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/logout",
-      "cases": {
-        "happy": [
-          "AuthLifecycleTests.RegisterProfileRefreshLogoutLifecycleIsSecure"
-        ],
-        "error": [
-          "EndpointMatrixTests.AccountEndpointsRejectDuplicateInvalidAndUnauthenticatedRequests"
-        ],
-        "authorization": [
-          "AuthLifecycleTests.RegisterProfileRefreshLogoutLifecycleIsSecure"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/change-password",
-      "cases": {
-        "happy": [
-          "PasswordLifecycleTests.ChangeRequiresCurrentPasswordAndRevokesEverySession"
-        ],
-        "error": [
-          "PasswordLifecycleTests.ChangeRequiresCurrentPasswordAndRevokesEverySession"
-        ],
-        "authorization": [
-          "PasswordLifecycleTests.ChangeRequiresAuthenticationAndRecoveryValidatesInput"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/forgot-password",
-      "cases": {
-        "happy": [
-          "PasswordLifecycleTests.ForgotDoesNotDiscloseUnknownAccountsAndResetTokenIsBoundAndSingleUse"
-        ],
-        "error": [
-          "PasswordLifecycleTests.ChangeRequiresAuthenticationAndRecoveryValidatesInput"
-        ],
-        "authorization": [
-          "PasswordLifecycleTests.ForgotDoesNotDiscloseUnknownAccountsAndResetTokenIsBoundAndSingleUse"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/reset-password",
-      "cases": {
-        "happy": [
-          "PasswordLifecycleTests.ForgotDoesNotDiscloseUnknownAccountsAndResetTokenIsBoundAndSingleUse"
-        ],
-        "error": [
-          "PasswordLifecycleTests.ForgotDoesNotDiscloseUnknownAccountsAndResetTokenIsBoundAndSingleUse"
-        ],
-        "authorization": [
-          "PasswordLifecycleTests.ForgotDoesNotDiscloseUnknownAccountsAndResetTokenIsBoundAndSingleUse"
-        ]
-      }
-    },
-    {
-      "operation": "GET /api/v1/auth/me",
-      "cases": {
-        "happy": [
-          "PasswordLifecycleTests.ChangeRequiresCurrentPasswordAndRevokesEverySession"
-        ],
-        "error": [
-          "AuthLifecycleTests.ExpiredRefreshAndTamperedAccessTokensAreRejected"
-        ],
-        "authorization": [
-          "AuthLifecycleTests.ExpiredRefreshAndTamperedAccessTokensAreRejected"
-        ]
-      }
-    },
-    {
-      "operation": "PATCH /api/v1/auth/me",
-      "cases": {
-        "happy": [
-          "AuthLifecycleTests.RegisterProfileRefreshLogoutLifecycleIsSecure"
-        ],
-        "error": [
-          "EndpointMatrixTests.AccountEndpointsRejectDuplicateInvalidAndUnauthenticatedRequests"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.AccountEndpointsRejectDuplicateInvalidAndUnauthenticatedRequests"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/categories",
-      "cases": {
-        "happy": [
-          "RecipeCoreApiTests.AdminCategorySlugIsStableAndDeleteWithRecipeConflicts"
-        ],
-        "error": [
-          "RecipeCoreApiTests.CategoryNameBoundsApplyToCreateAndUpdateWithoutChangingStorage"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.CategoryWritesRequireAdmin"
-        ]
-      }
-    },
-    {
-      "operation": "PUT /api/v1/categories/{id}",
-      "cases": {
-        "happy": [
-          "RecipeCoreApiTests.AdminCategorySlugIsStableAndDeleteWithRecipeConflicts"
-        ],
-        "error": [
-          "RecipeCoreApiTests.CategoryNameBoundsApplyToCreateAndUpdateWithoutChangingStorage"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.CategoryWritesRequireAdmin"
-        ]
-      }
-    },
-    {
-      "operation": "DELETE /api/v1/categories/{id}",
-      "cases": {
-        "happy": [
-          "AdminAuditLogsApiTests.AdminRequestReturnsAuditLogsAndTelemetryMetadata"
-        ],
-        "error": [
-          "RecipeCoreApiTests.AdminCategorySlugIsStableAndDeleteWithRecipeConflicts"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.CategoryWritesRequireAdmin"
-        ]
-      }
-    },
-    {
-      "operation": "GET /api/v1/sitemap.xml",
-      "cases": {
-        "happy": [
-          "EndpointMatrixTests.SitemapEndpointReturnsStoredXmlOrNotFound"
-        ],
-        "error": [
-          "EndpointMatrixTests.SitemapEndpointReturnsStoredXmlOrNotFound"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.SitemapEndpointReturnsStoredXmlOrNotFound"
-        ]
-      }
-    },
-    {
-      "operation": "GET /api/v1",
-      "cases": {
-        "happy": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ],
-        "error": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ]
-      }
-    },
-    {
-      "operation": "GET /api/v1/release",
-      "cases": {
-        "happy": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ],
-        "error": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ]
-      }
-    },
-    {
-      "operation": "GET /api/v1/operations/maintenance",
-      "cases": {
-        "happy": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ],
-        "error": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ],
-        "authorization": [
-          "EndpointMatrixTests.SupportingReadEndpointsReturnDataAndRejectWrites"
-        ]
-      }
-    },
-    {
-      "operation": "POST /api/v1/auth/me/avatar",
-      "cases": {
-        "happy": [
-          "RecipeMediaUploadTests.ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage"
-        ],
-        "error": [
-          "RecipeMediaUploadTests.ProfileAvatarUploadRejectsGuestsAndInvalidFilesWithoutChangingProfile"
-        ],
-        "authorization": [
-          "RecipeMediaUploadTests.ProfileAvatarUploadRejectsGuestsAndInvalidFilesWithoutChangingProfile"
-        ]
-      }
-    },
-    {
-      "operation": "GET /api/v1/avatars/{userId}/{fileName}",
-      "cases": {
-        "happy": [
-          "RecipeMediaUploadTests.ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage"
-        ],
-        "error": [
-          "RecipeMediaUploadTests.ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage"
-        ],
-        "authorization": [
-          "RecipeMediaUploadTests.ProfileAvatarUploadPersistsPublicImageAndReplacementHidesOldImage"
         ]
       }
     }

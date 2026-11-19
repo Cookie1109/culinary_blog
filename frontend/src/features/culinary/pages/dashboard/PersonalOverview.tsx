@@ -6,6 +6,8 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle,
+  Clock3,
+  Eye,
   FileText,
   Pencil,
   PlusCircle,
@@ -16,9 +18,9 @@ import { listMyRecipes, type RecipeStatus } from '@/lib/api/content-client'
 import { useAuth } from '../../contexts/AuthContext'
 
 const STATUS_BADGE: Record<RecipeStatus, string> = {
-  published: 'bg-green-50 text-green-700 border border-green-200',
-  draft: 'bg-amber-50 text-amber-700 border border-amber-200',
-  archived: 'bg-secondary text-muted-foreground border border-border',
+  published: 'bg-emerald-50 text-emerald-700',
+  draft: 'bg-amber-50 text-amber-700',
+  archived: 'bg-secondary text-muted-foreground',
 }
 
 const STATUS_LABEL: Record<RecipeStatus, string> = {
@@ -109,46 +111,51 @@ export function PersonalOverview() {
   const recentRecipes = recentQuery.data?.data ?? []
 
   return (
-    <div>
+    <div data-personal-overview>
       {/* Welcome */}
-      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="mb-7 flex flex-col justify-between gap-5 border-b border-border pb-7 sm:flex-row sm:items-center">
         <div>
-          <h1 className="mb-1 font-serif text-3xl text-foreground lg:text-4xl">Tổng quan cá nhân</h1>
-          <p className="text-muted-foreground">
+          <h1 className="mb-2 font-serif text-3xl text-foreground lg:text-4xl">Tổng quan cá nhân</h1>
+          <p className="text-sm leading-relaxed text-muted-foreground">
             Xin chào, {user.name.split(' ')[0]}. Đây là các công thức của bạn.
           </p>
         </div>
         <Link
           to="/dashboard/recipes/new"
-          className="inline-flex shrink-0 items-center justify-center gap-2 bg-primary px-5 py-3 text-sm uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <PlusCircle size={16} aria-hidden="true" /> Tạo công thức mới
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
         {stats.map(({ label, value, icon: Icon, color, filter }) => (
           <Link
             key={label}
             to={filter ? `/dashboard/recipes?status=${filter}` : '/dashboard/recipes'}
-            className="group block border border-border bg-background p-5 transition-colors hover:border-primary/50 lg:p-6"
+            className="group flex min-w-0 items-center justify-between gap-3 border border-border bg-card p-4 transition-colors hover:border-primary/50 sm:p-5 lg:p-6"
           >
-            <div className="mb-3 flex items-start justify-between">
-              <span className="text-xs uppercase tracking-widest text-muted-foreground group-hover:text-foreground">
-                {label}
-              </span>
-              <Icon size={18} strokeWidth={1.5} className={color} />
+            <div className="min-w-0">
+              <p className="mb-3 text-sm text-muted-foreground group-hover:text-foreground">{label}</p>
+              <p className="font-serif text-4xl leading-none tabular-nums text-foreground">{value}</p>
             </div>
-            <p className="font-serif text-3xl text-foreground">{value}</p>
+            <span
+              className={`hidden size-11 shrink-0 items-center justify-center bg-background sm:flex ${color}`}
+            >
+              <Icon size={21} strokeWidth={1.5} aria-hidden="true" />
+            </span>
           </Link>
         ))}
       </div>
 
       {/* Recent recipes */}
-      <div className="border border-border bg-background">
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h2 className="font-serif text-xl">Công thức gần đây</h2>
+      <div className="overflow-hidden border border-border bg-card">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/50 px-4 py-5 sm:px-6">
+          <h2 className="flex items-center gap-3 font-serif text-xl">
+            <Clock3 size={17} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
+            Công thức gần đây
+          </h2>
           <Link
             to="/dashboard/recipes"
             className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-primary transition-colors hover:text-primary/80"
@@ -192,73 +199,59 @@ export function PersonalOverview() {
         )}
 
         {!isLoading && !isError && recentRecipes.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-6 py-3 text-left text-xs uppercase tracking-widest font-medium text-muted-foreground">
-                    Tiêu đề
-                  </th>
-                  <th className="hidden px-6 py-3 text-left text-xs uppercase tracking-widest font-medium text-muted-foreground sm:table-cell">
-                    Danh mục
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs uppercase tracking-widest font-medium text-muted-foreground">
-                    Trạng thái
-                  </th>
-                  <th className="hidden px-6 py-3 text-right text-xs uppercase tracking-widest font-medium text-muted-foreground md:table-cell">
-                    Ngày tạo
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs uppercase tracking-widest font-medium text-muted-foreground">
-                    Thao tác
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentRecipes.map((recipe) => (
-                  <tr
-                    key={recipe.id}
-                    className="border-b border-border last:border-0 transition-colors hover:bg-secondary/40"
+          <ul className="divide-y divide-border">
+            {recentRecipes.map((recipe) => (
+              <li
+                key={recipe.id}
+                className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-4 gap-y-2 px-4 py-5 transition-colors hover:bg-background/70 sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:px-6"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex size-12 shrink-0 items-center justify-center border border-border/60 bg-background font-serif text-xl text-primary"
+                >
+                  {Array.from(recipe.title.trim())[0]?.toLocaleUpperCase('vi-VN')}
+                </span>
+                <div className="min-w-0">
+                  <Link
+                    to={`/dashboard/recipes/${recipe.id}/preview`}
+                    className="block break-words text-base font-medium text-foreground hover:text-primary"
                   >
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-foreground">{recipe.title}</span>
-                    </td>
-                    <td className="hidden px-6 py-4 text-muted-foreground sm:table-cell">
-                      {recipe.category.name}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-block px-2.5 py-1 text-xs rounded-none ${STATUS_BADGE[recipe.status]}`}
-                      >
-                        {STATUS_LABEL[recipe.status] ?? recipe.status}
-                      </span>
-                    </td>
-                    <td className="hidden px-6 py-4 text-right text-muted-foreground md:table-cell">
+                    {recipe.title}
+                  </Link>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-1 text-xs leading-relaxed text-muted-foreground">
+                    {recipe.category.name} ·{' '}
+                    <time dateTime={recipe.createdAt}>
                       {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <Link
-                          to={`/dashboard/recipes/${recipe.id}/preview`}
-                          aria-label={`Xem trước riêng tư ${recipe.title}`}
-                          className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
-                          title="Xem trước"
-                        >
-                          Xem trước
-                        </Link>
-                        <Link
-                          to={`/dashboard/recipes/${recipe.id}/edit`}
-                          aria-label={`Chỉnh sửa ${recipe.title}`}
-                          className="flex items-center gap-1 text-xs uppercase tracking-widest text-primary hover:text-primary/80"
-                        >
-                          <Pencil size={13} /> Sửa
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </time>
+                  </p>
+                </div>
+                <div className="col-start-2 flex items-center justify-between gap-2 sm:col-auto sm:justify-end sm:gap-3">
+                  <Link
+                    to={`/dashboard/recipes/${recipe.id}/preview`}
+                    aria-label={`Xem trước riêng tư ${recipe.title}`}
+                    title="Xem trước"
+                    className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary"
+                  >
+                    <Eye size={15} strokeWidth={1.5} aria-hidden="true" />
+                  </Link>
+                  <span
+                    className={`inline-flex w-28 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs ${STATUS_BADGE[recipe.status]}`}
+                  >
+                    <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+                    {STATUS_LABEL[recipe.status] ?? recipe.status}
+                  </span>
+                  <Link
+                    to={`/dashboard/recipes/${recipe.id}/edit`}
+                    aria-label={`Chỉnh sửa ${recipe.title}`}
+                    title="Chỉnh sửa"
+                    className="flex size-11 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary"
+                  >
+                    <Pencil size={17} strokeWidth={1.5} aria-hidden="true" />
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

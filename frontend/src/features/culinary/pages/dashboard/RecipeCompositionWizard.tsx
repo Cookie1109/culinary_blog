@@ -38,7 +38,13 @@ import { RecipeDetail } from '../RecipeDetail'
 import { RecipeStepList } from './RecipeStepList'
 
 const EMPTY_INGREDIENT: IngredientWrite = { name: '', quantity: null, unit: null, notes: null, orderIndex: 0 }
-const EMPTY_STEP: StepWrite = { title: '', description: '', timerMinutes: null, imageUrl: null }
+const EMPTY_STEP: StepWrite = {
+  stepType: 'cook',
+  title: '',
+  description: '',
+  timerMinutes: null,
+  imageUrl: null,
+}
 
 interface Props {
   recipe: Recipe
@@ -178,6 +184,7 @@ export function RecipeCompositionWizard({
   const originalTimer = getTimerInput(originalStep?.timerMinutes ?? null)
   const stepBaseline = originalStep
     ? {
+        stepType: originalStep.stepType ?? 'cook',
         title: originalStep.title,
         description: originalStep.description,
         timerMinutes: originalTimer.value,
@@ -350,6 +357,7 @@ export function RecipeCompositionWizard({
   const submitStep = (values: StepWrite) => {
     setClientError(null)
     stepMutation.mutate({
+      stepType: values.stepType ?? 'cook',
       title: values.title,
       description: values.description,
       imageUrl: values.imageUrl,
@@ -676,6 +684,17 @@ export function RecipeCompositionWizard({
                   id="step-description-error"
                   message={stepFields.formState.errors.description?.message}
                 />
+                <label className="block text-sm">
+                  Phân loại bước
+                  <select
+                    aria-label="Phân loại bước"
+                    className={inputClass}
+                    {...stepFields.register('stepType')}
+                  >
+                    <option value="prep">Chuẩn bị</option>
+                    <option value="cook">Nấu</option>
+                  </select>
+                </label>
                 <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3">
                   <input
                     aria-label="Thời gian hẹn giờ"
@@ -755,6 +774,7 @@ export function RecipeCompositionWizard({
                 const timer = getTimerInput(item.timerMinutes)
                 setTimerUnit(timer.unit)
                 setStepForm({
+                  stepType: item.stepType ?? 'cook',
                   title: item.title,
                   description: item.description,
                   timerMinutes: timer.value,

@@ -32,7 +32,7 @@ public sealed class RedisApplicationCacheTests
     {
         public Task<long> GetAsync(CancellationToken cancellationToken = default) => Task.FromResult(0L);
 
-        public Task<long> RefreshAsync(CancellationToken cancellationToken = default) => Task.FromResult(0L);
+        public Task<long> RefreshAsync(CancellationToken cancellationToken = default) => this.GetAsync(cancellationToken);
     }
 
     private sealed class UnavailableDistributedCache : IDistributedCache

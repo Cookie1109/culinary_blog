@@ -5,11 +5,9 @@ import { lazy, Suspense, useEffect, useRef, useState, useTransition, type FormEv
 import { useSearchParams } from 'react-router'
 import { useRouter } from 'next/navigation'
 import { normalizeRecipeSearch, recipeSearchPages, recipeSearchValidation } from '@/lib/recipe-search'
-import { useForm } from 'react-hook-form'
 import { FieldError } from '@/components/ui/field-error'
 import { RecipeCard } from '@/features/culinary/components/RecipeCard'
 import type { Category, PageEnvelope, Recipe } from '@/lib/api/content-client'
-import type { PublicRecipeFilterValues } from '../forms/content-schemas'
 
 const Modal = lazy(() => import('@/components/ui/modal').then((module) => ({ default: module.Modal })))
 
@@ -62,17 +60,6 @@ export function RecipesList({
   const minServings = searchParams.get('minServings') ?? ''
   const minPrepTime = searchParams.get('minPrepTime') ?? ''
   const maxPrepTime = searchParams.get('maxPrepTime') ?? ''
-  const pageSize = searchParams.get('pageSize') ?? '12'
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<PublicRecipeFilterValues>({
-    resolver: async (...args) =>
-      (await import('../forms/deferred-resolvers')).publicRecipeFiltersResolver(...args),
-    defaultValues: { maxCookTime, minServings, minPrepTime, maxPrepTime },
-  })
   const [searchError, setSearchError] = useState(initialSearchError)
   const requestedPage = Number.parseInt(searchParams.get('page') ?? '1', 10)
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
@@ -104,7 +91,7 @@ export function RecipesList({
   const composing = useRef(false)
   const focusResults = useRef(false)
   const submittedSearch = useRef<string | null>(null)
-  const hasActiveFilters = [...searchParams.keys()].some((key) => !['q', 'page', 'sort'].includes(key))
+  const hasActiveFilters = [...searchParams.keys()].some((key) => !['q', 'page', 'sort', 'pageSize'].includes(key))
   const selectedCategory = categories.find((item) => item.slug === category)
   const firstCategories = categories.slice(0, 4)
   const visibleCategories =
@@ -129,11 +116,6 @@ export function RecipesList({
     }
   }, [isPending, result])
   useEffect(() => setTimeValue(maxTime ? Math.min(maxTime, 180) : MAX_TIME_SLIDER_VALUE), [maxTime])
-
-  useEffect(
-    () => reset({ maxCookTime, minServings, minPrepTime, maxPrepTime }),
-    [maxCookTime, minServings, minPrepTime, maxPrepTime, reset],
-  )
 
   const setFilter = (key: string, value: string) => {
     if (key === 'q' || key === 'page') {
@@ -193,17 +175,6 @@ export function RecipesList({
     if (q) setFilter('q', '')
     focusResults.current = false
     inputRef.current?.focus()
-  }
-
-  const applyAdvancedFilters = (values: PublicRecipeFilterValues) => {
-    const next = new URLSearchParams(searchParams)
-    for (const key of ['maxCookTime', 'minServings', 'minPrepTime', 'maxPrepTime'] as const) {
-      if (values[key]) next.set(key, values[key])
-      else next.delete(key)
-    }
-    next.delete('page')
-    setFiltersOpen(false)
-    startTransition(() => setSearchParams(next, { replace: false, scroll: false }))
   }
 
   const applyTimeFilter = (value: number) => {
@@ -290,9 +261,6 @@ export function RecipesList({
             {isPending ? 'Đang tìm…' : 'Tìm kiếm'}
           </button>
         </form>
-        <p id="recipes-search-hint" className="mt-3 text-sm text-muted-foreground">
-          Tìm theo tên món. Bạn có thể gõ tiếng Việt không dấu.
-        </p>
         <FieldError id="recipes-search-error" message={searchError} />
       </header>
 
@@ -370,8 +338,7 @@ export function RecipesList({
           minServings ||
           minPrepTime ||
           maxPrepTime ||
-          sort !== 'newest' ||
-          pageSize !== '12') && (
+          sort !== 'newest') && (
           <button
             type="button"
             onClick={() => {
@@ -481,45 +448,6 @@ export function RecipesList({
               <span>{timeValue === MAX_TIME_SLIDER_VALUE ? '3+ giờ' : `${timeValue} phút`}</span>
             </div>
           </fieldset>
-          <form noValidate onSubmit={handleSubmit(applyAdvancedFilters)} className="sm:col-span-3 lg:mt-6">
-            <fieldset className="space-y-4">
-              <legend className="mb-3 w-full border-b border-border pb-3 font-serif text-xs uppercase tracking-widest text-muted-foreground lg:pb-2">
-                Khẩu phần và thời gian
-              </legend>
-              {(
-                [
-                  ['maxCookTime', 'Thời gian nấu tối đa (phút)', 0],
-                  ['minServings', 'Khẩu phần tối thiểu (người)', 1],
-                  ['minPrepTime', 'Chuẩn bị từ (phút)', 1],
-                  ['maxPrepTime', 'Chuẩn bị đến (phút)', 1],
-                ] as const
-              ).map(([key, label, minimum]) => (
-                <div key={key}>
-                  <label htmlFor={`filter-${key}`} className="mb-1 block text-sm">
-                    {label}
-                  </label>
-                  <input
-                    id={`filter-${key}`}
-                    type="number"
-                    min={minimum}
-                    step={1}
-                    {...register(key)}
-                    aria-invalid={Boolean(errors[key])}
-                    aria-describedby={errors[key] ? `filter-${key}-error` : undefined}
-                    placeholder="Không giới hạn"
-                    className="w-full border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                  />
-                  <FieldError id={`filter-${key}-error`} message={errors[key]?.message} />
-                </div>
-              ))}
-              <button
-                type="submit"
-                className="w-full bg-primary px-3 py-2.5 text-sm text-primary-foreground hover:bg-primary/90"
-              >
-                Áp dụng bộ lọc
-              </button>
-            </fieldset>
-          </form>
           <button
             type="button"
             disabled={isPending}
@@ -571,21 +499,6 @@ export function RecipesList({
               <option value="-prepTime">Thời gian chuẩn bị giảm dần</option>
               <option value="servings">Khẩu phần tăng dần</option>
               <option value="-servings">Khẩu phần giảm dần</option>
-            </select>
-            <label htmlFor="recipes-page-size" className="sr-only">
-              Số công thức mỗi trang
-            </label>
-            <select
-              id="recipes-page-size"
-              value={pageSize}
-              onChange={(event) => setFilter('pageSize', event.target.value)}
-              className="border border-border bg-background px-3 py-2.5 text-sm"
-            >
-              {Array.from(new Set(['12', '24', '50', pageSize])).map((size) => (
-                <option key={size} value={size}>
-                  {size} công thức / trang
-                </option>
-              ))}
             </select>
           </div>
 

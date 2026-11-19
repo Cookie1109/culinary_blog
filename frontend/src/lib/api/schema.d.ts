@@ -4,6 +4,29 @@
  */
 
 export interface paths {
+    "/recipe-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream committed recipe changes
+         * @description Public SSE stream. Sends connected on subscription and changed after committed
+         *     content mutations. Payload is an empty JSON object and contains no recipe or
+         *     user data. Heartbeat comments keep the connection alive. Reconnect and refetch
+         *     authorized data after connected; intermediate events are coalesced, not replayed.
+         */
+        get: operations["streamRecipeChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -836,6 +859,7 @@ export interface components {
             description: string;
             /** Format: uuid */
             categoryId: string;
+            /** @description Tự động tính từ các bước chuẩn bị */
             prepTime: number;
             cookTime: number;
             servings: number;
@@ -851,6 +875,7 @@ export interface components {
             description?: string;
             /** Format: uuid */
             categoryId?: string;
+            /** @description Tự động tính từ các bước chuẩn bị */
             prepTime?: number;
             cookTime?: number;
             servings?: number;
@@ -861,6 +886,8 @@ export interface components {
         StepUpdateRequest: {
             title?: string;
             description?: string;
+            /** @enum {string} */
+            stepType?: "prep" | "cook";
             /** @description Thời gian theo phút, hỗ trợ phần lẻ để biểu diễn giây */
             timerMinutes?: number | null;
             /** Format: uri */
@@ -871,6 +898,8 @@ export interface components {
         StepWrite: {
             title: string;
             description: string;
+            /** @enum {string} */
+            stepType?: "prep" | "cook";
             /** @description Thời gian theo phút, hỗ trợ phần lẻ để biểu diễn giây */
             timerMinutes?: number | null;
             /** Format: uri */
@@ -1094,6 +1123,30 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    streamRecipeChanges: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Continuous server-sent events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example event: changed
+                     *     data: {}
+                     */
+                    "text/event-stream": string;
+                };
+            };
+        };
+    };
     getApiMetadata: {
         parameters: {
             query?: never;

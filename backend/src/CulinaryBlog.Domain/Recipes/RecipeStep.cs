@@ -26,6 +26,9 @@ public sealed class RecipeStep : BaseEntity
     /// <summary>Gets the timer minutes.</summary>
     public double? TimerMinutes { get; private set; }
 
+    /// <summary>Gets the step classification.</summary>
+    public string StepType { get; private set; } = "cook";
+
     /// <summary>Gets the image url.</summary>
     public string? ImageUrl { get; private set; }
 
@@ -36,6 +39,7 @@ public sealed class RecipeStep : BaseEntity
     /// <param name="title">The title supplied to this operation.</param>
     /// <param name="description">The description supplied to this operation.</param>
     /// <param name="timerMinutes">The timer minutes supplied to this operation.</param>
+    /// <param name="stepType">The prep or cook classification.</param>
     /// <param name="imageUrl">The image url supplied to this operation.</param>
     /// <returns>The create result.</returns>
     public static RecipeStep Create(
@@ -45,10 +49,10 @@ public sealed class RecipeStep : BaseEntity
         string title,
         string description,
         double? timerMinutes,
-        string? imageUrl)
+        string? imageUrl, string stepType = "cook")
     {
         var step = new RecipeStep { Id = id, RecipeId = recipeId };
-        step.Update(stepNumber, title, description, timerMinutes, imageUrl);
+        step.Update(stepNumber, title, description, timerMinutes, imageUrl, stepType);
         return step;
     }
 
@@ -57,12 +61,13 @@ public sealed class RecipeStep : BaseEntity
     /// <param name="title">The title supplied to this operation.</param>
     /// <param name="description">The description supplied to this operation.</param>
     /// <param name="timerMinutes">The timer minutes supplied to this operation.</param>
+    /// <param name="stepType">The prep or cook classification.</param>
     /// <param name="imageUrl">The image url supplied to this operation.</param>
-    public void Update(int stepNumber, string title, string description, double? timerMinutes, string? imageUrl)
+    public void Update(int stepNumber, string title, string description, double? timerMinutes, string? imageUrl, string stepType = "cook")
     {
         var trimmedTitle = title.Trim();
         var trimmedDescription = description.Trim();
-        if (stepNumber < 1 || trimmedTitle.Length is < 1 or > 200 || trimmedDescription.Length is < 1 or > 2000 || timerMinutes < 0 ||
+        if (stepType is not ("prep" or "cook") || stepNumber < 1 || trimmedTitle.Length is < 1 or > 200 || trimmedDescription.Length is < 1 or > 2000 || timerMinutes < 0 ||
             (timerMinutes.HasValue && !double.IsFinite(timerMinutes.Value)))
         {
             throw new DomainException("RECIPE_DATA_INVALID", "Recipe step data is invalid.");
@@ -77,6 +82,7 @@ public sealed class RecipeStep : BaseEntity
         this.Title = trimmedTitle;
         this.Description = trimmedDescription;
         this.TimerMinutes = timerMinutes;
+        this.StepType = stepType;
         this.ImageUrl = string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl.Trim();
     }
 

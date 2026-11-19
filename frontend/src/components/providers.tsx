@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react'
 import { SessionProvider } from 'next-auth/react'
 import { AuthProvider } from '@/features/culinary/contexts/AuthContext'
 import { ToastProvider } from '@/components/ui/toast'
+import { RecipeRealtime } from '@/components/recipe-realtime'
 import { NavigationGuardProvider } from '@/components/navigation-guard'
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -24,6 +25,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RecipeRealtime />
       <SessionProvider>
         <AuthProvider>
           <ToastProvider>

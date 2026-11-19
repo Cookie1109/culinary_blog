@@ -41,7 +41,7 @@ export const recipeSchema = z.object({
   prepTime: z
     .number({ error: formMessages.number })
     .int(formMessages.timeInteger)
-    .positive(formMessages.prepTime),
+    .min(0, formMessages.prepTime),
   cookTime: z
     .number({ error: formMessages.number })
     .int(formMessages.timeInteger)
@@ -72,6 +72,7 @@ export const ingredientSchema = z.object({
 })
 
 export const stepSchema = z.object({
+  stepType: z.enum(['prep', 'cook']).optional(),
   title: z.string().trim().min(1, formMessages.stepTitleRequired).max(200, formMessages.stepTitleLength),
   description: z
     .string()

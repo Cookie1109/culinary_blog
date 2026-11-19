@@ -4,7 +4,7 @@ import test from 'node:test'
 
 const source = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 
-test('public revalidated caches use the agreed TTLs and shared public-content tag', async () => {
+test('public realtime pages render fresh content while keeping backend cache support', async () => {
   const [home, categories, category, recipe, serverClient] = await Promise.all([
     source('src/app/(public)/render-public/home/[key]/page.tsx'),
     source('src/app/(public)/render-public/categories/[key]/page.tsx'),
@@ -13,18 +13,16 @@ test('public revalidated caches use the agreed TTLs and shared public-content ta
     source('src/lib/api/public-content-server.ts'),
   ])
 
-  assert.match(home, /export const revalidate = 3600/)
-  assert.match(home, /export function generateStaticParams\(\)/)
-  assert.match(home, /return \[\]/)
+  assert.match(home, /export const dynamic = 'force-dynamic'/)
+  assert.doesNotMatch(home, /generateStaticParams/)
   assert.doesNotMatch(home, /connection\(/)
   assert.match(home, /key !== 'index'\) notFound\(\)/)
-  assert.match(categories, /export const revalidate = 3600/)
-  assert.match(categories, /export function generateStaticParams\(\)/)
-  assert.match(categories, /return \[\]/)
+  assert.match(categories, /export const dynamic = 'force-dynamic'/)
+  assert.doesNotMatch(categories, /generateStaticParams/)
   assert.doesNotMatch(categories, /connection\(/)
   assert.match(categories, /key !== 'index'\) notFound\(\)/)
-  assert.match(category, /export const revalidate = 600/)
-  assert.match(recipe, /export const revalidate = 300/)
+  assert.match(category, /export const dynamic = 'force-dynamic'/)
+  assert.match(recipe, /export const dynamic = 'force-dynamic'/)
   assert.match(serverClient, /PUBLIC_CONTENT_TAG = 'public-content'/)
   assert.match(serverClient, /tags: \[PUBLIC_CONTENT_TAG\]/)
   assert.match(serverClient, /export function getPublishedRecipes/)

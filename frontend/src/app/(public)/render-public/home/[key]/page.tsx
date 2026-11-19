@@ -4,18 +4,14 @@ import { Home } from '@/features/culinary/pages/Home'
 import { getPublicCategories, getPublishedRecipes } from '@/lib/api/public-content-server'
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 export const metadata: Metadata = createPageMetadata({
   title: SITE_NAME,
   description: SITE_DESCRIPTION,
   path: '/',
   absoluteTitle: true,
 })
-
-// Generate the public root on its first request so builds need no live API.
-export function generateStaticParams() {
-  return []
-}
 
 export default async function HomePage({ params }: { params: Promise<{ key: string }> }) {
   if ((await params).key !== 'index') notFound()

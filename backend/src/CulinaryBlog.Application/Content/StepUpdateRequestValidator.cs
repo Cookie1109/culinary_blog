@@ -10,6 +10,7 @@ internal sealed class StepUpdateRequestValidator : AbstractValidator<StepUpdateR
     /// <summary>Initializes a new instance of the <see cref="StepUpdateRequestValidator"/> class.</summary>
     public StepUpdateRequestValidator()
     {
+        this.RuleFor(request => request.StepType.Value).Must(value => value is "prep" or "cook").When(request => request.StepType.IsSpecified).OverridePropertyName("StepType");
         this.RuleFor(request => request.Title.Value).NotEmpty().MaximumLength(200)
             .When(request => request.Title.IsSpecified).OverridePropertyName("Title");
         this.RuleFor(request => request.Description.Value).NotEmpty().MaximumLength(2000)

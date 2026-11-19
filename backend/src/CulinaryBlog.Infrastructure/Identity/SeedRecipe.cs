@@ -16,6 +16,7 @@ namespace CulinaryBlog.Infrastructure.Identity;
 /// <param name="Nutrition">The nutrition supplied to this operation.</param>
 /// <param name="Ingredients">The ingredients supplied to this operation.</param>
 /// <param name="Steps">The steps supplied to this operation.</param>
+/// <param name="Instructions">General tips and guidance for the recipe.</param>
 internal sealed record SeedRecipe(
     string Slug,
     string Title,
@@ -27,4 +28,5 @@ internal sealed record SeedRecipe(
     RecipeDifficulty Difficulty,
     SeedNutrition Nutrition,
     IReadOnlyList<SeedIngredient> Ingredients,
-    IReadOnlyList<SeedStep> Steps);
+    IReadOnlyList<SeedStep> Steps,
+    string? Instructions = null);

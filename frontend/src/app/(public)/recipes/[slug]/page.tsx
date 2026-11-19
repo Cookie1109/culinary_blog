@@ -4,17 +4,14 @@ import { RecipeDetail } from '@/features/culinary/pages/RecipeDetail'
 import { getPublishedRecipe } from '@/lib/api/public-content-server'
 import { createPageMetadata, createRecipeJsonLd, recipeImages, serializeJsonLd, summarize } from '@/lib/seo'
 
-export const revalidate = 300
-
-export function generateStaticParams() {
-  return []
-}
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 type RecipePageProps = { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: RecipePageProps): Promise<Metadata> {
   const { slug } = await params
-  const recipe = await getPublishedRecipe(slug, revalidate)
+  const recipe = await getPublishedRecipe(slug)
   if (!recipe) notFound()
 
   return createPageMetadata({
@@ -31,7 +28,7 @@ export async function generateMetadata({ params }: RecipePageProps): Promise<Met
 
 export default async function RecipePage({ params }: RecipePageProps) {
   const { slug } = await params
-  const recipe = await getPublishedRecipe(slug, revalidate)
+  const recipe = await getPublishedRecipe(slug)
   if (!recipe) notFound()
 
   return (

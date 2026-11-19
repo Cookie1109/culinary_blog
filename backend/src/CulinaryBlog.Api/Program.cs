@@ -136,6 +136,7 @@ try
 
     app.MapAuthEndpoints();
     app.MapContentEndpoints();
+    app.MapRecipeEventsEndpoint();
     app.MapAdminUsersEndpoints();
 
     if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))

@@ -25,9 +25,48 @@ internal sealed class UnitOfWork(AppDbContext dbContext, IRecipeRepository recip
     /// <returns>A task representing the operation and its result.</returns>
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)
     {
+        foreach (var recipe in dbContext.ChangeTracker.Entries<Recipe>()
+            .Where(entry => entry.State is EntityState.Added or EntityState.Modified)
+            .Select(entry => entry.Entity).ToArray())
+        {
+            await dbContext.RecipeSteps.Where(step => step.RecipeId == recipe.Id)
+                .LoadAsync(cancellationToken).ConfigureAwait(false);
+            recipe.RecalculateTimes(dbContext.RecipeSteps.Local.Where(step => step.RecipeId == recipe.Id));
+        }
+
+        var deletedIds = dbContext.ChangeTracker.Entries<Recipe>()
+            .Where(entry => entry.State == EntityState.Modified && entry.Entity.IsDeleted &&
+                !entry.Property(recipe => recipe.IsDeleted).OriginalValue)
+            .Select(entry => entry.Entity.Id).ToArray();
+        if (deletedIds.Length > 0)
+        {
+            var images = await dbContext.RecipeImages.Where(image => deletedIds.Contains(image.RecipeId))
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var image in images)
+            {
+                image.Delete();
+            }
+
+            string[] keys = [.. images.SelectMany(image => new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey })
+                .OfType<string>().Distinct(),];
+            if (keys.Length > 0)
+            {
+                // Persist cleanup with the soft delete, so a rejected write cannot delete live objects.
+                dbContext.MediaOutbox.Add(new MediaOutboxMessage
+                {
+                    TraceParent = Activity.Current?.Id,
+                    CorrelationId = Activity.Current?.GetBaggageItem("correlation.id"),
+                    Id = Guid.NewGuid(),
+                    Type = MediaOutboxTypes.DeleteObjects,
+                    Payload = JsonSerializer.Serialize(new DeleteObjectsPayload(keys)),
+                    CreatedAt = timeProvider.GetUtcNow(),
+                    NextAttemptAt = timeProvider.GetUtcNow(),
+                });
+            }
+        }
+
         try
         {
-            await this.QueueDeletedRecipeImagesAsync(cancellationToken).ConfigureAwait(false);
             return await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (DbUpdateConcurrencyException exception)
@@ -55,44 +94,5 @@ internal sealed class UnitOfWork(AppDbContext dbContext, IRecipeRepository recip
                 ContentProblemKind.Conflict,
                 currentVersion);
         }
-    }
-
-    private async Task QueueDeletedRecipeImagesAsync(CancellationToken cancellationToken)
-    {
-        var recipeIds = dbContext.ChangeTracker.Entries<Recipe>()
-            .Where(entry => entry.State == EntityState.Modified && entry.Entity.IsDeleted &&
-                !entry.Property(recipe => recipe.IsDeleted).OriginalValue)
-            .Select(entry => entry.Entity.Id).ToArray();
-        if (recipeIds.Length == 0)
-        {
-            return;
-        }
-
-        var images = await dbContext.RecipeImages.IgnoreQueryFilters()
-            .Where(image => recipeIds.Contains(image.RecipeId) && !image.IsDeleted)
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-        foreach (var image in images)
-        {
-            image.Delete();
-        }
-
-        var keys = images.SelectMany(image => new[] { image.ObjectKey, image.MediumObjectKey, image.ThumbnailObjectKey })
-            .OfType<string>().Distinct(StringComparer.Ordinal).ToArray();
-        if (keys.Length == 0)
-        {
-            return;
-        }
-
-        var now = timeProvider.GetUtcNow();
-        dbContext.MediaOutbox.Add(new MediaOutboxMessage
-        {
-            TraceParent = Activity.Current?.Id,
-            CorrelationId = Activity.Current?.GetBaggageItem("correlation.id"),
-            Id = Guid.NewGuid(),
-            Type = MediaOutboxTypes.DeleteObjects,
-            Payload = JsonSerializer.Serialize(new DeleteObjectsPayload(keys)),
-            CreatedAt = now,
-            NextAttemptAt = now,
-        });
     }
 }

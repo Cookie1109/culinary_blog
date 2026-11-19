@@ -13,7 +13,7 @@ internal sealed class RecipeWriteRequestValidator : AbstractValidator<RecipeWrit
         this.RuleFor(request => request.Title).NotEmpty().MinimumLength(5).MaximumLength(200);
         this.RuleFor(request => request.Description).NotEmpty().MaximumLength(2000);
         this.RuleFor(request => request.CategoryId).NotEmpty();
-        this.RuleFor(request => request.PrepTime).GreaterThan(0);
+        this.RuleFor(request => request.PrepTime).GreaterThanOrEqualTo(0);
         this.RuleFor(request => request.CookTime).GreaterThanOrEqualTo(0);
         this.RuleFor(request => request.Servings).GreaterThan(0);
         this.RuleFor(request => request.Difficulty).IsInEnum();

@@ -1,7 +1,15 @@
 import Image from 'next/image'
 import { Outlet, Link, useNavigate, useSearchParams } from 'react-router'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Tag, LogOut, ChevronDown, Shield, Users } from 'lucide-react'
+import {
+  LayoutDashboard,
+  BookOpen,
+  Tag,
+  LogOut,
+  ChevronDown,
+  Shield,
+  Users,
+} from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -120,6 +128,7 @@ export function DashboardLayout() {
               </ul>
             </section>
           ))}
+
         </nav>
 
         {/* Sign out */}
@@ -171,7 +180,7 @@ export function DashboardLayout() {
         </details>
 
         <div className="min-h-0 min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto w-full max-w-7xl xl:has-[[data-fit-workspace]]:h-full xl:has-[[data-fit-workspace]]:min-h-0">
+          <div className="mx-auto w-full max-w-7xl has-[[data-personal-overview]]:max-w-[1440px] has-[[data-managed-recipes]]:max-w-[1440px] xl:has-[[data-fit-workspace]]:h-full xl:has-[[data-fit-workspace]]:min-h-0">
             <Outlet />
           </div>
         </div>

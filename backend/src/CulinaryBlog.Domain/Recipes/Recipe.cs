@@ -135,7 +135,7 @@ public sealed class Recipe : BaseEntity
             throw new DomainException("RECIPE_DATA_INVALID", "Recipe title or description is invalid.");
         }
 
-        if (categoryId == Guid.Empty || prepTime < 1 || cookTime < 0 || servings < 1 || !Enum.IsDefined(difficulty))
+        if (categoryId == Guid.Empty || prepTime < 0 || cookTime < 0 || servings < 1 || !Enum.IsDefined(difficulty))
         {
             throw new DomainException("RECIPE_DATA_INVALID", "Recipe category, time, servings or difficulty is invalid.");
         }
@@ -143,8 +143,7 @@ public sealed class Recipe : BaseEntity
         this.Title = trimmedTitle;
         this.Description = trimmedDescription;
         this.CategoryId = categoryId;
-        this.PrepTime = prepTime;
-        this.CookTime = cookTime;
+
         this.Servings = servings;
         this.Difficulty = difficulty;
         this.Instructions = instructions?.Trim() ?? string.Empty;
@@ -154,6 +153,15 @@ public sealed class Recipe : BaseEntity
         {
             this.Slug = slug;
         }
+    }
+
+    /// <summary>Derives displayed minutes from active classified steps.</summary>
+    /// <param name="steps">The recipe steps.</param>
+    public void RecalculateTimes(IEnumerable<RecipeStep> steps)
+    {
+        var active = steps.Where(step => !step.IsDeleted).ToArray();
+        this.PrepTime = (int)Math.Min(int.MaxValue, Math.Ceiling(active.Where(step => step.StepType == "prep").Sum(step => step.TimerMinutes ?? 0)));
+        this.CookTime = (int)Math.Min(int.MaxValue, Math.Ceiling(active.Where(step => step.StepType == "cook").Sum(step => step.TimerMinutes ?? 0)));
     }
 
     /// <summary>Publishes a draft only when it contains ingredients and steps.</summary>
@@ -178,7 +186,7 @@ public sealed class Recipe : BaseEntity
             this.Title.Length is < 5 or > 200 ||
             this.Description.Length is < 1 or > 2000 ||
             this.CategoryId == Guid.Empty ||
-            this.PrepTime < 1 ||
+            this.PrepTime < 0 ||
             this.CookTime < 0 ||
             this.Servings < 1 ||
             !Enum.IsDefined(this.Difficulty) ||

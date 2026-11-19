@@ -43,7 +43,7 @@ export function computeRecipeValidation(recipe: Recipe): ValidationItem[] {
       step: 'basic',
       stepLabel: '1. Thông tin cơ bản',
       label: 'Thời gian chuẩn bị',
-      isValid: recipe.prepTime >= 1,
+      isValid: recipe.prepTime >= 0,
       message: 'Thời gian chuẩn bị phải ít nhất 1 phút.',
     },
     {

@@ -68,6 +68,7 @@ function SortableStep({
       <div className="min-w-0 flex-1 wrap-anywhere">
         <strong className="block text-sm text-foreground">{step.title}</strong>
         <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{step.description}</p>
+        <span className="text-xs text-muted-foreground">{step.stepType === 'prep' ? 'Chuẩn bị' : 'Nấu'}</span>
         {step.timerMinutes != null && (
           <span className="mt-1.5 inline-block border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
             ⏱ {formatTimerDuration(step.timerMinutes)}

@@ -64,6 +64,7 @@ export interface RecipeStep {
   stepNumber: number
   title: string
   description: string
+  stepType?: 'prep' | 'cook'
   timerMinutes: number | null
   imageUrl: string | null
 }
@@ -71,6 +72,7 @@ export interface RecipeStep {
 export interface StepWrite {
   title: string
   description: string
+  stepType?: 'prep' | 'cook'
   timerMinutes: number | null
   imageUrl: string | null
   stepNumber?: number

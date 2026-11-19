@@ -18,7 +18,7 @@ internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
     {
         builder.ToTable("Recipes", table =>
         {
-            table.HasCheckConstraint("CK_Recipes_PrepTime", "\"PrepTime\" > 0");
+            table.HasCheckConstraint("CK_Recipes_PrepTime", "\"PrepTime\" >= 0");
             table.HasCheckConstraint("CK_Recipes_CookTime", "\"CookTime\" >= 0");
             table.HasCheckConstraint("CK_Recipes_Servings", "\"Servings\" > 0");
             table.HasCheckConstraint("CK_Recipes_Difficulty", "\"Difficulty\" BETWEEN 1 AND 4");

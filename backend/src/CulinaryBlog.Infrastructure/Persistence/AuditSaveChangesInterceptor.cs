@@ -50,7 +50,7 @@ internal sealed class AuditSaveChangesInterceptor(
         }
 
         var now = timeProvider.GetUtcNow();
-        var actor = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
+        string actor = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? httpContextAccessor.HttpContext?.User.FindFirstValue("sub")
             ?? "system";
 

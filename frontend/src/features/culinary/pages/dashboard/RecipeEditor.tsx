@@ -104,8 +104,8 @@ const EMPTY_FORM: RecipeForm = {
   categoryId: '',
   difficulty: 'medium',
   servings: 4,
-  prepTime: 15,
-  cookTime: 30,
+  prepTime: 0,
+  cookTime: 0,
   nutrition: EMPTY_NUTRITION,
 }
 
@@ -937,6 +937,9 @@ export function RecipeEditor() {
                     </div>
                   </div>
 
+                  <p className="text-sm text-muted-foreground">
+                    Thời gian tự động tính từ các bước Chuẩn bị và Nấu.
+                  </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="prepTime" className={labelClass}>
@@ -945,8 +948,8 @@ export function RecipeEditor() {
                       <input
                         id="prepTime"
                         type="number"
-                        min={1}
-                        required
+                        min={0}
+                        readOnly
                         {...register('prepTime', { valueAsNumber: true })}
                         aria-invalid={Boolean(errors.prepTime)}
                         aria-describedby={errors.prepTime ? 'recipe-prepTime-error' : undefined}
@@ -963,7 +966,7 @@ export function RecipeEditor() {
                         id="cookTime"
                         type="number"
                         min={0}
-                        required
+                        readOnly
                         {...register('cookTime', { valueAsNumber: true })}
                         aria-invalid={Boolean(errors.cookTime)}
                         aria-describedby={errors.cookTime ? 'recipe-cookTime-error' : undefined}
