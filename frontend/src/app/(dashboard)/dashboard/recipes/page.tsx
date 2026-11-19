@@ -1,5 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { MyRecipes } from '@/features/culinary/pages/dashboard/MyRecipes'
+
+export const metadata: Metadata = {
+  title: 'Công thức của tôi',
+  robots: { index: false, follow: false },
+}
 
 export default async function RecipesPage({
   searchParams,
