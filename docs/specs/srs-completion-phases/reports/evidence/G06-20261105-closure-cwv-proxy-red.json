@@ -1,0 +1,6 @@
+{
+  "atUtc": "2026-11-05T01:14:50.406226+00:00",
+  "status": 404,
+  "expected": 204,
+  "scope": "Synthetic routing check, not a real CWV measurement"
+}

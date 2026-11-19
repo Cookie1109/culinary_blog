@@ -1,0 +1,11 @@
+{
+  "atUtc": "2026-11-10T15:07:44.469679+00:00",
+  "tableCount": 30,
+  "rowCount": 2044,
+  "allTableCountsAndRowHashesUnchangedSinceNov5": true,
+  "mainMigrationsUnchanged": true,
+  "dataProtectionKeysPersistAcrossRenderRecreation": true,
+  "encryptedArchiveRoundtripVerified": true,
+  "sameExistingRecoveryKey": true,
+  "rawPrivateDataExported": false
+}

@@ -32,9 +32,9 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D6-10 · Sửa:** metadata title hoàn chỉnh, gồm hậu tố `| Culinary Blog` khi áp dụng, ≤60 ký tự; description 150–160 ký tự có ý nghĩa, OG 1200×630/Twitter/canonical/index-noindex phù hợp; kiểm tra long/short title/description và trang phân trang. Không chèn văn bản vô nghĩa chỉ để đủ độ dài.
-- [ ] **D6-11 · Sửa:** lưu lịch sử draft slug khi đổi title/slug, 301 từ slug cũ sang slug hiện hành, xử lý collision và tránh loop/chain không cần thiết. Slug sau publish giữ ổn định; URL cũ không được dẫn tới Draft riêng tư hoặc phá public/private split.
-- [ ] **D6-12 · Kiểm chứng:** Recipe JSON-LD đầy đủ field có dữ liệu thật, duration/yield/ingredients/steps/nutrition đúng; escape chống XSS, ảnh mặc định hợp lệ; chạy Rich Results Test trên bản triển khai phù hợp và lưu kết quả, không tạo rating/nutrition giả.
+- [x] **D6-10 · Sửa:** metadata title hoàn chỉnh, gồm hậu tố `| Culinary Blog` khi áp dụng, ≤60 ký tự; description 150–160 ký tự có ý nghĩa, OG 1200×630/Twitter/canonical/index-noindex phù hợp; kiểm tra long/short title/description và trang phân trang. Không chèn văn bản vô nghĩa chỉ để đủ độ dài.
+- [x] **D6-11 · Sửa:** lưu lịch sử draft slug khi đổi title/slug, 301 từ slug cũ sang slug hiện hành, xử lý collision và tránh loop/chain không cần thiết. Slug sau publish giữ ổn định; URL cũ không được dẫn tới Draft riêng tư hoặc phá public/private split.
+- [x] **D6-12 · Kiểm chứng:** Recipe JSON-LD đầy đủ field có dữ liệu thật, duration/yield/ingredients/steps/nutrition đúng; escape chống XSS, ảnh mặc định hợp lệ; chạy Rich Results Test trên bản triển khai phù hợp và lưu kết quả, không tạo rating/nutrition giả.
 
 ## Trình tự thực hiện trong phase
 
@@ -51,11 +51,14 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] SEO contract có test, migration history giữ dữ liệu và không lộ private content.
-- [ ] Không fake rating/nutrition/SEO validation bên ngoài khi chưa chạy.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] SEO contract có test, migration history giữ dữ liệu và không lộ private content.
+- [x] Không fake rating/nutrition/SEO validation bên ngoài khi chưa chạy.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-21-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-20-welcome-and-sitemap-jobs.md) · [Tiếp theo để tham khảo](phase-22-schema-migrations-openapi.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+
+E28 —27/10/2026: [report chung G04](reports/package-G04-result.md#checkpoint27102026--chốt-http-và-nghiệm-thu-g04-local),15/15 task local; giữ bằng chứng chưa bị ảnh hưởng. Không áp migration vào database người dùng hoặc nhận triển khai demo là nghiệm thu production.

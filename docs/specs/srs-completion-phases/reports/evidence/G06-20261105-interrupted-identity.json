@@ -1,0 +1,27 @@
+{
+  "project": "culinary-g06-6b34b3e25608",
+  "runId": "g06-6b34b3e25608",
+  "apiImage": "sha256:49163d607861408e29935a2d825cb41e85546e65e602243ab376d01e6cbfe684",
+  "target": "loopback only",
+  "productionAcceptance": false,
+  "profile": "smoke5VU30s then100VU10m thenramp0-50-100-150-0 over5m; six business HTTP operations/iteration",
+  "apiLimits": {
+    "cpus": 2,
+    "memoryGiB": 4
+  },
+  "postgresMaxConnections": 250,
+  "reason": "Two API pools allow100 each; database capacity includes both and control/keyring connections. Initial lab default100 produced SQLSTATE53300.",
+  "appMigrationsExpected": 14,
+  "cacheMeasurement": "Cumulative sum across both replicas before k6 setup and after20s export settle; no value-based window selection",
+  "backgroundJobsEnabled": false,
+  "emailEnabled": false,
+  "rateLimitsAreLabOnly": {
+    "global": 1000000,
+    "auth": 1000
+  },
+  "productionLimitations": [
+    "Loopback HTTP, no TLS/WAN",
+    "Workers and SMTP disabled; not a full-system production workload",
+    "Fixed concurrency with1s thinktime does not establish maximum capacity or linear scaling"
+  ]
+}

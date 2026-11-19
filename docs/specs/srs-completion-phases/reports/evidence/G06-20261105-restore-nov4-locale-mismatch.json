@@ -1,0 +1,20 @@
+{
+  "scope": "Restore saved Nov4 Neon archive into new local network-isolated PostgreSQL only; no live Neon writes",
+  "startedAtUtc": "2026-11-04T23:47:37.848484+00:00",
+  "archiveSha256": "04c1ca684c3e5648ca5c376368912e89a9c4f161a0d7bd0027fc4842f065f129",
+  "archiveContainsPreHotfixKeyring": true,
+  "container": "culinary-g06-restore-55037d31a79b",
+  "differences": [
+    {
+      "table": "hangfire.aggregatedcounter",
+      "countMatches": true
+    },
+    {
+      "table": "hangfire.hash",
+      "countMatches": true
+    }
+  ],
+  "ownedContainerRemoved": true,
+  "userContainersPreserved": true,
+  "finishedAtUtc": "2026-11-04T23:47:43.785925+00:00"
+}

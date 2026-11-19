@@ -32,7 +32,7 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 ## Task gốc phải đóng
 
 - [ ] **D9-01 · Kiểm chứng:** load smoke/load/stress trên artifact có định danh; profile tối thiểu 2 vCPU/4 GB cho API, ≥100 concurrent users; ghi dataset/request mix/duration/network/TLS, cold/warm và write traffic. Đạt warm GET p50 ≤150ms, API p95 ≤500ms, p99 ≤1000ms và Redis steady-state hit rate ≥80%; nới rate limit chỉ trong profile đo, ghi rõ và không sửa cấu hình production để né D5.
-- [ ] **D9-02 · Kiểm chứng/sửa theo đo:** review EXPLAIN ANALYZE truy vấn chính, N+1/projection/batch và B-tree/GIN cho điều kiện WHERE/ORDER BY; chứng minh slow log >100ms; kiểm pool Npgsql max 100 connections/instance. Không thêm read replica/partitioning chỉ vì slide có ví dụ; các phần này được SRS ghi tùy chọn/nâng cao.
+- [x] **D9-02 · Kiểm chứng/sửa theo đo:** review EXPLAIN ANALYZE truy vấn chính, N+1/projection/batch và B-tree/GIN cho điều kiện WHERE/ORDER BY; chứng minh slow log >100ms; kiểm pool Npgsql max 100 connections/instance. Không thêm read replica/partitioning chỉ vì slide có ví dụ; các phần này được SRS ghi tùy chọn/nâng cao.
 
 ## Trình tự thực hiện trong phase
 

@@ -31,8 +31,8 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D8-08 · Kiểm chứng/sửa:** rà mọi form/async/write flow dùng RHF/Zod hoặc cách đã chốt, inline/server error actionable, error code i18n-ready, không lộ stack; skeleton/loading/empty, toast thành công/thất bại, optimistic rollback phù hợp và upload progress % thật.
-- [ ] **D8-09 · Kiểm chứng:** responsive 320–767/768–1199/≥1200 trên public + auth + profile + dashboard; không tràn ngang, thao tác touch/keyboard, focus/escape/modal/menu, contrast text ≥4,5:1 và UI ≥3:1 theo WCAG AA. Lưu screenshot/axe/browser results, không chỉ regex class CSS.
+- [x] **D8-08 · Kiểm chứng/sửa:** rà mọi form/async/write flow dùng RHF/Zod hoặc cách đã chốt, inline/server error actionable, error code i18n-ready, không lộ stack; skeleton/loading/empty, toast thành công/thất bại, optimistic rollback phù hợp và upload progress % thật.
+- [x] **D8-09 · Kiểm chứng:** responsive 320–767/768–1199/≥1200 trên public + auth + profile + dashboard; không tràn ngang, thao tác touch/keyboard, focus/escape/modal/menu, contrast text ≥4,5:1 và UI ≥3:1 theo WCAG AA. Lưu screenshot/axe/browser results, không chỉ regex class CSS.
 
 ## Trình tự thực hiện trong phase
 
@@ -49,11 +49,15 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Gap UX/a11y tự động trong phạm vi đã sửa và có evidence mới.
-- [ ] Manual browser/screen-reader matrix vẫn do phase28 đóng.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Gap UX/a11y tự động trong phạm vi đã sửa và có evidence mới.
+- [x] Manual browser/screen-reader matrix vẫn do phase28 đóng.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-27-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-26-e2e-recipes-publish-search.md) · [Tiếp theo để tham khảo](phase-28-browser-and-screen-reader.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+## Checkpoint G05 ngày 29/10/2026
+
+Kết quả nguồn cuối ngày29/10/2026, gates và giới hạn môi trường ở [report G05](reports/package-G05-result.md#phase-27). Checkbox task chỉ đóng theo evidence trong report; trạng thái ban đầu ở đầu tài liệu được giữ như lịch sử.

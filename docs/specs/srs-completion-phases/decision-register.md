@@ -11,6 +11,8 @@ Ngày review: **23/10/2026, Asia/Bangkok**. Phạm vi **D0-02, D0-03, D0-04**. �
 - **Theo SRS**: thực hiện yêu cầu gốc, chưa phải runtime pass. **Chờ làm rõ SRS**: thiếu quy tắc hoặc có mâu thuẫn trong nguồn; không tự chọn theo code đang có. **Giữ baseline/Làm rõ/Không đổi** ở các mục ngoài A/B/C là kết quả review lịch sử, không chứng nhận khớp nguyên văn PDF; nếu xung đột PDF phải ghi mở và đối chiếu trước nghiệm thu.
 - Giữ lịch sử [APP-2026-10-23-ABC](approvals/2026-10-23-abc.md) và baseline cũ để truy vết, không xóa phản hồi người dùng. Các quyết định hiện tại nằm ở từng DEC bên dưới. Không thay runtime, migration hoặc triển khai ở lượt đính chính.
 
+Cập nhật25/10/2026: G04 xử lý runtime và ba chi tiết được người dùng giao lựa chọn tại DEC-13/15/21. Các mô tả review ngày23/10 bên trên là lịch sử; kết quả mới nằm trong [report G04](reports/package-G04-result.md). Đính chính A/B/C giữ nguyên hiệu lực.
+
 ## Rà đủ GAP-001–033 (D0-02)
 
 Mỗi dòng dưới là review mới đối với **quyết định cũ**. Trạng thái `Giữ` nghĩa giữ Accepted/Amended của baseline, **không phải pass implementation**. Chỉ rõ nơi có sai khác hoặc cần kiểm tiếp. Mã acceptance/CT dẫn về inventory; owner là phase thực thi, không đổi bảng phân công gốc.
@@ -35,7 +37,7 @@ Mỗi dòng dưới là review mới đối với **quyết định cũ**. Trạ
 | GAP-016 /36–37 | C/L/ADR-008:simple+unaccent, weighted tsvector/GIN, pg_trgm fallback | E-CONTENT search query/repository và migration; test pho/phở, prefix, rank, index, không raw SQL | FR-SRCH-001;18/30; Giữ |
 | GAP-017 /35–36,57,65 | C/L/D:title, description, timerMinutes; server append number, PUT reorder | StepWriteRequest/config có; optional PUT semantics cần DEC-13, không đổi về DurationMinutes | FR-RCP-010;17/22; Giữ |
 | GAP-018 /35,57,65 | C/L/D:orderIndex cho ingredient/image | DTO/config có; test sorting/default0/negative/normalize khi reorder | CT-DATA-ING-06/IMAGE-07;17/19; Giữ |
-| GAP-019 /25,29,55,58 | C/L/D:category name2–100, cookTime≥0, prepTime>0 | Validators/check constraints có; test zero cookTime giữ qua UI/URL | CT-DATA-CAT-01/RCP-05/06;17/18; Giữ |
+| GAP-019 /25,29,55,58 | C/L/D:schema category Name varchar100; input2–50 theo FR-CAT-001/E26, cookTime≥0, prepTime>0 | Input bounds/noHTML đã sửa và kiểm E26; giữ schema100. Test zero cookTime giữ qua UI/URL | CT-DATA-CAT-01/RCP-05/06;17/18; Giữ |
 | GAP-020 /23,59,62 | C/L/D:profile displayName/avatarUrl/bio; không sửa email/username | Presence flags+DTO có; test omit vs null và invalid không partial update | FR-AUTH-007;07; Giữ |
 | GAP-021 /28–29,47,61 | C/L/E:data resource, data/meta list | DTO PageEnvelope có; empty hint DEC-18, query defaults/alias DEC-15, không thêm items wrapper | CT-HTTP-04, CT-SCHEMA-07;18/22; Giữ |
 | GAP-022 /13,29,38 | C/L/ADR-006:bucket private, ObjectKey identity, controlled delivery | Source object keys/media route có; URL nullability DEC-22, unpublish phải chặn public media | CT-DATA-IMAGE-02, CT-SUP-07;19; Giữ |
@@ -66,11 +68,11 @@ Các quyết định bổ sung ở **C §3** cũng có hiệu lực: `/health` p
 
 ### DEC-02 — Sitemap ping Google
 
-- **Task/acceptance/nguồn:** D0-03; FR-JOB-003/A06, NFR-SEO-003/A04, CT-EXT-07; SRS tr.39/45/48 yêu cầu ping sau khi cập nhật sitemap.
-- **Theo nguồn:** giữ yêu cầu ping trong danh mục nghiệm thu; sitemap/robots/Search Console không tự thay thế bước này.
-- **Vướng mắc:** Google xác nhận endpoint đã ngừng và trả404 [W1], kiểm lại ngày23/10/2026. Không thể chứng nhận ping thành công; không gọi404 hoặc bỏ bước là đạt. Phương án thay thế trước đây đã hết hiệu lực.
-- **Tác động/kiểm tiếp:** phase20/21/38 ghi rõ phần sitemap/XML/robots có thể kiểm độc lập và phần provider chưa thể đạt nguyên văn. Chỉ thay tiêu chuẩn khi có đính chính SRS riêng; không thêm request lỗi thời để làm checklist xanh.
-- **Trạng thái:** Chờ làm rõ SRS — góiB; xử lý yêu cầu provider đã ngừng còn mở.
+- **Task/acceptance/nguồn:** D0-03; FR-JOB-003/A06, NFR-SEO-003/A04, CT-EXT-07; SRS tr.39/45/48 yêu cầu ping sau cập nhật sitemap.
+- **Theo nguồn:** giữ nguyên yêu cầu gốc để truy vết. Google đã ngừng endpoint/404 [W1]; không tuyên bố đã ping thành công.
+- **Chấp thuận hiệu lực:** người dùng27/10/2026 chấp thuận riêng [thay thế qua robots.txt](approvals/2026-10-27-sitemap-discovery.md): giữ job/lịch/retry/lock/public sitemap, khai báo URL trong robots.txt; Search Console tùy chọn. Đây là chấp thuận mới sau đính chính A/B/C, không khôi phục waiver cũ.
+- **Tác động/kiểm tiếp:** phase20 kiểm cron/XML/public HTTP/robots và giữ artifact khi upload lỗi; không suy Google đã index. Bằng chứng mới Root179 integration+frontend126 và phạm vi triển khai ghi E27 G04.
+- **Trạng thái:** Chấp thuận thay thế riêng27/10/2026 — góiB; không còn chờ quyết định ping.
 
 ### DEC-03 — .NET static analysis
 
@@ -110,7 +112,7 @@ Các quyết định bổ sung ở **C §3** cũng có hiệu lực: `/health` p
 - **Theo nguồn:** dùng RedLock cho tác vụ singleton. PostgreSQL shared queue và Hangfire multiple workers vẫn là yêu cầu riêng; lock PostgreSQL/DisableConcurrentExecution không thay RedLock.
 - **Hiện trạng/tác động:** source hiện có chưa chứng minh RedLock. Bỏ ngoại lệ lock PostgreSQL; không suy hiệu lực khóa từ attribute hoặc tên thư viện. Giữ bảo vệ artifact khi worker lỗi như yêu cầu correctness, không tự tuyên bố exactly-once.
 - **Kiểm tiếp:** phase20/35 kiểm RedLock thực, hai worker, overlap/retry, crash/disconnect và publication không ghi đè artifact mới. Thay đổi code/hạ tầng thuộc lượt thực thi.
-- **Trạng thái:** Theo SRS — góiB; ngoại lệ cũ hết hiệu lực, runtime còn mở.
+- **Trạng thái:** Theo SRS — góiB; ngoại lệ cũ hết hiệu lực, runtime local đã kiểm tại [G04](reports/package-G04-result.md); chưa áp dụng DB người dùng.
 
 ### DEC-08 — Uptime và lỗi quy đổi
 
@@ -156,9 +158,10 @@ Các quyết định bổ sung ở **C §3** cũng có hiệu lực: `/health` p
 
 - **Task/acceptance/nguồn:** D0-02; CT-API-17/26/29; SRS tr.63/65 đánh field PUT recipe/step/ingredient là optional; category Name không đánh optional.
 - **Theo nguồn:** giữ method/path và tính optional đã ghi; không ép payload tạo mới cho PUT một field. Quyền, validation và concurrency vẫn phải kiểm.
-- **Phần chưa rõ:** PDF không quy định đầy đủ omit/null, empty object và merge nutrition. Rút hiệu lực gói quy tắc omit-giữ-cũ/null-clear/empty400 trước đây; không gán những quy tắc đó thành nguyên văn SRS.
-- **Tác động/kiểm tiếp:** phase17/22 chốt riêng bảng omit/null/value và validation sau cập nhật trước khi đồng bộ DTO/OpenAPI/types/test; không tự chọn cách làm mất dữ liệu. Chưa sửa code trong lượt này.
-- **Trạng thái:** Chờ làm rõ SRS — góiA; optional theo PDF, chi tiết cập nhật còn mở.
+- **Quy tắc đã chốt theo ủy quyền:** omit giữ giá trị; null xóa field nullable, null ở dữ liệu bắt buộc bị từ chối; Instructions null thành chuỗi rỗng để giữ NOT NULL. Nutrition merge từng chỉ số; null cả object xóa khối. Empty object no-op, vẫn kiểm quyền/If-Match. Category PUT vẫn yêu cầu Name theo PDF.
+- **Căn cứ bổ sung:** [lựa chọn G04](approvals/2026-10-25-g04-contract-clarifications.md), phản hồi người dùng ngày25/10/2026. Đây là chi tiết triển khai được giao chọn, không phải nguyên văn PDF hoặc phục hồi phê duyệt A/B/C cũ.
+- **Tác động/kiểm tiếp:** phase17/22 đã có InputField/validators/merge dưới khóa, DTO/OpenAPI/types và test omit/null/atomic invalid/stale version/owned nutrition; xem [G04](reports/package-G04-result.md). Production migration chưa thực hiện.
+- **Trạng thái:** Theo SRS — góiA; optional giữ nguyên, chi tiết omit/null/empty/merge đã chốt theo ủy quyền G04.
 
 ### DEC-14 — Composition khi tạo Recipe (INV-G02)
 
@@ -171,10 +174,11 @@ Các quyết định bổ sung ở **C §3** cũng có hiệu lực: `/health` p
 ### DEC-15 — Query sort và defaults (INV-G03)
 
 - **Task/acceptance/nguồn:** D0-02; CT-QUERY-01/03, CT-API-09; tr.37 có sort và default page1/pageSize12/max50; tr.61/63 dùng sortBy/sortOrder, ví dụ pageSize10 không phải default.
-- **Theo nguồn:** giữ các dạng tham số được PDF liệt kê theo endpoint; sort với tiền tố - và mặc định-createdAt theo tr.37, search theo relevance. Không bỏ sortBy/sortOrder chỉ vì code hiện tại dùng sort.
-- **Phần chưa rõ:** cách nhận đồng thời hai kiểu sort, trường thiếu, allowlist từng endpoint chưa được PDF xác định đủ. Rút quy tắc alias phải đủ hai field và conflict400 đã thêm; chưa chọn precedence mới.
-- **Tác động/kiểm tiếp:** phase18/22 chốt bảng query hợp lệ/xung đột, đồng bộ validation/cache keys/docs/types; kiểm default12, explicit10, filters AND và thứ tự query không gây kết quả ngầm khác nhau.
-- **Trạng thái:** Chờ làm rõ SRS — góiA; giữ các tham số trong PDF, conflict policy còn mở.
+- **Theo nguồn:** giữ sort/sortBy/sortOrder; browse -createdAt, search relevance; category khi bỏ sort giữ thứ tự publishedAt của contract category. Không đổi default12 sang10.
+- **Quy tắc đã chốt theo ủy quyền:** normalize hai dạng sang cùng khóa; tương đương được nhận, mâu thuẫn400 để tránh bỏ qua ý định caller. sortBy không có sortOrder dùng asc (relevance desc); chỉ direction dùng createdAt. Allowlist title/createdAt/cookTime/prepTime/servings/relevance cho query tương ứng; relevance chỉ dành search. Giữ aliases newest/oldest/az/za hiện có.
+- **Căn cứ bổ sung:** [lựa chọn G04](approvals/2026-10-25-g04-contract-clarifications.md), phản hồi ngày25/10/2026; không gọi phần bổ sung này là nguyên văn SRS.
+- **Tác động/kiểm tiếp:** phase18/22 đã normalize/validate trong Application, canonical cache keys và API/UI/types; default12/explicit10/AND/zero/tie-break có regression [G04](reports/package-G04-result.md). Mâu thuẫn HTTP400/422 khác không được giải quyết bằng lựa chọn sort.
+- **Trạng thái:** Theo SRS — góiA; giữ tham số PDF, conflict/default alias đã chốt theo ủy quyền G04.
 
 ### DEC-16 — Auth/provider/logout status (INV-G04)
 
@@ -215,15 +219,15 @@ Các quyết định bổ sung ở **C §3** cũng có hiệu lực: `/health` p
 - **Theo nguồn:** dùng `IdentityUser<string>` và khóa ngoại cùng kiểu varchar(450). Guid/uuid trong source hiện tại là sai khác cần sửa; JSON ID dạng chuỗi không chứng minh kiểu lưu trữ khớp PDF.
 - **Tác động:** rút ngoại lệ giữ Guid/uuid. Phase22 phải lập kế hoạch chuyển đổi và kiểm bảo toàn user/role/login/token/recipe/FK, upgrade/rollback trên DB copy; không đổi UUID của các entity mà PDF quy định uuid.
 - **Kiểm tiếp:** catalog schema, toàn bộ Identity FK/index và migration readback/upgrade; không migrate dữ liệu đang chạy trong lượt hồ sơ.
-- **Trạng thái:** Theo SRS — góiB; giữ string theo GAP-032, runtime còn mở.
+- **Trạng thái:** Theo SRS — góiB; giữ string theo GAP-032, runtime local đã kiểm tại [G04](reports/package-G04-result.md); chưa áp dụng DB người dùng.
 
 ### DEC-21 — Instructions NOT NULL và enum smallint (INV-G09)
 
 - **Task/acceptance/nguồn:** D0-02; CT-DATA-RCP-04/08/09; tr.55 yêu cầu Instructions text NOT NULL, Difficulty/Status smallint NOT NULL với default1/0.
 - **Theo nguồn:** Instructions text NOT NULL; Difficulty/Status lưu smallint, giữ enum values1..4/0..2 và defaultsEasy1/Draft0. Không coi Instructions nullable theo dictionary cũ hoặc enum integer là khớp PDF.
-- **Tác động:** rút ngoại lệ integer và phần giữ nullable đi kèm. Giới hạn10000 ký tự hiện tại không được coi là giới hạn của PDF. Phase22 rà schema/DTO/validation và dữ liệu NULL trước khi thiết kế migration; không tự thay NULL bằng chuỗi rỗng hoặc suy steps thay legacy Instructions.
+- **Tác động:** rút ngoại lệ integer và phần giữ nullable đi kèm. Giới hạn10000 ký tự hiện tại không được coi là giới hạn của PDF. G04 đã rà schema/DTO/validation; người dùng giao chọn backfill NULL thành chuỗi rỗng, giữ nguyên Instructions có sẵn và không suy steps thành văn bản. Xem [lựa chọn G04](approvals/2026-10-25-g04-contract-clarifications.md).
 - **Kiểm tiếp:** physical types/nullability/default/checks, dữ liệu legacy, migration bảo toàn và API contract; backfill cần quy tắc có căn cứ, không chạy trên DB người dùng.
-- **Trạng thái:** Theo SRS — góiB; Instructions NOT NULL/smallint là expected, runtime còn mở.
+- **Trạng thái:** Theo SRS — góiB; Instructions NOT NULL/smallint là expected, runtime local đã kiểm tại [G04](reports/package-G04-result.md); chưa áp dụng DB người dùng.
 
 ### DEC-22 — OriginalUrl và delivery URL (INV-G10)
 
@@ -260,9 +264,9 @@ Các quyết định bổ sung ở **C §3** cũng có hiệu lực: `/health` p
 
 | Nhóm | Decision reference | Kết luận và phần thực thi còn lại |
 |---|---|---|
-| INV-G01 | DEC-13 | Optional theo PDF; omit/null/empty/merge còn mở;17/22 |
+| INV-G01 | DEC-13 | Optional theo PDF; omit/null/empty/merge đã chốt theo ủy quyền G04 và kiểm17/22 |
 | INV-G02 | DEC-14 | Nested create đã là yêu cầu;17/22 thực hiện nguyên tử |
-| INV-G03 | DEC-15 | Giữ tham số PDF/default12; conflict policy còn mở;18/22 |
+| INV-G03 | DEC-15 | Giữ tham số PDF/default12; alias/conflict đã chốt theo ủy quyền G04 và kiểm18/22 |
 | INV-G04 | DEC-16 | Theo ADR/catalog/GAP-007;08/09/10/22 kiểm và sync |
 | INV-G05 | DEC-17 | C§3 đã chốt;22/33 còn schema/dependency runtime |
 | INV-G06 | DEC-18 | API phải có message gợi ý khi rỗng;18/22 |
@@ -279,7 +283,7 @@ Các quyết định bổ sung ở **C §3** cũng có hiệu lực: `/health` p
 
 | Gói | IDs | Hướng xử lý hiện tại | Nguồn chỉ dẫn |
 |---|---|---|---|
-| A — API/UI | DEC-13, DEC-15, DEC-18, DEC-22, DEC-25 | Giữ optional/query của PDF; message trong API; OriginalUrl NOT NULL; route gốc; omit/null và query conflict còn mở | SRS-2026-10-23-ABC-CORRECTION/góiA |
+| A — API/UI | DEC-13, DEC-15, DEC-18, DEC-22, DEC-25 | Giữ optional/query của PDF; message trong API; OriginalUrl NOT NULL; route gốc; omit/null và query conflict đã chốt theo ủy quyền G04 | SRS-2026-10-23-ABC-CORRECTION/góiA |
 | B — Hạ tầng/dữ liệu | DEC-02, DEC-07, DEC-20, DEC-21 | RedLock; Identity string; Instructions NOT NULL/enums smallint; ping provider đã ngừng ghi vướng mắc | SRS-2026-10-23-ABC-CORRECTION/góiB |
 | C — Tiêu chí vận hành | DEC-09, DEC-11 | Giữ ngưỡng rõ trong PDF; bỏ protocol/tolerance tự thêm; SLA và cách đo còn mở | SRS-2026-10-23-ABC-CORRECTION/góiC |
 
@@ -302,3 +306,11 @@ Các quyết định bổ sung ở **C §3** cũng có hiệu lực: `/health` p
 - D0-04: mở lại vì mâu thuẫn uptime, kỳ đo và protocol scaling chưa thống nhất theo PDF. Backup03:00UTC là quy ước T§4, PDF chỉ ghi03:00; không coi UTC là nguyên văn. Topology production giữ theo SRS.
 - Owner đọc ID liên quan trước sửa contract; quyết định đang chờ không ngăn công việc độc lập. Không thực thi phase sau trong lượt này.
 - Lệnh kiểm tài liệu: `python docs/specs/srs-completion-phases/verify-decisions.py`, verifier inventory và diff check. Application commands có thật ở checklist mục6/package/project nhưng chưa chạy khi chỉ đổi tài liệu; không claim runtime pass.
+
+## Hiệu lực bổ sung G04 —27/10/2026
+
+- Người dùng giao lựa chọn mã lỗi hợp lý và triển khai sau khi được nêu rõ mâu thuẫn PDF: ưu tiên FR nghiệp vụ với validation422/concurrency409/publish thiếu điều kiện422. [Phê duyệt và phạm vi](approvals/2026-10-27-content-http-statuses.md); không đổi JSON hỏng/If-Match400, quyền hoặc các AuthProblem có mã riêng.
+- Category input2–50/storage100 và ingredient input1–100/storage200 là hai lớp tương thích của FR và schema; không phải nới giới hạn FR theo sức chứa cột. Không sửa schema hoặc dữ liệu cũ. [Contract hiệu lực](../../operations/content-validation-contract.md).
+- Chỉ khớp tên món theo chỉ đạo trực tiếp “Các kết quả khớp mô tả thì không tính. chỉ tính nếu khớp tên món thôi”; bằng chứng phạm vi/source/runtime ở E25 của [report G04](reports/package-G04-result.md). Không gọi đây là hành vi tìm kiếm cả mô tả của nguyên văn FR.
+- DEC-02 thay ping bằng sitemap/robots theo [chấp thuận riêng](approvals/2026-10-27-sitemap-discovery.md); không tuyên bố đã ping hoặc Google lập chỉ mục.
+- Verifier giữ ba checksum baseline gốc. Với Decision Log, kiểm riêng đúng một dòng dẫn ADR-011 đã được duyệt (SHA256 cố định), rồi so toàn bộ phần gốc với checksum ban đầu; không chấp nhận sửa khác. Test in-memory sửa baseline hoặc dòng dẫn đều phải FAIL. Không thay A/B/C hoặc mở ngoại lệ nghiệp vụ.

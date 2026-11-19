@@ -30,7 +30,9 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D9-03 · Kiểm chứng:** production bundle tất cả route ≤200 KB gzip, Lighthouse/CWV LCP ≤2,5s, CLS ≤0,1; lấy INP ≤200ms từ phép đo tương tác/RUM phù hợp và ghi cửa sổ mẫu. TBT là lab proxy, không thay thế chứng nhận INP; lưu audit meta/ảnh/code splitting và môi trường.
+- [x] **D9-03 · Kiểm chứng:** production bundle tất cả route ≤200 KB gzip, Lighthouse/CWV LCP ≤2,5s, CLS ≤0,1; lấy INP ≤200ms từ phép đo tương tác/RUM phù hợp và ghi cửa sổ mẫu. TBT là lab proxy, không thay thế chứng nhận INP; lưu audit meta/ảnh/code splitting và môi trường.
+
+Nghiệm thu10/11/2026 trên primaryVercel`df0dbb9`/deployment`dpl_CzWEgVuacUVkQFs9oKSweUPb1YHM`: Lighthouse trực tiếp7routes×3runs,42/42assertions đạt; source/deployment trước và sau phép đo khớp. Providerbudget20pages/58assets đã kiểmSHA và gzipupperbound189577bytes. INP đo từ18acceptedmetrics của sáu lượt tương tác browser thật trên cùng deployment, maxINP32ms; window/phân nhóm/giới hạn mẫu ghi rõ, không dùngTBT hoặc gọi đây làRUM của người dùng thật. PDF không quy định số người, thời gian chờRUM hoặc phải phát hành mọi thay đổi chưa được chọn trong repository. Task dùng bằng chứng đúng bản nghiệm thu; đổi artifact thì kiểm lại phần ảnh hưởng. Xem [review nghiệm thu](reports/package-G06-result.md#acceptance-review-10112026).
 
 ## Trình tự thực hiện trong phase
 
@@ -47,10 +49,10 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Có report mới, metric/môi trường/sample window chính xác.
-- [ ] Chưa đủ RUM không được đánh INP đạt.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Có report mới, metric/môi trường/sample window chính xác.
+- [x] INP có phép đo tương tác hoặc RUM phù hợp trên bản nghiệm thu; không dùng TBT thay INP.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-31-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 

@@ -1,0 +1,152 @@
+{
+  "recordedAtUtc": "2026-10-26T17:06:43.886246+00:00",
+  "approval": {
+    "questionId": "call_40e0eb214c1c40f7a94a8e4cabfa263b",
+    "answer": "Cho phép cập nhật main và auto-deploy",
+    "scope": "Exact tested commit to main and Render auto-deploy; no cloud environment edits, migrations or seed"
+  },
+  "commit": "2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+  "baseCommit": "7ed7a5835ab6d79ec72c9aa6d21fae72a24d206e",
+  "mainVerifiedViaGitHub": true,
+  "fastForwardPush": true,
+  "forcePush": false,
+  "prePushHookExecuted": true,
+  "rootIndexPreservedEmpty": true,
+  "rootWorkingTreePreserved": true,
+  "isolatedTestsPassed": 27,
+  "backendFormatPassed": true,
+  "frontendFormatPassed": true,
+  "migrationFilesChanged": false,
+  "migrationsInDeployedSource": 5,
+  "renderAutoDeploymentVerified": true,
+  "renderEnvironmentChanged": false,
+  "manualDeploymentTriggered": false,
+  "renderHealth": {
+    "checkedAtUtc": "2026-10-26T16:56:13.630549+00:00",
+    "checks": [
+      {
+        "path": "/api/v1/release",
+        "httpStatus": 200,
+        "body": {
+          "data": {
+            "provider": "Render",
+            "commitSha": "2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+            "apiImageDigest": null,
+            "webImageDigest": null,
+            "apiServiceId": "srv-dbf5mmoae00c73esdplg",
+            "apiInstanceId": "srv-dbf5mmoae00c73esdplg-hibernate-558c7846f6-q7l4x",
+            "webDeploymentId": null
+          },
+          "meta": {}
+        }
+      },
+      {
+        "path": "/health/live",
+        "httpStatus": 200,
+        "body": {
+          "status": "Healthy"
+        }
+      },
+      {
+        "path": "/health/ready",
+        "httpStatus": 200,
+        "body": {
+          "status": "Healthy"
+        }
+      }
+    ]
+  },
+  "renderReadSmoke": {
+    "checkedAtUtc": "2026-10-26T16:57:31.078050+00:00",
+    "readRequestsOnly": true,
+    "checks": [
+      {
+        "path": "/api/v1/categories?page=1&pageSize=1",
+        "httpStatus": 200,
+        "hasDataEnvelope": true,
+        "hasMetaEnvelope": false,
+        "returnedItems": 20,
+        "meta": null
+      },
+      {
+        "path": "/api/v1/recipes?page=1&pageSize=1",
+        "httpStatus": 200,
+        "hasDataEnvelope": true,
+        "hasMetaEnvelope": true,
+        "returnedItems": 1,
+        "meta": {
+          "page": 1,
+          "pageSize": 1,
+          "total": 100,
+          "totalPages": 100,
+          "hasNextPage": true,
+          "hasPreviousPage": false
+        }
+      }
+    ]
+  },
+  "neonAfterStartup": {
+    "checkedAtUtc": "2026-10-26T16:57:23.759509+00:00",
+    "passed": true,
+    "tables": 28,
+    "rows": 2042,
+    "fingerprintsMatchApprovedArchive": true,
+    "schemaAndMigrationHistoryMatch": true,
+    "foreignKeysChecked": 14,
+    "orphanRows": 0,
+    "sequenceChecks": 11,
+    "verificationWritesPerformed": false,
+    "privateArtifactSha256": "e46eb6d13fa4a438431eaa13f48488ced21a707e2c8f7958527193d525fe6123"
+  },
+  "directDatabaseOrRedisDataWritesPerformed": false,
+  "readApiRequestsMayPopulateRedisCache": true,
+  "ci": {
+    "url": "https://github.com/Cookie1109/culinary_blog/actions/runs/40363195850",
+    "status": "completed",
+    "conclusion": "failure",
+    "backend": "success",
+    "composeAndContainerScans": "success",
+    "secretScan": "success",
+    "securityFilesystemScan": "failure: zod 4.6.2 CVE-2023-54404 HIGH; scanner lists fixed version 4.6.6",
+    "frontendChecksAndTests": "success before npm audit",
+    "frontendAudit": "failure: 1 moderate and 4 high dependency findings; fast-uri, undici, zod and dependent paths",
+    "dependenciesChangedOrGateSuppressed": false
+  },
+  "minioTunnelRecovery": {
+    "previousFailure": "Old Quick Tunnel hostname no longer resolves; existing gateway stopped and cloudflared absent",
+    "existingGatewayResumed": true,
+    "existingCredentialsReused": true,
+    "iamBucketDataVolumesAndMinioContainerUnchanged": true,
+    "installationPerformed": false,
+    "verification": {
+      "checkedAtUtc": "2026-10-26T17:03:16.903257+00:00",
+      "endpoint": "https://ranked-congratulations-supports-hwy.trycloudflare.com",
+      "readOnly": true,
+      "renderEnvironmentChanged": false,
+      "previousEndpointDnsResolves": false,
+      "anonymousHttpStatus": {
+        "/minio/health/live": 200,
+        "/": 403,
+        "/minio/admin/v3/info": 403,
+        "/minio/": 403
+      },
+      "authenticatedListBucketSucceeded": true,
+      "existingObjectReadSucceeded": true,
+      "downloadMatchesLocal": true,
+      "downloadBytes": 273384,
+      "downloadSha256": "3afe682bf654696f4f89c21b5509caf6e982b0d1251959ce6289a21d1f42fea9"
+    },
+    "ignoredLocalImportProfilesEndpointUpdated": [
+      "backend/.env",
+      "tmp/render/backend-render.env.draft"
+    ],
+    "remainingManualAction": "Render > culinary-blog-api > Environment > Edit ObjectStorage__Endpoint to endpoint above; user applies deployment. Keep other values unchanged.",
+    "renderToNewTunnelVerified": false
+  },
+  "remaining": [
+    "User must apply new MinIO endpoint on Render before full dependency health/media can pass",
+    "CI filesystem security and npm audit gates remain failed; not a full production release certification",
+    "Uncommitted root workspace still contains six pending migrations and schema changes; they are not in this deployed commit",
+    "Snapshot verification does not include local writes after the approved archive timestamp"
+  ]
+}

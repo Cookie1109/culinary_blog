@@ -36,6 +36,8 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Trình tự thực hiện trong phase
 
+Checkpoint31/10/2026: hai API/Nginx đã kiểm quota gốc100/10/5, cache privacy/shared cache, RedLock/retry và hai worker; MinIO4node lab đã kiểm quorum/heal/checksum. D9-09/D9-10 vẫn mở vì chưa có DEC-11 benchmark và topology/CDN production đúng artifact. Xem [report G06](reports/package-G06-result.md#phase-35), không coi lab cùng host là production HA.
+
 1. Test≥2 API qua Nginx: JWT/shared cache/quota/queue/singleton/worker không nhân đôi sai.
 2. So throughput/latency trước-sau thêm instance theo decision; ghi cơ chế lock so RedLock.
 3. Kiểm MinIO distributed4+ nodes/CDN/static/images multi-stage non-root trong môi trường phù hợp; nếu không có ghi điều kiện triển khai/test còn thiếu.

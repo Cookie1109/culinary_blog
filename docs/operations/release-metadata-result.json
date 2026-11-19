@@ -1,0 +1,189 @@
+{
+  "checkedAtUtc": "2026-10-26T16:19:41.200221+00:00",
+  "userApproval": {
+    "questionId": "call_f587c3d394024f66b9ff055867022e2b",
+    "answer": "Đồng ý với điều kiện phải khớp với PDF",
+    "scope": "Provider-native runtime release metadata only; no SRS waiver, database migration or deployment"
+  },
+  "srs": {
+    "path": "D:\\Culinary_Blog\\docs\\specs\\SRS_Culinary_Blog_v1.0.0.pdf",
+    "sha256": "8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063",
+    "pagesInspected": [
+      15,
+      16,
+      41,
+      42,
+      43,
+      52
+    ],
+    "containerAndProductionComposeRequirementsRetained": true,
+    "runtimeDigestRequirementFound": false,
+    "fullHybridProductionConformanceCertified": false
+  },
+  "contract": {
+    "defaultProvider": "Docker",
+    "explicitManagedProvider": "Render",
+    "renderRuntimeFields": [
+      "RENDER",
+      "RENDER_GIT_COMMIT",
+      "RENDER_SERVICE_ID",
+      "RENDER_INSTANCE_ID"
+    ],
+    "explicitCommitMustMatchPlatform": true,
+    "imageDigestsNullOnRender": true,
+    "optionalFrontendDeploymentId": "Release:WebDeploymentId",
+    "frontendIdVerifiedWithVercel": false,
+    "sourceRevisionOrInstanceNotEquivalentToImageDigest": true,
+    "responseSchema": "docs/operations/release-metadata.schema.json"
+  },
+  "tests": {
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0,
+    "trxSha256": "993cf361a0dc260728bc5690647b95b0dfa6f00d85f91f38894dbc1a0a5d8a19",
+    "usesCloudOrDatabase": false
+  },
+  "preservedDockerGatesSha256": {
+    "compose.yaml": "6caa44bd2804005232c36ad28a94c13fc094a88656a36ee6c5ec7f8a1d900557",
+    "compose.dev.yaml": "ea4ebc618dcd92b9c5d32d1b39ddb272d8f81b4c0dc434037206a2db4ce7ffb6",
+    "infra/production/compose.production.yaml": "585ab6967b6be0e9a09113c23eb616d51548f0b920b22f5d700b923e94697b92",
+    ".github/workflows/release-images.yml": "c7a3035c7c09dda18ff9bfb0a36cae18b28778abf987ac6f20db45c6a26fc00b",
+    "scripts/release-gate.ps1": "dfeaab9f1a0e78aa8c9904285e35dfdd59f1e18ef3f259e69e3e3bdacdb80c72",
+    "scripts/deploy-release.ps1": "9c3a16c2fe4a5a11b4f93384c45b6725a28b23951397b941bb42b024831f13b7"
+  },
+  "developmentFilesSha256Unchanged": {
+    "compose.yaml": "6caa44bd2804005232c36ad28a94c13fc094a88656a36ee6c5ec7f8a1d900557",
+    "compose.dev.yaml": "ea4ebc618dcd92b9c5d32d1b39ddb272d8f81b4c0dc434037206a2db4ce7ffb6",
+    "backend/src/CulinaryBlog.Api/appsettings.json": "c0ffac0efa16ae23069e8bfa34335a57a26606cd2138de473b2b50fdaacb22a8",
+    "backend/src/CulinaryBlog.Api/appsettings.Development.json": "feaa7fa3c35d83b905736ed5357b1c3655a8681cc05157f53cf2698fa4015701"
+  },
+  "privateEnvPreparation": {
+    "preparedAtUtc": "2026-10-26T16:13:37.018320+00:00",
+    "importFile": "D:\\Culinary_Blog\\tmp\\upstash\\render-neon-upstash.env",
+    "variables": [
+      "ASPNETCORE_ENVIRONMENT",
+      "ASPNETCORE_HTTP_PORTS",
+      "AllowedHosts",
+      "ConnectionStrings__Database",
+      "ConnectionStrings__Redis",
+      "Database__ApplyMigrationsOnStartup",
+      "AdminSeed__Enabled",
+      "BackgroundJobs__Enabled",
+      "Release__Provider"
+    ],
+    "privateDrafts": [
+      {
+        "file": "backend/.env",
+        "onlyConnectionAndSafetyVariablesTouched": true,
+        "otherBytesUnchanged": true
+      },
+      {
+        "file": "tmp/render/backend-render.env.draft",
+        "onlyConnectionAndSafetyVariablesTouched": true,
+        "otherBytesUnchanged": true
+      }
+    ],
+    "configurationReports": [
+      {
+        "file": "backend/.env",
+        "productionGuardMissingOrInvalidKeys": [],
+        "portSetting": "8080",
+        "postgresAndRedisVariablesFilled": true,
+        "databaseStartupMigrations": "false",
+        "adminSeed": "false",
+        "backgroundJobs": "false"
+      },
+      {
+        "file": "tmp/render/backend-render.env.draft",
+        "productionGuardMissingOrInvalidKeys": [],
+        "portSetting": "8080",
+        "postgresAndRedisVariablesFilled": true,
+        "databaseStartupMigrations": "false",
+        "adminSeed": "false",
+        "backgroundJobs": "false"
+      }
+    ],
+    "releaseProvider": "Render",
+    "runtimeMetadataRequiredFromRender": [
+      "RENDER",
+      "RENDER_GIT_COMMIT",
+      "RENDER_SERVICE_ID",
+      "RENDER_INSTANCE_ID"
+    ],
+    "runtimeMetadataVerifiedOnRender": false,
+    "currentWorkingTreeSchemaReady": false,
+    "renderUpdated": false,
+    "localDevelopmentOrMinioChanged": false,
+    "databaseWritesPerformed": false
+  },
+  "credentialScanPassed": true,
+  "releaseGateScriptsExecuted": false,
+  "dockerProductionPromotionPerformed": false,
+  "databaseOrRedisDataWritesPerformed": false,
+  "minioChanged": false,
+  "providerTokensAdded": false,
+  "productionSecurityGuardDisabled": false,
+  "commitPushOrDeploymentPerformed": true,
+  "runtimeRenderVerifiedAfterChange": true,
+  "remaining": [
+    "User must apply new MinIO endpoint on Render before full dependency health/media can pass",
+    "CI filesystem security and npm audit gates remain failed; not a full production release certification",
+    "Uncommitted root workspace still contains six pending migrations and schema changes; they are not in this deployed commit",
+    "Snapshot verification does not include local writes after the approved archive timestamp"
+  ],
+  "publishing": {
+    "recordedAtUtc": "2026-10-26T17:06:43.886246+00:00",
+    "baseCommit": "7ed7a5835ab6d79ec72c9aa6d21fae72a24d206e",
+    "commit": "2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+    "branch": "fix/render-release-metadata",
+    "commitUrl": "https://github.com/Cookie1109/culinary_blog/commit/2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+    "branchUrl": "https://github.com/Cookie1109/culinary_blog/tree/fix/render-release-metadata",
+    "pushed": true,
+    "remoteMainUnchangedVerified": false,
+    "mainCommit": "2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+    "scope": [
+      "backend/src/CulinaryBlog.Api/Program.cs",
+      "backend/src/CulinaryBlog.Api/Security/ProductionConfigurationGuard.cs",
+      "backend/src/CulinaryBlog.Api/Security/ReleaseMetadata.cs",
+      "backend/src/CulinaryBlog.Infrastructure/DependencyInjection.cs",
+      "backend/tests/CulinaryBlog.IntegrationTests/ReleaseMetadataTests.cs",
+      "backend/tests/CulinaryBlog.IntegrationTests/SecurityHardeningTests.cs",
+      "backend/tests/CulinaryBlog.IntegrationTests/StartupStorageConfigurationTests.cs",
+      "docs/operations/release-metadata.schema.json",
+      "docs/operations/render-release-metadata.md",
+      "docs/specs/phase-0/adr/ADR-011-release-metadata-providers.md"
+    ],
+    "migrationFilesAndDependenciesUnchanged": true,
+    "migrationsInCommit": 5,
+    "isolatedTestsPassed": 27,
+    "backendFormatPassed": true,
+    "frontendFormatPassed": true,
+    "prePushHookExecuted": true,
+    "rootWorkspaceChangesPreserved": true,
+    "rootIndexNotStagedOrReset": true,
+    "computerUse": "Read live deployment modal; public release endpoint independently verifies exact commit; no environment/manual deploy UI action",
+    "autoDeploySettingVerified": false,
+    "renderSettingsChanged": false,
+    "manualDeploymentTriggered": false,
+    "productionBranchUpdated": true,
+    "databaseOrRedisWritesPerformed": false,
+    "minioChanged": false,
+    "nextStep": "See render-metadata-deployment-result.json; apply new MinIO endpoint manually, keep CI findings open",
+    "initialBranchPush": {
+      "recordedAtUtc": "2026-10-26T16:50:12.355089+00:00",
+      "remoteMainUnchangedVerified": true,
+      "mainCommit": "7ed7a5835ab6d79ec72c9aa6d21fae72a24d206e",
+      "productionBranchUpdated": false,
+      "computerUse": "Stopped by tool because current browser URL could not be determined; no further UI actions"
+    },
+    "renderAutoDeploymentVerified": true,
+    "mainPromotionApproval": {
+      "questionId": "call_40e0eb214c1c40f7a94a8e4cabfa263b",
+      "answer": "Cho phép cập nhật main và auto-deploy",
+      "scope": "Exact tested commit to main and Render auto-deploy; no cloud environment edits, migrations or seed"
+    },
+    "deploymentReport": "render-metadata-deployment-result.json"
+  },
+  "productionDeployPerformed": true,
+  "deploymentReport": "render-metadata-deployment-result.json"
+}

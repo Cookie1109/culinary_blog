@@ -1,0 +1,54 @@
+{
+  "atUtc": "2026-11-05T06:34:01.744353+00:00",
+  "profile": "Existing public-api load profile:100VU5min,90%warm10%cold,1s think time, loopback only",
+  "apiImage": "sha256:49163d607861408e29935a2d825cb41e85546e65e602243ab376d01e6cbfe684",
+  "apiLimitsEach": {
+    "cpus": 2,
+    "memoryBytes": 4294967296
+  },
+  "rows": [
+    {
+      "apiInstances": 1,
+      "businessRequests": 29800,
+      "httpRequestsIncludingControls": 29825,
+      "iterationRateReportedByK6": 87.30583222099135,
+      "warmP50Ms": 4.7657,
+      "warmP95Ms": 11.428369999999997,
+      "warmP99Ms": 37.44965100000021,
+      "coldP95Ms": 20.52888499999999,
+      "coldP99Ms": 54.15145100000007,
+      "apiFailureRate": 0,
+      "observedCacheHitRatio": 0.894141829393628
+    },
+    {
+      "apiInstances": 2,
+      "businessRequests": 29813,
+      "httpRequestsIncludingControls": 29838,
+      "iterationRateReportedByK6": 87.36101785616218,
+      "warmP50Ms": 4.6829,
+      "warmP95Ms": 9.06245,
+      "warmP99Ms": 13.917540000000018,
+      "coldP95Ms": 17.077169999999974,
+      "coldP99Ms": 26.476036000000036,
+      "apiFailureRate": 0,
+      "observedCacheHitRatio": 0.8985266723116003
+    }
+  ],
+  "iterationRateRatio2over1": 1.000632095631723,
+  "thresholds": "Original p50<=150/p95<=500/p99<=1000ms, cache>=80%, APIerrors0; unchanged",
+  "trialExitCodes": [
+    0,
+    0
+  ],
+  "cleanupExit": 0,
+  "rateInterpretation": "K6 rate includes its measured setup/teardown window; not simply count divided by300seconds",
+  "capacityClaimed": false,
+  "formalScalingAcceptance": false,
+  "limits": [
+    "One paired run, not three repeats",
+    "Fixed100VU and1s think time caps offered demand; ratio near1 does not measure linear capacity",
+    "Public-read only; prior mixed read/write100VU10min evidence remains separate",
+    "Shared local Docker VM and existing user stack; configured per-instance caps are not dedicated production reservations",
+    "OTLP counters have export/scrape lag; counter delta is not exact HTTP request count"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "atUtc": "2026-10-31T14:24:26.994607+00:00",
+  "sourceFiles": 745,
+  "existingChanged": [
+    "backend/Directory.Packages.props",
+    "backend/src/CulinaryBlog.Api/Program.cs",
+    "backend/src/CulinaryBlog.Api/packages.lock.json",
+    "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj",
+    "backend/src/CulinaryBlog.Infrastructure/DependencyInjection.cs",
+    "backend/src/CulinaryBlog.Infrastructure/packages.lock.json",
+    "backend/tests/CulinaryBlog.ArchitectureTests/packages.lock.json",
+    "backend/tests/CulinaryBlog.IntegrationTests/packages.lock.json"
+  ],
+  "newFiles": [
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/DataProtectionKeyDbContext.cs",
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/20261031134534_PersistDataProtectionKeys.Designer.cs",
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/20261031134534_PersistDataProtectionKeys.cs",
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/DataProtectionKeyDbContextModelSnapshot.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/DataProtectionPersistenceTests.cs",
+    "scripts/new-data-protection-certificate.ps1"
+  ],
+  "unrelatedBeforeSnapshotFilesChanged": [],
+  "priorEvidenceFilesUnchanged": 199,
+  "pdfAndAbcUnchanged": true,
+  "headUnchanged": true,
+  "mainAppMigrationCount": 13,
+  "keyringMigrationCount": 1,
+  "mainAppModelAndUpgradeTestsUnchanged": true,
+  "frontendSourceHashesReused": 107,
+  "backendTests": {
+    "unit": 129,
+    "architecture": 3,
+    "integration": 242
+  },
+  "imageHighCriticalFindings": 0,
+  "rawSecretScanExit": 1,
+  "secretFindings": 102,
+  "secretTriageCounts": {
+    "Docker container identifier (noncredential; captured via docker inspect)": 2,
+    "digest/fingerprint (noncredential)": 100
+  },
+  "secretUnresolved": 0,
+  "exactPrivateValueCheck": {
+    "files": 44,
+    "certificateSecretsIncluded": 2,
+    "matchingFiles": []
+  },
+  "jwtFiles": [],
+  "scopedDiffCheckExit": 0,
+  "brokenLinks": [],
+  "userContainerIdentitiesPreserved": true,
+  "remainingOwnedDpResources": 0,
+  "gatewayRunning": true,
+  "realNeonMigrated": false,
+  "realRenderDataProtectionEnvironmentChanged": false,
+  "sourceDeployed": false,
+  "originalClosedD9Tasks": [
+    "D9-02",
+    "D9-05",
+    "D9-06"
+  ]
+}

@@ -32,9 +32,9 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D6-13 · Kiểm chứng/sửa:** đối chiếu tất cả schema/data type/length/nullability/default/constraint/index/relationship/audit/soft-delete/Version và API method/path/status/error/envelope/header với inventory D0. Bao gồm refresh-token family/hash, media/outbox và tables mới; không chỉ kiểm OpenAPI có endpoint.
-- [ ] **D6-14 · Kiểm chứng:** migration upgrade từ bản trước giữ user/recipe/composition/token/outbox/media, migration mới nullable/backfill đúng; restart/seed idempotent không ghi đè dữ liệu người dùng; kiểm tra dữ liệu seed theo SRS và ghi rõ sai khác dùng seed thủ công thay Bogus nếu còn. Test trên DB/container riêng, chưa tự áp dụng vào DB người dùng.
-- [ ] **D6-15 · Sửa/kiểm chứng:** cập nhật OpenAPI/XML comments/Scalar và generate frontend types; kiểm diff để phát hiện contract drift. Bảo đảm docs auth/multipart/ETag/headers/error response khớp hành vi thật và môi trường được mở docs đúng quy định.
+- [x] **D6-13 · Kiểm chứng/sửa:** đối chiếu tất cả schema/data type/length/nullability/default/constraint/index/relationship/audit/soft-delete/Version và API method/path/status/error/envelope/header với inventory D0. Bao gồm refresh-token family/hash, media/outbox và tables mới; không chỉ kiểm OpenAPI có endpoint.
+- [x] **D6-14 · Kiểm chứng:** migration upgrade từ bản trước giữ user/recipe/composition/token/outbox/media, migration mới nullable/backfill đúng; restart/seed idempotent không ghi đè dữ liệu người dùng; kiểm tra dữ liệu seed theo SRS và ghi rõ sai khác dùng seed thủ công thay Bogus nếu còn. Test trên DB/container riêng, chưa tự áp dụng vào DB người dùng.
+- [x] **D6-15 · Sửa/kiểm chứng:** cập nhật OpenAPI/XML comments/Scalar và generate frontend types; kiểm diff để phát hiện contract drift. Bảo đảm docs auth/multipart/ETag/headers/error response khớp hành vi thật và môi trường được mở docs đúng quy định.
 
 ## Trình tự thực hiện trong phase
 
@@ -51,11 +51,17 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Không còn contract drift được phát hiện chưa giải thích; schema/data/API có evidence.
-- [ ] Không apply migration vào database người dùng để hoàn thành phase.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Không còn contract drift được phát hiện chưa giải thích; schema/data/API có evidence.
+- [x] Không apply migration vào database người dùng để hoàn thành phase.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-22-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-21-seo-metadata-and-slugs.md) · [Tiếp theo để tham khảo](phase-23-unit-coverage-gate.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+
+Bổ sung26/10: [E21 giữ MinIO](reports/package-G04-result.md#checkpoint-giữ-nguyên-minio--26102026) đã hoàn tác Cloudinary theo yêu cầu mới và kiểm hồi quy227 đạt; giữ dữ liệu MinIO, đính chính A/B/C và trạng thái task hiện có. Render chưa deploy.
+
+
+E28 —27/10/2026: [report chung G04](reports/package-G04-result.md#checkpoint27102026--chốt-http-và-nghiệm-thu-g04-local),15/15 task local; giữ bằng chứng chưa bị ảnh hưởng. Không áp migration vào database người dùng hoặc nhận triển khai demo là nghiệm thu production.

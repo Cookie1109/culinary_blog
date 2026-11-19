@@ -1,0 +1,70 @@
+{
+  "atUtc": "2026-11-10T16:24:27.546010+00:00",
+  "scope": "G06 phases30–35 only",
+  "sourceCommit": "df0dbb927e0430a485d47570e8849a11340065cb",
+  "deployment": "dpl_CzWEgVuacUVkQFs9oKSweUPb1YHM",
+  "rootHead": "ce4ae4eb8fd7d94b36b600ec01da024f4a9670e3",
+  "closedTasks": [
+    "D9-02",
+    "D9-05",
+    "D9-06"
+  ],
+  "openTasks": [
+    "D9-01",
+    "D9-03",
+    "D9-04",
+    "D9-07",
+    "D9-09",
+    "D9-10"
+  ],
+  "proofFiles": {
+    "G06-20261110-dependency-audit.json": "e57e2a6c547de7ca283ea400583c2f470f02dc0ed619fc61c6eed6380cd248a7",
+    "G06-20261110-final-live-read-checks.json": "2c639436da3af7f2c8966b7c857d8479281f19a147a561ecf0a35e9aeaf90691",
+    "G06-20261110-final-native-lighthouse.json": "90970b691a8d549669f8cce1991815689ba453815e907238de1a4c54917c1a20",
+    "G06-20261110-frontend-local-gates.json": "6cfb17b26b8becb7279319ac1481d04abc83049ac8ffaec9ed2cf0d078dcae9b",
+    "G06-20261110-layout-controlled-gate.json": "aac32fc51f1373d8131cf735aa1290f80ba9c809dd1ce42dbff5f28505a8b879",
+    "G06-20261110-layout-controlled-provider-summary.json": "1f71bb0351a4a3d23baee2de8969019b3ef675090c7e4041dbe99b628a36c1d6",
+    "G06-20261110-layout-deployment.json": "d9c808d76dd9341bcd090362676fe37350ed3fbbec2a185dcc51b74eec102301",
+    "G06-20261110-layout-env-preservation.json": "ec94c38e26528f66e008705abbcc4f39359cfe8bfc22447b8d6a99647b1a23ba",
+    "G06-20261110-layout-metrics-export.json": "bc0e9872c0b78ac9b0c9993b5438b6d0fd8c88f034c5592a5ca1e7621c6249d0",
+    "G06-20261110-layout-primary-checks.json": "f7ca453c2b0792eb5130b78e6bcae6e6fe2fcae88374723aaff100e2387cc074",
+    "G06-20261110-layout-provider-primary-bundle-cdn.json": "a41abd161c8a4a3842c3162a91ebe307e1095b4fb4bcb42b61999b5c091bcc13",
+    "G06-20261110-layout-provider-staged-bundle-cdn.json": "dac0ea62bb1d40d5541f1c19453cc912a3dcf83ecabbfca673b5669e1327b4c3",
+    "G06-20261110-layout-staged-checks.json": "5d3369c49713b5a164750be91c49a8f10b7ed6436c669ee6020bc4f5f3a504b8",
+    "G06-20261110-layout-upload-safety.json": "822486253f25558b162f8159137e33efed8aa3d21d85854dc6b18678a1b65d53",
+    "G06-20261110-live-read-checks.json": "0df774c10fcb735180951a0432d335924eee3b3df6fd833c323357b478923f9c",
+    "G06-20261110-media-content-evidence-binding.json": "a32ef443e8b0120171310c98bb2b46ff77653a31b09791fa887f0cdb46eff58f",
+    "G06-20261110-neon-continuity.json": "8c2125ef6d7157f7b257f225e4e8088c54f687a2757f5263a1c55f87a136ef97",
+    "G06-20261110-persistent-mounts.json": "ebead2f50f40f572f4294f95221c307e80bbf1a386b3ac280dadac677b2fdef5",
+    "G06-20261110-postgres-backup.json": "33612f98a25df82f2df2b6f930fa616bafb23dbb70d2786ef5308ed604c11185",
+    "G06-20261110-postgres-tool-config.json": "339ce08f6ade6486a51d4dae3bdc080c095a6e2b0dadfef58f532401c883e01a",
+    "G06-20261110-postgres-tool-security.json": "f1d0fe25fcce537abe1498c74962d21e3db753a4f724bc774b5c1757a77a4170",
+    "G06-20261110-postman-status.json": "107e26bae682de6e6a7816722cb34cbcda8bb985c095df3312d4f7eb322b7fe2",
+    "G06-20261110-preservation.json": "eb97061a5fd5b4bff5d1238e41a648465177fbd888d28e7cb5c15193b1acdf9e",
+    "G06-20261110-prior-production-failures.json": "0714af3d9f90d23faecf64d71b31e4972512657ebe500aafe2de8754c725d0e1",
+    "G06-20261110-render-endpoint-change.json": "c1d75db745d38cf179021959305eae30bfeb655db465210315b22af37ec12bbe",
+    "G06-20261110-runtime-preservation.json": "bd2ccd89ab34cd4cf54945a6ee7a585782a3aa54706331919baed7addd6b3c4d"
+  },
+  "sourceHashes": {
+    "frontend/tests/search-layout.e2e.mjs": "2d988137e9f6ba7ee1bfef0041e097486e4322595add69aef9f6422fe05b070f",
+    "infra/operations/backup-neon.py": "553c29ea61e041b7c0d7686c9097b493f85092c285eda3707b850e07e151fd09",
+    "infra/operations/register-neon-backup.ps1": "8e089da673b119a2469e9f0c15a73cd2ac6b9158277bf456f54eb2ab5221c3d2",
+    "infra/operations/tests/test_backup_neon.py": "0a0780bd5d8066d55399834d6022892b948c4ba47d719f35880ddc98129203b1",
+    "infra/operations/postgres-tools.Dockerfile": "4b48b29b737cd452b55bd78c3970e3df7f9d9cc94e55d5224c7a6e6438040ff6",
+    "docs/operations/neon-backup-windows.md": "e00d942370353cdb0c6e5d69e829862c975b82ea4901b1090df267b6168baede",
+    "frontend/src/features/culinary/pages/RecipesList.tsx": "ef6123bca1fb2363f359badf50bbf8383919a6409f0fdaeecdcf5ad02a8811a4"
+  },
+  "trackingHashes": {
+    "docs/operations/g06-remaining-inputs-2026-11-05.md": "c53edc231491380a692e6463cd1e81ab2959dc9847e18185d033602394241170",
+    "docs/specs/srs-completion-checklist.md": "1d9d2d76d65d504eb2f635dc3b14f9b0b20e07f86cbfc16745cf7ac4e3478eda",
+    "docs/specs/srs-completion-phases/demo-scope-2026-11-05.md": "f8dbfaf8b9bcaa2645f5840daaa2410f9ac9f62a91f284949450cbac46350103",
+    "docs/specs/srs-completion-phases/progress.md": "bee01081190c4e868967e0f18d360fadbaa0a59d631087b5ca951562f48a0b87",
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md": "87a2681cb7f97a9a774ae2b6fffd2fb02513c74ae52ca2ba4471a24ab6a124ea"
+  },
+  "pdfSha256": "8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063",
+  "metadataExclusions": [
+    "Self, final public scan review and validation hashes; validation binds manifest and scan review.",
+    "No raw secrets, personal data, backup files, provider logs or asset contents published."
+  ],
+  "publicSecurityScan": "See G06-20261110-public-scan-review.json; raw exit preserved and findings triaged without ignores."
+}

@@ -1,0 +1,90 @@
+[
+  {
+    "path": "tmp/package-G06/resume-20261104/cache-isolated-full-tests/Admin_COOKIEE_2026-11-04_19_45_07_net10.0.trx",
+    "sha256": "cc963a28cc60f665b4aefc5533b625b41976db20462efc9d21e74e52c964df40",
+    "counters": {
+      "total": "3",
+      "executed": "3",
+      "passed": "3",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    }
+  },
+  {
+    "path": "tmp/package-G06/resume-20261104/cache-isolated-full-tests/Admin_COOKIEE_2026-11-04_19_45_16_net10.0.trx",
+    "sha256": "c766f2b8fbaf18c5a25c57e745ab0912a70ebece5f3d9206ac097d5c2658bb24",
+    "counters": {
+      "total": "290",
+      "executed": "290",
+      "passed": "290",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    }
+  },
+  {
+    "path": "tmp/package-G06/resume-20261104/cache-isolated-full-tests/Admin_COOKIEE_2026-11-04_19_49_48_net10.0.trx",
+    "sha256": "2a7e00c5ae1179a034eaf20db81715f8d45813a9378f63600ea44382c812ac0c",
+    "counters": {
+      "total": "157",
+      "executed": "157",
+      "passed": "143",
+      "failed": "14",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    }
+  },
+  {
+    "path": "tmp/package-G06/resume-20261104/cache-unit-fixtures-tests/Admin_COOKIEE_2026-11-05_06_44_56_net10.0.trx",
+    "sha256": "a28a1950806d601b6d1ff7522716c3248aaa38daf9d31e29ee60bbaeaa24c9b3",
+    "counters": {
+      "total": "157",
+      "executed": "157",
+      "passed": "157",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    }
+  }
+]

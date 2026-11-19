@@ -31,9 +31,9 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D6-05 · Kiểm chứng/sửa:** upload JPEG/PNG/WebP/AVIF ≤5 MB, magic bytes/decode/pixel/path traversal, kiểm tra size trước buffering theo SRS; filename GUID, bucket private, quyền tải/xem/xóa. Có ít nhất test adapter MinIO thật bên cạnh test storage giả, không suy kết quả fake thành storage thật.
-- [ ] **D6-06 · Kiểm chứng:** resize decode thực medium 800×600, thumbnail 300×300, lưu bản gốc + variants/URL; retry 3, xử lý lỗi/restart/idempotency và fallback ảnh gốc khi job thất bại. Kiểm tra canvas/giữ tỷ lệ theo lựa chọn đã ghi, không đánh đủ fallback chỉ từ test kích thước.
-- [ ] **D6-07 · Kiểm chứng:** delete object idempotent/retry 3/outbox, object không còn và metadata không trôi khi storage lỗi; không xóa ảnh recipe khác hoặc làm mất bản gốc khi resize thất bại.
+- [x] **D6-05 · Kiểm chứng/sửa:** upload JPEG/PNG/WebP/AVIF ≤5 MB, magic bytes/decode/pixel/path traversal, kiểm tra size trước buffering theo SRS; filename GUID, bucket private, quyền tải/xem/xóa. Có ít nhất test adapter MinIO thật bên cạnh test storage giả, không suy kết quả fake thành storage thật.
+- [x] **D6-06 · Kiểm chứng:** resize decode thực medium 800×600, thumbnail 300×300, lưu bản gốc + variants/URL; retry 3, xử lý lỗi/restart/idempotency và fallback ảnh gốc khi job thất bại. Kiểm tra canvas/giữ tỷ lệ theo lựa chọn đã ghi, không đánh đủ fallback chỉ từ test kích thước.
+- [x] **D6-07 · Kiểm chứng:** delete object idempotent/retry 3/outbox, object không còn và metadata không trôi khi storage lỗi; không xóa ảnh recipe khác hoặc làm mất bản gốc khi resize thất bại.
 
 ## Trình tự thực hiện trong phase
 
@@ -50,11 +50,17 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Có evidence upload/resize/delete cả success/failure và đúng kích thước.
-- [ ] Không thay test fallback bằng assertion source/kích thước.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Có evidence upload/resize/delete cả success/failure và đúng kích thước.
+- [x] Không thay test fallback bằng assertion source/kích thước.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-19-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-18-search-filters-and-pagination.md) · [Tiếp theo để tham khảo](phase-20-welcome-and-sitemap-jobs.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+
+Bổ sung26/10: [E21 giữ MinIO](reports/package-G04-result.md#checkpoint-giữ-nguyên-minio--26102026) đã hoàn tác Cloudinary theo yêu cầu mới và kiểm hồi quy227 đạt; giữ dữ liệu MinIO, đính chính A/B/C và trạng thái task hiện có. Render chưa deploy.
+
+
+E28 —27/10/2026: [report chung G04](reports/package-G04-result.md#checkpoint27102026--chốt-http-và-nghiệm-thu-g04-local),15/15 task local; giữ bằng chứng chưa bị ảnh hưởng. Không áp migration vào database người dùng hoặc nhận triển khai demo là nghiệm thu production.

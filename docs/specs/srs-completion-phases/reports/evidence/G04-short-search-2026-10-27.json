@@ -1,0 +1,305 @@
+{
+  "recordedAtUtc": "2026-10-26T17:49:29.766103+00:00",
+  "userAuthorization": "Sửa phần đó và push lên Github giúp tôi.",
+  "commit": "9719c8bff462c910ba1586bdf8ae4e70271bf118",
+  "branchUpdated": "main",
+  "mainVerifiedViaGitHub": true,
+  "sourceBase": "2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+  "commitUrl": "https://github.com/Cookie1109/culinary_blog/commit/9719c8bff462c910ba1586bdf8ae4e70271bf118",
+  "pdfSha256": "8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063",
+  "pdfScope": "FR-SRCH-001 pages36-37; retain unaccent/FTS/GIN/rank, partial prefixes and pho:* & bo:*",
+  "behavior": "For a single normalized two-character term, prefer exact lexeme when present among Published recipes before other filters; otherwise retain prefix/trigram. Other searches unchanged.",
+  "before": {
+    "failed": 2,
+    "expectedRelevantFixtureItems": 3,
+    "actualItems": 7
+  },
+  "afterIsolated": {
+    "total": "8",
+    "executed": "8",
+    "passed": "8",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "afterRootWorkspace": {
+    "total": "32",
+    "executed": "32",
+    "passed": "32",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "backendAndFrontendPrePushFormatPassed": true,
+  "hookBypassed": false,
+  "migrationsDependenciesOrCredentialsChanged": false,
+  "migrationsInDeployedSource": 5,
+  "cloudEnvironmentChanged": false,
+  "productionSeedOrMigrationRun": false,
+  "localDevelopmentAndMinioChanged": false,
+  "rootIndexUnchanged": true,
+  "live": {
+    "checkedAtUtc": "2026-10-26T17:44:28.414947+00:00",
+    "checks": [
+      {
+        "path": "/api/v1/release",
+        "status": 200,
+        "commitSha": "9719c8bff462c910ba1586bdf8ae4e70271bf118"
+      },
+      {
+        "path": "/health/ready",
+        "status": 200,
+        "body": {
+          "status": "Healthy"
+        }
+      },
+      {
+        "path": "/api/v1/recipes/search?q=g%C3%A0&pageSize=50",
+        "status": 200,
+        "total": 18,
+        "titles": [
+          "Cháo gà",
+          "Cơm gà Hội An",
+          "Phở gà Hà Nội",
+          "Lẩu gà lá é",
+          "Gà kho gừng",
+          "Mì Quảng gà",
+          "Gỏi gà bắp cải",
+          "Gà rang sả ớt",
+          "Xôi gà lá sen",
+          "Chân gà sả tắc",
+          "Gà hấp lá chanh",
+          "Gà nướng muối ớt",
+          "Miến xào lòng gà",
+          "Lòng gà xào mướp",
+          "Súp cua",
+          "Xôi mặn",
+          "Xôi xéo",
+          "Bún thang Hà Nội"
+        ]
+      },
+      {
+        "path": "/api/v1/recipes/search?q=ga&pageSize=50",
+        "status": 200,
+        "total": 18,
+        "titles": [
+          "Cháo gà",
+          "Cơm gà Hội An",
+          "Phở gà Hà Nội",
+          "Lẩu gà lá é",
+          "Gà kho gừng",
+          "Mì Quảng gà",
+          "Gỏi gà bắp cải",
+          "Gà rang sả ớt",
+          "Xôi gà lá sen",
+          "Chân gà sả tắc",
+          "Gà hấp lá chanh",
+          "Gà nướng muối ớt",
+          "Miến xào lòng gà",
+          "Lòng gà xào mướp",
+          "Súp cua",
+          "Xôi mặn",
+          "Xôi xéo",
+          "Bún thang Hà Nội"
+        ]
+      },
+      {
+        "path": "/api/v1/recipes/search?q=ph&pageSize=50",
+        "status": 200,
+        "total": 22,
+        "titles": [
+          "Bánh đa cua Hải Phòng",
+          "Phở gà Hà Nội",
+          "Phở bò Hà Nội",
+          "Phá lấu bò",
+          "Cơm âm phủ Huế",
+          "Lẩu mắm",
+          "Bánh ít trần",
+          "Bánh cuốn Hà Nội",
+          "Xôi mặn",
+          "Xôi xéo",
+          "Chuối nếp nướng",
+          "Lẩu gà lá é",
+          "Trứng cút lộn xào me",
+          "Bánh bèo chén",
+          "Bánh đúc nóng",
+          "Nộm hoa chuối",
+          "Nem lụi Huế",
+          "Gỏi cuốn tôm thịt",
+          "Gỏi cá mai",
+          "Gỏi đu đủ khô bò",
+          "Cơm hến Huế",
+          "Mì Quảng gà"
+        ]
+      }
+    ],
+    "vercel": {
+      "url": "https://culinary-blog.vercel.app/recipes?q=g%C3%A0",
+      "status": 200,
+      "recipeCardSlugs": [
+        "chan-ga-sa-tac",
+        "chao-ga",
+        "ga-hap-la-chanh",
+        "ga-kho-gung",
+        "ga-nuong-muoi-ot",
+        "ga-rang-sa-ot",
+        "goi-ga-bap-cai",
+        "lau-ga-la-e",
+        "long-ga-xao-muop",
+        "mien-xao-long-ga",
+        "sup-cua",
+        "xoi-man"
+      ],
+      "unrelatedCardsPresent": false,
+      "firstPageOnly": true,
+      "pageSize": 12,
+      "allRelatedExamplesOnFirstPage": false,
+      "secondPage": {
+        "url": "https://culinary-blog.vercel.app/recipes?q=g%C3%A0&page=2",
+        "status": 200,
+        "recipeCardSlugs": [
+          "bun-thang-ha-noi",
+          "com-ga-hoi-an",
+          "mi-quang-ga",
+          "pho-ga-ha-noi",
+          "xoi-ga-la-sen",
+          "xoi-xeo"
+        ]
+      },
+      "allPagesMatchApi": true,
+      "allPagesRecipeCount": 18,
+      "allPagesContainRelatedExamples": true,
+      "allPagesExcludeUnrelatedExamples": true
+    }
+  },
+  "newRenderCommitObserved": true,
+  "ci": {
+    "url": "https://github.com/Cookie1109/culinary_blog/actions/runs/40370676637",
+    "status": "completed",
+    "conclusion": "failure",
+    "jobs": [
+      {
+        "name": "compose",
+        "status": "completed",
+        "conclusion": "success",
+        "failedSteps": []
+      },
+      {
+        "name": "security",
+        "status": "completed",
+        "conclusion": "failure",
+        "failedSteps": [
+          "Run aquasecurity/trivy-action@v0.36.0"
+        ]
+      },
+      {
+        "name": "frontend",
+        "status": "completed",
+        "conclusion": "failure",
+        "failedSteps": [
+          "Run npm audit --audit-level=high"
+        ]
+      },
+      {
+        "name": "backend",
+        "status": "completed",
+        "conclusion": "success",
+        "failedSteps": []
+      },
+      {
+        "name": "dependency-review",
+        "status": "completed",
+        "conclusion": "skipped"
+      }
+    ],
+    "previousMainDependencyAuditFailuresNotWaived": true
+  },
+  "documentationChecks": {
+    "verifyInventoryExitCode": 0,
+    "inventoryAcceptances": 347,
+    "verifyDecisionsExitCode": 1,
+    "decisionFailure": "Baseline changed since review: 02_Decision_Log.md; existing ADR-011 addition outside search commit",
+    "decisionLogChangedInSearchCommit": false,
+    "currentDecisionLogSha256": "a7f41043f32543873b34169aaef17f2dea92387aba5a2f97ad123ca02ea8647e",
+    "expectedBaselineSha256": "4e68856688080645ab7f18802106dbd6f6ab923209f42f6a4428f46b9ecd574a",
+    "gateOrBaselineModified": false
+  },
+  "g04": {
+    "closedTasks": 9,
+    "totalTasks": 15,
+    "taskCheckboxes": {
+      "D6-01": false,
+      "D6-02": false,
+      "D6-03": false,
+      "D6-04": false,
+      "D6-05": true,
+      "D6-06": true,
+      "D6-07": true,
+      "D6-08": true,
+      "D6-09": false,
+      "D6-10": true,
+      "D6-11": true,
+      "D6-12": true,
+      "D6-13": false,
+      "D6-14": true,
+      "D6-15": true
+    },
+    "complete": false,
+    "remaining": [
+      "D6-01",
+      "D6-02",
+      "D6-03",
+      "D6-04",
+      "D6-09",
+      "D6-13"
+    ],
+    "reasons": [
+      "400/422 source contract conflicts",
+      "Category Name50/100 source conflict",
+      "Google sitemap ping provider retired; DEC-02 unresolved",
+      "Full G04 workspace changes and six pending migrations are not in this deployed hotfix"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "tmp/release-metadata-publish/artifacts/short-search-test/short-search-before.trx",
+      "sha256": "cf52ca9544d05fa03a9e82e1908ca72dbdeb70f620ddaf2ff6cb9b1c183ea310"
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/short-search-test/short-search-after.trx",
+      "sha256": "922e069e37fd167440116861859f5c483acad17ae8078efa45ec7f994f8e33de"
+    },
+    {
+      "path": "tmp/g04/short-search-test/short-search-root-after.trx",
+      "sha256": "89c25bc92921bada589d9e7a0fa26a4ffb2fd14229e39008381b762ad075f294"
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/short-search-push.log",
+      "sha256": "22983d7316af435cbdb7f76d84f5f4f3ab16a1a996766020c47dc08b4e8bc4db"
+    },
+    {
+      "path": "tmp/g04/search-live-after-push.json",
+      "sha256": "0128408795103dacab81e5b16d273c5781d49cd5b464c87d274b51f823c16a91"
+    }
+  ]
+}

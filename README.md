@@ -2,7 +2,7 @@
 
 Ứng dụng web chia sẻ và khám phá công thức nấu ăn, xây dựng theo [SRS v1.0.0](docs/specs/SRS_Culinary_Blog_v1.0.0.pdf). Dự án gồm frontend Next.js và backend ASP.NET Core theo Clean Architecture, CQRS.
 
-**Trạng thái:** Đã triển khai và kiểm thử các phần chính ở môi trường local. Chưa được phê duyệt triển khai production; xem [báo cáo Phase 8](docs/specs/phase-8/README.md).
+**Demo môn học:** [Website](https://culinary-blog.vercel.app) chạy trên Vercel và [API](https://culinary-blog-api.onrender.com/health/ready) chạy trên Render Free. Xem [bàn giao G07](docs/specs/srs-completion-phases/reports/package-G07-result.md) để đối chiếu phiên bản, kết quả kiểm thử và các yêu cầu SRS còn thiếu.
 
 ## Chức năng chính
 
@@ -42,9 +42,7 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 docker compose up --detach --build --wait
 ```
 
-Mở ứng dụng tại **http://localhost:8080**. MinIO và công cụ tạo bucket được build từ binary bản phát hành chính thức đã ghim phiên bản và SHA-256; không cần có sẵn image MinIO hoặc nạp file tar trên máy. Hai container này chạy Linux AMD64; Docker Desktop trên máy ARM cần bật khả năng chạy image AMD64.
-
-Trên macOS/Linux, tạo cấu hình bằng `cp .env.example .env` rồi chạy cùng lệnh Docker Compose ở trên.
+Nếu registry từ chối tải MinIO Community hoặc MinIO Client đã ghim, nạp image đã xác minh cho đúng kiến trúc máy bằng `docker load --input <file-tar>`. Khai báo `MINIO_IMAGE` và/hoặc `MINIO_MC_IMAGE` trong `.env` theo tên hoặc digest thực tế của image đã nạp rồi chạy lại lệnh Compose. Có thể build MinIO Client từ nguồn đã ghim theo [hướng dẫn công cụ MinIO](docs/operations/minio-backup-tool.md#build-và-định-danh) và dùng image đó cho `MINIO_MC_IMAGE`. Lượt đo thời gian setup và điều kiện cache nằm trong [bàn giao G07](docs/specs/srs-completion-phases/reports/package-G07-result.md#d10-01-setup).
 
 | Dịch vụ           | Địa chỉ                      |
 | ----------------- | ---------------------------- |
@@ -56,6 +54,8 @@ Trên macOS/Linux, tạo cấu hình bằng `cp .env.example .env` rồi chạy 
 | Log hệ thống      | http://localhost:5341        |
 
 Dừng hệ thống bằng `docker compose down`; dữ liệu trong named volumes được giữ lại.
+
+Demo backend Render kết nối MinIO trên máy cá nhân qua HTTPS: xem [DEMO_MINIO_TUNNEL.md](DEMO_MINIO_TUNNEL.md) và script `scripts/start-minio-tunnel.ps1`. Hướng dẫn giữ bucket/volume hiện có, không công khai Console và không thay cấu hình PostgreSQL/Redis.
 
 Lần đầu, ứng dụng tự tạo schema, role và dữ liệu mẫu kèm ảnh. Admin không có tài khoản/mật khẩu mặc định: nếu cần quản trị, cấu hình `ADMIN_SEED_ENABLED=true`, `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong `.env` rồi chạy lại lệnh trên. Đăng nhập Google cần cấu hình OAuth riêng; có thể sử dụng đăng nhập email khi chưa bật Google.
 
@@ -74,8 +74,6 @@ Giữ nguyên `.env` và tên Compose project. Không dùng `docker compose down
 Initializer chỉ bổ sung dữ liệu mẫu còn thiếu, không xóa công thức/danh mục do người dùng tạo, không ghi đè nội dung mẫu đã sửa và không khôi phục bản ghi đã xóa mềm. Migration local vẫn tự chạy khi API khởi động; quy trình production riêng ở mục Cấu hình.
 
 Git clone không sao chép `.env`, database, ảnh người dùng tải lên hoặc lịch sử đang lưu trên máy cũ. Nếu cần chuyển cả dữ liệu sang máy khác, phải sao lưu/khôi phục PostgreSQL và MinIO; khôi phục thêm volume nhật ký khi cần giữ lịch sử thao tác.
-
-Bản clone mới có đủ mã nguồn, migration và dữ liệu mẫu để sử dụng công thức, nguyên liệu, kéo thả các bước, hẹn giờ, tải ảnh, hồ sơ/avatar, tìm kiếm và quản trị. Thư chào mừng và đặt lại mật khẩu mặc định được nhận trong MailHog; dùng SMTP và Google OAuth của riêng bạn để bật gửi email thật hoặc đăng nhập Google.
 
 ### Phát triển giao diện
 
@@ -110,7 +108,7 @@ API sử dụng tiền tố `/api/v1`. [Scalar](http://localhost:8080/scalar) v�
 
 ## Kiểm tra chất lượng
 
-Để chạy kiểm tra trên máy, cần .NET SDK `10.0.402`, Node.js `22.23.3`, Python 3 và Docker Desktop:
+Để chạy kiểm tra trên máy, cần .NET SDK `10.0.402`, Node.js `22.23.3` và Docker Desktop:
 
 ```powershell
 ./scripts/verify.ps1
@@ -118,6 +116,17 @@ API sử dụng tiền tố `/api/v1`. [Scalar](http://localhost:8080/scalar) v�
 ```
 
 `verify.ps1` kiểm tra backend, frontend và cấu hình Compose. `smoke.ps1` build, khởi động stack và kiểm tra health, trang chủ cùng CSP.
+
+G05 bổ sung Python 3 cho gate coverage Application ≥80% và endpoint matrix. Chạy riêng browser E2E sau locked restore backend và `npm --prefix frontend ci`:
+
+```powershell
+node frontend/node_modules/@playwright/test/cli.js install chromium
+npm --prefix frontend run test:e2e
+```
+
+Lệnh E2E build source hiện tại, dựng PostgreSQL/Redis/MinIO/MailHog riêng trên cổng loopback ngẫu nhiên, chờ readiness, chạy Playwright rồi dọn đúng process/container/network thuộc run. Không dùng DB hay `.env` của stack đang chạy. Email chỉ vào MailHog thử. Log, kết quả, axe/contrast và screenshot ở `tmp/package-G05/e2e/<run>/`; không lưu auth trace hoặc storageState. `npm --prefix frontend run test:components` chạy Jest + Testing Library, bên cạnh Node/JSDOM suite đang có. Ma trận browser/screen reader thủ công vẫn thuộc phase28.
+
+CI/local verifier giữ SonarAnalyzer/StyleCop strict riêng, kèm `python scripts/test-srs-analyzers.py` để chứng minh mã sạch pass, lỗi kiểm soát và thiếu analyzer DLL fail. ESLint nạp Airbnb thực qua FlatCompat trên ESLint9/Hooks7, Next15 plugin, TypeScript và accessibility; Node suite kiểm các rule này vẫn bắt lỗi. Peer overrides chỉ áp dụng cho hai preset Airbnb, không dùng legacy-peer-deps. Các cấu hình tích hợp và bốn vị trí diagnostic được duyệt có phạm vi/test trong [review G05](docs/specs/srs-completion-phases/reports/package-G05-analysis-review.md); không giảm gate strict hoặc thay chuẩn SRS. [Endpoint matrix](docs/specs/srs-completion-phases/reports/package-G05-endpoint-matrix.md) liên kết từng operation với happy/error test và TRX.
 
 `verify.ps1` dừng ngay khi một lệnh thất bại. Sau khi clone và cài dependencies, bật kiểm tra định dạng trước mỗi lần push:
 

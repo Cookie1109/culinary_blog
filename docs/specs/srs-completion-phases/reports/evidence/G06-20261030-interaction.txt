@@ -1,0 +1,20 @@
+[
+  {
+    route: '/login',
+    trusted: 9,
+    maxObservedMs: 16,
+    belowThresholdBoundMs: null
+  },
+  {
+    route: '/recipes',
+    trusted: 3,
+    maxObservedMs: 16,
+    belowThresholdBoundMs: null
+  },
+  {
+    route: '/search',
+    trusted: 3,
+    maxObservedMs: 16,
+    belowThresholdBoundMs: null
+  }
+]

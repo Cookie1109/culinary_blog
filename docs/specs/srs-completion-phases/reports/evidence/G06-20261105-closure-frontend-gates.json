@@ -1,0 +1,487 @@
+{
+  "sourceCommits": [
+    "29ff736ef00c5cf8e9c898680f728eff9e1e6a10",
+    "b4f3376e8001c283faf1773c87cf0e4ccc3b06e1"
+  ],
+  "baseCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+  "branch": "fix/cwv-metrics-20261105",
+  "node": "22.23.3",
+  "nodeTests": 129,
+  "jestTests": 22,
+  "jestSuites": 3,
+  "exits": {
+    "rum-optimized-test": {
+      "exit": 0
+    },
+    "rum-optimized-test-components": {
+      "exit": 0
+    },
+    "rum-optimized-lint": {
+      "exit": 0
+    },
+    "rum-optimized-typecheck": {
+      "exit": 0
+    },
+    "rum-format-verified": {
+      "exit": 0
+    },
+    "rum-build-final": {
+      "exit": 0
+    },
+    "rum-strong-bundle-final": {
+      "exit": 0
+    },
+    "rum-native-browser": {
+      "exit": 0
+    },
+    "rum-native-lighthouse": {
+      "exit": 0,
+      "build": "tFot7ni_tHUD-2Tm_0J8M",
+      "paths": [
+        "/",
+        "/recipes",
+        "/categories",
+        "/search",
+        "/login",
+        "/recipes/goi-bo-bop-thau",
+        "/categories/mon-nuoc"
+      ]
+    }
+  },
+  "npmProductionAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "nativeBuildId": "tFot7ni_tHUD-2Tm_0J8M",
+  "lighthouse": {
+    "routes": 7,
+    "runsPerRoute": 3,
+    "summaries": [
+      {
+        "url": "http://127.0.0.1:55125/",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": false,
+            "value": 0.89,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 2181.32675,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 3.493138358309584e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 188974,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:55125/recipes",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.99,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 879.4169999999999,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 4.405296779694757e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 188450,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:55125/categories",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.99,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 773.8481499999996,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 4.405296779694757e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 180705,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:55125/search",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.96,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 1327.9202500000004,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 4.405296779694757e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 188450,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:55125/login",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 689.41835,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 1.745994221171526e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 182684,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:55125/recipes/goi-bo-bop-thau",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.99,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 810.824975,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 0.0003183139602122974,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 180705,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:55125/categories/mon-nuoc",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.99,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 994.5340000000003,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 5.475353095267302e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 183224,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "bundleGate": "Original G06 checker includes all route ancestors/global-error, <=204800 bytes gzip; not weakened",
+  "secretScan": {
+    "commits": 2,
+    "findings": 0,
+    "reportSha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  "push": "Normal branch push; backend/frontend pre-push hooks passed after candidate checkout LF normalization. No force/hook bypass/main push.",
+  "scope": "Thin telemetry/performance fix based on deployed frontend; backend and Neon schema unchanged. Native lab != RUM. Full root G06 artifact is different."
+}

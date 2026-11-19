@@ -1,0 +1,10 @@
+
+> @culinary-blog/web@1.0.0 test:components
+> jest --runInBand
+
+
+Test Suites: 3 passed, 3 total
+Tests:       21 passed, 21 total
+Snapshots:   0 total
+Time:        1.348 s, estimated 2 s
+Ran all test suites.

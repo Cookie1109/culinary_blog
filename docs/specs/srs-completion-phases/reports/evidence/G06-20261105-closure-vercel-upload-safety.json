@@ -1,0 +1,11 @@
+{
+  "fileCount": 712,
+  "forbiddenFiles": [],
+  "commit": "b4f3376e8001c283faf1773c87cf0e4ccc3b06e1",
+  "newProductionFlags": [
+    "WEB_VITALS_ENABLED",
+    "WEB_VITALS_BUILD_ID",
+    "SITE_URL"
+  ],
+  "originalFiveValues": "Not modified; not disclosed"
+}

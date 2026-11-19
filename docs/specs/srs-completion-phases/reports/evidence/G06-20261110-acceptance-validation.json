@@ -1,0 +1,21 @@
+{
+  "valid": true,
+  "atUtc": "2026-11-10T17:01:29.106886+00:00",
+  "fullG06Acceptance": false,
+  "closedTaskCount": 5,
+  "openTaskCount": 4,
+  "manifestSha256": "db7f1c1aa57a231c96c42ff78cd3a6d1dbaa99f9e246273ba6de037841f81daa",
+  "publicScanReviewSha256": "36b7f2b7432fb223b1cb2149b659500657b8a3abd918478e4c5e0a327b5d45dd",
+  "checks": [
+    "D9-03actualproductionLH42/42+budget+INPboundtosameartifact",
+    "D9-07criterionmatrixbackedbyexistingrestore/schedule/persistenceproofs",
+    "Fourproduction/storagegapsleftopenwithactualprovider/serverreferences",
+    "Originaltasktexts/numericgates/PDF/A/B/Cunchanged",
+    "Noappsourcechange;onlysevenreview/trackingdocs",
+    "Allsixprogressrowsandtwophasecheckboxesmatch5closed4open",
+    "Allpriorproofsunchanged;newsource/trackinghashesverified",
+    "No privatevalue matches or Gitleaks findings",
+    "Interruptedlocalrunexit1retained;exactownedlabcleanup0",
+    "No publicload/DAST,licensepurchase,storagechange,Neonmigration or otherpackages"
+  ]
+}

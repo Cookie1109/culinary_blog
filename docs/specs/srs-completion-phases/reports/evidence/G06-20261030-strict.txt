@@ -1,0 +1,13 @@
+  CulinaryBlog.Domain -> D:\Culinary_Blog\backend\src\CulinaryBlog.Domain\bin\Release\net10.0\CulinaryBlog.Domain.dll
+  CulinaryBlog.Application -> D:\Culinary_Blog\backend\src\CulinaryBlog.Application\bin\Release\net10.0\CulinaryBlog.Application.dll
+  CulinaryBlog.Infrastructure -> D:\Culinary_Blog\backend\src\CulinaryBlog.Infrastructure\bin\Release\net10.0\CulinaryBlog.Infrastructure.dll
+  CulinaryBlog.Api -> D:\Culinary_Blog\backend\src\CulinaryBlog.Api\bin\Release\net10.0\CulinaryBlog.Api.dll
+  CulinaryBlog.ArchitectureTests -> D:\Culinary_Blog\backend\tests\CulinaryBlog.ArchitectureTests\bin\Release\net10.0\CulinaryBlog.ArchitectureTests.dll
+  CulinaryBlog.IntegrationTests -> D:\Culinary_Blog\backend\tests\CulinaryBlog.IntegrationTests\bin\Release\net10.0\CulinaryBlog.IntegrationTests.dll
+  CulinaryBlog.UnitTests -> D:\Culinary_Blog\backend\tests\CulinaryBlog.UnitTests\bin\Release\net10.0\CulinaryBlog.UnitTests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:12.52

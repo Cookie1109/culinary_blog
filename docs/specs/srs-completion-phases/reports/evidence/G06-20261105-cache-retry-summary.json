@@ -1,0 +1,169 @@
+{
+  "checkedAtUtc": "2026-11-05T00:41:52.225704+00:00",
+  "scope": "Authorized local synthetic API diagnostic; not production or formal DEC-11/scaling acceptance",
+  "identity": {
+    "project": "culinary-g06-d89e049a7662",
+    "runId": "g06-d89e049a7662",
+    "apiImage": "sha256:49163d607861408e29935a2d825cb41e85546e65e602243ab376d01e6cbfe684",
+    "target": "loopback only",
+    "productionAcceptance": false,
+    "profile": "smoke5VU30s then100VU10m thenramp0-50-100-150-0 over5m",
+    "apiLimits": {
+      "cpus": 2,
+      "memoryGiB": 4
+    },
+    "postgresMaxConnections": 250,
+    "reason": "Two API pools allow100 each; database capacity includes both and control/keyring connections. Initial lab default100 produced SQLSTATE53300.",
+    "appMigrationsExpected": 14,
+    "cacheMeasurement": "Cumulative sum across both replicas before k6 setup and after20s export settle; no value-based window selection",
+    "backgroundJobsEnabled": false,
+    "emailEnabled": false,
+    "rateLimitOverridesAreLabOnly": true,
+    "loadGeneration": "Windows k6 against loopback HTTP; six business requests and1s sleep per completed iteration",
+    "hostGuard": "Require10GiB C free before start; stop own load if below5GiB during monitoring; not an SRS threshold",
+    "engineResources": {
+      "cpuCount": 12,
+      "memoryBytes": 8243064832,
+      "note": "Docker Desktop shared VM including user stack; perAPI caps2CPU/4GiB, not dedicated production hardware"
+    }
+  },
+  "trials": [
+    {
+      "stage": "smoke",
+      "profile": "smoke",
+      "exit": 0,
+      "iterations": 140,
+      "httpRequestsIncludingControls": 856,
+      "businessFailureRate": 0,
+      "businessFailureSamples": 0,
+      "cachedGetP50Ms": 6.032500000000001,
+      "apiP95Ms": 45.89417999999992,
+      "apiP99Ms": 91.6320180000001,
+      "thresholds": {
+        "journey_api_duration": {
+          "p(95)<=500": {
+            "ok": true
+          },
+          "p(99)<=1000": {
+            "ok": true
+          }
+        },
+        "journey_cached_get_duration": {
+          "p(50)<=150": {
+            "ok": true
+          }
+        },
+        "journey_failures": {
+          "rate==0": {
+            "ok": true
+          }
+        }
+      }
+    },
+    {
+      "stage": "journey",
+      "profile": "load",
+      "exit": 0,
+      "iterations": 52776,
+      "httpRequestsIncludingControls": 316862,
+      "businessFailureRate": 0,
+      "businessFailureSamples": 0,
+      "cachedGetP50Ms": 7.1065,
+      "apiP95Ms": 53.6857,
+      "apiP99Ms": 89.34361000000001,
+      "thresholds": {
+        "journey_failures": {
+          "rate==0": {
+            "ok": true
+          }
+        },
+        "journey_api_duration": {
+          "p(95)<=500": {
+            "ok": true
+          },
+          "p(99)<=1000": {
+            "ok": true
+          }
+        },
+        "journey_cached_get_duration": {
+          "p(50)<=150": {
+            "ok": true
+          }
+        }
+      },
+      "outputCache": {
+        "baseline": {
+          "hits": 216.0,
+          "misses": 2.0,
+          "atUtc": "2026-11-05T00:25:28.502144+00:00"
+        },
+        "final": {
+          "hits": 99935.0,
+          "misses": 2.0,
+          "atUtc": "2026-11-05T00:35:59.104677+00:00"
+        },
+        "hitDelta": 99719.0,
+        "missDelta": 0.0,
+        "ratio": 1.0,
+        "required": 0.8,
+        "passed": true
+      }
+    },
+    {
+      "stage": "stress",
+      "profile": "stress",
+      "exit": 0,
+      "iterations": 23090,
+      "httpRequestsIncludingControls": 138846,
+      "businessFailureRate": 0,
+      "businessFailureSamples": 0,
+      "cachedGetP50Ms": 8.88975,
+      "apiP95Ms": 76.48703499999999,
+      "apiP99Ms": 123.63574299999978,
+      "thresholds": {
+        "journey_failures": {
+          "rate==0": {
+            "ok": true
+          }
+        },
+        "journey_cached_get_duration": {
+          "p(50)<=150": {
+            "ok": true
+          }
+        },
+        "journey_api_duration": {
+          "p(95)<=500": {
+            "ok": true
+          },
+          "p(99)<=1000": {
+            "ok": true
+          }
+        }
+      },
+      "outputCache": {
+        "baseline": {
+          "hits": 99935.0,
+          "misses": 2.0,
+          "atUtc": "2026-11-05T00:35:59.781567+00:00"
+        },
+        "final": {
+          "hits": 141315.0,
+          "misses": 10.0,
+          "atUtc": "2026-11-05T00:41:35.934256+00:00"
+        },
+        "hitDelta": 41380.0,
+        "missDelta": 8.0,
+        "ratio": 0.9998067072581425,
+        "required": 0.8,
+        "passed": true
+      }
+    }
+  ],
+  "cleanup": {
+    "exit": 0
+  },
+  "allLocalGatesPassed": true,
+  "stressGaugeObservedMax": 149,
+  "stressTargetPeak": 150,
+  "stressPeakHeld": false
+}

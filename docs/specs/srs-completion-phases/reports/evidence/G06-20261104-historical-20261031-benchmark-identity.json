@@ -1,0 +1,14 @@
+{
+  "project": "culinary-g06-f54dfdfa36c0",
+  "runId": "g06-f54dfdfa36c0",
+  "apiImage": "sha256:378b9ff6130892e6a0e63fb2a72178a9b2a0fbefcc68f19995de48497715f397",
+  "publicReadProfile": "100VU for5min each topology; 90%warm/10%cold script mix",
+  "journeyProfile": "100VU for10min; existing6operation journey",
+  "target": "loopback only",
+  "productionAcceptance": false,
+  "oneAndTwoInstancePerApiLimits": {
+    "cpus": 2,
+    "memoryGiB": 4
+  },
+  "fullFormalScalingProtocolNotApproved": true
+}

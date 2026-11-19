@@ -1,0 +1,18 @@
+{
+  "build": "tWVKFb5qF1kb1-HXqamyT",
+  "controls": [
+    {
+      "expected": 204,
+      "actual": 204
+    },
+    {
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "expected": 413,
+      "actual": 413
+    }
+  ],
+  "measurement": "synthetic HTTP controls, not RUM"
+}

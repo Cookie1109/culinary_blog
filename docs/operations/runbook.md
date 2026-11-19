@@ -102,14 +102,14 @@ Sau migration, chạy readiness và smoke journey. Rollback ứng dụng bằng 
 
 ## 10. Backup và restore drill
 
-Chạy stack reliability để kích hoạt PostgreSQL dump và MinIO snapshot hằng ngày. Hai loại backup giữ 30 ngày; backup volumes trên staging/production phải nằm trên encrypted storage độc lập với data volumes và Docker host chính.
+Chạy stack reliability để kích hoạt PostgreSQL dump và MinIO snapshot lúc 03:00 UTC hằng ngày (10:00 Asia/Bangkok theo baseline Test Strategy §4). Scheduler tính lại mốc UTC sau restart/retry, không chạy ngay rồi ngủ 24 giờ. Hai loại backup giữ 30 ngày; backup volumes trên staging/production phải nằm trên encrypted storage độc lập với data volumes và Docker host chính.
 
 ```powershell
 docker compose -f compose.yaml -f infra/operations/compose.reliability.yaml up --detach --build --wait
 ./scripts/restore-drill.ps1
 ```
 
-Restore drill chỉ ghi vào PostgreSQL/MinIO tmpfs sạch, kiểm tra checksum, migration/recipe/object count rồi ghi RTO/RPO vào `artifacts/reliability/`. Không xem backup là hợp lệ nếu chưa có restore drill pass. Production restore cần incident approval, write freeze và target mới; không restore đè trực tiếp lên database/bucket đang phục vụ.
+Trước drill, xác nhận project/dataset thử riêng và dừng writer của chính stack thử để so dữ liệu nhất quán. Restore drill chỉ ghi vào PostgreSQL/MinIO tmpfs sạch, kiểm tra checksum dump, toàn bộ schema/rows của public tables (gồm users/tokens/outbox/composition) và checksum từng file media sau restore, cùng migration/recipe/object count, rồi ghi RTO/RPO vào `artifacts/reliability/`. Không xem backup là hợp lệ nếu chưa có restore drill pass. Production restore cần incident approval, write freeze và target mới; không restore đè trực tiếp lên database/bucket đang phục vụ.
 
 ## 11. Failure drill
 

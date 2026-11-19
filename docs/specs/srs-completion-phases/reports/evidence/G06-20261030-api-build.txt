@@ -1,0 +1,86 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.29kB 0.0s done
+#1 DONE 0.1s
+
+#2 [internal] load metadata for mcr.microsoft.com/dotnet/aspnet:10.0.13-noble@sha256:d5633778c754e89a386882eddf8dbee6942447a8a4b8267c19cf1e1158d0b0ac
+#2 DONE 0.3s
+
+#3 [internal] load metadata for mcr.microsoft.com/dotnet/sdk:10.0.402-noble@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
+#3 DONE 0.3s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 113B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 DONE 0.0s
+
+#6 [build  1/10] FROM mcr.microsoft.com/dotnet/sdk:10.0.402-noble@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
+#6 resolve mcr.microsoft.com/dotnet/sdk:10.0.402-noble@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa 0.0s done
+#6 DONE 0.1s
+
+#7 [runtime 1/5] FROM mcr.microsoft.com/dotnet/aspnet:10.0.13-noble@sha256:d5633778c754e89a386882eddf8dbee6942447a8a4b8267c19cf1e1158d0b0ac
+#7 resolve mcr.microsoft.com/dotnet/aspnet:10.0.13-noble@sha256:d5633778c754e89a386882eddf8dbee6942447a8a4b8267c19cf1e1158d0b0ac 0.0s done
+#7 DONE 0.1s
+
+#5 [internal] load build context
+#5 transferring context: 277.58kB 0.1s done
+#5 DONE 0.1s
+
+#8 [build  4/10] COPY src/CulinaryBlog.Domain/CulinaryBlog.Domain.csproj src/CulinaryBlog.Domain/
+#8 CACHED
+
+#9 [build  5/10] COPY src/CulinaryBlog.Application/CulinaryBlog.Application.csproj src/CulinaryBlog.Application/
+#9 CACHED
+
+#10 [build  6/10] COPY src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj src/CulinaryBlog.Infrastructure/
+#10 CACHED
+
+#11 [build  7/10] COPY src/CulinaryBlog.Api/CulinaryBlog.Api.csproj src/CulinaryBlog.Api/
+#11 CACHED
+
+#12 [build  2/10] WORKDIR /source
+#12 CACHED
+
+#13 [build  3/10] COPY global.json Directory.Build.props Directory.Packages.props NuGet.Config CulinaryBlog.slnx ./
+#13 CACHED
+
+#14 [build  8/10] RUN dotnet restore src/CulinaryBlog.Api/CulinaryBlog.Api.csproj
+#14 CACHED
+
+#15 [build  9/10] COPY src/ src/
+#15 DONE 1.9s
+
+#16 [build 10/10] RUN dotnet publish src/CulinaryBlog.Api/CulinaryBlog.Api.csproj --no-restore -c Release -o /app/publish
+#16 8.451   CulinaryBlog.Domain -> /source/src/CulinaryBlog.Domain/bin/Release/net10.0/CulinaryBlog.Domain.dll
+#16 10.75   CulinaryBlog.Application -> /source/src/CulinaryBlog.Application/bin/Release/net10.0/CulinaryBlog.Application.dll
+#16 16.99   CulinaryBlog.Infrastructure -> /source/src/CulinaryBlog.Infrastructure/bin/Release/net10.0/CulinaryBlog.Infrastructure.dll
+#16 44.85   CulinaryBlog.Api -> /source/src/CulinaryBlog.Api/bin/Release/net10.0/CulinaryBlog.Api.dll
+#16 48.23   CulinaryBlog.Api -> /app/publish/
+#16 DONE 48.6s
+
+#17 [runtime 2/5] RUN apt-get update     && apt-get install -y --no-install-recommends curl libbrotli1     && rm -rf /var/lib/apt/lists/*
+#17 CACHED
+
+#18 [runtime 3/5] WORKDIR /app
+#18 CACHED
+
+#19 [runtime 4/5] COPY --from=build /app/publish .
+#19 DONE 4.4s
+
+#20 [runtime 5/5] RUN mkdir -p /app/logs /app/data-protection && chown "1654" /app/logs /app/data-protection
+#20 DONE 0.8s
+
+#21 exporting to image
+#21 exporting layers
+#21 exporting layers 28.9s done
+#21 exporting manifest sha256:bcfc3c56162371a121ca109c0f35b2159f72626263c209871dca39443c598e3c 0.0s done
+#21 exporting config sha256:5eeeae423621477139d612691521d6c1ca4fbf88c5968b1d56277c8a8e131233 0.0s done
+#21 exporting attestation manifest sha256:319e8e016baaca5beba8e5433cb0a29c0d75f000503cd8984872fc571b768825 0.0s done
+#21 exporting manifest list sha256:59647a0bbe14894ee59f7f50d093321761efd15239f59004938e0956f71bf4ab 0.0s done
+#21 naming to docker.io/library/culinary-g06-api:local 0.0s done
+#21 unpacking to docker.io/library/culinary-g06-api:local
+#21 unpacking to docker.io/library/culinary-g06-api:local 9.4s done
+#21 DONE 38.5s

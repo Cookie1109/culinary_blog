@@ -31,8 +31,8 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D9-05 · Kiểm chứng/sửa:** live/ready/aggregate health đúng dependency matrix và không lộ chi tiết công khai; xác minh HTTP/EF/custom trace/span/metrics xuất tới OTLP/collector/dashboard thật, correlation nối request → handler → job khi có. Kiểm alerts/log sink lỗi không làm lộ dữ liệu hoặc gây crash ngoài hợp đồng.
-- [ ] **D9-06 · Kiểm chứng:** failure drill PostgreSQL/Redis/MinIO/SMTP/worker/restart, global 500 Problem Details không lộ stack, DB reconnect/timeout 30s và Redis fallback, queue persistence/retry; ghi thời điểm lỗi/hồi phục và dữ liệu còn nguyên.
+- [x] **D9-05 · Kiểm chứng/sửa:** live/ready/aggregate health đúng dependency matrix và không lộ chi tiết công khai; xác minh HTTP/EF/custom trace/span/metrics xuất tới OTLP/collector/dashboard thật, correlation nối request → handler → job khi có. Kiểm alerts/log sink lỗi không làm lộ dữ liệu hoặc gây crash ngoài hợp đồng.
+- [x] **D9-06 · Kiểm chứng:** failure drill PostgreSQL/Redis/MinIO/SMTP/worker/restart, global 500 Problem Details không lộ stack, DB reconnect/timeout 30s và Redis fallback, queue persistence/retry; ghi thời điểm lỗi/hồi phục và dữ liệu còn nguyên.
 
 ## Trình tự thực hiện trong phase
 

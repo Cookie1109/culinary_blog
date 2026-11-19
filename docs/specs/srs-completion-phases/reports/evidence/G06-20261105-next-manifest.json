@@ -1,0 +1,72 @@
+{
+  "atUtc": "2026-11-05T11:31:10.847175+00:00",
+  "scope": "G06 phases30–35 only; G07 read-only scope question, not execution",
+  "rootHead": "ce4ae4eb8fd7d94b36b600ec01da024f4a9670e3",
+  "candidateFrontendCommit": "d50f9dd439000a1ae865b0b84fc6d7465a4926c6",
+  "deployment": "dpl_6UHCvBm31hSkn3AWF79uvVDeqV4R",
+  "closedTaskIds": [
+    "D9-02",
+    "D9-05",
+    "D9-06"
+  ],
+  "openTaskIds": [
+    "D9-01",
+    "D9-03",
+    "D9-04",
+    "D9-07",
+    "D9-09",
+    "D9-10"
+  ],
+  "evidence": {
+    "G06-20261105-next-backup-skip.json": "2901c4b7b540a89ff8831b8cee73c0b92f4135586520f6c1494f773d3261e213",
+    "G06-20261105-next-frontend-gates.json": "a6e2d94f7b549cdb72b8db9400c0f9318ddfb5e7fef8d09ab430efe05eb4849f",
+    "G06-20261105-next-paired-identity.json": "d3f633513367c633e80d4f1e2607fb2a6907b345e2f971d996d219d70f011545",
+    "G06-20261105-next-paired-pipeline-exits.json": "67a95297ea97891d71f382bb7538b726eb2929f12b2e604f4b52a2e7c7a18f8b",
+    "G06-20261105-next-paired-public-summary.json": "143b8bd3f80fdcdcb814c802eb561e4cbd7c5e26e005d9558e1888b9315a9245",
+    "G06-20261105-next-preservation.json": "837f3b030e639042c1aa42f3c1aa1cea0316b19ea5b42de2b43a6643630856e1",
+    "G06-20261105-next-proxy-deployment.json": "bf381666cffd7fb1bf42474924575ee60bb692f287528cbd6273970bd14b1157",
+    "G06-20261105-next-proxy-docker-config-equivalence.json": "3f37f9271920797d219b5cfb0c83c6e290f7ad427c14703a215580811d88d328",
+    "G06-20261105-next-proxy-env-preservation.json": "1dee293a58823660b1b37c0d3e250b9bdadd532a4a3b69a4af89b4c7957c9254",
+    "G06-20261105-next-proxy-native-api-roundtrip.json": "ba001b0a533cc97382414d2674c45143fb17114b8b5dde0cc2d6c3fc16304374",
+    "G06-20261105-next-proxy-native-controls.json": "30115d4898d69873c125f33db14df516c0e7b9757c0c0d2737374c99af123284",
+    "G06-20261105-next-proxy-native-cwv.json": "60fcbdb8f06c553c5269560e253e9b20048525a30e2ed914c93866014abaf22d",
+    "G06-20261105-next-proxy-native-lighthouse.json": "330262aee6f9b8773d708cf9ae77543e217d2c0ce60af1f2f7bb27227a706b53",
+    "G06-20261105-next-proxy-primary-checks.json": "faa80c91720d8a6ca5cf7c2cb07cadb6d2fa740aee4f883abbfe5efbee23bc6d",
+    "G06-20261105-next-proxy-provider-bundle.json": "4b524284c1452612c7c96872a58259153c11120afd0aeb1e95245540db4ad647",
+    "G06-20261105-next-proxy-provider-primary-bundle-cdn.json": "42658ccf5d49dcdeb4d3460c24952f4ad60c2cf794bd6e575b9e2e8eae6dfde2",
+    "G06-20261105-next-proxy-red-binding.json": "52d4f79353c3cbfcd4c14c962d56228795ccb8aa32fe3c843d91c4aad7eba91f",
+    "G06-20261105-next-proxy-source-exits.json": "3d9e6506c1f0c24227f51b81512b46a4d90ef5d41917195eacccdd3fc4f673ef",
+    "G06-20261105-next-proxy-staged-checks.json": "789ed7c5f2ccd9bfa0cd2076a27524a745522be83a7f5faeceb1deed6163fcbc",
+    "G06-20261105-next-proxy-upload-safety.json": "6a9862657cde72e64879de652234381eb659d0974db2a65fd15800503c550ad5",
+    "G06-20261105-next-public-scan-review.json": "65909c979b98a3438cba3f34fd9bdf806e7c0abf4a507b5259684df235894f9e",
+    "G06-20261105-next-runtime-unavailable.json": "0bb6bf18cd16e768c355738910317649c7bc6a1162c081cfc6a7c8bd17b79f9e"
+  },
+  "changedExistingFiles": {
+    "docs/operations/web-vitals.md": "7c7e8fe5145ec063905a59db4ccfecc47a1980f11ba9a26454a6f79e07434062",
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md": "315a4b5507d37e5a7c198d597f16e7167424fbbf032766ecbe76274340f4a1fc",
+    "frontend/next.config.mjs": "b9c4dcc75018bdda444cf03cbba8cc6bf7e4bbb60748f75103c1b7f15e7de824",
+    "infra/nginx/nginx.production.conf": "4c8daf628c2d87edafe43f50a25c891cae0ac5516d4a80dfb95dede2fac8486b",
+    "docs/specs/srs-completion-phases/progress.md": "3b21994ca9ebaf854436e80b06e60b0afb39f6e599f33d7c26bee7e8ce0afbd4",
+    "docs/specs/srs-completion-checklist.md": "aaefc16908ab723599e1f3a0add5471a02d4c680864d39d2f01430cf527b8847"
+  },
+  "sourceFileHashes": {
+    "infra/nginx/nginx.production.conf": "4c8daf628c2d87edafe43f50a25c891cae0ac5516d4a80dfb95dede2fac8486b",
+    "frontend/next.config.mjs": "b9c4dcc75018bdda444cf03cbba8cc6bf7e4bbb60748f75103c1b7f15e7de824",
+    "frontend/tests/vercel-api-proxy.test.mjs": "55edc3a5214aad276103f50267a7314c9e8ee803e371a8542a0c5340db85d83e"
+  },
+  "pdfSha256": "8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063",
+  "publicGitleaks": {
+    "exit": 1,
+    "findings": 2,
+    "unresolved": 0
+  },
+  "priorManifestHashes": {
+    "G06-20261105-manifest.json": "12e0f38119f5fe4dac67e5eb6ce9be7a23536f92e019d3440b38674febfd401f",
+    "G06-20261105-closure-manifest.json": "5de6773d3766f0d8e4cfb042f9d4edf131cbd2dc4e916c9bd270c4d0345774ae"
+  },
+  "metadataExclusions": [
+    "Self/validation hash excluded",
+    "Raw provider logs/JS, auth/OAuth/bypass/API/env, backups/media/keys and personal filenames excluded",
+    "Historical metadata may reference earlier source hashes; historical evidence itself unchanged"
+  ]
+}

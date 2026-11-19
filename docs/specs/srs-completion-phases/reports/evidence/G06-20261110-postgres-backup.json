@@ -1,0 +1,57 @@
+{
+  "cwd": "D:\\Culinary_Blog",
+  "python": "3.13",
+  "manualCommand": "C:/Python313/python.exe infra/operations/backup-neon.py --config [private config path]",
+  "manualExit": 0,
+  "schedulerCommand": "Start-ScheduledTask -TaskName Culinary-G06-PostgreSQLBackup",
+  "schedulerState": {
+    "TaskName": "Culinary-G06-PostgreSQLBackup",
+    "State": 3
+  },
+  "schedulerInfo": {
+    "LastRunTime": "2026-11-10T23:07:16+07:00",
+    "LastTaskResult": 0,
+    "NextRunTime": "2026-11-11T10:00:00+07:00"
+  },
+  "scheduledReceipt": {
+    "job": "culinary-g06-postgres",
+    "runId": "20261110T160716Z-771f9b74",
+    "startedAtUtc": "2026-11-10T16:07:16.135508+00:00",
+    "status": "success",
+    "sourceReadOnly": true,
+    "sourceWrites": false,
+    "snapshotTables": 30,
+    "snapshotRows": 2044,
+    "migrations": 5,
+    "rowHashesAndSchemaMatch": true,
+    "sameExportedSnapshot": true,
+    "keyring": {
+      "count": 1,
+      "encrypted": true,
+      "plaintext": false
+    },
+    "durability": {
+      "database": "neondb",
+      "readOnly": "on",
+      "walLevel": "replica",
+      "fsync": "off",
+      "synchronousCommit": "on",
+      "synchronousStandbyNames": "walproposer"
+    },
+    "restoreVerifySeconds": 4.384,
+    "archiveBytes": 145248,
+    "archiveSha256": "505c864c0355b8c69047e55942827bf680f5efb95634648b54a513df8ee49dca",
+    "encryptedFilesVerified": 3,
+    "expiredOwnRuns": 0,
+    "isolatedRestoreRemoved": true,
+    "finishedAtUtc": "2026-11-10T16:07:27.713728+00:00"
+  },
+  "retentionUnitTests": 2,
+  "unitExit": 0,
+  "retentionDays": 30,
+  "timezone": "03:00UTC / 10:00Asia/Bangkok",
+  "requires": "PC on, current user logged in, Docker Desktop and network available. Not an always-on or historical daily-backup guarantee.",
+  "storageIndependence": "PostgreSQL archive is local Windows storage separate from Neon/Render. It is not a new off-host media archive.",
+  "photoOrDriveWorkflowResumed": false,
+  "sourceWrites": false
+}

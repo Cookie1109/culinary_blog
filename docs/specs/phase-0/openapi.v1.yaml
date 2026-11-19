@@ -23,6 +23,24 @@ tags:
   - name: Health
   - name: Operations
 paths:
+  /recipe-events:
+    get:
+      operationId: streamRecipeChanges
+      tags: [Recipes]
+      security: []
+      summary: Stream committed recipe changes
+      description: |
+        Public SSE stream. Sends connected on subscription and changed after committed
+        content mutations. Payload is an empty JSON object and contains no recipe or
+        user data. Heartbeat comments keep the connection alive. Reconnect and refetch
+        authorized data after connected; intermediate events are coalesced, not replayed.
+      responses:
+        '200':
+          description: Continuous server-sent events
+          content:
+            text/event-stream:
+              schema: {type: string}
+              example: "event: changed\ndata: {}\n\n"
   /:
     get:
       tags: [Operations]
@@ -1203,7 +1221,7 @@ components:
         title: {type: string, minLength: 5, maxLength: 200}
         description: {type: string, minLength: 1, maxLength: 2000}
         categoryId: {type: string, format: uuid}
-        prepTime: {type: integer, minimum: 1}
+        prepTime: {type: integer, minimum: 0, description: Tự động tính từ các bước chuẩn bị}
         cookTime: {type: integer, minimum: 0}
         servings: {type: integer, minimum: 1}
         difficulty: {$ref: '#/components/schemas/RecipeDifficulty'}
@@ -1218,7 +1236,7 @@ components:
         title: {type: string, minLength: 5, maxLength: 200}
         description: {type: string, minLength: 1, maxLength: 2000}
         categoryId: {type: string, format: uuid}
-        prepTime: {type: integer, minimum: 1}
+        prepTime: {type: integer, minimum: 0, description: Tự động tính từ các bước chuẩn bị}
         cookTime: {type: integer, minimum: 0}
         servings: {type: integer, minimum: 1}
         difficulty: {$ref: '#/components/schemas/RecipeDifficulty'}
@@ -1229,6 +1247,7 @@ components:
       properties:
         title: {type: string, minLength: 1, maxLength: 200}
         description: {type: string, minLength: 1, maxLength: 2000}
+        stepType: {type: string, enum: [prep, cook]}
         timerMinutes: {type: [number, 'null'], minimum: 0, description: 'Thời gian theo phút, hỗ trợ phần lẻ để biểu diễn giây'}
         imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
         stepNumber: {type: integer, minimum: 1, description: Chỉ dùng khi PUT để đổi vị trí}
@@ -1238,6 +1257,7 @@ components:
       properties:
         title: {type: string, minLength: 1, maxLength: 200}
         description: {type: string, minLength: 1, maxLength: 2000}
+        stepType: {type: string, enum: [prep, cook]}
         timerMinutes: {type: [number, 'null'], minimum: 0, description: 'Thời gian theo phút, hỗ trợ phần lẻ để biểu diễn giây'}
         imageUrl: {type: [string, 'null'], format: uri, maxLength: 500}
         stepNumber: {type: integer, minimum: 1, description: Chỉ dùng khi PUT để đổi vị trí}

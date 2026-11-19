@@ -1,0 +1,620 @@
+{
+  "recordedAtUtc": "2026-10-26T21:44:12.093011+00:00",
+  "timezone": "Asia/Bangkok",
+  "uiCommit": "9486cb251e723bc23fe7aaf148973e6289ae8c52",
+  "finalMainCommit": "d5eca462390b501098c34c102bc5a58ab2ebfd21",
+  "userInstruction": "Remove keyword highlights and match labels; only recipe-name matches count, description-only results excluded.",
+  "matchingScope": "Title only for exact, accent preference, prefixes, short-word dictionary and trigram fallback. Existing SearchVector title weight A restricts all tsqueries; no schema/trigger/data change.",
+  "publicSearchCacheNamespace": "cb:v3:search:",
+  "redisFlushed": false,
+  "ui": "Plain titles/descriptions, no mark or reason labels; hint says search by recipe name.",
+  "ci": {
+    "headSha": "d5eca462390b501098c34c102bc5a58ab2ebfd21",
+    "runId": 40406039643,
+    "url": "https://github.com/Cookie1109/culinary_blog/actions/runs/40406039643",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "compose",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "frontend",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "backend",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "security",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "dependency-review",
+        "status": "completed",
+        "conclusion": "skipped"
+      }
+    ],
+    "vercel": [
+      {
+        "context": "Vercel",
+        "state": "success",
+        "url": "https://vercel.com/cookie1109s-projects/culinary-blog/5wDbh6N6u55rkrUNRMyL3FLtz5Et"
+      }
+    ]
+  },
+  "runtime": {
+    "checkedAtUtc": "2026-10-26T21:40:52.321430+00:00",
+    "target": "https://culinary-blog-api.onrender.com",
+    "readOnly": true,
+    "passed": true,
+    "queries": [
+      {
+        "q": "ga",
+        "status": 200,
+        "total": 14,
+        "titles": [
+          "Cháo gà",
+          "Cơm gà Hội An",
+          "Phở gà Hà Nội",
+          "Lẩu gà lá é",
+          "Gà kho gừng",
+          "Mì Quảng gà",
+          "Gỏi gà bắp cải",
+          "Gà rang sả ớt",
+          "Xôi gà lá sen",
+          "Chân gà sả tắc",
+          "Gà hấp lá chanh",
+          "Gà nướng muối ớt",
+          "Miến xào lòng gà",
+          "Lòng gà xào mướp"
+        ]
+      },
+      {
+        "q": "gà",
+        "status": 200,
+        "total": 14,
+        "titles": [
+          "Cháo gà",
+          "Cơm gà Hội An",
+          "Phở gà Hà Nội",
+          "Lẩu gà lá é",
+          "Gà kho gừng",
+          "Mì Quảng gà",
+          "Gỏi gà bắp cải",
+          "Gà rang sả ớt",
+          "Xôi gà lá sen",
+          "Chân gà sả tắc",
+          "Gà hấp lá chanh",
+          "Gà nướng muối ớt",
+          "Miến xào lòng gà",
+          "Lòng gà xào mướp"
+        ]
+      },
+      {
+        "q": "  GÀ  ",
+        "status": 200,
+        "total": 14,
+        "titles": [
+          "Cháo gà",
+          "Cơm gà Hội An",
+          "Phở gà Hà Nội",
+          "Lẩu gà lá é",
+          "Gà kho gừng",
+          "Mì Quảng gà",
+          "Gỏi gà bắp cải",
+          "Gà rang sả ớt",
+          "Xôi gà lá sen",
+          "Chân gà sả tắc",
+          "Gà hấp lá chanh",
+          "Gà nướng muối ớt",
+          "Miến xào lòng gà",
+          "Lòng gà xào mướp"
+        ]
+      },
+      {
+        "q": "gà",
+        "status": 200,
+        "total": 14,
+        "titles": [
+          "Cháo gà",
+          "Cơm gà Hội An",
+          "Phở gà Hà Nội",
+          "Lẩu gà lá é",
+          "Gà kho gừng",
+          "Mì Quảng gà",
+          "Gỏi gà bắp cải",
+          "Gà rang sả ớt",
+          "Xôi gà lá sen",
+          "Chân gà sả tắc",
+          "Gà hấp lá chanh",
+          "Gà nướng muối ớt",
+          "Miến xào lòng gà",
+          "Lòng gà xào mướp"
+        ]
+      },
+      {
+        "q": "ga nuong",
+        "status": 200,
+        "total": 1,
+        "titles": [
+          "Gà nướng muối ớt"
+        ]
+      },
+      {
+        "q": "ga nuongg",
+        "status": 200,
+        "total": 1,
+        "titles": [
+          "Gà nướng muối ớt"
+        ]
+      },
+      {
+        "q": "pho bo",
+        "status": 200,
+        "total": 1,
+        "titles": [
+          "Phở bò Hà Nội"
+        ]
+      },
+      {
+        "q": "ph",
+        "status": 200,
+        "total": 5,
+        "titles": [
+          "Bánh đa cua Hải Phòng",
+          "Phở gà Hà Nội",
+          "Phở bò Hà Nội",
+          "Phá lấu bò",
+          "Cơm âm phủ Huế"
+        ]
+      },
+      {
+        "q": "cá",
+        "status": 200,
+        "total": 10,
+        "titles": [
+          "Bún cá Nha Trang",
+          "Cá hấp bia",
+          "Canh chua cá lóc",
+          "Cá bống kho tiêu",
+          "Canh cá nấu dọc mùng",
+          "Cá kho tộ",
+          "Gỏi cá mai",
+          "Cá nục kho thơm",
+          "Cơm niêu cá bống",
+          "Cá lóc nướng trui"
+        ]
+      },
+      {
+        "q": "ca",
+        "status": 200,
+        "total": 11,
+        "titles": [
+          "Bún cá Nha Trang",
+          "Cà ri chay",
+          "Cá hấp bia",
+          "Canh chua cá lóc",
+          "Cá bống kho tiêu",
+          "Canh cá nấu dọc mùng",
+          "Cá kho tộ",
+          "Gỏi cá mai",
+          "Cá nục kho thơm",
+          "Cơm niêu cá bống",
+          "Cá lóc nướng trui"
+        ]
+      },
+      {
+        "q": "bò",
+        "status": 200,
+        "total": 12,
+        "titles": [
+          "Bò kho",
+          "Bò bía mặn",
+          "Bò lúc lắc",
+          "Bún bò Huế",
+          "Phá lấu bò",
+          "Gỏi đu đủ khô bò",
+          "Gỏi bò bóp thấu",
+          "Phở bò Hà Nội",
+          "Bò nướng lá lốt",
+          "Đậu cô ve xào bò",
+          "Lẩu riêu cua bắp bò",
+          "Bông thiên lý xào bò"
+        ]
+      },
+      {
+        "q": "bơ",
+        "status": 200,
+        "total": 12,
+        "titles": [
+          "Bò kho",
+          "Bò bía mặn",
+          "Bò lúc lắc",
+          "Bún bò Huế",
+          "Phá lấu bò",
+          "Gỏi đu đủ khô bò",
+          "Gỏi bò bóp thấu",
+          "Phở bò Hà Nội",
+          "Bò nướng lá lốt",
+          "Đậu cô ve xào bò",
+          "Lẩu riêu cua bắp bò",
+          "Bông thiên lý xào bò"
+        ]
+      },
+      {
+        "q": "zzzzkhongcomon",
+        "status": 200,
+        "total": 0,
+        "titles": []
+      }
+    ],
+    "release": {
+      "data": {
+        "provider": "Render",
+        "commitSha": "d5eca462390b501098c34c102bc5a58ab2ebfd21",
+        "apiImageDigest": null,
+        "webImageDigest": null,
+        "apiServiceId": "srv-dbf5mmoae00c73esdplg",
+        "apiInstanceId": "srv-dbf5mmoae00c73esdplg-hibernate-89cf7654d-zgtvm",
+        "webDeploymentId": null
+      },
+      "meta": {}
+    },
+    "readiness": {
+      "status": 200,
+      "body": {
+        "status": "Healthy"
+      }
+    }
+  },
+  "browser": {
+    "checkedAtUtc": "2026-10-26T21:42:09.472Z",
+    "target": "https://culinary-blog.vercel.app",
+    "browser": "Chrome/155.0.8059.85",
+    "passed": true,
+    "checks": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 960
+        },
+        "titles": [
+          "Cháo gà",
+          "Cơm gà Hội An",
+          "Phở gà Hà Nội",
+          "Lẩu gà lá é",
+          "Gà kho gừng",
+          "Mì Quảng gà",
+          "Gỏi gà bắp cải",
+          "Gà rang sả ớt",
+          "Xôi gà lá sen",
+          "Chân gà sả tắc",
+          "Gà hấp lá chanh",
+          "Gà nướng muối ớt"
+        ],
+        "marks": 0,
+        "hasLabels": false,
+        "sort": "relevance",
+        "overflow": false,
+        "hint": "Tìm theo tên món. Bạn có thể gõ tiếng Việt không dấu.",
+        "screenshot": "plain-search-1440.png",
+        "passed": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "titles": [
+          "Cháo gà",
+          "Cơm gà Hội An",
+          "Phở gà Hà Nội",
+          "Lẩu gà lá é",
+          "Gà kho gừng",
+          "Mì Quảng gà",
+          "Gỏi gà bắp cải",
+          "Gà rang sả ớt",
+          "Xôi gà lá sen",
+          "Chân gà sả tắc",
+          "Gà hấp lá chanh",
+          "Gà nướng muối ớt"
+        ],
+        "marks": 0,
+        "hasLabels": false,
+        "sort": "relevance",
+        "overflow": false,
+        "hint": "Tìm theo tên món. Bạn có thể gõ tiếng Việt không dấu.",
+        "screenshot": "plain-search-390.png",
+        "passed": true
+      }
+    ]
+  },
+  "screenshotsReviewed": true,
+  "tests": [
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only/title-only-before.trx",
+      "total": 17,
+      "passed": 9,
+      "failed": 8
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only/title-only-integration.trx",
+      "total": 109,
+      "passed": 109,
+      "failed": 0
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only/title-only-unit.trx",
+      "total": 67,
+      "passed": 67,
+      "failed": 0
+    },
+    {
+      "path": "tmp/g04/vietnamese-search/title-only-root-search.trx",
+      "total": 47,
+      "passed": 47,
+      "failed": 0
+    },
+    {
+      "path": "tmp/g04/vietnamese-search/title-only-root-cache.trx",
+      "total": 4,
+      "passed": 4,
+      "failed": 0
+    }
+  ],
+  "frontendTests": {
+    "isolated": 109,
+    "rootG04": 125,
+    "removedFeatureHelperTests": 2,
+    "plainCardDomAssertions": "retained and updated to assert no highlights/labels"
+  },
+  "formatLintTypecheckBuildBudget": "passed; final push hook verifies .NET and frontend format after LF normalization",
+  "pdfScope": "PDF and ABC corrections unchanged. Title-only scope is the user-directed refinement; do not claim this narrows/waives FR-SRCH acceptance. D6-04 remains open.",
+  "g04ClosedTasks": 9,
+  "g04TotalTasks": 15,
+  "remaining": [
+    "D6-01",
+    "D6-02",
+    "D6-03",
+    "D6-04",
+    "D6-09",
+    "D6-13"
+  ],
+  "cloudEnvironmentOrSchemaOrMigrationOrSeedOrMinioChanged": false,
+  "rootIndexPreserved": true,
+  "changedPublishedFiles": [
+    "backend/src/CulinaryBlog.Api/Presentation/ContentEndpoints.cs",
+    "backend/src/CulinaryBlog.Application/Abstractions/Caching/PublicCacheKeys.cs",
+    "backend/src/CulinaryBlog.Infrastructure/Content/ContentService.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/RecipeDiscoveryApiTests.cs",
+    "backend/tests/CulinaryBlog.UnitTests/PublicCacheKeyTests.cs",
+    "docs/operations/search-short-terms.md",
+    "docs/specs/phase-0/openapi.v1.yaml",
+    "frontend/src/features/culinary/components/RecipeCard.tsx",
+    "frontend/src/features/culinary/pages/RecipesList.tsx",
+    "frontend/src/lib/api/schema.d.ts",
+    "frontend/src/lib/recipe-search.ts",
+    "frontend/tests/recipe-search.test.mjs",
+    "frontend/tests/ux-ui-behavior.test.mjs"
+  ],
+  "sourceHashes": [
+    {
+      "path": "backend/src/CulinaryBlog.Api/Presentation/ContentEndpoints.cs",
+      "publishedSha256": "762f5520e5a27c6f9b4d21e5fda836c528b5c480f111b0c3a19e4a82f82a8d0d",
+      "rootG04Sha256": "1e138a03a97221c5bf8864fcc2f45d4e31b2740ccbfcb4cae000fc6eed187b3e"
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Application/Abstractions/Caching/PublicCacheKeys.cs",
+      "publishedSha256": "6683da7a1b94ae8cba5fc93c5ea12a2dc6e2af9aa83da38b31def738bff323de",
+      "rootG04Sha256": "1b3dfc9a748350935a173eb8127173cdb214e4bbc326ace34b9024c0e30c6f44"
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Infrastructure/Content/ContentService.cs",
+      "publishedSha256": "7002883a6e0d44bf8070ce8ea53a8124194f8c9464522a1fd8ce10e757d5dec7",
+      "rootG04Sha256": "54dfaf892c2e21adc123c603664c6fc65ded98ff5570e66b1a99591dbf853e94"
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/RecipeDiscoveryApiTests.cs",
+      "publishedSha256": "19570b21db68ffcd7cff8d8f26a415ce36387abd20e93e31780fc926738244c8",
+      "rootG04Sha256": "ac77f0f78d3c126f2816d8e22f77ae23948ae57e18475c7e76ac83af833113fa"
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.UnitTests/PublicCacheKeyTests.cs",
+      "publishedSha256": "6588d4c22ecc2bad5974f77056ab9720502dcd1599ed41a46b3b37cf24d88627",
+      "rootG04Sha256": "fc389d4be4bcbbc1dc9a0aca0df89069270c1c10e21a0ba358ab3da9ea951654"
+    },
+    {
+      "path": "docs/operations/search-short-terms.md",
+      "publishedSha256": "9b7ca7ae7c0243e116f6c47000e803c083e777a02f6697d765cff75842bd2d20",
+      "rootG04Sha256": "9b7ca7ae7c0243e116f6c47000e803c083e777a02f6697d765cff75842bd2d20"
+    },
+    {
+      "path": "docs/specs/phase-0/openapi.v1.yaml",
+      "publishedSha256": "dbe8e47eb11e20b79350a08b10f4f343b5b412865c0bcefff4816375cbfb2c22",
+      "rootG04Sha256": "1f6bfc108953f9e283825630895c304675f23d365c7ce40bc038940bd0d4ed0b"
+    },
+    {
+      "path": "frontend/src/features/culinary/components/RecipeCard.tsx",
+      "publishedSha256": "88cae5e23b271509086f80108d3f330d14092441bb7879c78f61f097f84451bf",
+      "rootG04Sha256": "88cae5e23b271509086f80108d3f330d14092441bb7879c78f61f097f84451bf"
+    },
+    {
+      "path": "frontend/src/features/culinary/pages/RecipesList.tsx",
+      "publishedSha256": "4379131d08d24ab1fa561a7e018d03eccd18199e8753e31b1248726456d4fd07",
+      "rootG04Sha256": "701d6b9664f15089b3d440cd6e9ccefa38585d9c9095a48d1ed1e12e200dbfc7"
+    },
+    {
+      "path": "frontend/src/lib/api/schema.d.ts",
+      "publishedSha256": "d149d0ba020bebb59e78e3adfbb6fc015b1aa59b32ac466476e06b3169d5e706",
+      "rootG04Sha256": "4f3816c2c6126dc13ed52fd01d5364f9ab676c6c082f4c82bdbba97bd5f62e92"
+    },
+    {
+      "path": "frontend/src/lib/recipe-search.ts",
+      "publishedSha256": "2556a7e1044f07a7e83e7cdc09f081c288d937c70cdf48e1d7c7d80b858ef5f1",
+      "rootG04Sha256": "2556a7e1044f07a7e83e7cdc09f081c288d937c70cdf48e1d7c7d80b858ef5f1"
+    },
+    {
+      "path": "frontend/tests/recipe-search.test.mjs",
+      "publishedSha256": "3da45e08ac6e034c076f98976d0a10b0ec05323a70bff0aa27940a970fbc7ab0",
+      "rootG04Sha256": "3da45e08ac6e034c076f98976d0a10b0ec05323a70bff0aa27940a970fbc7ab0"
+    },
+    {
+      "path": "frontend/tests/ux-ui-behavior.test.mjs",
+      "publishedSha256": "099acb46ec4534d5ac60087712250c15a3981c606e8c9509ad0ca498b6dbc3c6",
+      "rootG04Sha256": "ebffcd6b50c979fc57e83b8149ccb3ffba97976757c7b995baa874f71c153b7c"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only/title-only-before.trx",
+      "sha256": "12a958786ecf7aa9a51468985b200f51ca7cd894da3cc37b72fc87b6bc23d0a6",
+      "bytes": 4070980
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only/title-only-integration.trx",
+      "sha256": "8ff016286cc2d8f91840e0684d8384045cf46e6252d0b5090117972f61e617ef",
+      "bytes": 11842169
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only/title-only-unit.trx",
+      "sha256": "c31e65ed37a7c499aebf76a5601da9834cf52bafeaf9df81e3cf092fe6db5b25",
+      "bytes": 98740
+    },
+    {
+      "path": "tmp/g04/vietnamese-search/title-only-root-search.trx",
+      "sha256": "1af85df5c4fecf66c7febaae82032a810d032fa4dbf8bc81518c6099bfda97a3",
+      "bytes": 5901654
+    },
+    {
+      "path": "tmp/g04/vietnamese-search/title-only-root-cache.trx",
+      "sha256": "0942422402b9b54a72c6cc27675fa61372a289190efe19e98870d41b3d0ddca7",
+      "bytes": 7159
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-ci.json",
+      "sha256": "c45c6d50307acbee3352b1f8326b8086677d60e561fe37b92afd70dd532ea972",
+      "bytes": 912
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-ci-backend.log",
+      "sha256": "1e5359560b5d8e4854410e7910b7ab67d19ddf8413ce74d39862132bcdc3dfeb",
+      "bytes": 24735
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-ci-frontend.log",
+      "sha256": "1892d8edabcf2afa6b814830aa8310ae862d4f24ce86544a2880ad381d8e4e40",
+      "bytes": 69348
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-runtime.json",
+      "sha256": "850c65ffbdcbe31df1aa37b826e94651c147817505c9e1d747802294388874ea",
+      "bytes": 5400
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/plain-search-browser.json",
+      "sha256": "9d0becae63b3b543f6882291c130c08a79c6fad1f3d9a328bdddd2b290a3b1e1",
+      "bytes": 1595
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/plain-search-1440.png",
+      "sha256": "0e9bb8a0218ad4dcf3ca3361c0aa4e9838a85303637a0d9180f58c78ff62bb9e",
+      "bytes": 664145
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/plain-search-390.png",
+      "sha256": "e3d0cd27183dd6dcb367621e8e0b4faaa3165b0ae40f6575f9ac3070f5a2fae5",
+      "bytes": 187298
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-generate.log",
+      "sha256": "4e6637fa22ca38606262deecddedd12864d7e67bc01c65157f4efef26c8fc444",
+      "bytes": 251
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-format.log",
+      "sha256": "b151f4ee2da1154dce8cad649fe0bc4262d2b227aa87f779e92e34e894f83bf2",
+      "bytes": 260
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-lint.log",
+      "sha256": "c5669f923276eeab1ed7e690e61e4fdda30ee1ebb7492062109e5c40d03d9c45",
+      "bytes": 134
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-typecheck.log",
+      "sha256": "3b6d60260bae8e7cd5f86d4a06f8cd19947e7936f9656824ae7ba0ae7e82e061",
+      "bytes": 118
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-build.log",
+      "sha256": "cb4389ab1ac6bcaf9fd52926e4ba2496038b6c4eb5b3738c4b463d092290a5f7",
+      "bytes": 6496
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-test.log",
+      "sha256": "85e8eee61367cf12cdcfaabe20eb89efcaf2f319c528c957c1b70fd039a1df63",
+      "bytes": 53272
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-budget-check.log",
+      "sha256": "cefd6924dfb59110457eee892d1d15a9b33f902426e8375c426fb6c3d3026cfa",
+      "bytes": 6948
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/plain-search-push.log",
+      "sha256": "b22e0d38cfc03a674655d4942ddb22a4bc29347a4f5d261870ca59f07e5311c2",
+      "bytes": 305
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/title-only-push-final.log",
+      "sha256": "a079d4e5462455b5de2a18a07ef821c609182b89d112e6a689d7be69766c89f6",
+      "bytes": 305
+    },
+    {
+      "path": "tmp/g04/title-only-tests.log",
+      "sha256": "66e3fc811be4786b5642a3778f356a95169bc5c4aac8fcc90208e88f6ec9a217",
+      "bytes": 30669
+    },
+    {
+      "path": "tmp/g04/title-only-types.log",
+      "sha256": "762a89eb7522665c0455289bb21320c6c070be06061713ed0a57ecbf2d3632f0",
+      "bytes": 58
+    },
+    {
+      "path": "tmp/check-title-only-runtime.py",
+      "sha256": "5c6b484e1f39eee3943d25275a548ce6483f13d10d5efae466a7186a55e13dad",
+      "bytes": 2472
+    },
+    {
+      "path": "tmp/check-plain-search-cards.mjs",
+      "sha256": "62cfff00c63b4f5c17e477d3edbcbead7ebc73412fb25ae8beabede9615e7dcd",
+      "bytes": 3137
+    },
+    {
+      "path": "tmp/g04/title-only-inventory.log",
+      "sha256": "2d36355ddf0754e9633a9580626841ecb835f367dd919d416e04f03a4f69fd40",
+      "bytes": 245
+    },
+    {
+      "path": "tmp/g04/title-only-decisions.log",
+      "sha256": "1748217c324a04d929155c781a51a5fbdb0f01367ce3391beb92c791425bf809",
+      "bytes": 373
+    }
+  ],
+  "documentationChecks": {
+    "inventoryExitCode": 0,
+    "acceptances": 347,
+    "contracts": 209,
+    "operations": 47,
+    "decisionExitCode": 1,
+    "knownFailureUnchanged": "Historical baseline hash of 02_Decision_Log.md; not bypassed",
+    "rootIndexAndAffectedWhitespaceCheck": "passed"
+  }
+}

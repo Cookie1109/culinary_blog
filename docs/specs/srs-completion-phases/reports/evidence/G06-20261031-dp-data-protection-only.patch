@@ -1,0 +1,710 @@
+--- a/backend/Directory.Packages.props
++++ b/backend/Directory.Packages.props
+@@ -16,6 +16,7 @@
+     <PackageVersion Include="MediatR" Version="12.5.0" />
+     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
+     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
++    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.13" />
+     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.13" />
+     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+     <PackageVersion Include="Microsoft.AspNetCore.OutputCaching.StackExchangeRedis" Version="10.0.13" />
+--- a/backend/src/CulinaryBlog.Api/Program.cs
++++ b/backend/src/CulinaryBlog.Api/Program.cs
+@@ -10,9 +10,12 @@
+ using CulinaryBlog.Infrastructure;
+ using CulinaryBlog.Infrastructure.Identity;
+ using CulinaryBlog.Infrastructure.Jobs;
++using CulinaryBlog.Infrastructure.Persistence;
+ using CulinaryBlog.Infrastructure.RateLimiting;
+ using Hangfire;
++using Microsoft.AspNetCore.DataProtection;
+ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
++using Microsoft.EntityFrameworkCore;
+ using Scalar.AspNetCore;
+ using Serilog;
+ using Serilog.Events;
+@@ -118,6 +121,19 @@
+             .ConfigureAwait(false);
+     }
+ 
++    if (builder.Configuration.GetValue("DataProtection:PersistKeysToDatabase", false))
++    {
++        await using var keyScope = app.Services.CreateAsyncScope();
++        var keys = keyScope.ServiceProvider.GetRequiredService<DataProtectionKeyDbContext>().DataProtectionKeys;
++        _ = await keys.AnyAsync().ConfigureAwait(false);
++        var protector = app.Services.GetRequiredService<IDataProtectionProvider>().CreateProtector("CulinaryBlog.StartupKeyringCheck");
++        _ = protector.Unprotect(protector.Protect("keyring-ready"));
++        if (!await keys.AnyAsync().ConfigureAwait(false))
++        {
++            throw new InvalidOperationException("Database Data Protection keyring did not persist a key.");
++        }
++    }
++
+     app.MapAuthEndpoints();
+     app.MapContentEndpoints();
+ 
+--- a/backend/src/CulinaryBlog.Api/packages.lock.json
++++ b/backend/src/CulinaryBlog.Api/packages.lock.json
+@@ -548,6 +548,7 @@
+           "Hangfire.AspNetCore": "[1.8.25, )",
+           "Hangfire.PostgreSql": "[1.21.1, )",
+           "Magick.NET-Q8-AnyCPU": "[15.0.0, )",
++          "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.13, )",
+           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.13, )",
+           "Microsoft.AspNetCore.OutputCaching.StackExchangeRedis": "[10.0.13, )",
+           "Microsoft.EntityFrameworkCore": "[10.0.13, )",
+@@ -635,6 +636,15 @@
+           "MediatR.Contracts": "[2.0.1, 3.0.0)"
+         }
+       },
++      "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": {
++        "type": "CentralTransitive",
++        "requested": "[10.0.13, )",
++        "resolved": "10.0.13",
++        "contentHash": "p6pbz+KzSMO0lfZRF3bbGwBrdfZw/Ou0fQEum0ndGdvUeJQMGTfUxo+XzT3BN1bGRIBqexlw9ayXhjMBJ1mdUQ==",
++        "dependencies": {
++          "Microsoft.EntityFrameworkCore": "10.0.13"
++        }
++      },
+       "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+         "type": "CentralTransitive",
+         "requested": "[10.0.13, )",
+--- a/backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj
++++ b/backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj
+@@ -12,6 +12,7 @@
+     <PackageReference Include="Bogus" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore" />
+     <PackageReference Include="Google.Apis.Auth" />
++    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
+     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+       <PrivateAssets>all</PrivateAssets>
+--- a/backend/src/CulinaryBlog.Infrastructure/DependencyInjection.cs
++++ b/backend/src/CulinaryBlog.Infrastructure/DependencyInjection.cs
+@@ -1,5 +1,6 @@
+ // Culinary Blog. Authorship is recorded in the repository history.
+ 
++using System.Security.Cryptography.X509Certificates;
+ using CulinaryBlog.Application.Abstractions.Caching;
+ using CulinaryBlog.Application.Abstractions.Persistence;
+ using CulinaryBlog.Application.Audit;
+@@ -81,6 +82,8 @@
+         services.AddDbContext<AppDbContext>((serviceProvider, options) => options
+             .UseNpgsql(databaseConnection, provider => provider.CommandTimeout(30))
+             .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>(), serviceProvider.GetRequiredService<SlowQueryInterceptor>()));
++        services.AddDbContext<DataProtectionKeyDbContext>(options => options.UseNpgsql(
++            databaseConnection, provider => provider.MigrationsHistoryTable("__DataProtectionMigrations").CommandTimeout(30)));
+         services.AddIdentityCore<ApplicationUser>(options =>
+             {
+                 options.User.RequireUniqueEmail = true;
+@@ -100,7 +103,27 @@
+             .AddDefaultTokenProviders();
+         services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromMinutes(30));
+         var dataProtection = services.AddDataProtection().SetApplicationName("CulinaryBlog");
+-        if (configuration["DataProtection:KeyPath"] is { Length: > 0 } keyPath)
++        if (configuration.GetValue("DataProtection:PersistKeysToDatabase", false))
++        {
++            var certificateBase64 = configuration["DataProtection:CertificateBase64"];
++            if (string.IsNullOrWhiteSpace(certificateBase64))
++            {
++                throw new InvalidOperationException("Database key storage requires DataProtection:CertificateBase64 from secret configuration.");
++            }
++
++            // Data Protection options retain this certificate for the host lifetime.
++            var certificate = X509CertificateLoader.LoadPkcs12(
++                Convert.FromBase64String(certificateBase64), password: null, X509KeyStorageFlags.EphemeralKeySet);
++            using var rsa = certificate.GetRSAPublicKey();
++            if (!certificate.HasPrivateKey || rsa is null)
++            {
++                certificate.Dispose();
++                throw new InvalidOperationException("DataProtection:CertificateBase64 must contain an RSA certificate with its private key.");
++            }
++
++            dataProtection.PersistKeysToDbContext<DataProtectionKeyDbContext>().ProtectKeysWithCertificate(certificate);
++        }
++        else if (configuration["DataProtection:KeyPath"] is { Length: > 0 } keyPath)
+         {
+             dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keyPath));
+         }
+--- /dev/null
++++ b/backend/src/CulinaryBlog.Infrastructure/Persistence/DataProtectionKeyDbContext.cs
+@@ -0,0 +1,15 @@
++// Culinary Blog. Authorship is recorded in the repository history.
++
++using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore;
++
++namespace CulinaryBlog.Infrastructure.Persistence;
++
++/// <summary>Keeps keyring migrations separate from the application schema.</summary>
++/// <param name="options">The options supplied to this operation.</param>
++public sealed class DataProtectionKeyDbContext(DbContextOptions<DataProtectionKeyDbContext> options)
++    : DbContext(options), IDataProtectionKeyContext
++{
++    /// <summary>Gets the encrypted data protection keyring.</summary>
++    public DbSet<DataProtectionKey> DataProtectionKeys => this.Set<DataProtectionKey>();
++}
+--- /dev/null
++++ b/backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/20261031134534_PersistDataProtectionKeys.Designer.cs
+@@ -0,0 +1,48 @@
++// <auto-generated />
++using CulinaryBlog.Infrastructure.Persistence;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
++
++#nullable disable
++
++namespace CulinaryBlog.Infrastructure.Persistence.KeyMigrations
++{
++    [DbContext(typeof(DataProtectionKeyDbContext))]
++    [Migration("20261031134534_PersistDataProtectionKeys")]
++    partial class PersistDataProtectionKeys
++    {
++        /// <inheritdoc />
++        protected override void BuildTargetModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder
++                .HasAnnotation("ProductVersion", "10.0.13")
++                .HasAnnotation("Relational:MaxIdentifierLength", 63);
++
++            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
++
++            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
++                {
++                    b.Property<int>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("integer");
++
++                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
++
++                    b.Property<string>("FriendlyName")
++                        .HasColumnType("text");
++
++                    b.Property<string>("Xml")
++                        .HasColumnType("text");
++
++                    b.HasKey("Id");
++
++                    b.ToTable("DataProtectionKeys");
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+--- /dev/null
++++ b/backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/20261031134534_PersistDataProtectionKeys.cs
+@@ -0,0 +1,45 @@
++// Culinary Blog. Authorship is recorded in the repository history.
++
++using Microsoft.EntityFrameworkCore.Migrations;
++using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
++
++#nullable disable
++
++namespace CulinaryBlog.Infrastructure.Persistence.KeyMigrations;
++
++/// <inheritdoc />
++public partial class PersistDataProtectionKeys : Migration
++{
++    /// <inheritdoc />
++    protected override void Up(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.CreateTable(
++            name: "DataProtectionKeys",
++            columns: table => new
++            {
++                Id = table.Column<int>(type: "integer", nullable: false)
++                    .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
++                FriendlyName = table.Column<string>(type: "text", nullable: true),
++                Xml = table.Column<string>(type: "text", nullable: true),
++            },
++            constraints: table =>
++            {
++                table.PrimaryKey("PK_DataProtectionKeys", x => x.Id);
++            });
++    }
++
++    /// <inheritdoc />
++    protected override void Down(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.Sql("""
++            DO $g06$
++            BEGIN
++                IF EXISTS (SELECT 1 FROM "DataProtectionKeys") THEN
++                    RAISE EXCEPTION 'Data Protection keys exist; preserve the keyring before rollback.';
++                END IF;
++            END $g06$;
++            """);
++        migrationBuilder.DropTable(
++            name: "DataProtectionKeys");
++    }
++}
+--- /dev/null
++++ b/backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/DataProtectionKeyDbContextModelSnapshot.cs
+@@ -0,0 +1,45 @@
++// <auto-generated />
++using CulinaryBlog.Infrastructure.Persistence;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
++
++#nullable disable
++
++namespace CulinaryBlog.Infrastructure.Persistence.KeyMigrations
++{
++    [DbContext(typeof(DataProtectionKeyDbContext))]
++    partial class DataProtectionKeyDbContextModelSnapshot : ModelSnapshot
++    {
++        protected override void BuildModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder
++                .HasAnnotation("ProductVersion", "10.0.13")
++                .HasAnnotation("Relational:MaxIdentifierLength", 63);
++
++            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
++
++            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
++                {
++                    b.Property<int>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("integer");
++
++                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
++
++                    b.Property<string>("FriendlyName")
++                        .HasColumnType("text");
++
++                    b.Property<string>("Xml")
++                        .HasColumnType("text");
++
++                    b.HasKey("Id");
++
++                    b.ToTable("DataProtectionKeys");
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+--- a/backend/src/CulinaryBlog.Infrastructure/packages.lock.json
++++ b/backend/src/CulinaryBlog.Infrastructure/packages.lock.json
+@@ -47,6 +47,15 @@
+         "contentHash": "yECRj8M7/D7dIndVmvEbMsolIBC+lyd+Er3wM/p8MSCaTAqjXjYvqmfETu9u/QuJBKM/ofgZBUtRs4HqRicrow==",
+         "dependencies": {
+           "Magick.NET.Core": "15.0.0"
++        }
++      },
++      "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": {
++        "type": "Direct",
++        "requested": "[10.0.13, )",
++        "resolved": "10.0.13",
++        "contentHash": "p6pbz+KzSMO0lfZRF3bbGwBrdfZw/Ou0fQEum0ndGdvUeJQMGTfUxo+XzT3BN1bGRIBqexlw9ayXhjMBJ1mdUQ==",
++        "dependencies": {
++          "Microsoft.EntityFrameworkCore": "10.0.13"
+         }
+       },
+       "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+--- a/backend/tests/CulinaryBlog.ArchitectureTests/packages.lock.json
++++ b/backend/tests/CulinaryBlog.ArchitectureTests/packages.lock.json
+@@ -112,6 +112,25 @@
+           "Microsoft.AspNetCore.Cryptography.Internal": "10.0.13"
+         }
+       },
++      "Microsoft.AspNetCore.DataProtection": {
++        "type": "Transitive",
++        "resolved": "10.0.13",
++        "contentHash": "d8y1BVJdef2IPunLS6nPAHwmH162gQ7wGrv17jXcPPdFSjD4GgTUE7OHM0s57Z80tNFb/iRxQUBsNNXzYs/C/w==",
++        "dependencies": {
++          "Microsoft.AspNetCore.Cryptography.Internal": "10.0.13",
++          "Microsoft.AspNetCore.DataProtection.Abstractions": "10.0.13",
++          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
++          "Microsoft.Extensions.Hosting.Abstractions": "10.0.13",
++          "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
++          "Microsoft.Extensions.Options": "10.0.13",
++          "System.Security.Cryptography.Xml": "10.0.13"
++        }
++      },
++      "Microsoft.AspNetCore.DataProtection.Abstractions": {
++        "type": "Transitive",
++        "resolved": "10.0.13",
++        "contentHash": "ZeGcJpE6GpYVL2/4Lk0zkkTxf8a5hvTT91ApVf4BZA21GFQ4HY6gOpgPD1+4ED/43errbY8RwKyQynlT1kI33Q=="
++      },
+       "Microsoft.Bcl.AsyncInterfaces": {
+         "type": "Transitive",
+         "resolved": "1.1.0",
+@@ -234,22 +253,22 @@
+       },
+       "Microsoft.Extensions.FileProviders.Abstractions": {
+         "type": "Transitive",
+-        "resolved": "10.0.0",
+-        "contentHash": "/ppSdehKk3fuXjlqCDgSOtjRK/pSHU8eWgzSHfHdwVm5BP4Dgejehkw+PtxKG2j98qTDEHDst2Y99aNsmJldmw==",
+-        "dependencies": {
+-          "Microsoft.Extensions.Primitives": "10.0.0"
++        "resolved": "10.0.13",
++        "contentHash": "BZDwtN3uoWRghDi5lRRZPDjMMCg2Ds7J6YEYjqka/TLjqnzquEpXyvchrIMeoubwT1ns23ow6PPeAoBHJO81Rw==",
++        "dependencies": {
++          "Microsoft.Extensions.Primitives": "10.0.13"
+         }
+       },
+       "Microsoft.Extensions.Hosting.Abstractions": {
+         "type": "Transitive",
+-        "resolved": "10.0.0",
+-        "contentHash": "KrN6TGFwCwqOkLLk/idW/XtDQh+8In+CL9T4M1Dx+5ScsjTq4TlVbal8q532m82UYrMr6RiQJF2HvYCN0QwVsA==",
+-        "dependencies": {
+-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
+-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+-          "Microsoft.Extensions.Diagnostics.Abstractions": "10.0.0",
+-          "Microsoft.Extensions.FileProviders.Abstractions": "10.0.0",
+-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
++        "resolved": "10.0.13",
++        "contentHash": "zIrbe9vkIFXxW3mOApIOWXw+xMwX7Cgsptr3ZSlglJt4hW2qp4fB/JU1NHgAevteBNH4PicvU9DsFPHxlnnloA==",
++        "dependencies": {
++          "Microsoft.Extensions.Configuration.Abstractions": "10.0.13",
++          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
++          "Microsoft.Extensions.Diagnostics.Abstractions": "10.0.13",
++          "Microsoft.Extensions.FileProviders.Abstractions": "10.0.13",
++          "Microsoft.Extensions.Logging.Abstractions": "10.0.13"
+         }
+       },
+       "Microsoft.Extensions.Identity.Core": {
+@@ -492,6 +511,19 @@
+         "type": "Transitive",
+         "resolved": "6.0.1",
+         "contentHash": "rHaWtKDwCi9qJ3ObKo8LHPMuuwv33YbmQi7TcUK1C264V3MFnOr5Im7QgCTdLniztP3GJyeiSg5x8NqYJFqRmg=="
++      },
++      "System.Security.Cryptography.Pkcs": {
++        "type": "Transitive",
++        "resolved": "10.0.13",
++        "contentHash": "a+EovgC1fBnwdlQ6cn3j4JFBfKqiFaFvoAhjisOoSvazLAcIznaBzPQP0oYnvccmeXfqUH1KebVZOxSeH6rMaw=="
++      },
++      "System.Security.Cryptography.Xml": {
++        "type": "Transitive",
++        "resolved": "10.0.13",
++        "contentHash": "v6/GHhLaHkuN/ISgbKzBeyC7TP7S6Qm/dVyKA+p0ay9nlJyLif+spozjAGclY/FRIv2TC+KNQCo7dSNmupvWtQ==",
++        "dependencies": {
++          "System.Security.Cryptography.Pkcs": "10.0.13"
++        }
+       },
+       "xunit.abstractions": {
+         "type": "Transitive",
+@@ -576,6 +608,7 @@
+           "Hangfire.AspNetCore": "[1.8.25, )",
+           "Hangfire.PostgreSql": "[1.21.1, )",
+           "Magick.NET-Q8-AnyCPU": "[15.0.0, )",
++          "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.13, )",
+           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.13, )",
+           "Microsoft.AspNetCore.OutputCaching.StackExchangeRedis": "[10.0.13, )",
+           "Microsoft.EntityFrameworkCore": "[10.0.13, )",
+@@ -674,6 +707,16 @@
+           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
+         }
+       },
++      "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": {
++        "type": "CentralTransitive",
++        "requested": "[10.0.13, )",
++        "resolved": "10.0.13",
++        "contentHash": "p6pbz+KzSMO0lfZRF3bbGwBrdfZw/Ou0fQEum0ndGdvUeJQMGTfUxo+XzT3BN1bGRIBqexlw9ayXhjMBJ1mdUQ==",
++        "dependencies": {
++          "Microsoft.AspNetCore.DataProtection": "10.0.13",
++          "Microsoft.EntityFrameworkCore": "10.0.13"
++        }
++      },
+       "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+         "type": "CentralTransitive",
+         "requested": "[10.0.13, )",
+--- /dev/null
++++ b/backend/tests/CulinaryBlog.IntegrationTests/DataProtectionPersistenceTests.cs
+@@ -0,0 +1,160 @@
++// Culinary Blog. Authorship is recorded in the repository history.
++
++using System.Security.Cryptography;
++using System.Security.Cryptography.X509Certificates;
++using System.Text;
++using CulinaryBlog.Infrastructure;
++using CulinaryBlog.Infrastructure.Identity;
++using CulinaryBlog.Infrastructure.Persistence;
++using Microsoft.AspNetCore.DataProtection;
++using Microsoft.AspNetCore.Identity;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.Extensions.Configuration;
++using Microsoft.Extensions.DependencyInjection;
++using Npgsql;
++using Testcontainers.PostgreSql;
++
++namespace CulinaryBlog.IntegrationTests;
++
++/// <summary>Checks encrypted key persistence independently of container filesystems.</summary>
++public sealed class DataProtectionPersistenceTests : IAsyncLifetime
++{
++    private readonly PostgreSqlContainer postgres = new PostgreSqlBuilder("postgres:16.10-bookworm")
++        .WithDatabase("g06_keyring_test").WithUsername("culinary").WithPassword("integration-test-only").Build();
++
++    /// <inheritdoc />
++    public Task InitializeAsync() => this.postgres.StartAsync();
++
++    /// <inheritdoc />
++    public Task DisposeAsync() => this.postgres.DisposeAsync().AsTask();
++
++    /// <summary>Rejects missing or public-only certificates instead of storing plaintext keys.</summary>
++    [Fact]
++    public void DatabaseModeRejectsMissingOrPublicOnlyCertificate()
++    {
++        Assert.Throws<InvalidOperationException>(() =>
++        {
++            using var services = BuildServices(this.postgres.GetConnectionString(), null, "unused");
++        });
++        using var rsa = RSA.Create(2048);
++        var request = new CertificateRequest("CN=G06 test", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
++        using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
++        using var publicOnly = X509CertificateLoader.LoadCertificate(certificate.Export(X509ContentType.Cert));
++        Assert.Throws<InvalidOperationException>(() =>
++        {
++            using var services = BuildServices(this.postgres.GetConnectionString(), Convert.ToBase64String(publicOnly.Export(X509ContentType.Pfx)), "unused");
++        });
++    }
++
++    /// <summary>Reuses encrypted keys and reset tokens after provider recreation and database restore.</summary>
++    /// <returns>A task representing the operation and its result.</returns>
++    [Fact]
++    public async Task KeysAndResetTokensSurviveProviderRecreationAndCleanRestore()
++    {
++        var connection = await this.CreateDatabaseAsync();
++        using var rsa = RSA.Create(2048);
++        var request = new CertificateRequest("CN=G06 test", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
++        using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
++        var secret = Convert.ToBase64String(certificate.Export(X509ContentType.Pfx));
++        var blockedPath = Path.GetTempFileName();
++        try
++        {
++            string payload;
++            string resetToken;
++            string userId;
++            await using (var first = BuildServices(connection, secret, blockedPath))
++            {
++                await using var scope = first.CreateAsyncScope();
++                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
++                await db.Database.MigrateAsync();
++                var applicationMigrations = (await db.Database.GetAppliedMigrationsAsync()).ToArray();
++                var keyDb = scope.ServiceProvider.GetRequiredService<DataProtectionKeyDbContext>();
++                await keyDb.Database.MigrateAsync();
++                await keyDb.Database.GetService<IMigrator>().MigrateAsync("0");
++                await keyDb.Database.MigrateAsync();
++                Assert.Equal(applicationMigrations, (await db.Database.GetAppliedMigrationsAsync()).ToArray());
++                var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
++                var user = new ApplicationUser { Id = Guid.NewGuid().ToString(), UserName = "keyring@example.test", Email = "keyring@example.test", DisplayName = "G06 fixture" };
++                Assert.True((await users.CreateAsync(user, "Synthetic#G06Password1")).Succeeded);
++                userId = user.Id;
++                resetToken = await users.GeneratePasswordResetTokenAsync(user);
++                payload = first.GetRequiredService<IDataProtectionProvider>().CreateProtector("G06 fixture").Protect("synthetic payload");
++                var xml = await keyDb.DataProtectionKeys.Select(key => key.Xml!).ToArrayAsync();
++                Assert.NotEmpty(xml);
++                Assert.True(xml.All(value => value.Contains("encryptedSecret", StringComparison.Ordinal)), "Keys must be encrypted at rest.");
++                Assert.True(xml.All(value => !value.Contains("<masterKey", StringComparison.Ordinal)), "No plaintext master key may be stored.");
++                await Assert.ThrowsAsync<PostgresException>(() => keyDb.Database.GetService<IMigrator>().MigrateAsync("0"));
++                Assert.NotEmpty(await keyDb.DataProtectionKeys.ToArrayAsync());
++            }
++
++            await using (var second = BuildServices(connection, secret, blockedPath))
++            {
++                Assert.Equal("synthetic payload", second.GetRequiredService<IDataProtectionProvider>().CreateProtector("G06 fixture").Unprotect(payload));
++                await using var scope = second.CreateAsyncScope();
++                var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
++                var user = (await users.FindByIdAsync(userId))!;
++                Assert.True((await users.ResetPasswordAsync(user, resetToken, "Synthetic#G06Password2")).Succeeded);
++                resetToken = await users.GeneratePasswordResetTokenAsync(user);
++            }
++
++            var sourceDatabase = new NpgsqlConnectionStringBuilder(connection).Database!;
++            var dump = await this.postgres.ExecAsync(["pg_dump", "-U", "culinary", "-d", sourceDatabase, "-Fc", "-f", "/tmp/keyring.dump"]);
++            Assert.Equal(0, dump.ExitCode);
++            var restoredConnection = await this.CreateDatabaseAsync();
++            var restoredDatabase = new NpgsqlConnectionStringBuilder(restoredConnection).Database!;
++            var restore = await this.postgres.ExecAsync(["pg_restore", "-U", "culinary", "-d", restoredDatabase, "--exit-on-error", "/tmp/keyring.dump"]);
++            Assert.Equal(0, restore.ExitCode);
++            await using var restored = BuildServices(restoredConnection, secret, blockedPath);
++            Assert.Equal("synthetic payload", restored.GetRequiredService<IDataProtectionProvider>().CreateProtector("G06 fixture").Unprotect(payload));
++            await using var restoredScope = restored.CreateAsyncScope();
++            var restoredUsers = restoredScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
++            Assert.True((await restoredUsers.ResetPasswordAsync((await restoredUsers.FindByIdAsync(userId))!, resetToken, "Synthetic#G06Password3")).Succeeded);
++            await using var original = BuildServices(connection, secret, blockedPath);
++            await using var originalScope = original.CreateAsyncScope();
++            var originalHashes = await KeyHashesAsync(originalScope.ServiceProvider.GetRequiredService<DataProtectionKeyDbContext>());
++            var restoredHashes = await KeyHashesAsync(restoredScope.ServiceProvider.GetRequiredService<DataProtectionKeyDbContext>());
++            Assert.Equal(originalHashes, restoredHashes);
++            Assert.Equal(0, new FileInfo(blockedPath).Length);
++        }
++        finally
++        {
++            File.Delete(blockedPath);
++        }
++    }
++
++    private static ServiceProvider BuildServices(string connection, string? certificate, string keyPath)
++    {
++        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
++        {
++            ["ConnectionStrings:Database"] = connection,
++            ["ConnectionStrings:Redis"] = "127.0.0.1:1,abortConnect=false",
++            ["ObjectStorage:Endpoint"] = "http://127.0.0.1:1",
++            ["Jwt:SigningKey"] = "synthetic-g06-keyring-test-signing-key",
++            ["BackgroundJobs:Enabled"] = "false",
++            ["DataProtection:PersistKeysToDatabase"] = "true",
++            ["DataProtection:CertificateBase64"] = certificate,
++            ["DataProtection:KeyPath"] = keyPath,
++        }).Build();
++        var services = new ServiceCollection();
++        services.AddLogging();
++        services.AddHttpContextAccessor();
++        services.AddInfrastructure(config);
++        return services.BuildServiceProvider();
++    }
++
++    private static async Task<string[]> KeyHashesAsync(DataProtectionKeyDbContext db)
++    {
++        var xml = await db.DataProtectionKeys.OrderBy(key => key.Id).Select(key => key.Xml!).ToArrayAsync();
++        return xml.Select(value => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)))).ToArray();
++    }
++
++    private async Task<string> CreateDatabaseAsync()
++    {
++        var name = "g06_keyring_" + Guid.NewGuid().ToString("N");
++        var result = await this.postgres.ExecAsync(["psql", "-U", "culinary", "-d", "g06_keyring_test", "-c", $"CREATE DATABASE {name}"]);
++        Assert.Equal(0, result.ExitCode);
++        return new NpgsqlConnectionStringBuilder(this.postgres.GetConnectionString()) { Database = name }.ConnectionString;
++    }
++}
+--- a/backend/tests/CulinaryBlog.IntegrationTests/packages.lock.json
++++ b/backend/tests/CulinaryBlog.IntegrationTests/packages.lock.json
+@@ -215,6 +215,25 @@
+         "dependencies": {
+           "Microsoft.AspNetCore.Cryptography.Internal": "10.0.13"
+         }
++      },
++      "Microsoft.AspNetCore.DataProtection": {
++        "type": "Transitive",
++        "resolved": "10.0.13",
++        "contentHash": "d8y1BVJdef2IPunLS6nPAHwmH162gQ7wGrv17jXcPPdFSjD4GgTUE7OHM0s57Z80tNFb/iRxQUBsNNXzYs/C/w==",
++        "dependencies": {
++          "Microsoft.AspNetCore.Cryptography.Internal": "10.0.13",
++          "Microsoft.AspNetCore.DataProtection.Abstractions": "10.0.13",
++          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
++          "Microsoft.Extensions.Hosting.Abstractions": "10.0.13",
++          "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
++          "Microsoft.Extensions.Options": "10.0.13",
++          "System.Security.Cryptography.Xml": "10.0.13"
++        }
++      },
++      "Microsoft.AspNetCore.DataProtection.Abstractions": {
++        "type": "Transitive",
++        "resolved": "10.0.13",
++        "contentHash": "ZeGcJpE6GpYVL2/4Lk0zkkTxf8a5hvTT91ApVf4BZA21GFQ4HY6gOpgPD1+4ED/43errbY8RwKyQynlT1kI33Q=="
+       },
+       "Microsoft.AspNetCore.TestHost": {
+         "type": "Transitive",
+@@ -754,6 +773,19 @@
+         "resolved": "6.0.1",
+         "contentHash": "rHaWtKDwCi9qJ3ObKo8LHPMuuwv33YbmQi7TcUK1C264V3MFnOr5Im7QgCTdLniztP3GJyeiSg5x8NqYJFqRmg=="
+       },
++      "System.Security.Cryptography.Pkcs": {
++        "type": "Transitive",
++        "resolved": "10.0.13",
++        "contentHash": "a+EovgC1fBnwdlQ6cn3j4JFBfKqiFaFvoAhjisOoSvazLAcIznaBzPQP0oYnvccmeXfqUH1KebVZOxSeH6rMaw=="
++      },
++      "System.Security.Cryptography.Xml": {
++        "type": "Transitive",
++        "resolved": "10.0.13",
++        "contentHash": "v6/GHhLaHkuN/ISgbKzBeyC7TP7S6Qm/dVyKA+p0ay9nlJyLif+spozjAGclY/FRIv2TC+KNQCo7dSNmupvWtQ==",
++        "dependencies": {
++          "System.Security.Cryptography.Pkcs": "10.0.13"
++        }
++      },
+       "Testcontainers": {
+         "type": "Transitive",
+         "resolved": "4.15.0",
+@@ -849,6 +881,7 @@
+           "Hangfire.AspNetCore": "[1.8.25, )",
+           "Hangfire.PostgreSql": "[1.21.1, )",
+           "Magick.NET-Q8-AnyCPU": "[15.0.0, )",
++          "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.13, )",
+           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.13, )",
+           "Microsoft.AspNetCore.OutputCaching.StackExchangeRedis": "[10.0.13, )",
+           "Microsoft.EntityFrameworkCore": "[10.0.13, )",
+@@ -947,6 +980,16 @@
+           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
+         }
+       },
++      "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": {
++        "type": "CentralTransitive",
++        "requested": "[10.0.13, )",
++        "resolved": "10.0.13",
++        "contentHash": "p6pbz+KzSMO0lfZRF3bbGwBrdfZw/Ou0fQEum0ndGdvUeJQMGTfUxo+XzT3BN1bGRIBqexlw9ayXhjMBJ1mdUQ==",
++        "dependencies": {
++          "Microsoft.AspNetCore.DataProtection": "10.0.13",
++          "Microsoft.EntityFrameworkCore": "10.0.13"
++        }
++      },
+       "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+         "type": "CentralTransitive",
+         "requested": "[10.0.13, )",
+--- /dev/null
++++ b/scripts/new-data-protection-certificate.ps1
+@@ -0,0 +1,52 @@
++#requires -Version 7.0
++param([string]$OutputDirectory = 'tmp/data-protection')
++$ErrorActionPreference = 'Stop'
++$repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
++$target = [IO.Path]::GetFullPath((Join-Path $repoRoot $OutputDirectory))
++if (-not $target.StartsWith($repoRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
++    throw 'Certificate output must stay inside the workspace.'
++}
++$privatePath = Join-Path $target 'certificate.base64'
++$metadataPath = Join-Path $target 'certificate-metadata.json'
++if ((Test-Path -LiteralPath $privatePath) -or (Test-Path -LiteralPath $metadataPath)) {
++    throw 'Certificate output already exists. Preserve the existing secret; this tool does not rotate it.'
++}
++& git -C $repoRoot check-ignore -q -- $privatePath
++if ($LASTEXITCODE -ne 0) { throw 'Private certificate output must be Git-ignored.' }
++[IO.Directory]::CreateDirectory($target) | Out-Null
++$rsa = [Security.Cryptography.RSA]::Create(3072)
++$certificate = $null
++try {
++    $request = [Security.Cryptography.X509Certificates.CertificateRequest]::new(
++        'CN=CulinaryBlog Data Protection', $rsa,
++        [Security.Cryptography.HashAlgorithmName]::SHA256,
++        [Security.Cryptography.RSASignaturePadding]::Pkcs1)
++    $certificate = $request.CreateSelfSigned([DateTimeOffset]::UtcNow.AddMinutes(-5), [DateTimeOffset]::UtcNow.AddYears(2))
++    New-Item -ItemType File -Path $privatePath -ErrorAction Stop | Out-Null
++    $acl = [Security.AccessControl.FileSecurity]::new()
++    $acl.SetAccessRuleProtection($true, $false)
++    $acl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new(
++        [Security.Principal.WindowsIdentity]::GetCurrent().User,
++        [Security.AccessControl.FileSystemRights]::FullControl,
++        [Security.AccessControl.AccessControlType]::Allow))
++    Set-Acl -LiteralPath $privatePath -AclObject $acl
++    [IO.File]::WriteAllText($privatePath,
++        [Convert]::ToBase64String($certificate.Export([Security.Cryptography.X509Certificates.X509ContentType]::Pfx)),
++        [Text.UTF8Encoding]::new($false))
++    $metadata = [ordered]@{
++        certificateSha256 = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($certificate.RawData))
++        notBeforeUtc = $certificate.NotBefore.ToUniversalTime().ToString('o')
++        notAfterUtc = $certificate.NotAfter.ToUniversalTime().ToString('o')
++        rsaBits = 3072
++        privateFile = $privatePath
++        purpose = 'Data Protection key encryption; not an HTTPS certificate'
++    }
++    [IO.File]::WriteAllText($metadataPath, ($metadata | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
++    Write-Output 'Certificate generated locally; private value is not printed.'
++    Write-Output "Private file for secret configuration: $privatePath"
++    Write-Output "Metadata: $metadataPath"
++}
++finally {
++    if ($certificate) { $certificate.Dispose() }
++    $rsa.Dispose()
++}

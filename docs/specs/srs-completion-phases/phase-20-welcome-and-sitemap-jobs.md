@@ -31,8 +31,8 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D6-08 · Kiểm chứng:** welcome HTML có encode tên/link tin cậy, Hangfire persistent queue/outbox, retry 1/5/30 phút/Failed state/log, concurrency/restart không tạo job trùng thông thường; SMTP fail giữ đăng ký. Dashboard chỉ Admin; ghi giới hạn duplicate email nếu crash sau SMTP accept, không hứa exactly-once.
-- [ ] **D6-09 · Sửa/kiểm chứng:** sitemap hàng ngày 02:00 UTC/retry 2/singleton/public URLs + static/category, `lastmod`, `changefreq`, `priority` theo hợp đồng; lỗi upload giữ artifact cũ; robots khai báo URL sitemap. Rà quyết định ping Google ở D0, không thêm request lỗi hoặc tự bỏ yêu cầu mà không ghi sai khác.
+- [x] **D6-08 · Kiểm chứng:** welcome HTML có encode tên/link tin cậy, Hangfire persistent queue/outbox, retry 1/5/30 phút/Failed state/log, concurrency/restart không tạo job trùng thông thường; SMTP fail giữ đăng ký. Dashboard chỉ Admin; ghi giới hạn duplicate email nếu crash sau SMTP accept, không hứa exactly-once.
+- [x] **D6-09 · Sửa/kiểm chứng:** sitemap hàng ngày 02:00 UTC/retry 2/singleton/public URLs + static/category, `lastmod`, `changefreq`, `priority` theo hợp đồng; lỗi upload giữ artifact cũ; robots khai báo URL sitemap. Rà quyết định ping Google ở D0, không thêm request lỗi hoặc tự bỏ yêu cầu mà không ghi sai khác.
 
 ## Trình tự thực hiện trong phase
 
@@ -49,11 +49,17 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Hai job đủ contract và failure evidence, lịch/múi giờ chính xác.
-- [ ] Sai khác ping/lock có quyết định nguồn, không tự miễn yêu cầu.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Hai job đủ contract và failure evidence, lịch/múi giờ chính xác.
+- [x] Sai khác ping/lock có quyết định nguồn, không tự miễn yêu cầu.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-20-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-19-media-storage-and-jobs.md) · [Tiếp theo để tham khảo](phase-21-seo-metadata-and-slugs.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+
+Bổ sung26/10: [E21 giữ MinIO](reports/package-G04-result.md#checkpoint-giữ-nguyên-minio--26102026) đã hoàn tác Cloudinary theo yêu cầu mới và kiểm hồi quy227 đạt; giữ dữ liệu MinIO, đính chính A/B/C và trạng thái task hiện có. Render chưa deploy.
+
+
+E28 —27/10/2026: [report chung G04](reports/package-G04-result.md#checkpoint27102026--chốt-http-và-nghiệm-thu-g04-local),15/15 task local; giữ bằng chứng chưa bị ảnh hưởng. Không áp migration vào database người dùng hoặc nhận triển khai demo là nghiệm thu production.

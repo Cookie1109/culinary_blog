@@ -1,0 +1,282 @@
+{
+  "apiImage": "sha256:59647a0bbe14894ee59f7f50d093321761efd15239f59004938e0956f71bf4ab",
+  "jobId": "124",
+  "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+  "spans": [
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "326a8e136b5e5573",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "d41740e63a6f3175",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "c080198bd5142cd3",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "27c89f69bdf168eb",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "f54ec304f7f7c642",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "e818043caa9966d0",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "b10224f8f94a8f75",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "0ba499e23b29e6e4",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "8a52de05ec9e6dec",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "40d86ef06670969b",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "89361db79dd6f966",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "acd33f895343f811",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "63b4652849b7755f",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "2f3718297fe01357",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "0baeb46f0db365d3",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "collector-1  |     ID             : 3cc622fc58ab0cc1",
+      "spanId": "3cc622fc58ab0cc1",
+      "name": "POST /api/v1/auth/register",
+      "kind": "Server",
+      "postgresql": false,
+      "http": true,
+      "correlation": "g06-runtime-drill"
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "3cc622fc58ab0cc1",
+      "spanId": "4b29ce088ef581a0",
+      "name": "outbox.welcome",
+      "kind": "Producer",
+      "postgresql": false,
+      "http": false,
+      "correlation": "g06-runtime-drill"
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "89a3507c40a1da44",
+      "spanId": "fcdef0b7234d6605",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "89a3507c40a1da44",
+      "spanId": "868b344e27611b9f",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "92c3942c9c2e7a7a04d594c2eccff12c",
+      "parentId": "4b29ce088ef581a0",
+      "spanId": "89a3507c40a1da44",
+      "name": "WelcomeEmailJob.SendAsync",
+      "kind": "Consumer",
+      "postgresql": false,
+      "http": false,
+      "correlation": "g06-runtime-drill"
+    }
+  ],
+  "outputCacheHits": [
+    {
+      "metric": {},
+      "value": [
+        1793295641.342,
+        "38"
+      ]
+    }
+  ],
+  "businessCreated": [
+    {
+      "metric": {},
+      "value": [
+        1793295641.344,
+        "2"
+      ]
+    }
+  ],
+  "dashboardUid": "culinary-blog-operations",
+  "dashboardTitle": "Culinary Blog Operations",
+  "grafanaQueryFrames": [
+    {
+      "schema": {
+        "refId": "A",
+        "meta": {
+          "type": "numeric-multi",
+          "typeVersion": [
+            0,
+            1
+          ],
+          "custom": {
+            "calculatedMinStep": 2000,
+            "resultType": "vector"
+          },
+          "executedQueryString": "Expr: sum(output_cache_hits_total)\nStep: 2s"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "interval": 2000
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {},
+            "config": {
+              "displayNameFromDS": "sum(output_cache_hits_total)"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1793295641255
+          ],
+          [
+            38
+          ]
+        ]
+      }
+    }
+  ],
+  "recipeFixtureId": "18141d75-ff9e-4e3e-83de-53eafd85ef01",
+  "imageFixtureId": "7de1b754-8732-4234-b087-c03cd9ac8596",
+  "grafanaBase": "http://127.0.0.1:52058"
+}

@@ -1,0 +1,70 @@
+{
+  "routes": [
+    {
+      "route": "/",
+      "categories:performance": 0.95,
+      "largest-contentful-paint": 1530.7393999999995,
+      "cumulative-layout-shift": 4.742989876687132e-05,
+      "total-blocking-time": 0,
+      "resource-summary:script:size": 194209,
+      "meta-description": 1
+    },
+    {
+      "route": "/recipes",
+      "categories:performance": 0.98,
+      "largest-contentful-paint": 1051.4371500000002,
+      "cumulative-layout-shift": 4.405296779694757e-05,
+      "total-blocking-time": 0,
+      "resource-summary:script:size": 204775,
+      "meta-description": 1
+    },
+    {
+      "route": "/categories",
+      "categories:performance": 0.99,
+      "largest-contentful-paint": 859.26365,
+      "cumulative-layout-shift": 4.405296779694757e-05,
+      "total-blocking-time": 0,
+      "resource-summary:script:size": 183347,
+      "meta-description": 1
+    },
+    {
+      "route": "/search",
+      "categories:performance": 0.98,
+      "largest-contentful-paint": 1047.83545,
+      "cumulative-layout-shift": 4.405296779694757e-05,
+      "total-blocking-time": 0,
+      "resource-summary:script:size": 204775,
+      "meta-description": 1
+    },
+    {
+      "route": "/login",
+      "categories:performance": 1,
+      "largest-contentful-paint": 737.2009500000001,
+      "cumulative-layout-shift": 1.745994221171526e-05,
+      "total-blocking-time": 0,
+      "resource-summary:script:size": 190025,
+      "meta-description": 1
+    },
+    {
+      "route": "/recipes/com-chien-hai-san",
+      "categories:performance": 1,
+      "largest-contentful-paint": 774.3010000000002,
+      "cumulative-layout-shift": 0.0001594800815261106,
+      "total-blocking-time": 0,
+      "resource-summary:script:size": 183347,
+      "meta-description": 1
+    },
+    {
+      "route": "/categories/banh-viet",
+      "categories:performance": 1,
+      "largest-contentful-paint": 761.10975,
+      "cumulative-layout-shift": 4.405296779694757e-05,
+      "total-blocking-time": 0,
+      "resource-summary:script:size": 186680,
+      "meta-description": 1
+    }
+  ],
+  "maxScriptTransferBytes": 204775,
+  "loopbackHeadroomBytes": 25,
+  "scope": "Native standalone build only; provider transfer headers/build may differ and staging must be measured."
+}

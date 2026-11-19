@@ -1,0 +1,117 @@
+{
+  "project": "culinary-g06-6b34b3e25608",
+  "scope": "Authorized loopback load on synthetic resources only; not production or formal scaling acceptance",
+  "events": [
+    {
+      "kind": "setup-ready",
+      "atUtc": "2026-11-04T23:50:49.030957+00:00",
+      "base": "http://127.0.0.1:59754",
+      "dataset": {
+        "recipes": 50,
+        "categories": 20,
+        "appMigrations": 14,
+        "keyMigrations": 1
+      }
+    },
+    {
+      "kind": "single-journey-smoke-start",
+      "atUtc": "2026-11-04T23:50:49.235558+00:00",
+      "apiCount": 1,
+      "argvWithoutSecrets": [
+        "C:/Program Files/k6/k6.exe",
+        "run",
+        "--quiet",
+        "-e",
+        "BASE_URL=http://127.0.0.1:59754",
+        "-e",
+        "PROFILE=smoke",
+        "-e",
+        "SUMMARY_PATH=D:\\Culinary_Blog\\tmp\\package-G06\\resume-20261104\\benchmark-cache\\single-journey-smoke-metrics.json",
+        "-e",
+        "BENCHMARK_RUN_ID=g06-1b947e9b9569",
+        "D:\\Culinary_Blog\\performance\\k6\\recipe-journey.js"
+      ]
+    },
+    {
+      "kind": "single-journey-smoke-finish",
+      "atUtc": "2026-11-04T23:51:25.880502+00:00",
+      "exit": 0,
+      "metricsFile": "single-journey-smoke-metrics.json",
+      "jwtPresent": false,
+      "metricsKeys": [
+        "runId",
+        "profile",
+        "metrics"
+      ],
+      "metricsSha256": "ad279c1fd475fe69dafd0f5b0dca10d00d3a999bce40c3b7583c49d54362508b"
+    },
+    {
+      "kind": "smoke-complete",
+      "atUtc": "2026-11-04T23:51:25.881216+00:00",
+      "trialExitCodes": [
+        0
+      ]
+    },
+    {
+      "kind": "dual-upstreams-verified",
+      "atUtc": "2026-11-04T23:51:29.170118+00:00",
+      "upstreamCount": 2
+    },
+    {
+      "kind": "dual-journey100-start",
+      "atUtc": "2026-11-04T23:51:29.181243+00:00",
+      "apiCount": 2,
+      "argvWithoutSecrets": [
+        "C:/Program Files/k6/k6.exe",
+        "run",
+        "--quiet",
+        "-e",
+        "BASE_URL=http://127.0.0.1:59754",
+        "-e",
+        "PROFILE=load",
+        "-e",
+        "SUMMARY_PATH=D:\\Culinary_Blog\\tmp\\package-G06\\resume-20261104\\benchmark-cache\\dual-journey100-metrics.json",
+        "-e",
+        "BENCHMARK_RUN_ID=g06-6b34b3e25608",
+        "D:\\Culinary_Blog\\performance\\k6\\recipe-journey.js"
+      ]
+    }
+  ],
+  "userContainersBefore": [
+    "8408c093a358 culinary-blog-web-1",
+    "3a245feff450 culinary-blog-api-1",
+    "2a652e4c9469 culinary-blog-nginx-1",
+    "af42e245f804 culinary-blog-grafana-1",
+    "3fd1322e8cf8 culinary-blog-prometheus-1",
+    "d799d8731baa culinary-blog-redis-1",
+    "69149e4526cf culinary-blog-postgres-1",
+    "fc7008680210 culinary-blog-otel-collector-1",
+    "335418437c6f culinary-blog-minio-1",
+    "3f9d4aba9a36 culinary-blog-alertmanager-1",
+    "9daa52e7bcad culinary-blog-seq-1",
+    "1c92fc34db55 culinary-blog-mailhog-1",
+    "416d7c5a0b4a culinary-blog-blackbox-exporter-1"
+  ],
+  "images": {
+    "postgres": "sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74",
+    "redis": "sha256:bb186d083732f669da90be8b0f975a37812b15e913465bb14d845db72a4e3e08",
+    "minio": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "collector": "sha256:886722fe0f37af9d1fe24d29529253ec59fbf263b3b1df4facaf221373e19d23",
+    "api": "sha256:49163d607861408e29935a2d825cb41e85546e65e602243ab376d01e6cbfe684",
+    "prometheus": "sha256:76947e7ef22f8a698fc638f706685909be425dbe09bd7a2cd7aca849f79b5f64",
+    "api2": "sha256:49163d607861408e29935a2d825cb41e85546e65e602243ab376d01e6cbfe684",
+    "lb": "sha256:30f1c0d78e0ad60901648be663a710bdadf19e4c10ac6782c235200619158284"
+  },
+  "apiLimits": {
+    "cpus": 2,
+    "memLimitBytes": 4294967296
+  },
+  "base": "http://127.0.0.1:59754",
+  "prometheus": "http://127.0.0.1:58381",
+  "dataset": {
+    "recipes": 50,
+    "categories": 20,
+    "appMigrations": 14,
+    "keyMigrations": 1
+  }
+}

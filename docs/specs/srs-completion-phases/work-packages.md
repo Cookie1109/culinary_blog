@@ -64,6 +64,10 @@ Các phần thiếu RUM/HTTPS staging/production topology/Rich Results/UAT vẫn
 
 ### G06 — Phi chức năng và vận hành
 
+Ngày 11/11/2026, G06 đã đóng trong phạm vi báo cáo môn học dùng tài nguyên miễn phí. Năm task đạt theo bằng chứng hiện có. D9-01/04/09/10 đã đóng cho báo cáo và còn các điều kiện SRS nêu trong [kết quả G06](reports/package-G06-result.md#free-demo-closeout-20261111).
+
+Chuẩn bị demo05/11 áp dụng [phạm vi giản lược G06/G07](demo-scope-2026-11-05.md): bỏ các bước bổ sung đã chỉ định, giữ yêu cầu PDF, gate hiện hữu và trạng thái chưa nghiệm thu.
+
 - Chuẩn bị môi trường synthetic một lần cho các bài30–35 tương thích; cô lập tài nguyên/dataset mỗi phép đo, ghi rõ profile để không nhiễu số đo. Restore/failure drill dùng target thử riêng.
 - Sau33 làm34;35 cần kết quả30/33/34 và shared cache/quota/jobs trước đó. Không dùng việc gom gói để chạy bài scaling khi đầu vào chưa đủ.
 - Checkpoint: phân biệt benchmark local/staging/production, lab/RUM, config/evidence thật. D0-04/protocol, credential, topology hoặc cửa sổ mẫu thiếu thì ghi mở đúng task. SLA quan sát thuộc36, không chờ thụ động trong phiên agent.

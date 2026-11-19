@@ -75,7 +75,7 @@ spec = (ROOT / 'docs/specs/phase-0/openapi.v1.yaml').read_text(encoding='utf-8')
 operations = set()
 path = None
 for line in spec.splitlines():
-    match = re.fullmatch(r'  (/[^:]+):', line)
+    match = re.fullmatch(r'  (/[^:]*):', line)
     if match:
         path = match[1]
     method = re.fullmatch(r'    (get|post|put|patch|delete):', line)
@@ -84,7 +84,7 @@ for line in spec.splitlines():
 documented = {
     (method, re.sub(r'\{[^}]+\}', '{}', path))
     for method, path in re.findall(
-        r'^\| CT-(?:API|SUP)-\d+ \| [^|]*?\b(GET|POST|PUT|PATCH|DELETE) (/[^\s|]+)',
+        r'^\| CT-(?:API|SUP)-\d+ \| [^|]*?\b(GET|POST|PUT|PATCH|DELETE) (/[^\s|]*)',
         inventory, re.M)
 }
 if operations - documented:

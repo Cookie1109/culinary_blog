@@ -1,0 +1,478 @@
+{
+  "startedAtUtc": "2026-10-31T05:34:05.116398+00:00",
+  "project": "culinary-g06-minio4-20261031",
+  "scope": "Four local containers and distinct volumes on one host; NOT production HA/CDN acceptance",
+  "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+  "userContainersBefore": [
+    "8408c093a358 culinary-blog-web-1",
+    "3a245feff450 culinary-blog-api-1",
+    "2a652e4c9469 culinary-blog-nginx-1",
+    "af42e245f804 culinary-blog-grafana-1",
+    "3fd1322e8cf8 culinary-blog-prometheus-1",
+    "d799d8731baa culinary-blog-redis-1",
+    "69149e4526cf culinary-blog-postgres-1",
+    "fc7008680210 culinary-blog-otel-collector-1",
+    "335418437c6f culinary-blog-minio-1",
+    "3f9d4aba9a36 culinary-blog-alertmanager-1",
+    "9daa52e7bcad culinary-blog-seq-1",
+    "1c92fc34db55 culinary-blog-mailhog-1",
+    "416d7c5a0b4a culinary-blog-blackbox-exporter-1"
+  ],
+  "initialInfo": {
+    "status": "success",
+    "info": {
+      "mode": "online",
+      "deploymentID": "3270de08-93ea-43b3-9e69-c0182b90681b",
+      "backend": {
+        "backendType": "Erasure",
+        "onlineDisks": 4,
+        "offlineDisks": 0,
+        "standardSCParity": 2,
+        "rrSCParity": 1,
+        "totalSets": [
+          1
+        ],
+        "totalDrivesPerSet": [
+          4
+        ]
+      },
+      "servers": [
+        {
+          "state": "online",
+          "endpoint": "minio2:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio2:9000/data",
+              "state": "ok"
+            }
+          ]
+        },
+        {
+          "state": "online",
+          "endpoint": "minio3:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio3:9000/data",
+              "state": "ok"
+            }
+          ]
+        },
+        {
+          "state": "online",
+          "endpoint": "minio4:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio4:9000/data",
+              "state": "ok"
+            }
+          ]
+        },
+        {
+          "state": "online",
+          "endpoint": "minio1:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio1:9000/data",
+              "state": "ok"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "degradedInfo": {
+    "status": "success",
+    "info": {
+      "mode": "online",
+      "deploymentID": "3270de08-93ea-43b3-9e69-c0182b90681b",
+      "backend": {
+        "backendType": "Erasure",
+        "onlineDisks": 3,
+        "offlineDisks": 1,
+        "standardSCParity": 2,
+        "rrSCParity": 1,
+        "totalSets": [
+          1
+        ],
+        "totalDrivesPerSet": [
+          4
+        ]
+      },
+      "servers": [
+        {
+          "state": "online",
+          "endpoint": "minio2:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio2:9000/data",
+              "state": "ok"
+            }
+          ]
+        },
+        {
+          "state": "online",
+          "endpoint": "minio3:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio3:9000/data",
+              "state": "ok"
+            }
+          ]
+        },
+        {
+          "state": "offline",
+          "endpoint": "minio4:9000",
+          "version": null,
+          "drives": [
+            {
+              "endpoint": "http://minio4:9000/data",
+              "state": "offline"
+            }
+          ]
+        },
+        {
+          "state": "online",
+          "endpoint": "minio1:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio1:9000/data",
+              "state": "ok"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "recoveredInfo": {
+    "status": "success",
+    "info": {
+      "mode": "online",
+      "deploymentID": "3270de08-93ea-43b3-9e69-c0182b90681b",
+      "backend": {
+        "backendType": "Erasure",
+        "onlineDisks": 4,
+        "offlineDisks": 0,
+        "standardSCParity": 2,
+        "rrSCParity": 1,
+        "totalSets": [
+          1
+        ],
+        "totalDrivesPerSet": [
+          4
+        ]
+      },
+      "servers": [
+        {
+          "state": "online",
+          "endpoint": "minio2:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio2:9000/data",
+              "state": "ok"
+            }
+          ]
+        },
+        {
+          "state": "online",
+          "endpoint": "minio3:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio3:9000/data",
+              "state": "ok"
+            }
+          ]
+        },
+        {
+          "state": "online",
+          "endpoint": "minio4:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio4:9000/data",
+              "state": "ok"
+            }
+          ]
+        },
+        {
+          "state": "online",
+          "endpoint": "minio1:9000",
+          "version": "2025-09-07T16:13:09Z",
+          "drives": [
+            {
+              "endpoint": "http://minio1:9000/data",
+              "state": "ok"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "healJsonLines": [
+    {
+      "status": "success",
+      "type": "bucket",
+      "name": "g06-lab/",
+      "before": {
+        "color": "green",
+        "offline": 0,
+        "online": 4,
+        "missing": 0,
+        "corrupted": 0,
+        "drives": [
+          {
+            "uuid": "",
+            "endpoint": "http://minio1:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio2:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio3:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio4:9000/data",
+            "state": "ok"
+          }
+        ]
+      },
+      "after": {
+        "color": "green",
+        "offline": 0,
+        "online": 4,
+        "missing": 0,
+        "corrupted": 0,
+        "drives": [
+          {
+            "uuid": "",
+            "endpoint": "http://minio1:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio2:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio3:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio4:9000/data",
+            "state": "ok"
+          }
+        ]
+      },
+      "size": 0
+    },
+    {
+      "status": "success",
+      "type": "object",
+      "name": "g06-lab/before.txt",
+      "before": {
+        "color": "green",
+        "offline": 0,
+        "online": 4,
+        "missing": 0,
+        "corrupted": 0,
+        "drives": [
+          {
+            "uuid": "",
+            "endpoint": "http://minio1:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio2:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio3:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio4:9000/data",
+            "state": "ok"
+          }
+        ]
+      },
+      "after": {
+        "color": "green",
+        "offline": 0,
+        "online": 4,
+        "missing": 0,
+        "corrupted": 0,
+        "drives": [
+          {
+            "uuid": "",
+            "endpoint": "http://minio1:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio2:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio3:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio4:9000/data",
+            "state": "ok"
+          }
+        ]
+      },
+      "size": 20
+    },
+    {
+      "status": "success",
+      "type": "object",
+      "name": "g06-lab/during.txt",
+      "before": {
+        "color": "yellow",
+        "offline": 0,
+        "online": 3,
+        "missing": 1,
+        "corrupted": 0,
+        "drives": [
+          {
+            "uuid": "",
+            "endpoint": "http://minio1:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio2:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio3:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio4:9000/data",
+            "state": "missing"
+          }
+        ]
+      },
+      "after": {
+        "color": "green",
+        "offline": 0,
+        "online": 4,
+        "missing": 0,
+        "corrupted": 0,
+        "drives": [
+          {
+            "uuid": "",
+            "endpoint": "http://minio1:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio2:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio3:9000/data",
+            "state": "ok"
+          },
+          {
+            "uuid": "",
+            "endpoint": "http://minio4:9000/data",
+            "state": "ok"
+          }
+        ]
+      },
+      "size": 20
+    },
+    {
+      "status": "success",
+      "type": "summary",
+      "objects_scanned": 2,
+      "objects_healed": 1,
+      "items_scanned": 3,
+      "items_healed": 1,
+      "size": 40,
+      "duration": 1
+    }
+  ],
+  "checks": {
+    "fourNodesInitially": true,
+    "oneNodeStoppedReadPassed": true,
+    "oneNodeStoppedWritePassed": true,
+    "fourNodesRecovered": true,
+    "readChecksumsAfterRecovery": true,
+    "syntheticBucketVersioning": true,
+    "sha256": {
+      "before": "0324c8ea2da7cdb490537d400d7a8ad1259bb26dc690c0832bc223993be3eff6",
+      "during": "d22dd2c670a4306971743f427f63d7aa442276d575d25e8eebd238cea7dc17b4"
+    }
+  },
+  "passed": true,
+  "mounts": [
+    {
+      "container": "/culinary-g06-minio4-20261031-minio1-1",
+      "name": "culinary-g06-minio4-20261031_data1",
+      "destination": "/data"
+    },
+    {
+      "container": "/culinary-g06-minio4-20261031-minio2-1",
+      "name": "culinary-g06-minio4-20261031_data2",
+      "destination": "/data"
+    },
+    {
+      "container": "/culinary-g06-minio4-20261031-minio3-1",
+      "name": "culinary-g06-minio4-20261031_data3",
+      "destination": "/data"
+    },
+    {
+      "container": "/culinary-g06-minio4-20261031-minio4-1",
+      "name": "culinary-g06-minio4-20261031_data4",
+      "destination": "/data"
+    }
+  ],
+  "remainingContainers": [],
+  "remainingVolumes": [],
+  "remainingNetworks": [],
+  "userContainersAfter": [
+    "8408c093a358 culinary-blog-web-1",
+    "3a245feff450 culinary-blog-api-1",
+    "2a652e4c9469 culinary-blog-nginx-1",
+    "af42e245f804 culinary-blog-grafana-1",
+    "3fd1322e8cf8 culinary-blog-prometheus-1",
+    "d799d8731baa culinary-blog-redis-1",
+    "69149e4526cf culinary-blog-postgres-1",
+    "fc7008680210 culinary-blog-otel-collector-1",
+    "335418437c6f culinary-blog-minio-1",
+    "3f9d4aba9a36 culinary-blog-alertmanager-1",
+    "9daa52e7bcad culinary-blog-seq-1",
+    "1c92fc34db55 culinary-blog-mailhog-1",
+    "416d7c5a0b4a culinary-blog-blackbox-exporter-1"
+  ],
+  "userContainerIdentitiesPreserved": true,
+  "finishedAtUtc": "2026-10-31T05:34:24.749349+00:00"
+}

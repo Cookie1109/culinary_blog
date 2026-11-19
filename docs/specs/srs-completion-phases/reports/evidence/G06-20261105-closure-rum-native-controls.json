@@ -1,0 +1,18 @@
+{
+  "build": "tFot7ni_tHUD-2Tm_0J8M",
+  "controls": [
+    {
+      "expected": 204,
+      "actual": 204
+    },
+    {
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "expected": 413,
+      "actual": 413
+    }
+  ],
+  "measurement": "synthetic HTTP controls, not RUM"
+}

@@ -1,0 +1,53 @@
+{
+  "recordedAtUtc": "2026-10-26T17:06:43.886246+00:00",
+  "baseCommit": "7ed7a5835ab6d79ec72c9aa6d21fae72a24d206e",
+  "commit": "2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+  "branch": "fix/render-release-metadata",
+  "commitUrl": "https://github.com/Cookie1109/culinary_blog/commit/2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+  "branchUrl": "https://github.com/Cookie1109/culinary_blog/tree/fix/render-release-metadata",
+  "pushed": true,
+  "remoteMainUnchangedVerified": false,
+  "mainCommit": "2ed7f4258af1dd651edd12bebe4d62d4b2a2c047",
+  "scope": [
+    "backend/src/CulinaryBlog.Api/Program.cs",
+    "backend/src/CulinaryBlog.Api/Security/ProductionConfigurationGuard.cs",
+    "backend/src/CulinaryBlog.Api/Security/ReleaseMetadata.cs",
+    "backend/src/CulinaryBlog.Infrastructure/DependencyInjection.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/ReleaseMetadataTests.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/SecurityHardeningTests.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/StartupStorageConfigurationTests.cs",
+    "docs/operations/release-metadata.schema.json",
+    "docs/operations/render-release-metadata.md",
+    "docs/specs/phase-0/adr/ADR-011-release-metadata-providers.md"
+  ],
+  "migrationFilesAndDependenciesUnchanged": true,
+  "migrationsInCommit": 5,
+  "isolatedTestsPassed": 27,
+  "backendFormatPassed": true,
+  "frontendFormatPassed": true,
+  "prePushHookExecuted": true,
+  "rootWorkspaceChangesPreserved": true,
+  "rootIndexNotStagedOrReset": true,
+  "computerUse": "Read live deployment modal; public release endpoint independently verifies exact commit; no environment/manual deploy UI action",
+  "autoDeploySettingVerified": false,
+  "renderSettingsChanged": false,
+  "manualDeploymentTriggered": false,
+  "productionBranchUpdated": true,
+  "databaseOrRedisWritesPerformed": false,
+  "minioChanged": false,
+  "nextStep": "See render-metadata-deployment-result.json; apply new MinIO endpoint manually, keep CI findings open",
+  "initialBranchPush": {
+    "recordedAtUtc": "2026-10-26T16:50:12.355089+00:00",
+    "remoteMainUnchangedVerified": true,
+    "mainCommit": "7ed7a5835ab6d79ec72c9aa6d21fae72a24d206e",
+    "productionBranchUpdated": false,
+    "computerUse": "Stopped by tool because current browser URL could not be determined; no further UI actions"
+  },
+  "renderAutoDeploymentVerified": true,
+  "mainPromotionApproval": {
+    "questionId": "call_40e0eb214c1c40f7a94a8e4cabfa263b",
+    "answer": "Cho phép cập nhật main và auto-deploy",
+    "scope": "Exact tested commit to main and Render auto-deploy; no cloud environment edits, migrations or seed"
+  },
+  "deploymentReport": "render-metadata-deployment-result.json"
+}

@@ -1,0 +1,111 @@
+{
+  "atUtc": "2026-11-11T06:28:43.737369+00:00",
+  "scope": "Course demo issue closeout, not full SRS production acceptance",
+  "pullRequest": {
+    "number": 31,
+    "url": "https://github.com/Cookie1109/culinary_blog/pull/31",
+    "merged": true,
+    "mergeCommit": "4b9102f4b37482a76f25cdbafbfb50b1a1b26dd0"
+  },
+  "issues": [
+    {
+      "number": 25,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-11-11T06:21:14Z",
+      "html_url": "https://github.com/Cookie1109/culinary_blog/issues/25"
+    },
+    {
+      "number": 29,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-11-11T06:21:15Z",
+      "html_url": "https://github.com/Cookie1109/culinary_blog/issues/29"
+    }
+  ],
+  "ci": {
+    "runId": 42970222052,
+    "url": "https://github.com/Cookie1109/culinary_blog/actions/runs/42970222052",
+    "headSha": "03c08b3ee1b7f50727ff8bca3e36f62f2c7ce30b",
+    "conclusion": "success",
+    "jobsPassed": [
+      "backend",
+      "frontend",
+      "functional-browser",
+      "dependency-review",
+      "security",
+      "compose"
+    ]
+  },
+  "renderRecovery": {
+    "atUtc": "2026-11-11T06:26:11.534262+00:00",
+    "plan": "free",
+    "serviceId": "srv-dbf5mmoae00c73esdplg",
+    "commit": "4b9102f4b37482a76f25cdbafbfb50b1a1b26dd0",
+    "changedEnvKeys": [
+      "ObjectStorage__Endpoint"
+    ],
+    "credentialsUnchanged": true,
+    "existingStorageRetained": true,
+    "deployId": "dep-dbq0l0hsrm7s7394vme0",
+    "mode": "deploy_only",
+    "statusAtTrigger": "update_in_progress",
+    "verifiedStatus": "live",
+    "finishedAtUtc": "2026-11-11T06:26:46.246345Z"
+  },
+  "liveChecks": {
+    "atUtc": "2026-11-11T06:27:57.350310+00:00",
+    "commit": "4b9102f4b37482a76f25cdbafbfb50b1a1b26dd0",
+    "deployId": "dep-dbq0l0hsrm7s7394vme0",
+    "checks": [
+      {
+        "name": "Render /health",
+        "status": 200,
+        "sha256": "6d0c0ec7bb784d95db9ff7698a87ec3f1270bad9959f375e968d974ea38ff6d9"
+      },
+      {
+        "name": "Render /health/ready",
+        "status": 200,
+        "sha256": "6d0c0ec7bb784d95db9ff7698a87ec3f1270bad9959f375e968d974ea38ff6d9"
+      },
+      {
+        "name": "Render /health/live",
+        "status": 200,
+        "sha256": "6d0c0ec7bb784d95db9ff7698a87ec3f1270bad9959f375e968d974ea38ff6d9"
+      },
+      {
+        "name": "Render release",
+        "status": 200,
+        "sha256": "6db5fbf8dcc369d227c06027a5ebbe5ce63071d4dd9d2c58805ad95e19c09637"
+      },
+      {
+        "name": "Vercel recipes",
+        "status": 200,
+        "sha256": "a44b9a297926e89aa37542636aad1c60ff9a1275ac77483c2bd3b1e5ae2b77df"
+      },
+      {
+        "name": "Vercel same-origin API",
+        "status": 200,
+        "sha256": "33230f79efef99ce142c936df86feaa09b636cea113ea3a91e239a7e1c1c6adf"
+      },
+      {
+        "name": "Render recipe detail",
+        "status": 200,
+        "sha256": "80480791a157c578777d3f1039349ee8bdc091cf755e7de90507a03cca25d73a"
+      },
+      {
+        "name": "Render medium image",
+        "status": 200,
+        "sha256": "f9f13112f3c4ded4df8ee840ee508b76063c7e3e651385b7b696189add38bbee"
+      },
+      {
+        "name": "Vercel medium image",
+        "status": 200,
+        "sha256": "f9f13112f3c4ded4df8ee840ee508b76063c7e3e651385b7b696189add38bbee"
+      }
+    ],
+    "mediaBytesMatch": true,
+    "sessionReadHasNoSetCookie": true,
+    "passed": true
+  }
+}

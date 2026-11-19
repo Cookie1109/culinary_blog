@@ -1,0 +1,45 @@
+{
+  "atUtc": "2026-11-05T05:25:43.651627+00:00",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "redirectedOffSite": false,
+      "deploymentHeader": "sin1::iad1::2cmdc-1793856344106-1aaf7bf72ad6"
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "redirectedOffSite": false,
+      "deploymentHeader": "sin1::iad1::j9q2j-1793856344554-bb7832ef7d5a"
+    },
+    {
+      "path": "/recipes",
+      "status": 200,
+      "redirectedOffSite": false,
+      "deploymentHeader": "sin1::iad1::kxthb-1793856344993-915877e46295"
+    },
+    {
+      "path": "/search",
+      "status": 200,
+      "redirectedOffSite": false,
+      "deploymentHeader": "sin1::iad1::2cmdc-1793856345485-b0204480b967"
+    },
+    {
+      "path": "/api/auth/csrf",
+      "status": 200,
+      "redirectedOffSite": false,
+      "deploymentHeader": "sin1::iad1::49kl8-1793856345842-11c0141207be"
+    },
+    {
+      "path": "/api/web-vitals",
+      "expected": 400,
+      "status": 400
+    },
+    {
+      "path": "/api/web-vitals",
+      "expected": 403,
+      "status": 403
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+    "finishedAtUtc":  "2026-11-05T00:21:38.8022325Z",
+    "beforeCFree":  31011790848,
+    "afterBytes":  41012953088,
+    "disk":  "C:\\Users\\Admin\\AppData\\Local\\Docker\\wsl\\disk\\docker_data.vhdx",
+    "startedAtUtc":  "2026-11-05T00:20:53.2296688Z",
+    "beforeBytes":  47312797696,
+    "success":  true,
+    "afterCFree":  37310935040,
+    "operation":  "Reclaim unused virtual-disk blocks only; no Docker objects or user files deleted"
+}

@@ -1,0 +1,12 @@
+{
+  "run": "9a98888d7b32",
+  "buildId": "xdiPVekHnUeTXXctWK3dd",
+  "code": 0,
+  "scope": "5VU/5s loopback authentication/summary privacy regression; no frontend rebuild or repeated UI/Lighthouse",
+  "safeSummaryContainsJwt": false,
+  "legacySummaryContainsJwt": false,
+  "legacySetupKeys": [
+    "category"
+  ],
+  "apiDllSha256": "2682ec30d96a9df60c6a53a937b51c32b81bd08646a8533989088fec99ae96f8"
+}

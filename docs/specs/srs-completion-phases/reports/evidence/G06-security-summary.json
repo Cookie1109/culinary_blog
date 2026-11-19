@@ -1,0 +1,27 @@
+{
+  "api.json": {
+    "imageId": "sha256:a5cb68b05ff4d9c37193b1421418052a81333bd1e2e76b33fdf9d1b7dde6b773",
+    "vulnerabilities": [
+      {
+        "id": "CVE-2026-111497",
+        "package": "libbrotli1",
+        "severity": "HIGH",
+        "fixedVersion": "1.1.0-2ubuntu0.1"
+      }
+    ],
+    "failedMisconfigurations": 0,
+    "resultScopes": 4
+  },
+  "api-current.json": {
+    "imageId": "sha256:74ca9484d1a13eae3f7ec5898db3346d4d7a91fcd79058ebdb66a598c6c23864",
+    "vulnerabilities": [],
+    "failedMisconfigurations": 0,
+    "resultScopes": 4
+  },
+  "config-current.json": {
+    "imageId": null,
+    "vulnerabilities": [],
+    "failedMisconfigurations": 0,
+    "resultScopes": 11
+  }
+}

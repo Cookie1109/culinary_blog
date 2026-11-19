@@ -1,0 +1,106 @@
+# Kết quả gói G06 — Hiệu năng, bảo mật và vận hành
+
+**Checkpoint 29/10/2026 (Asia/Bangkok): G06 chưa đạt, cần tiếp tục.** Đã xử lý phần độc lập của phase30–35; **cả 9 task gốc còn mở**. Có lỗi runtime đã tái hiện/sửa, bằng chứng mới và gate đỏ thực tế. Không chứng nhận production, không thay đính chính A/B/C hoặc đặt protocol/ngoại lệ mới.
+
+- Đã đọc AGENTS, README gốc/điều phối, work-packages, progress, G05 checkpoint; đọc phần dependency G03/G04 cần cho cache/quota/media/jobs/schema. Chưa có checkpoint G06 trước lượt này.
+- PDF SRS tr.13,39–44 là tiêu chuẩn; SHA256 `8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063`. Giữ DEC-10 03:00 UTC theo Test Strategy §4; DEC-11/protocol tải và scaling vẫn mở. Không dùng lại protocol80–20/5+15phút/error1%/efficiency90% đã bị rút.
+- HEAD đầu/cuối `7ed7a5835ab6d79ec72c9aa6d21fae72a24d206e`; trước sửa có658 dirty entries,925 file được hash. Không reset/restore/stage hàng loạt, không chạm PDF/người dùng đang chuyển tài liệu. Không có ủy quyền commit/push mới; không commit/push/deploy/publish.
+- Runtime: .NET10.0.403, Node22.23.3 ở `tmp/srs-audit/runtime/node-v22.23.3-win-x64`, Python3.13.7, Docker29.7.2, k61.4.2, Trivy0.74.0, Gitleaks8.30.1, Lighthouse13.5.0. Không dùng Node host22.18.0 để nghiệm thu.
+- Môi trường synthetic riêng `culinary-g06-20261029`: PostgreSQL16.10, Redis7.4.5, MinIO digest pin, MailHog, collector0.137.0; named volumes mới, API2CPU/4GiB, port loopback ngẫu nhiên. Không dùng `.env` hoặc DB/bucket người dùng. Browser regression tái dùng runner G05 dựng một stack riêng khác; đó là regression của thay đổi G06, không thực hiện lại gói G05.
+- **Điểm chặn môi trường cuối lượt:** ổC còn khoảng0,02GB; Docker bắt đầu trả500 và build/test bị treo. ỔD còn khoảng55,7GB. Đã dừng đúng CLI build API/web G06 và test tree `g06-final` đã xác minh; không restart/stop Docker hoặc stack người dùng. Cleanup riêng G06 timeout40s, nên **chưa xác nhận dọn xong container/network/volumes G06**. Xem checkpoint cuối.
+- [Manifest nguồn/log](evidence/G06-checkpoint-manifest.json) lưu701 code/config hashes và32 log/report hashes. Các artifact trong `tmp/package-G06/` là intermediate; evidence bền vững có tiền tố `G06-` trong thư mục evidence.
+
+## Phase 30
+
+| Task / nguồn | Kết quả | Evidence / phần còn mở |
+|---|---|---|
+| D9-01; NFR-PERF-001/002/003, tr.40 | Chưa đạt; chờ protocol và production | Đã sửa k6 warm path search thiếu `q` (nay dùng recipes list), ngưỡng latency dùng≤ đúng PDF; bỏ chấp nhận1% request lỗi, mọi request fixture phải trả200. Phát hiện cache hit metric cũ bỏ sót Output Cache; thêm counter riêng và đổi k6/dashboard. **Chưa chạy smoke/load/stress mới**, chưa có mix/write/cold-warm/≥100 users hoặc production evidence. Không suy profile mặc định5 phút là protocol đã duyệt. |
+| D9-02; NFR-PERF-004/SCALE-002, tr.40–41,44 | Có review và phép đo một phần; chưa đóng | E02: PostgreSQL Testcontainer10.000 recipes,1 warm-up+5 đo; list p95 **0,097ms**, search **43,405ms**, có EXPLAIN ANALYZE/BUFFERS/GIN và composite B-tree. `StructuredLoggingTests` có query `pg_sleep(0.15)` thật và log>100ms không chứa SQL/params. Source `MapRecipesAsync` batch category/author/image theo ID, không truy vấn từng recipe. Thêm assertion pool100 và command timeout30s, mới compile; **chưa chạy hai assertion mới** do Docker. Còn mở review đầy đủ sort/filter (Title A–Z/Z–A chưa thấy B-tree Title; quickest dùng biểu thức PrepTime+CookTime), projection/SQL thực và count query theo data size. Chưa tự tạo index/migration hoặc replica/partition. |
+
+Counter mới `output.cache.hits`/`output.cache.misses` chỉ tính lookup thành công vào Redis Output Cache; không gộp cache-aside inner lookup vào mẫu số hit rate HTTP. Counter `cache.*` cũ giữ cho chẩn đoán Application. Lỗi Redis vẫn là failure counter riêng. Test hiện có về miss→hit hai instance được bổ sung assertion counter, **runtime assertion mới chưa chạy**. Không coi source instrumentation là phép đo hit≥80%.
+
+## Phase 31
+
+| Task / nguồn | Kết quả | Evidence / phần còn mở |
+|---|---|---|
+| D9-03; NFR-PERF-005, tr.41 | Chưa đạt | E05/E06: sửa gate bỏ sót ancestor layouts và bỏ qua file mất; chỉ tính JS, deduplicate, fail khi manifest rỗng/chunk thiếu. Sau code splitting validation, **21/23 page entries**≤200KiB gzip theo manifest; **new/edit recipe≈206,1KiB**, gate exit1. Đây là phép đo static chunks, chưa chứng nhận dynamic chunks/network của mọi route. Browser7/7, Node135/136 (1 fail budget), Jest21/21. Chưa có INP/RUM/sample window phù hợp. |
+
+Validation Zod/RHF vẫn giữ nguyên schema/message/server field handling. Profile, filters, category, recipe và password form tải resolver khi validate; hai schema nhỏ dùng chung (`env`, Problem Details) dùng Zod Mini để giảm JS. Không đổi form/API semantics hoặc dependency versions; custom UI harness được phép load `zod/mini` thật. Hai negative controls của budget chứng minh layout lớn/missing artifact không thể pass.
+
+Lighthouse đầu chạy4 routes×3 lần trên production-mode local HTTP. Lượt này trùng API restart/port đổi trong fault drill, home/categories500 do target stale; **không dùng làm số đo LCP/CLS hoặc kết luận lỗi sản phẩm**. Recipes/login có script transfer vượt budget trong lượt đó nhưng cùng run bị nhiễu, không dùng để nghiệm thu. Source password resolver đổi sau build của lab này; phải dựng/đo lại. TBT không được dùng thay INP. Đã dừng đúng hai process web lab G06.
+
+## Phase 32
+
+| Task / nguồn | Kết quả | Evidence / phần còn mở |
+|---|---|---|
+| D9-04; NFR-SEC-004/005/007, tr.41–42 | Có scan/remediation; chờ môi trường và artifact cuối | E07: npm0 High/Critical (5 Low), .NET vulnerable listing không tìm package lỗi trên lock hiện tại; history67 commits0 leak. Snapshot Git-eligible worktree128 findings đã triage:111 fingerprint SHA/commit/artifact,14 Render service/instance IDs,3 dòng văn bản kỹ thuật; không đổi rule/allowlist và raw scanner vẫn exit1. Trivy config11 scopes0 High/Critical. API image ban đầu có1 High `CVE-2026-111497` ở libbrotli1; Dockerfile cài package cập nhật từ Ubuntu, **image sửa có0 High/Critical**, scan exit0. Web image build chưa xong do hết ổC; không có web image scan mới. Thiếu staging HTTPS được chỉ định/identity artifact để chạy dynamic scan/TLS thật. |
+
+Hai image đã scan: trước sửa `sha256:a5cb68b05ff4d9c37193b1421418052a81333bd1e2e76b33fdf9d1b7dde6b773`; sau sửa worker/libbrotli `sha256:74ca9484d1a13eae3f7ec5898db3346d4d7a91fcd79058ebdb66a598c6c23864`. Image sau **có trước thay đổi Output Cache counters**; build cuối bị hủy khi Docker lỗi. Không gắn scan cũ cho image/source cuối chưa build.
+
+Đã rà production template giữ TLS1.2/1.3, redirect, HSTS31536000 và headers; CORS/fail-fast/cookie có integration hiện có. Đây là source/local IT, **không thay HTTPS deployment verification**. Không gọi endpoint demo/staging bất kỳ để scan, không dispatch workflow hoặc tự deploy.
+
+Automatic approval review từ chối mount Docker socket vào container Trivy vì quyền daemon quá rộng. Đã dùng **`docker image save` rồi Trivy `--input` với tar mount chỉ đọc**, không cấp socket; scan/remediation nêu trên thực chạy bằng cách này.
+
+## Phase 33
+
+| Task / nguồn | Kết quả | Evidence / phần còn mở |
+|---|---|---|
+| D9-05; FR-OBS-001/002/003, tr.39 | Có runtime OTLP/health, chưa đóng | E03/E04: health matrix trên dependency thật, public chỉ `status`; collector gRPC nhận HTTP/EF trace thật, có **3 spans chung TraceId HTTP→EF** và correlation ID, cùng request-duration/health/custom cache metrics. [OTLP summary](evidence/G06-otlp-summary.json) bỏ SQL/params. Chưa kiểm dashboard/trace backend end-to-end; request→handler→job hiện chưa đủ (job filter còn dùng `job-{id}`, outbox chưa mang context gốc). Counter Output Cache cuối mới compile, chưa có exporter evidence cho counter mới. Log sink lỗi không crash/no token có test trong E02. |
+| D9-06; NFR-REL-002, tr.43 | Lỗi runtime đã sửa và kiểm một phần; chưa đóng | E03: Redis down→ready503/live200/public read200; MinIO down→aggregate503/ready200; SMTP down→register201; DB down→ready503/live200/500 Problem Details không stack; phục hồi DB khoảng3,988s ở run cuối; token DB dùng refresh được sau API/worker restart. **Tái hiện API tự dừng khi media worker query DB lỗi**; sửa batch loop catch/log/retry ở tick sau, không đổi HostOptions thành Ignore. Regression mới1/1 chứng minh worker sống và dispatch tiếp sau DB hồi phục. Còn queue/media bytes/persistence/retry toàn stack sau restart và run cuối sạch trên artifact cuối; full regression cuối bị Docker500/hết ổC. |
+
+Drill đầu lỗi thật: `MediaOutboxDispatcher.DispatchBatchAsync` query nằm ngoài try của từng message → exception thoát BackgroundService, Host dừng, exit0 không OOM. Sửa ở vòng batch, giữ catch cancellation và không đánh dấu processed khi batch thất bại. Không sửa policy retry của từng job.
+
+Drill sau sửa đã qua các assertion outage/recovery và token; lần chờ sau restart từng fail vì Docker cấp lại host port ngẫu nhiên, đã sửa harness đọc lại `compose port`. Lượt cuối fail riêng assertion tên metric hit cũ, dẫn đến sửa counter E01; không đổi lần fail đó thành một full drill pass. Không chạy alert observation/receiver của phase36.
+
+## Phase 34
+
+| Task / nguồn | Kết quả | Evidence / phần còn mở |
+|---|---|---|
+| D9-07; NFR-REL-003, tr.43 | Scheduler đã sửa/kiểm; restore chờ môi trường | E08: scheduler neo03:00 UTC thay immediate+sleep86400 ở cả reliability/production compose. Clock-controlled container tests **4 methods/7 scenarios pass**: trước/đúng/sau mốc, midnight/restart, runtime dài và retry giữ mốc ngày. Retention PostgreSQL dùng phút thay `-mtime +30` vốn giữ tới31 ngày. MinIO lưu checksum từng file và restore đọc lại object để so bytes; PostgreSQL restore chọn marker complete, so toàn bộ public table rows/hash và schema. Backup ghi started-at; RPO đọc mốc bắt đầu thay completed-at để tránh báo thiếu khoảng backup. **Chưa chạy restore/retention fixture/WAL drill mới**, chưa có RTO/RPO thực hoặc independent production storage proof do Docker/hết đĩa. |
+
+CI compose job thêm gate scheduler; không giảm gate hiện có. Runbook ghi03:00 UTC=10:00 Asia/Bangkok, freeze writer của đúng stack thử và kiểm toàn bộ dữ liệu/media. Shell5 files và PowerShell restore parser pass; đó chỉ là syntax evidence. Test harness đã thêm cleanup tên container riêng khi timeout; phần cleanup bổ sung cuối chưa chạy lại trên Docker đang lỗi. Không restore đè DB/bucket nào, chưa chạy `runtime.py restore`.
+
+## Phase 35
+
+| Task / nguồn | Kết quả | Evidence / phần còn mở |
+|---|---|---|
+| D9-09; NFR-SCALE-001/PERF-002, tr.40,44 | Chờ đầu vào/protocol | Đã kiểm dependency và source: JWT/shared Redis/PostgreSQL Hangfire, sitemap RedLock đã có từ G04; PostgreSQL lock không thay RedLock. G03/IT có kiểm cross-instance cache/quota nhưng không phải2 API qua Nginx trong benchmark hiện tại. **Không chạy scaling khi30/33/34 chưa đủ**; chưa so throughput/latency hoặc chứng nhận tuyến tính. DEC-11 vẫn mở, không đặt tolerance. |
+| D9-10; NFR-SCALE-003/CONS-009, tr.13,44 | Chờ môi trường; topology còn thiếu | Production template hiện vẫn MinIO single node, chưa có bằng chứng distributed4+ nodes/CDN `_next/static`. Dockerfile API multi-stage/non-root hiện có; đã build một image riêng, không suy thành production topology. Chưa có tài nguyên/deployment nghiệm thu được chỉ định; không mua cloud hoặc deploy. |
+
+## Evidence dùng chung
+
+Cwd `D:/Culinary_Blog`, trừ npm/Lighthouse ở `frontend`. Các lệnh Docker dùng quyền truy cập daemon local đã được cho phép, chỉ tài nguyên thử. Log không dùng làm bằng chứng cho source đổi sau run.
+
+| ID | Lệnh/artifact thực tế | Loại / actual / exit |
+|---|---|---|
+| E01 | `dotnet build backend/CulinaryBlog.slnx -c Release --no-restore -m:1 -nodeReuse:false -p:UseSharedCompilation=false -warnaserror -p:CustomAfterMicrosoftCommonTargets=D:/Culinary_Blog/scripts/srs-analyzers.targets`; TEMP/TMP ởD | **Source cuối strict build0 warning/0 error, exit0**. Không thay runtime test. [Log](evidence/G06-analyzers-final.txt). |
+| E02 | `dotnet test backend/CulinaryBlog.slnx -c Release --no-restore --logger trx ...` ban đầu; recheck hai bài Redis; new outbox test |129 unit+3 architecture pass; IT235/237,2 fail/0skip. Redis recheck2/2 và outbox1/1 pass. Không gọi thành một full run238/238. [Counts](evidence/G06-facts.json), [query plans](evidence/G06-query-plans.txt). |
+| E03 | `python tmp/package-G06/runtime.py setup/drill` | Container/HTTP thật; nhiều checkpoints có timestamp. Run đầu tái hiện host stop; sau sửa pass outage/token, rồi fail metric assertion cũ. [Events](evidence/G06-runtime-events.json), [last drill](evidence/G06-runtime-drill-final.txt). |
+| E04 | Collector thật debug+Prometheus export từ E03 | HTTP/EF trace/metric nhận thật; chưa có Output Cache counter cuối/dashboard/job chain. [Summary](evidence/G06-otlp-summary.json). |
+| E05 | `npm run build`/`npm run budget:check`; E2E runner build lại frontend cuối | Build pass; budget **exit1**,2 route206,1KiB. [Budget](evidence/G06-bundle-budget-final.txt). |
+| E06 | `npm test`; `npm run test:components`; `npm run lint/typecheck/format`; `npm run test:e2e` | Node135/136,1 budget fail/0skip; Jest21/21; typecheck/format0; lint sửa require literal rồi kiểm lại0. **Browser7/7** (5 journeys+2 UX), run `dbff484146f1`, backend thật/MailHog. [Browser](evidence/G06-browser-regression.txt). Artifact/screenshot ở `tmp/package-G05/e2e/dbff484146f1/`, không gọi gói G05 mới. |
+| E07 | `dotnet list ... package --vulnerable --include-transitive --no-restore --format json`; `npm audit --audit-level=high --json`; Gitleaks git/dir; Trivy fs/image --input | Scopes/results ở [security summary](evidence/G06-security-summary.json), [API fixed scan](evidence/G06-scan-api-current.json), [config](evidence/G06-scan-config-current.json), [secret triage](evidence/G06-secret-triage.json). Đã phân biệt scan snapshot/old image với artifact cuối chưa build. |
+| E08 | `python scripts/test-backup-scheduler.py`; `bash -n`5 shell files; PowerShell Parser restore |4 clock tests/7 scenarios pass, exit0;5 syntax checks+PS parse0. Restore/retention/RPO runtime chưa chạy. [Clock tests](evidence/G06-scheduler-tests.txt). |
+| E09 | `dotnet test ...UnitTests -c Release --no-build --no-restore --collect "XPlat Code Coverage" ...`; `python scripts/check-application-coverage.py tmp/package-G06/unit-final` | Source cuối **129/129**,0skip; Application888/985=**90,15%**, branch68,35%, exit0/0. [Coverage gate](evidence/G06-coverage-final.txt). |
+| E10 | Full backend regression sau worker fix; API counter image build/web image build; dedicated cleanup | Unit129/architecture3 pass trước khi Docker trả500. Integration không có final verdict; **đã hủy test tree**, không suy các test chưa chạy là pass. Image builds bị hủy; cleanup timeout40s. [Interrupted regression](evidence/G06-backend-regression-final.txt), [cleanup](evidence/G06-cleanup.txt). |
+
+## Thay đổi và giới hạn
+
+- Phase30/33: thêm Output Cache counters, dashboard/k6 đúng layer; bổ sung assertion hit/miss, pool100/timeout30. Assertions mới compile nhưng chưa chạy runtime.
+- Phase31: gate đo đủ ancestor layouts/JS/missing artifact, negative controls; lazy form validation/Zod Mini, giữ behavior và tests. Chưa đạt budget recipe editor; không tăng ngưỡng.
+- Phase32/33: cập nhật libbrotli1 trong image; media batch worker không kéo chết host khi DB lỗi, thêm regression phục hồi.
+- Phase34: scheduler UTC/retention/checksum/full data restore/start-time RPO; CI clock gate/runbook. Không đổi schema/migration/HTTP contract; chưa có index migration mới.
+- G06 không đóng D9-08 hoặc chạy10/28/36/G07. Không chỉnh các trạng thái gói khác. Source issues/index/correlation/bundle còn mở để tiếp tục, không biến thiếu bằng chứng thành ngoại lệ.
+
+## Checkpoint tiếp tục
+
+1. **Giải phóng dung lượng ổC bằng lựa chọn của chủ máy.** Không xóa dữ liệu/cache/volumes người dùng hoặc restart Docker tùy tiện. ỔD còn trống không tự khắc phục chỗ ghi của công cụ/Docker trên môi trường hiện tại; chưa kiểm đường dẫn virtual disk hay kết luận nguyên nhân nội bộ daemon. Kiểm Docker API phục hồi trước khi tạo container mới.
+2. Kiểm/dọn đúng tài nguyên thử: `docker compose --project-name culinary-g06-20261029 --env-file tmp/package-G06/empty.env -f tmp/package-G06/compose.json --profile restore down --volumes`. Lượt hiện tại đã thử, timeout; chưa xác nhận cleanup. Container Testcontainers của regression bị gián đoạn có thể còn; chỉ dọn khi xác minh label/run ownership. Không chạy prune toàn daemon.
+3. Các helper tái lập nằm trong `tmp/package-G06/runtime.py` và `web.mjs` (source/hash trong checkpoint manifest/log). Synthetic credentials chỉ ở tmp, không đưa vào Git. `runtime.py setup` tạo stack riêng; `drill` phải đọc lại host port sau restart. **Build image API source cuối trước khi dùng helper**, vì tag hiện tại còn image trước counter mới. Build web cũng chưa hoàn tất.
+4. Chạy targeted mới: `dotnet test backend/tests/CulinaryBlog.IntegrationTests -c Release --no-restore --filter "FullyQualifiedName~OutputCacheApiTests|FullyQualifiedName~RecipeDiscoveryPerformanceTests|FullyQualifiedName~StructuredLoggingTests|FullyQualifiedName~MediaOutboxResilienceTests"`; rồi regression chung khi các lỗi đã rõ. Đừng ghép isolated pass thành full suite xanh. Chạy lại clock tests sau cleanup-harness change.
+5. Hoàn thiện phase33 counter/runtime/dashboard/correlation; sau đó `runtime.py restore` trên target sạch để kiểm retention31/29-day probes, schema/all-public rows/media/checksums/WAL và RTO/RPO theo started-at. **Lệnh restore này chưa chạy.** Không chạy35 benchmark trước khi đủ30/33/34.
+6. Phase31 còn tối ưu2 route editor206,1KiB, kiểm cả dynamic initial JS; tái build/chạy budget sau source đổi. Dựng lab ổn định, không đo cùng fault/restart/load/scans; đọc target/BUILD_ID hiện tại, đo LCP/CLS và tương tác/INP có sample window. Lab cũ không còn dùng được.
+7. Phase30 hoàn tất index/query review (nhất là Title/quickest) theo EXPLAIN trước tối ưu. Chốt DEC-11/workload/duration/scaling acceptance rồi mới dùng phép đo để nghiệm thu; không tự chọn protocol đã bị rút. Cần production artifact/resource/network phù hợp PDF.
+8. Phase32 cần web image scan và HTTPS staging đúng identity/ủy quyền dynamic scan; phase35 cần ít nhất2 API qua Nginx, RedLock/multi-worker, MinIO4+ nodes và CDN deployment evidence. Không suy local/config pass thành production.
+
+Progress đã cập nhật6 dòng phase30–35 và dòngG06, checklist gốc dẫn về checkpoint này;9 checkbox vẫn mở vì acceptance chưa đủ. Bàn giao này là checkpoint tiếp tục G06, **không phải kết luận hoàn tất gói hoặc SRS**.

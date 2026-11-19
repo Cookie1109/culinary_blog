@@ -1,0 +1,1507 @@
+[
+  {
+    "source": "backend\\tests\\CulinaryBlog.IntegrationTests\\AuthRateLimitTests.cs",
+    "destination": "backend\\tests\\CulinaryBlog.IntegrationTests\\AuthRateLimitTests.cs",
+    "types": [
+      "AuthRateLimitTests"
+    ]
+  },
+  {
+    "source": "backend\\tests\\CulinaryBlog.IntegrationTests\\AuthRateLimitTests.cs",
+    "destination": "backend\\tests\\CulinaryBlog.IntegrationTests\\RateLimitRedisFixture.cs",
+    "types": [
+      "RateLimitRedisFixture"
+    ]
+  },
+  {
+    "source": "backend\\tests\\CulinaryBlog.IntegrationTests\\EndpointMatrixTests.cs",
+    "destination": "backend\\tests\\CulinaryBlog.IntegrationTests\\EndpointMatrixTests.cs",
+    "types": [
+      "EndpointMatrixTests"
+    ]
+  },
+  {
+    "source": "backend\\tests\\CulinaryBlog.IntegrationTests\\EndpointMatrixTests.cs",
+    "destination": "backend\\tests\\CulinaryBlog.IntegrationTests\\HealthEndpointMatrixTests.cs",
+    "types": [
+      "HealthEndpointMatrixTests"
+    ]
+  },
+  {
+    "source": "backend\\tests\\CulinaryBlog.IntegrationTests\\FunctionalRegressionSeedTests.cs",
+    "destination": "backend\\tests\\CulinaryBlog.IntegrationTests\\FunctionalRegressionSeedTests.cs",
+    "types": [
+      "FunctionalRegressionSeedTests"
+    ]
+  },
+  {
+    "source": "backend\\tests\\CulinaryBlog.IntegrationTests\\FunctionalRegressionSeedTests.cs",
+    "destination": "backend\\tests\\CulinaryBlog.IntegrationTests\\LegacySeedPreservationTests.cs",
+    "types": [
+      "LegacySeedPreservationTests"
+    ]
+  },
+  {
+    "source": "backend\\tests\\CulinaryBlog.IntegrationTests\\StartupStorageConfigurationTests.cs",
+    "destination": "backend\\tests\\CulinaryBlog.IntegrationTests\\StartupStorageConfigurationScope.cs",
+    "types": [
+      "StartupStorageConfigurationScope"
+    ]
+  },
+  {
+    "source": "backend\\tests\\CulinaryBlog.IntegrationTests\\StartupStorageConfigurationTests.cs",
+    "destination": "backend\\tests\\CulinaryBlog.IntegrationTests\\StartupStorageConfigurationTests.cs",
+    "types": [
+      "StartupStorageConfigurationTests"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Audit\\AuditContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Audit\\IAuditLogService.cs",
+    "types": [
+      "IAuditLogService"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Audit\\AuditContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Audit\\AuditLogEntryDto.cs",
+    "types": [
+      "AuditLogEntryDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Audit\\AuditContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Audit\\TelemetryStatusDto.cs",
+    "types": [
+      "TelemetryStatusDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Audit\\AuditContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Audit\\AuditLogsEnvelope.cs",
+    "types": [
+      "AuditLogsEnvelope"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Audit\\ListAuditLogsQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Audit\\ListAuditLogsQuery.cs",
+    "types": [
+      "ListAuditLogsQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Audit\\ListAuditLogsQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Audit\\ListAuditLogsQueryValidator.cs",
+    "types": [
+      "ListAuditLogsQueryValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Audit\\ListAuditLogsQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Audit\\ListAuditLogsQueryHandler.cs",
+    "types": [
+      "ListAuditLogsQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\IPasswordResetEmailSender.cs",
+    "types": [
+      "IPasswordResetEmailSender"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\IAuthService.cs",
+    "types": [
+      "IAuthService"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RegisterRequest.cs",
+    "types": [
+      "RegisterRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\LoginRequest.cs",
+    "types": [
+      "LoginRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\GoogleLoginRequest.cs",
+    "types": [
+      "GoogleLoginRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RefreshTokenRequest.cs",
+    "types": [
+      "RefreshTokenRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ChangePasswordRequest.cs",
+    "types": [
+      "ChangePasswordRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ForgotPasswordRequest.cs",
+    "types": [
+      "ForgotPasswordRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ResetPasswordRequest.cs",
+    "types": [
+      "ResetPasswordRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\UpdateProfileRequest.cs",
+    "types": [
+      "UpdateProfileRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\UserDto.cs",
+    "types": [
+      "UserDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthSessionDto.cs",
+    "types": [
+      "AuthSessionDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\DataEnvelope.cs",
+    "types": [
+      "DataEnvelope"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RegisterCommand.cs",
+    "types": [
+      "RegisterCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RegisterCommandHandler.cs",
+    "types": [
+      "RegisterCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RegisterCommandValidator.cs",
+    "types": [
+      "RegisterCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\LoginCommand.cs",
+    "types": [
+      "LoginCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\LoginCommandHandler.cs",
+    "types": [
+      "LoginCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\LoginCommandValidator.cs",
+    "types": [
+      "LoginCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\GoogleLoginCommand.cs",
+    "types": [
+      "GoogleLoginCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\GoogleLoginCommandHandler.cs",
+    "types": [
+      "GoogleLoginCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\GoogleLoginCommandValidator.cs",
+    "types": [
+      "GoogleLoginCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RefreshSessionCommand.cs",
+    "types": [
+      "RefreshSessionCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RefreshSessionCommandHandler.cs",
+    "types": [
+      "RefreshSessionCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RefreshSessionCommandValidator.cs",
+    "types": [
+      "RefreshSessionCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\LogoutCommand.cs",
+    "types": [
+      "LogoutCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\LogoutCommandHandler.cs",
+    "types": [
+      "LogoutCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\LogoutCommandValidator.cs",
+    "types": [
+      "LogoutCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ChangePasswordCommand.cs",
+    "types": [
+      "ChangePasswordCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ChangePasswordCommandHandler.cs",
+    "types": [
+      "ChangePasswordCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ChangePasswordCommandValidator.cs",
+    "types": [
+      "ChangePasswordCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ForgotPasswordCommand.cs",
+    "types": [
+      "ForgotPasswordCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ForgotPasswordCommandHandler.cs",
+    "types": [
+      "ForgotPasswordCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ForgotPasswordCommandValidator.cs",
+    "types": [
+      "ForgotPasswordCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ResetPasswordCommand.cs",
+    "types": [
+      "ResetPasswordCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ResetPasswordCommandHandler.cs",
+    "types": [
+      "ResetPasswordCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ResetPasswordCommandValidator.cs",
+    "types": [
+      "ResetPasswordCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\GetCurrentUserQuery.cs",
+    "types": [
+      "GetCurrentUserQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\GetCurrentUserQueryHandler.cs",
+    "types": [
+      "GetCurrentUserQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\UpdateProfileCommand.cs",
+    "types": [
+      "UpdateProfileCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\UpdateProfileCommandHandler.cs",
+    "types": [
+      "UpdateProfileCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\UpdateProfileCommandValidator.cs",
+    "types": [
+      "UpdateProfileCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RegisterRequestValidator.cs",
+    "types": [
+      "RegisterRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\LoginRequestValidator.cs",
+    "types": [
+      "LoginRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ChangePasswordRequestValidator.cs",
+    "types": [
+      "ChangePasswordRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ForgotPasswordRequestValidator.cs",
+    "types": [
+      "ForgotPasswordRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ResetPasswordRequestValidator.cs",
+    "types": [
+      "ResetPasswordRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\RefreshTokenRequestValidator.cs",
+    "types": [
+      "RefreshTokenRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\NewPasswordValidator.cs",
+    "types": [
+      "NewPasswordValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\GoogleLoginRequestValidator.cs",
+    "types": [
+      "GoogleLoginRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\AuthValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\UpdateProfileRequestValidator.cs",
+    "types": [
+      "UpdateProfileRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\IApplicationActor.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\IApplicationActor.cs",
+    "types": [
+      "IApplicationActor"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Auth\\IApplicationActor.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Auth\\ApplicationActor.cs",
+    "types": [
+      "ApplicationActor"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Behaviors\\RequestBodyValidator.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Behaviors\\IRequestWithBody.cs",
+    "types": [
+      "IRequestWithBody"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Behaviors\\RequestBodyValidator.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Behaviors\\RequestBodyValidator.cs",
+    "types": [
+      "RequestBodyValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetCategoriesQuery.cs",
+    "types": [
+      "GetCategoriesQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetCategoriesQueryHandler.cs",
+    "types": [
+      "GetCategoriesQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetCategoryQuery.cs",
+    "types": [
+      "GetCategoryQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetCategoryQueryValidator.cs",
+    "types": [
+      "GetCategoryQueryValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetCategoryQueryHandler.cs",
+    "types": [
+      "GetCategoryQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateCategoryCommand.cs",
+    "types": [
+      "CreateCategoryCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateCategoryCommandHandler.cs",
+    "types": [
+      "CreateCategoryCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateCategoryCommandValidator.cs",
+    "types": [
+      "CreateCategoryCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateCategoryCommand.cs",
+    "types": [
+      "UpdateCategoryCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateCategoryCommandHandler.cs",
+    "types": [
+      "UpdateCategoryCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateCategoryCommandValidator.cs",
+    "types": [
+      "UpdateCategoryCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\DeleteCategoryCommand.cs",
+    "types": [
+      "DeleteCategoryCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\DeleteCategoryCommandHandler.cs",
+    "types": [
+      "DeleteCategoryCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateIngredientCommand.cs",
+    "types": [
+      "CreateIngredientCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateIngredientCommandHandler.cs",
+    "types": [
+      "CreateIngredientCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateIngredientCommandValidator.cs",
+    "types": [
+      "CreateIngredientCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateIngredientCommand.cs",
+    "types": [
+      "UpdateIngredientCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateIngredientCommandHandler.cs",
+    "types": [
+      "UpdateIngredientCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateIngredientCommandValidator.cs",
+    "types": [
+      "UpdateIngredientCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\DeleteIngredientCommand.cs",
+    "types": [
+      "DeleteIngredientCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\DeleteIngredientCommandHandler.cs",
+    "types": [
+      "DeleteIngredientCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateStepCommand.cs",
+    "types": [
+      "CreateStepCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateStepCommandHandler.cs",
+    "types": [
+      "CreateStepCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CreateStepCommandValidator.cs",
+    "types": [
+      "CreateStepCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateStepCommand.cs",
+    "types": [
+      "UpdateStepCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateStepCommandHandler.cs",
+    "types": [
+      "UpdateStepCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateStepCommandValidator.cs",
+    "types": [
+      "UpdateStepCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\DeleteStepCommand.cs",
+    "types": [
+      "DeleteStepCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\DeleteStepCommandHandler.cs",
+    "types": [
+      "DeleteStepCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UploadImageCommand.cs",
+    "types": [
+      "UploadImageCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UploadImageCommandHandler.cs",
+    "types": [
+      "UploadImageCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateImageCommand.cs",
+    "types": [
+      "UpdateImageCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateImageCommandHandler.cs",
+    "types": [
+      "UpdateImageCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UpdateImageCommandValidator.cs",
+    "types": [
+      "UpdateImageCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\DeleteImageCommand.cs",
+    "types": [
+      "DeleteImageCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\CompositionRequests.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\DeleteImageCommandHandler.cs",
+    "types": [
+      "DeleteImageCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\IContentService.cs",
+    "types": [
+      "IContentService"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryWriteRequest.cs",
+    "types": [
+      "CategoryWriteRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\NutritionDto.cs",
+    "types": [
+      "NutritionDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\IngredientWriteRequest.cs",
+    "types": [
+      "IngredientWriteRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\IngredientDto.cs",
+    "types": [
+      "IngredientDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\StepWriteRequest.cs",
+    "types": [
+      "StepWriteRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\StepDto.cs",
+    "types": [
+      "StepDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ImageMetadataRequest.cs",
+    "types": [
+      "ImageMetadataRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeImageDto.cs",
+    "types": [
+      "RecipeImageDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ChildMutationDto.cs",
+    "types": [
+      "ChildMutationDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\MediaFileDto.cs",
+    "types": [
+      "MediaFileDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeWriteRequest.cs",
+    "types": [
+      "RecipeWriteRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeCreateRequest.cs",
+    "types": [
+      "RecipeCreateRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryDto.cs",
+    "types": [
+      "CategoryDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeAuthorDto.cs",
+    "types": [
+      "RecipeAuthorDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeDto.cs",
+    "types": [
+      "RecipeDto"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\PageMeta.cs",
+    "types": [
+      "PageMeta"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\PageEnvelope.cs",
+    "types": [
+      "PageEnvelope"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryDetailData.cs",
+    "types": [
+      "CategoryDetailData"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryDetailEnvelope.cs",
+    "types": [
+      "CategoryDetailEnvelope"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentProblemException.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ContentProblemKind.cs",
+    "types": [
+      "ContentProblemKind"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentProblemException.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ContentProblemException.cs",
+    "types": [
+      "ContentProblemException"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetPublishedRecipeQuery.cs",
+    "types": [
+      "GetPublishedRecipeQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetPublishedRecipeQueryHandler.cs",
+    "types": [
+      "GetPublishedRecipeQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetMyRecipeQuery.cs",
+    "types": [
+      "GetMyRecipeQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetMyRecipeQueryHandler.cs",
+    "types": [
+      "GetMyRecipeQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetAdminRecipeQuery.cs",
+    "types": [
+      "GetAdminRecipeQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetAdminRecipeQueryHandler.cs",
+    "types": [
+      "GetAdminRecipeQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ListMyRecipesQuery.cs",
+    "types": [
+      "ListMyRecipesQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ListMyRecipesQueryHandler.cs",
+    "types": [
+      "ListMyRecipesQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ListAdminRecipesQuery.cs",
+    "types": [
+      "ListAdminRecipesQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ListAdminRecipesQueryHandler.cs",
+    "types": [
+      "ListAdminRecipesQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\OpenMediaQuery.cs",
+    "types": [
+      "OpenMediaQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentQueries.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\OpenMediaQueryHandler.cs",
+    "types": [
+      "OpenMediaQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentUpdateContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\NutritionUpdateRequest.cs",
+    "types": [
+      "NutritionUpdateRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentUpdateContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeUpdateRequest.cs",
+    "types": [
+      "RecipeUpdateRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentUpdateContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\IngredientUpdateRequest.cs",
+    "types": [
+      "IngredientUpdateRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentUpdateContracts.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\StepUpdateRequest.cs",
+    "types": [
+      "StepUpdateRequest"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentUpdateValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeUpdateRequestValidator.cs",
+    "types": [
+      "RecipeUpdateRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentUpdateValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\IngredientUpdateRequestValidator.cs",
+    "types": [
+      "IngredientUpdateRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentUpdateValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\StepUpdateRequestValidator.cs",
+    "types": [
+      "StepUpdateRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentUpdateValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\NutritionUpdateRequestValidator.cs",
+    "types": [
+      "NutritionUpdateRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\CategoryWriteRequestValidator.cs",
+    "types": [
+      "CategoryWriteRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeWriteRequestValidator.cs",
+    "types": [
+      "RecipeWriteRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RecipeCreateRequestValidator.cs",
+    "types": [
+      "RecipeCreateRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\IngredientWriteRequestValidator.cs",
+    "types": [
+      "IngredientWriteRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\StepWriteRequestValidator.cs",
+    "types": [
+      "StepWriteRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ContentValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ImageMetadataRequestValidator.cs",
+    "types": [
+      "ImageMetadataRequestValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\InputField.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\InputField.cs",
+    "types": [
+      "InputField"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\InputField.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\InputFieldJsonConverterFactory.cs",
+    "types": [
+      "InputFieldJsonConverterFactory"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ManagedQueryValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ListMyRecipesQueryValidator.cs",
+    "types": [
+      "ListMyRecipesQueryValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ManagedQueryValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\ListAdminRecipesQueryValidator.cs",
+    "types": [
+      "ListAdminRecipesQueryValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ManagedQueryValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\GetPublishedRecipeQueryValidator.cs",
+    "types": [
+      "GetPublishedRecipeQueryValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\ManagedQueryValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\UploadImageCommandValidator.cs",
+    "types": [
+      "UploadImageCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Content\\RequestMetadataValidators.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Content\\RequestMetadataValidator.cs",
+    "types": [
+      "RequestMetadataValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Media\\GetSitemapQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Media\\ISitemapLocation.cs",
+    "types": [
+      "ISitemapLocation"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Media\\GetSitemapQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Media\\GetSitemapQuery.cs",
+    "types": [
+      "GetSitemapQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Media\\GetSitemapQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Media\\GetSitemapQueryHandler.cs",
+    "types": [
+      "GetSitemapQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Domain\\Recipes\\RecipeImage.cs",
+    "destination": "backend\\src\\CulinaryBlog.Domain\\Recipes\\ImageProcessingStatus.cs",
+    "types": [
+      "ImageProcessingStatus"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Domain\\Recipes\\RecipeImage.cs",
+    "destination": "backend\\src\\CulinaryBlog.Domain\\Recipes\\RecipeImage.cs",
+    "types": [
+      "RecipeImage"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Caching\\RedisApplicationCache.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Caching\\CacheMetrics.cs",
+    "types": [
+      "CacheMetrics"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Caching\\RedisApplicationCache.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Caching\\RedisApplicationCache.cs",
+    "types": [
+      "RedisApplicationCache"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\ActiveUserAuthorization.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\ActiveUserRequirement.cs",
+    "types": [
+      "ActiveUserRequirement"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\ActiveUserAuthorization.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\ActiveUserAuthorizationHandler.cs",
+    "types": [
+      "ActiveUserAuthorizationHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\RecipeAuthorization.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\RecipeOwnerRequirement.cs",
+    "types": [
+      "RecipeOwnerRequirement"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\RecipeAuthorization.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\RecipeAuthorizationHandler.cs",
+    "types": [
+      "RecipeAuthorizationHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\TokenService.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\AccessTokenResult.cs",
+    "types": [
+      "AccessTokenResult"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\TokenService.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\TokenService.cs",
+    "types": [
+      "TokenService"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\VietnameseSeedData.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\VietnameseSeedData.cs",
+    "types": [
+      "VietnameseSeedData"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\VietnameseSeedData.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\SeedAuthor.cs",
+    "types": [
+      "SeedAuthor"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\VietnameseSeedData.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\SeedCategory.cs",
+    "types": [
+      "SeedCategory"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\VietnameseSeedData.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\SeedRecipe.cs",
+    "types": [
+      "SeedRecipe"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\VietnameseSeedData.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\SeedIngredient.cs",
+    "types": [
+      "SeedIngredient"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\VietnameseSeedData.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\SeedStep.cs",
+    "types": [
+      "SeedStep"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\VietnameseSeedData.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Identity\\SeedNutrition.cs",
+    "types": [
+      "SeedNutrition"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\MediaOutboxDispatcher.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\MediaOutboxTypes.cs",
+    "types": [
+      "MediaOutboxTypes"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\MediaOutboxDispatcher.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\MediaOutboxDispatcher.cs",
+    "types": [
+      "MediaOutboxDispatcher"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\MediaOutboxDispatcher.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\ResizeImagePayload.cs",
+    "types": [
+      "ResizeImagePayload"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\MediaOutboxDispatcher.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\DeleteObjectsPayload.cs",
+    "types": [
+      "DeleteObjectsPayload"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\SitemapXml.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\SitemapEntry.cs",
+    "types": [
+      "SitemapEntry"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\SitemapXml.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Jobs\\SitemapXml.cs",
+    "types": [
+      "SitemapXml"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Repository.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Repository.cs",
+    "types": [
+      "Repository"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Repository.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\RecipeRepository.cs",
+    "types": [
+      "RecipeRepository"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Repository.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\UnitOfWork.cs",
+    "types": [
+      "UnitOfWork"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\RateLimiting\\PostgresRateLimitCounter.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\RateLimiting\\RateLimitReservation.cs",
+    "types": [
+      "RateLimitReservation"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\RateLimiting\\PostgresRateLimitCounter.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\RateLimiting\\PostgresRateLimitCounter.cs",
+    "types": [
+      "PostgresRateLimitCounter"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Infrastructure\\RateLimiting\\PostgresRateLimitCounter.cs",
+    "destination": "backend\\src\\CulinaryBlog.Infrastructure\\RateLimiting\\RateLimitStateCleanupJob.cs",
+    "types": [
+      "RateLimitStateCleanupJob"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\DeleteRecipeCommand.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\DeleteRecipeCommand.cs",
+    "types": [
+      "DeleteRecipeCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\DeleteRecipeCommand.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\DeleteRecipeCommandHandler.cs",
+    "types": [
+      "DeleteRecipeCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\CreateRecipeCommand.cs",
+    "types": [
+      "CreateRecipeCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\CreateRecipeCommandHandler.cs",
+    "types": [
+      "CreateRecipeCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\CreateRecipeCommandValidator.cs",
+    "types": [
+      "CreateRecipeCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\UpdateRecipeCommand.cs",
+    "types": [
+      "UpdateRecipeCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\UpdateRecipeCommandHandler.cs",
+    "types": [
+      "UpdateRecipeCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\UpdateRecipeCommandValidator.cs",
+    "types": [
+      "UpdateRecipeCommandValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\PublishRecipeCommand.cs",
+    "types": [
+      "PublishRecipeCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\PublishRecipeCommandHandler.cs",
+    "types": [
+      "PublishRecipeCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\UnpublishRecipeCommand.cs",
+    "types": [
+      "UnpublishRecipeCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\UnpublishRecipeCommandHandler.cs",
+    "types": [
+      "UnpublishRecipeCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\ArchiveRecipeCommand.cs",
+    "types": [
+      "ArchiveRecipeCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\ArchiveRecipeCommandHandler.cs",
+    "types": [
+      "ArchiveRecipeCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\UnarchiveRecipeCommand.cs",
+    "types": [
+      "UnarchiveRecipeCommand"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\RecipeCommands.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Commands\\UnarchiveRecipeCommandHandler.cs",
+    "types": [
+      "UnarchiveRecipeCommandHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\ListPublishedRecipesQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\ListPublishedRecipesQuery.cs",
+    "types": [
+      "ListPublishedRecipesQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\ListPublishedRecipesQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\ListPublishedRecipesQueryValidator.cs",
+    "types": [
+      "ListPublishedRecipesQueryValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\ListPublishedRecipesQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\ListPublishedRecipesQueryHandler.cs",
+    "types": [
+      "ListPublishedRecipesQueryHandler"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\SearchPublishedRecipesQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\SearchPublishedRecipesQuery.cs",
+    "types": [
+      "SearchPublishedRecipesQuery"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\SearchPublishedRecipesQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\SearchPublishedRecipesQueryValidator.cs",
+    "types": [
+      "SearchPublishedRecipesQueryValidator"
+    ]
+  },
+  {
+    "source": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\SearchPublishedRecipesQuery.cs",
+    "destination": "backend\\src\\CulinaryBlog.Application\\Features\\Recipes\\Queries\\SearchPublishedRecipesQueryHandler.cs",
+    "types": [
+      "SearchPublishedRecipesQueryHandler"
+    ]
+  }
+]

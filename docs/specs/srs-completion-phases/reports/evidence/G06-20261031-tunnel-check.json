@@ -1,0 +1,18 @@
+{
+  "checkedAtUtc": "2026-10-31T05:25:01.190793+00:00",
+  "endpoint": "https://involves-chambers-blocked-faculty.trycloudflare.com",
+  "readOnly": true,
+  "renderEnvironmentChanged": false,
+  "previousEndpointDnsResolves": false,
+  "anonymousHttpStatus": {
+    "/minio/health/live": 200,
+    "/": 403,
+    "/minio/admin/v3/info": 403,
+    "/minio/": 403
+  },
+  "authenticatedListBucketSucceeded": true,
+  "existingObjectReadSucceeded": true,
+  "downloadMatchesLocal": true,
+  "downloadBytes": 273384,
+  "downloadSha256": "3afe682bf654696f4f89c21b5509caf6e982b0d1251959ce6289a21d1f42fea9"
+}

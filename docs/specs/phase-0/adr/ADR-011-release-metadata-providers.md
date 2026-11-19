@@ -2,6 +2,8 @@
 
 Ngày26/10/2026. Trạng thái: được người dùng duyệt **có điều kiện khớp PDF**, đã đối chiếu và triển khai local; chưa deploy. Không sửa hiệu lực các đính chính A/B/C hoặc đóng gate SRS nào.
 
+Cập nhật 11/11/2026. Render Free đã trả provider `Render` và commit backend `41f619b` từ `/api/v1/release`. Frontend Vercel `df0dbb9` được đối chiếu qua deployment đã ghi và SHA-256 của asset đang phục vụ. Xem [bàn giao G07](../../srs-completion-phases/reports/package-G07-result.md#d10-02-artifact). Hai trường image digest của Render vẫn theo hợp đồng provider bên dưới.
+
 ## Căn cứ và phạm vi
 
 SRS71 trang, SHA256 `8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063`:

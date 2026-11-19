@@ -1,0 +1,91 @@
+{
+  "atUtc": "2026-11-05T05:43:07.745730+00:00",
+  "scope": "G06 only, phases30-35; immutable prior05Nov evidence reused",
+  "closedTaskIds": [
+    "D9-02",
+    "D9-05",
+    "D9-06"
+  ],
+  "openTaskIds": [
+    "D9-01",
+    "D9-03",
+    "D9-04",
+    "D9-07",
+    "D9-09",
+    "D9-10"
+  ],
+  "rootHead": "ce4ae4eb8fd7d94b36b600ec01da024f4a9670e3",
+  "priorBaselineFiles": 1333,
+  "changedExistingFiles": {
+    "docs/operations/web-vitals.md": "7c7e8fe5145ec063905a59db4ccfecc47a1980f11ba9a26454a6f79e07434062",
+    "docs/specs/srs-completion-phases/progress.md": "9a1016aeab6b615f581de715d938febb04b10bd2fd2617498bc34a6547ad0362",
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md": "d55fd5aef13984ca90531fa23dc76bcf6138079b794e6314845af20ce7a1a7e3",
+    "docs/specs/srs-completion-checklist.md": "8473996bf734c32301a9c6202394ba371f437481b84b428d8f7197890b46a9d3",
+    "infra/nginx/nginx.production.conf": "4c8daf628c2d87edafe43f50a25c891cae0ac5516d4a80dfb95dede2fac8486b"
+  },
+  "newFiles": {
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-https-dast.json": "ee68d4d3549faa114531f4b19d01c3101a44e91f3a10b4a5132a5eb56078d7bf",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-rum-native-controls.json": "4a5f9b388bffabf7f436db726745f5e5459bfc9d5ffda2fe975ac862779b520e",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-production-field-first.json": "36f394c0f5e8e7399f0f12d55007879c0cd1d25bdf9bd0909fccc70211ef0b10",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-actual-media-backup-restore.json": "d98ddcde2233ce4a300b71163290d71487b1c2edd128bd7cc57b874779f53515",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-vercel-production-read.json": "be4f61ea40058262a92027c486821af1f006c6329903d1d77e964ea9b7f6d129",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-native-cwv.json": "cf22a9b44b1334b9b76130609846c7e62acfc0477363450c7c444591c430bffc",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-production-cwv-log.json": "220654a7f00fef1c47d11e35b8a8949779605f26f1ece7337d8f8ef3118d3954",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-vercel-upload-safety.json": "54908aedcb2141a6f9318e84a58b306ecc64b51e0471a9e8d3a171a7ee811c70",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-encrypted-backup.json": "1c59c6adcf213e2573a9d596fe9f38bc8c808c77b4c16914bceddb147954e8db",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-https-identity.json": "43182d458d49adf229214dc5d75f674fb5d2de751b1a2f99870041a91971b991",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-vercel-deployment.json": "ff3ce01dc68635f47ca4a719cf0942b6077224aeb89291f2b1c9a3a4b04edcc8",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-cwv-proxy-red.json": "52b11b14de1a77d9aa3fb1fe1cbb6b1c929f37523339e87d2417a0826c6ff6c7",
+    "docs/operations/g06-remaining-inputs-2026-11-05.md": "054cdc6fbcdc7d3bea88f8d9df8b6ad7ad04bdd227cca3cd3a5c65a1084d9204",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-frontend-gates.json": "495cc813055f31ff3435ae57037c747897f1fc3314695856d3a744c1c9751d83",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-https-cleanup.json": "05237f592ac6184c2212711529f26ea53e4bd3c18669b29541404dc36d4e0cca",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-vercel-staged-checks.json": "95995240244985822703f7db065965abedfda5da370ec43fe0ead15a78ea0ffc",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-https-security-checks.json": "4cc6f0db7e65533138abd982e68fe538f18b4655ae11e8b44595bdc1fdc546a2",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-cwv-proxy-green.json": "0136f5835de7cd8aa56eccca2802642133c1e662d94590867d300a7ed46947ba",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-preservation.json": "c7cb8c7f47da493c73c2568ac789a8ffc794580201c7ff4a259f9f942492cb08",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-vercel-env-preservation.json": "4d80d8a68e94dccb525d1fbd9fbcb1215e20b2b411be46557386917fba44db83",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261105-closure-secret-triage.json": "b5d0a7494fbd986a046684b4167e37c8561e261686bd5772839f10807e0de65b"
+  },
+  "evidence": {
+    "G06-20261105-closure-actual-media-backup-restore.json": "d98ddcde2233ce4a300b71163290d71487b1c2edd128bd7cc57b874779f53515",
+    "G06-20261105-closure-cwv-proxy-green.json": "0136f5835de7cd8aa56eccca2802642133c1e662d94590867d300a7ed46947ba",
+    "G06-20261105-closure-cwv-proxy-red.json": "52b11b14de1a77d9aa3fb1fe1cbb6b1c929f37523339e87d2417a0826c6ff6c7",
+    "G06-20261105-closure-encrypted-backup.json": "1c59c6adcf213e2573a9d596fe9f38bc8c808c77b4c16914bceddb147954e8db",
+    "G06-20261105-closure-frontend-gates.json": "495cc813055f31ff3435ae57037c747897f1fc3314695856d3a744c1c9751d83",
+    "G06-20261105-closure-https-cleanup.json": "05237f592ac6184c2212711529f26ea53e4bd3c18669b29541404dc36d4e0cca",
+    "G06-20261105-closure-https-dast.json": "ee68d4d3549faa114531f4b19d01c3101a44e91f3a10b4a5132a5eb56078d7bf",
+    "G06-20261105-closure-https-identity.json": "43182d458d49adf229214dc5d75f674fb5d2de751b1a2f99870041a91971b991",
+    "G06-20261105-closure-https-security-checks.json": "4cc6f0db7e65533138abd982e68fe538f18b4655ae11e8b44595bdc1fdc546a2",
+    "G06-20261105-closure-native-cwv.json": "cf22a9b44b1334b9b76130609846c7e62acfc0477363450c7c444591c430bffc",
+    "G06-20261105-closure-preservation.json": "c7cb8c7f47da493c73c2568ac789a8ffc794580201c7ff4a259f9f942492cb08",
+    "G06-20261105-closure-production-cwv-log.json": "220654a7f00fef1c47d11e35b8a8949779605f26f1ece7337d8f8ef3118d3954",
+    "G06-20261105-closure-production-field-first.json": "36f394c0f5e8e7399f0f12d55007879c0cd1d25bdf9bd0909fccc70211ef0b10",
+    "G06-20261105-closure-rum-native-controls.json": "4a5f9b388bffabf7f436db726745f5e5459bfc9d5ffda2fe975ac862779b520e",
+    "G06-20261105-closure-secret-triage.json": "b5d0a7494fbd986a046684b4167e37c8561e261686bd5772839f10807e0de65b",
+    "G06-20261105-closure-vercel-deployment.json": "ff3ce01dc68635f47ca4a719cf0942b6077224aeb89291f2b1c9a3a4b04edcc8",
+    "G06-20261105-closure-vercel-env-preservation.json": "4d80d8a68e94dccb525d1fbd9fbcb1215e20b2b411be46557386917fba44db83",
+    "G06-20261105-closure-vercel-production-read.json": "be4f61ea40058262a92027c486821af1f006c6329903d1d77e964ea9b7f6d129",
+    "G06-20261105-closure-vercel-staged-checks.json": "95995240244985822703f7db065965abedfda5da370ec43fe0ead15a78ea0ffc",
+    "G06-20261105-closure-vercel-upload-safety.json": "54908aedcb2141a6f9318e84a58b306ecc64b51e0471a9e8d3a171a7ee811c70"
+  },
+  "sourceFileHashes": {
+    "infra/nginx/nginx.production.conf": "4c8daf628c2d87edafe43f50a25c891cae0ac5516d4a80dfb95dede2fac8486b"
+  },
+  "isolatedFrontendCommit": "b4f3376e8001c283faf1773c87cf0e4ccc3b06e1",
+  "pdfSha256": "8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063",
+  "finalPublicGitleaks": {
+    "exit": 1,
+    "findings": 1,
+    "unresolved": 0
+  },
+  "rawPrivateArtifactsExcluded": [
+    "provider logs/auth/env/automation-bypass token",
+    "Neon dump/PFX",
+    "all301media/raw manifest",
+    "temporary TLS keys/config and signed requests"
+  ],
+  "metadataExclusions": [
+    "manifest and validation cannot hash themselves",
+    "historical whole-worktree metadata changed by current permitted tracking files; old evidence itself remains immutable"
+  ]
+}

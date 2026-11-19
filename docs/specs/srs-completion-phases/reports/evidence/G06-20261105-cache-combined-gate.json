@@ -1,0 +1,24 @@
+{
+  "exit": 0,
+  "checks": [
+    {
+      "trx": "tmp/package-G06/resume-20261104/cache-isolated-full-tests/Admin_COOKIEE_2026-11-04_19_45_07_net10.0.trx",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "trx": "tmp/package-G06/resume-20261104/cache-isolated-full-tests/Admin_COOKIEE_2026-11-04_19_45_16_net10.0.trx",
+      "passed": 290,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "trx": "tmp/package-G06/resume-20261104/cache-unit-fixtures-tests/Admin_COOKIEE_2026-11-05_06_44_56_net10.0.trx",
+      "passed": 157,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "reuseReason": "Only two unit-test DI fixtures changed after full integration/architecture pass; production and integration source unchanged."
+}

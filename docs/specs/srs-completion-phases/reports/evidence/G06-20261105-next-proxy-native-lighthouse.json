@@ -1,0 +1,425 @@
+{
+  "build": "tWVKFb5qF1kb1-HXqamyT",
+  "exit": 0,
+  "routes": 7,
+  "runsPerRoute": 3,
+  "summaries": [
+    {
+      "url": "/",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": false,
+          "value": 0.89,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 2189.1320000000005,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 4.742989876687132e-05,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 188913,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "/recipes",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.97,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 1233.9328000000003,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 3.268311813197882e-05,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 188417,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "/categories",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.99,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 876.8200000000002,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 4.405296779694757e-05,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 180673,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "/search",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.96,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 1352.1992749999995,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 4.405296779694757e-05,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 188417,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "/login",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 690.7450999999998,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 1.745994221171526e-05,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 182591,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "/recipes/goi-bo-bop-thau",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.98,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 1087.2878,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.0003183139602122974,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 180673,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "/categories/mon-nuoc",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.99,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 854.79,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 5.475353095267302e-05,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 183191,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    }
+  ],
+  "rawLogSha256": "731cc38689e4d904cd7b8fafaa302b4e86ee71d483408b6eb97e0a542eb2fd1f",
+  "diagnosticsRetained": true,
+  "syntheticLabOnly": true,
+  "INPFieldAcceptance": false
+}

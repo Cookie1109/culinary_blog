@@ -30,9 +30,9 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D8-05 · Sửa/kiểm chứng E2E-03:** tạo Draft bằng wizard với thông tin, ingredient, step, image; kiểm preview/private visibility, validation và save/error/conflict recovery theo SRS.
-- [ ] **D8-06 · Sửa/kiểm chứng E2E-04:** publish từ UI → home/list/detail/category/search thấy nội dung → unpublish/archive mất khỏi public/cache; Author khác không được sửa, Admin đúng quyền; kiểm cả nội dung vừa mutation và invalidation.
-- [ ] **D8-07 · Sửa/kiểm chứng E2E-05:** tìm “pho/phở” → relevance/filter/sort/page/URL/back-forward → mở đúng detail; có empty/error/loading và query không hợp lệ rõ ràng.
+- [x] **D8-05 · Sửa/kiểm chứng E2E-03:** tạo Draft bằng wizard với thông tin, ingredient, step, image; kiểm preview/private visibility, validation và save/error/conflict recovery theo SRS.
+- [x] **D8-06 · Sửa/kiểm chứng E2E-04:** publish từ UI → home/list/detail/category/search thấy nội dung → unpublish/archive mất khỏi public/cache; Author khác không được sửa, Admin đúng quyền; kiểm cả nội dung vừa mutation và invalidation.
+- [x] **D8-07 · Sửa/kiểm chứng E2E-05:** tìm “pho/phở” → relevance/filter/sort/page/URL/back-forward → mở đúng detail; có empty/error/loading và query không hợp lệ rõ ràng.
 
 ## Trình tự thực hiện trong phase
 
@@ -49,11 +49,15 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Đủ năm critical browser journeys thực chạy, có assertion nội dung/state/visibility.
-- [ ] HTTP simulation không thay backend thật của các bài nghiệm thu này.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Đủ năm critical browser journeys thực chạy, có assertion nội dung/state/visibility.
+- [x] HTTP simulation không thay backend thật của các bài nghiệm thu này.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-26-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-25-e2e-registration-and-login.md) · [Tiếp theo để tham khảo](phase-27-ux-responsive-accessibility.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+## Checkpoint G05 ngày 29/10/2026
+
+Kết quả nguồn cuối ngày29/10/2026, gates và giới hạn môi trường ở [report G05](reports/package-G05-result.md#phase-26). Checkbox task chỉ đóng theo evidence trong report; trạng thái ban đầu ở đầu tài liệu được giữ như lịch sử.

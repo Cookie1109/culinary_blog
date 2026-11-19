@@ -1,0 +1,175 @@
+{
+  "deployment": "dpl_6UHCvBm31hSkn3AWF79uvVDeqV4R",
+  "sourceCommit": "d50f9dd439000a1ae865b0b84fc6d7465a4926c6",
+  "manifest": {
+    "event": "g06-bundle-manifest",
+    "sha256": "e31870b036d202a10ef359b1e366f8554303f027a80ec274b08300aecccbdde0"
+  },
+  "routes": [
+    {
+      "event": "g06-bundle-route",
+      "route": "/_not-found/page",
+      "rawKb": 459.6,
+      "gzipKb": 143.7,
+      "gzipBytes": 147143,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(auth)/register/page",
+      "rawKb": 479.9,
+      "gzipKb": 150.9,
+      "gzipBytes": 154486,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(auth)/forgot-password/page",
+      "rawKb": 473.5,
+      "gzipKb": 148.8,
+      "gzipBytes": 152337,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(auth)/login/page",
+      "rawKb": 479.4,
+      "gzipKb": 151,
+      "gzipBytes": 154637,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(auth)/reset-password/page",
+      "rawKb": 473.5,
+      "gzipKb": 148.8,
+      "gzipBytes": 152337,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/profile/page",
+      "rawKb": 514.1,
+      "gzipKb": 162.7,
+      "gzipBytes": 166574,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(public)/categories/page",
+      "rawKb": 506.9,
+      "gzipKb": 160.7,
+      "gzipBytes": 164577,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(public)/page",
+      "rawKb": 534.1,
+      "gzipKb": 168.8,
+      "gzipBytes": 172817,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(public)/recipes/[slug]/page",
+      "rawKb": 506.9,
+      "gzipKb": 160.7,
+      "gzipBytes": 164577,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(public)/recipes/page",
+      "rawKb": 531.1,
+      "gzipKb": 168.3,
+      "gzipBytes": 172319,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(public)/categories/[slug]/page",
+      "rawKb": 512.3,
+      "gzipKb": 163.2,
+      "gzipBytes": 167096,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/audit/page",
+      "rawKb": 551.7,
+      "gzipKb": 175.2,
+      "gzipBytes": 179370,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/categories/page",
+      "rawKb": 554.4,
+      "gzipKb": 176,
+      "gzipBytes": 180265,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/page",
+      "rawKb": 543.3,
+      "gzipKb": 172.8,
+      "gzipBytes": 176972,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/recipes/new/page",
+      "rawKb": 585.4,
+      "gzipKb": 184.9,
+      "gzipBytes": 189306,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/recipes/[id]/edit/page",
+      "rawKb": 585.4,
+      "gzipKb": 184.9,
+      "gzipBytes": 189306,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/recipes/page",
+      "rawKb": 562.4,
+      "gzipKb": 177.9,
+      "gzipBytes": 182211,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/system/page",
+      "rawKb": 566,
+      "gzipKb": 179.5,
+      "gzipBytes": 183770,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/users/page",
+      "rawKb": 529.6,
+      "gzipKb": 168.4,
+      "gzipBytes": 172489,
+      "status": "PASS"
+    },
+    {
+      "event": "g06-bundle-route",
+      "route": "/(dashboard)/dashboard/recipes/[id]/preview/page",
+      "rawKb": 527.5,
+      "gzipKb": 168.3,
+      "gzipBytes": 172320,
+      "status": "PASS"
+    }
+  ],
+  "assetCount": 58,
+  "pageRoutes": 20,
+  "maxGzipBytes": 189306,
+  "thresholdBytes": 204800,
+  "allRouteBudgetsPassed": true
+}

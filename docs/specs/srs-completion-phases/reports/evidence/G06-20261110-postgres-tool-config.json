@@ -1,0 +1,16 @@
+{
+  "scanner": "Trivy0.74.0",
+  "command": "trivy config --severity HIGH,CRITICAL --format json --exit-code1 [dedicated Dockerfile context]",
+  "exit": 0,
+  "checks": [
+    {
+      "target": "Dockerfile",
+      "summary": {
+        "Successes": 20,
+        "Failures": 0
+      }
+    }
+  ],
+  "rawReportSha256": "cdf9f3fcdfb10a221ce0b4723d2beaac627cf57327d1b1d7a4e56b37c5cf4fa7",
+  "dockerfileSourceSha256": "4b48b29b737cd452b55bd78c3970e3df7f9d9cc94e55d5224c7a6e6438040ff6"
+}

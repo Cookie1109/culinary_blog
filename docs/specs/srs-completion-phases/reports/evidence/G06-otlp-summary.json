@@ -1,0 +1,70 @@
+{
+  "collector": "0.137.0 real OTLP gRPC receiver; detailed debug trace exporter + Prometheus exporter",
+  "correlatedHttpEfSpans": [
+    {
+      "traceId": "1e890fc44ceb7393c53f19f93a8c1639",
+      "parentId": "6f02ead6e87934b4",
+      "spanId": "db5ac3615737674a",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "1e890fc44ceb7393c53f19f93a8c1639",
+      "parentId": "6f02ead6e87934b4",
+      "spanId": "e1a9ce7957db9950",
+      "name": "g06",
+      "kind": "Client",
+      "postgresql": true,
+      "http": false,
+      "correlation": null
+    },
+    {
+      "traceId": "1e890fc44ceb7393c53f19f93a8c1639",
+      "parentId": "collector-1  |     ID             : 6f02ead6e87934b4",
+      "spanId": "6f02ead6e87934b4",
+      "name": "GET /api/v1/categories/",
+      "kind": "Server",
+      "postgresql": false,
+      "http": true,
+      "correlation": "g06-runtime-drill"
+    }
+  ],
+  "metricNames": [
+    "aspnetcore_authentication_authenticate_duration_seconds",
+    "aspnetcore_diagnostics_exceptions_total",
+    "aspnetcore_identity_user_create_duration_seconds",
+    "aspnetcore_identity_user_update_duration_seconds",
+    "aspnetcore_memory_pool_allocated_bytes_total",
+    "aspnetcore_memory_pool_evicted_bytes_total",
+    "aspnetcore_memory_pool_pooled_bytes",
+    "aspnetcore_memory_pool_rented_bytes_total",
+    "aspnetcore_rate_limiting_active_request_leases",
+    "aspnetcore_rate_limiting_queued_requests",
+    "aspnetcore_rate_limiting_request_lease_duration_seconds",
+    "aspnetcore_rate_limiting_request_time_in_queue_seconds",
+    "aspnetcore_rate_limiting_requests_total",
+    "aspnetcore_routing_match_attempts_total",
+    "cache_misses_total",
+    "cache_operation_duration_milliseconds",
+    "cache_operation_failures_total",
+    "culinary_health_check",
+    "culinary_health_readiness",
+    "dns_lookup_duration_seconds",
+    "http_client_active_requests",
+    "http_client_connection_duration_seconds",
+    "http_client_open_connections",
+    "http_client_request_duration_seconds",
+    "http_client_request_time_in_queue_seconds",
+    "http_server_active_requests",
+    "http_server_request_duration_seconds",
+    "kestrel_active_connections",
+    "kestrel_connection_duration_seconds",
+    "kestrel_queued_connections",
+    "target_info"
+  ],
+  "knownGap": "Old cache.hits excluded public Output Cache; output.cache.hits/misses added in final source but runtime check blocked by disk full",
+  "rawTraceSha256": "0d0ccb96b5adebe32a8ba67d5cdf035c810661d12276510447e743f2c34834ca"
+}

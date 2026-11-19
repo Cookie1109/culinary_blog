@@ -1,0 +1,66 @@
+{
+  "atUtc": "2026-11-10T16:58:37.957115+00:00",
+  "openTasks": [
+    "D9-01",
+    "D9-04",
+    "D9-09",
+    "D9-10"
+  ],
+  "productionBackend": {
+    "serviceId": "srv-dbf5mmoae00c73esdplg",
+    "plan": "free",
+    "numInstances": 1,
+    "region": "singapore",
+    "providerInventoryExit": 0,
+    "sourceCommitStill": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298"
+  },
+  "performanceRequirements": {
+    "source": "PDFp40§4.1preface explicitlyproductionwithrealtraffic; >=100users single2vCPU4GB andlinearhorizontalscaling",
+    "notProved": [
+      "Approvedproductionloadtargetwith2vCPU4GB",
+      "Production100userread/writesmokeloadstress andcounterwindow",
+      "Productionmultiinstancecapacity/linearitycriteria/measurement"
+    ],
+    "publicLoadAuthorized": false,
+    "localDiagnostic": {
+      "project": "culinary-g06-b16b4b1f3b97",
+      "exits": {
+        "startedAtUtc": "2026-11-10T16:47:02.123941+00:00",
+        "purpose": "Missing D9-01 single-instance read/write gate; no public service load",
+        "setupExit": 0,
+        "smokeExit": 0,
+        "journeyExit": 1,
+        "cleanupExit": 0,
+        "finishedAtUtc": "2026-11-10T16:49:41.055067+00:00"
+      },
+      "disposition": "Intentionallyinterrupted afterrecheckingproductionrequirement; setup/smoke0,journey1 retained. No partialrunaccepted.",
+      "resourcesRemoved": true,
+      "userContainerIdsPreserved": true
+    }
+  },
+  "storageRequirements": {
+    "source": "PDFp44NFR-SCALE-003production4+MinIOnodes; originalD9-04High/Criticalgate",
+    "currentImageId": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "unresolvedAdvisory": "GHSA-9c4q-hq6p-c237",
+    "vendorPatchedEdition": "AIStor",
+    "activeProductionLicenseRequired": true,
+    "freeLicenseSupports": "single-node only",
+    "notProved": [
+      "Patchedsupportedserverwithvalidproductionmulti-nodelicense",
+      "Actualproduction4+nodedurabletopology/loadbalancer/CDNrequirement"
+    ],
+    "providerReferences": [
+      "https://github.com/minio/minio/security/advisories/GHSA-9c4q-hq6p-c237",
+      "https://docs.min.io/aistor/installation/linux/install/deploy-aistor-on-ubuntu-server/"
+    ],
+    "noLicensePurchaseProviderSwitchInfrastructureMigrationPerformed": true
+  },
+  "scopeRestrictionsKept": [
+    "No publicload/DAST",
+    "No paidresourceorlicensepurchase",
+    "No photo/Drivebackup",
+    "No Neonmigration/reset",
+    "No otherpackages/phase10/28/36"
+  ],
+  "remainingTasksClosedByPressure": false
+}
