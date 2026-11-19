@@ -47,7 +47,6 @@ async function createDraft(page: Page, title: string) {
   await page.locator('#title').fill(title)
   await page.locator('#description').fill('Công thức synthetic dùng riêng cho kiểm thử browser.')
   await page.locator('#category').selectOption({ index: 1 })
-  await page.locator('#prepTime').fill('10')
   await page.locator('#cookTime').fill('20')
   await page.locator('#servings').fill('2')
   const created = page.waitForResponse(
