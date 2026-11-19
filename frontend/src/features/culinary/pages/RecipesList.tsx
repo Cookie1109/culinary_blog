@@ -91,7 +91,9 @@ export function RecipesList({
   const composing = useRef(false)
   const focusResults = useRef(false)
   const submittedSearch = useRef<string | null>(null)
-  const hasActiveFilters = [...searchParams.keys()].some((key) => !['q', 'page', 'sort', 'pageSize'].includes(key))
+  const hasActiveFilters = [...searchParams.keys()].some(
+    (key) => !['q', 'page', 'sort', 'pageSize'].includes(key),
+  )
   const selectedCategory = categories.find((item) => item.slug === category)
   const firstCategories = categories.slice(0, 4)
   const visibleCategories =
