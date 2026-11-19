@@ -1,5 +1,6 @@
 'use client'
 
+import { formatMinutes } from '@/lib/recipe-timer'
 import { Clock, LoaderCircle } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
@@ -66,7 +67,7 @@ export function RecipeCard({
         </span>
         <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <Clock size={14} aria-hidden="true" />
-          {recipe.prepTime + recipe.cookTime} phút
+          {formatMinutes(recipe.prepTime + recipe.cookTime)}
         </span>
       </div>
       <Heading className="font-serif text-2xl transition-colors group-hover:text-primary">

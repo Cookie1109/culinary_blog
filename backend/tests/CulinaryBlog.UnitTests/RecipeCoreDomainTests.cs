@@ -290,7 +290,7 @@ public sealed class RecipeCoreDomainTests
     public void TimesAreDerivedFromActiveSteps()
     {
         var recipe = CreateRecipe();
-        var prep = RecipeStep.Create(Guid.NewGuid(), recipe.Id, 1, "Prep", "Wash", 0.5, null, "prep");
+        var prep = RecipeStep.Create(Guid.NewGuid(), recipe.Id, 1, "Prep", "Wash", 1.5, null, "prep");
         var cook = RecipeStep.Create(Guid.NewGuid(), recipe.Id, 2, "Cook", "Boil", 10, null);
         var untimed = RecipeStep.Create(Guid.NewGuid(), recipe.Id, 3, "Serve", "Serve", null, null);
         RecipeStep[] steps = [prep, cook, untimed];
