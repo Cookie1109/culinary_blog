@@ -10,7 +10,14 @@ export const categorySchema = z.object({
     .max(50, formMessages.categoryName)
     .refine((value) => !/<[^>]*>/.test(value), formMessages.categoryHtml),
   description: z.string().max(2000, formMessages.descriptionLength),
-  imageUrl: optionalImageUrl,
+  imageUrl: z
+    .string()
+    .trim()
+    .max(500, formMessages.imageUrlLength)
+    .refine((value) => {
+      if (!value || value.startsWith('/api/v1/media/')) return true
+      return optionalImageUrl.safeParse(value).success
+    }, formMessages.imageUrlInvalid),
   orderIndex: z
     .number({ error: formMessages.number })
     .int(formMessages.orderInteger)

@@ -397,6 +397,35 @@
           "AdminAuditLogsApiTests.AuthorRequestIsRejectedWithForbidden"
         ]
       }
+    },
+    {
+      "operation": "POST /api/v1/categories/image",
+      "cases": {
+        "happy": [
+          "CategoryImageApiTests.ReplacingOrClearingImageDeletesUnusedFile",
+          "CategoryImageApiTests.SharedImageIsKeptWhileAnotherCategoryUsesIt"
+        ],
+        "error": [
+          "CategoryImageApiTests.MalformedMultipartIsRejectedAsBadRequest"
+        ],
+        "authorization": [
+          "CategoryImageApiTests.OnlyAdministratorsCanUploadCategoryImages"
+        ]
+      }
+    },
+    {
+      "operation": "GET /api/v1/media/category/{fileName}",
+      "cases": {
+        "happy": [
+          "CategoryImageApiTests.ReplacingOrClearingImageDeletesUnusedFile"
+        ],
+        "error": [
+          "CategoryImageApiTests.OnlyAdministratorsCanUploadCategoryImages"
+        ],
+        "authorization": [
+          "CategoryImageApiTests.OnlyAdministratorsCanUploadCategoryImages"
+        ]
+      }
     }
   ]
 }
