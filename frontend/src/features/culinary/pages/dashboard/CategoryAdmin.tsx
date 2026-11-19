@@ -1,13 +1,26 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, CheckCircle2, Pencil, Plus, Trash2 } from 'lucide-react'
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle2,
+  FolderOpen,
+  ImageOff,
+  Layers,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react'
+import Image from 'next/image'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { FieldError } from '@/components/ui/field-error'
 import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/features/culinary/contexts/AuthContext'
 import { Modal } from '@/components/ui/modal'
+import { publicMediaUrl } from '@/lib/media-url'
 import { ApiProblem, apiErrorMessage } from '@/lib/api/problem-details'
 import {
   createCategory,
@@ -16,11 +29,34 @@ import {
   updateCategory,
   type Category,
 } from '@/lib/api/content-client'
+import { CategoryImageField } from './CategoryImageField'
 import { formMessages } from '../../forms/messages'
 import { setServerFieldErrors } from '../../forms/server-errors'
 import type { CategoryValues } from '../../forms/content-schemas'
 
 const EMPTY_FORM: CategoryValues = { name: '', description: '', imageUrl: '', orderIndex: 0 }
+
+function CategoryThumb({ category }: { category: Category }) {
+  const [failed, setFailed] = useState(false)
+  if (!category.imageUrl || failed) {
+    return (
+      <div className="grid h-full w-full place-items-center text-muted-foreground" aria-hidden="true">
+        <ImageOff size={18} strokeWidth={1.5} />
+      </div>
+    )
+  }
+  return (
+    <Image
+      src={publicMediaUrl(category.imageUrl)}
+      alt=""
+      fill
+      sizes="80px"
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="object-cover"
+    />
+  )
+}
 
 export function CategoryAdmin() {
   const { user } = useAuth()
@@ -32,15 +68,20 @@ export function CategoryAdmin() {
     handleSubmit,
     reset: resetForm,
     setError: setFieldError,
+    setValue,
+    control,
     formState: { errors },
   } = useForm<CategoryValues>({
     resolver: async (...args) => (await import('../../forms/deferred-resolvers')).categoryResolver(...args),
     defaultValues: EMPTY_FORM,
   })
+  const imageUrl = useWatch({ control, name: 'imageUrl' })
   const { showToast } = useToast()
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
   const [actionNotice, setActionNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [imageUploading, setImageUploading] = useState(false)
 
   const categories = useQuery({
     queryKey: ['categories'],
@@ -54,7 +95,12 @@ export function CategoryAdmin() {
         name: form.name.trim(),
         description: form.description.trim() || null,
         imageUrl: form.imageUrl.trim() || null,
-        orderIndex: form.orderIndex,
+        orderIndex: editing
+          ? editing.orderIndex
+          : Math.max(
+              -1,
+              ...(queryClient.getQueryData<Category[]>(['categories']) ?? []).map((c) => c.orderIndex),
+            ) + 1,
       }
       return editing ? updateCategory(editing.id, payload) : createCategory(payload)
     },
@@ -153,10 +199,15 @@ export function CategoryAdmin() {
     save.mutate(values)
   }
 
-  // Sort categories by orderIndex ascending, then name
   const sortedCategories = categories.data
-    ? [...categories.data].sort((a, b) => a.orderIndex - b.orderIndex || a.name.localeCompare(b.name))
+    ? [...categories.data].sort((a, b) => a.name.localeCompare(b.name, 'vi'))
     : []
+  const totalRecipes = sortedCategories.reduce((sum, c) => sum + c.recipeCount, 0)
+  const emptyCount = sortedCategories.filter((c) => c.recipeCount === 0).length
+  const needle = query.trim().toLowerCase()
+  const visibleCategories = needle
+    ? sortedCategories.filter((c) => c.name.toLowerCase().includes(needle))
+    : sortedCategories
 
   return (
     <div>
@@ -214,7 +265,7 @@ export function CategoryAdmin() {
               </p>
             )}
             <fieldset disabled={save.isPending}>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-5">
                 <label className="text-xs uppercase tracking-widest text-muted-foreground">
                   Tên danh mục <span className="text-red-500">*</span>
                   <input
@@ -230,20 +281,6 @@ export function CategoryAdmin() {
                   <FieldError id="category-name-error" message={errors.name?.message} />
                 </label>
                 <label className="text-xs uppercase tracking-widest text-muted-foreground">
-                  Thứ tự quản trị <span className="text-red-500">*</span>
-                  <input
-                    required
-                    type="number"
-                    min={0}
-                    {...register('orderIndex', { valueAsNumber: true })}
-                    aria-invalid={Boolean(errors.orderIndex)}
-                    aria-describedby={errors.orderIndex ? 'category-orderIndex-error' : undefined}
-                    className="mt-2 w-full border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-                    placeholder="0, 1, 2..."
-                  />
-                  <FieldError id="category-orderIndex-error" message={errors.orderIndex?.message} />
-                </label>
-                <label className="text-xs uppercase tracking-widest text-muted-foreground md:col-span-2">
                   Mô tả
                   <textarea
                     maxLength={2000}
@@ -256,19 +293,15 @@ export function CategoryAdmin() {
                   />
                   <FieldError id="category-description-error" message={errors.description?.message} />
                 </label>
-                <label className="text-xs uppercase tracking-widest text-muted-foreground md:col-span-2">
-                  URL hình ảnh
-                  <input
-                    type="url"
-                    maxLength={500}
-                    {...register('imageUrl')}
-                    aria-invalid={Boolean(errors.imageUrl)}
-                    aria-describedby={errors.imageUrl ? 'category-imageUrl-error' : undefined}
-                    className="mt-2 w-full border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-                    placeholder="https://example.com/images/category.jpg"
+                <div>
+                  <CategoryImageField
+                    value={imageUrl}
+                    onChange={(url) => setValue('imageUrl', url, { shouldDirty: true, shouldValidate: true })}
+                    onBusyChange={setImageUploading}
+                    disabled={save.isPending}
                   />
                   <FieldError id="category-imageUrl-error" message={errors.imageUrl?.message} />
-                </label>
+                </div>
               </div>
             </fieldset>
             <div className="mt-5 flex justify-end gap-3 border-t border-border pt-4">
@@ -282,7 +315,7 @@ export function CategoryAdmin() {
               </button>
               <button
                 type="submit"
-                disabled={save.isPending}
+                disabled={save.isPending || imageUploading}
                 className="flex items-center gap-2 bg-primary px-5 py-2.5 text-sm uppercase tracking-widest text-primary-foreground transition-opacity hover:opacity-95 disabled:opacity-60"
               >
                 {editing ? <Pencil size={15} /> : <Plus size={15} />}{' '}
@@ -309,118 +342,163 @@ export function CategoryAdmin() {
       )}
 
       {categories.isSuccess && (
-        <div className="grid gap-3 md:hidden">
-          {sortedCategories.length === 0 && (
-            <p className="border border-border p-6 text-sm text-muted-foreground">
-              Chưa có danh mục nào. Chọn “Thêm danh mục” để bắt đầu.
-            </p>
-          )}
-          {sortedCategories.map((category) => (
-            <article key={category.id} className="border border-border bg-background p-4">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="font-serif text-xl">{category.name}</h2>
-                <span className="text-sm text-muted-foreground">#{category.orderIndex}</span>
-              </div>
-              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{category.description}</p>
-              <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
-                <span className="text-sm text-muted-foreground">{category.recipeCount} công thức</span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => beginEdit(category)}
-                    aria-label={`Sửa ${category.name}`}
-                    className="inline-flex min-h-11 items-center gap-2 border border-border px-3 text-sm hover:bg-secondary"
-                  >
-                    <Pencil size={14} aria-hidden="true" /> Sửa
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget(category)}
-                    aria-label={`Xóa ${category.name}`}
-                    className="inline-flex min-h-11 items-center gap-2 border border-border px-3 text-sm text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 size={14} aria-hidden="true" /> Xóa
-                  </button>
+        <>
+          <div className="mb-4 flex flex-col gap-4 border border-border bg-card p-4 lg:flex-row lg:items-center lg:justify-between">
+            <dl className="flex flex-wrap gap-x-8 gap-y-3">
+              {[
+                { label: 'Danh mục', value: sortedCategories.length, icon: Layers },
+                { label: 'Công thức', value: totalRecipes, icon: BookOpen },
+                { label: 'Danh mục trống', value: emptyCount, icon: FolderOpen },
+              ].map(({ label, value, icon: Icon }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <Icon size={18} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
+                  <dd className="font-serif text-2xl leading-none tabular-nums">{value}</dd>
+                  <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>
                 </div>
+              ))}
+            </dl>
+            <div className="relative w-full lg:max-w-xs">
+              <Search
+                size={16}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                aria-label="Tìm danh mục"
+                placeholder="Tìm theo tên danh mục…"
+                className="min-h-11 w-full border border-border bg-background py-2 pl-9 pr-3 text-sm focus:border-primary focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {visibleCategories.length === 0 ? (
+            <p className="border border-border bg-background p-8 text-center text-sm text-muted-foreground">
+              {sortedCategories.length === 0
+                ? 'Chưa có danh mục nào. Chọn “Thêm danh mục” để bắt đầu.'
+                : 'Không tìm thấy danh mục phù hợp.'}
+            </p>
+          ) : (
+            <>
+              <div className="hidden overflow-x-auto border border-border bg-background md:block">
+                <table className="w-full text-left text-sm">
+                  <caption className="sr-only">Danh sách danh mục công thức</caption>
+                  <thead className="border-b border-border bg-secondary/30 text-xs uppercase tracking-widest text-muted-foreground">
+                    <tr>
+                      <th scope="col" className="px-5 py-3 font-medium">
+                        Danh mục
+                      </th>
+                      <th scope="col" className="px-5 py-3 text-right font-medium">
+                        Số công thức
+                      </th>
+                      <th scope="col" className="px-5 py-3 text-right font-medium">
+                        Thao tác
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleCategories.map((category) => (
+                      <tr
+                        key={category.id}
+                        className="border-b border-border transition-colors last:border-0 hover:bg-secondary/20"
+                      >
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-4">
+                            <div className="relative h-12 w-16 shrink-0 overflow-hidden border border-border bg-secondary/40">
+                              <CategoryThumb category={category} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-medium text-foreground">{category.name}</div>
+                              <div className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                                {category.description || 'Chưa có mô tả.'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          <span
+                            className={`inline-block border px-2 py-1 text-xs ${
+                              category.recipeCount > 0
+                                ? 'border-primary/30 bg-primary/5 text-primary'
+                                : 'border-border text-muted-foreground'
+                            }`}
+                          >
+                            {category.recipeCount} công thức
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => beginEdit(category)}
+                              aria-label={`Sửa ${category.name}`}
+                              title="Chỉnh sửa danh mục"
+                              className="inline-grid h-11 w-11 place-items-center text-muted-foreground transition-colors hover:text-primary"
+                            >
+                              <Pencil size={15} aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(category)}
+                              aria-label={`Xóa ${category.name}`}
+                              title={
+                                category.recipeCount > 0 ? 'Danh mục có công thức liên kết' : 'Xóa danh mục'
+                              }
+                              className="inline-grid h-11 w-11 place-items-center text-muted-foreground transition-colors hover:text-red-600"
+                            >
+                              <Trash2 size={15} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </article>
-          ))}
-        </div>
-      )}
-      {categories.isSuccess && (
-        <div className="hidden overflow-x-auto border border-border bg-background md:block">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
-              <tr>
-                <th className="px-5 py-3 w-20">Thứ tự</th>
-                <th className="px-5 py-3">Tên danh mục</th>
-                <th className="px-5 py-3">Slug</th>
-                <th className="px-5 py-3 text-right">Số công thức</th>
-                <th className="px-5 py-3 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedCategories.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                    Chưa có danh mục nào. Chọn “Thêm danh mục” để bắt đầu.
-                  </td>
-                </tr>
-              ) : (
-                sortedCategories.map((category) => (
-                  <tr
-                    key={category.id}
-                    className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors"
-                  >
-                    <td className="px-5 py-4 font-mono font-medium text-muted-foreground">
-                      #{category.orderIndex}
-                    </td>
-                    <td className="px-5 py-4 font-medium text-foreground">
-                      <div>{category.name}</div>
-                      {category.description && (
-                        <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                          {category.description}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 font-mono text-xs text-muted-foreground">{category.slug}</td>
-                    <td className="px-5 py-4 text-right">
-                      {category.recipeCount > 0 ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                          {category.recipeCount} công thức
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">0 công thức</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      <div className="flex justify-end gap-2">
+
+              <ul className="grid gap-3 md:hidden" aria-label="Danh sách danh mục công thức">
+                {visibleCategories.map((category) => (
+                  <li key={category.id} className="border border-border bg-background p-4">
+                    <div className="flex gap-3">
+                      <div className="relative h-14 w-20 shrink-0 overflow-hidden border border-border bg-secondary/40">
+                        <CategoryThumb category={category} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="font-serif text-xl">{category.name}</h2>
+                        <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+                          {category.description || 'Chưa có mô tả.'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
+                      <span className="text-sm text-muted-foreground">{category.recipeCount} công thức</span>
+                      <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={() => beginEdit(category)}
                           aria-label={`Sửa ${category.name}`}
-                          className="inline-grid h-11 w-11 place-items-center text-muted-foreground hover:text-primary transition-colors"
-                          title="Chỉnh sửa danh mục"
+                          className="inline-flex min-h-11 items-center gap-2 border border-border px-3 text-sm hover:bg-secondary"
                         >
-                          <Pencil size={15} />
+                          <Pencil size={14} aria-hidden="true" /> Sửa
                         </button>
                         <button
                           type="button"
-                          className="inline-grid h-11 w-11 place-items-center text-muted-foreground hover:text-red-600 transition-colors"
                           onClick={() => setDeleteTarget(category)}
                           aria-label={`Xóa ${category.name}`}
-                          title={category.recipeCount > 0 ? 'Danh mục có công thức liên kết' : 'Xóa danh mục'}
+                          className="inline-flex min-h-11 items-center gap-2 border border-border px-3 text-sm text-red-700 hover:bg-red-50"
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={14} aria-hidden="true" /> Xóa
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </>
       )}
 
       {/* Accessible Delete Confirmation Modal Dialog */}
