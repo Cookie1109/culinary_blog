@@ -157,7 +157,6 @@ jobs:
         working-directory: frontend
         env:
           CULINARY_COMPLETION_RESULTS: ${{ github.workspace }}/artifacts/browser
-          DEBUG: pw:api
       - uses: actions/upload-artifact@v4
         if: always()
         with:

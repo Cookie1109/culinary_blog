@@ -75,9 +75,15 @@ export async function withIsolatedApp({ media = false }, exercise) {
   }
   async function stop({ child, exit }) {
     if (child.exitCode === null && !child.signalCode) {
+      let force
       if (process.platform === 'win32') await command('taskkill', ['/PID', String(child.pid), '/T', '/F'])
-      else child.kill('SIGTERM')
+      else {
+        child.kill('SIGTERM')
+        // Servers holding open streams (such as real-time events) ignore a graceful stop on Linux.
+        force = setTimeout(() => child.kill('SIGKILL'), 10_000)
+      }
       await exit
+      clearTimeout(force)
     }
   }
   async function freePort() {
