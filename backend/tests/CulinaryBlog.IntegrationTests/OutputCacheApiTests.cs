@@ -372,8 +372,22 @@ public sealed class OutputCacheApiTests(AuthApiFactory factory) : IClassFixture<
             paused = false;
             first.DefaultRequestHeaders.Authorization = null;
 
-            // Let commands that timed out while Redis was paused finish processing.
-            Assert.Equal("PONG", (await firstFactory.Services.GetRequiredService<IConnectionMultiplexer>().GetDatabase().ExecuteAsync("PING")).ToString());
+            // Let commands that timed out while Redis was paused finish processing; the multiplexer needs a moment to reconnect.
+            var redis = firstFactory.Services.GetRequiredService<IConnectionMultiplexer>();
+            var recovered = false;
+            for (var attempt = 0; attempt < 50 && !recovered; attempt++)
+            {
+                try
+                {
+                    recovered = (await redis.GetDatabase().ExecuteAsync("PING")).ToString() == "PONG";
+                }
+                catch (Exception exception) when (exception is RedisException or TimeoutException)
+                {
+                    await Task.Delay(200);
+                }
+            }
+
+            Assert.True(recovered, "Redis did not answer PING within 10 seconds after it was resumed.");
 
             // Read the non-writing instance first: a local pending-invalidation list is insufficient.
             foreach (var client in new[] { second, first })
