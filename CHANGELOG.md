@@ -6,7 +6,7 @@ Tất cả thay đổi đáng chú ý của Culinary Blog được ghi tại đ�
 
 ### Demo môn học
 
-- Ghi lại phiên bản demo Render/Vercel, bằng chứng kiểm thử và phần SRS còn thiếu trong [bàn giao G07](docs/specs/srs-completion-phases/reports/package-G07-result.md).
+- Ghi lại phiên bản demo Render/Vercel, bằng chứng kiểm thử và phần SRS còn thiếu trong bàn giao G07.
 - Compose local nhận image MinIO và MinIO Client đã nạp sẵn qua `MINIO_IMAGE` và `MINIO_MC_IMAGE` khi registry từ chối tải image mặc định.
 
 ### Release gate production
@@ -34,6 +34,4 @@ Tất cả thay đổi đáng chú ý của Culinary Blog được ghi tại đ�
 - Google OAuth là Should-have và chưa thuộc release candidate hiện tại.
 - Welcome email dùng transactional outbox hosted worker thay Hangfire; retry/observability vẫn được giữ theo deviation đã duyệt.
 
-[Unreleased]: docs/release/v1.0.0-release-notes.md
-[1.0.0-rc.1]: docs/release/v1.0.0-release-notes.md
 

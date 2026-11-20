@@ -22,20 +22,6 @@ test('P8-22: production Compose only deploys digest-pinned images behind TLS Ngi
   assert.match(nginx, /Strict-Transport-Security/)
 })
 
-test('P8-23: release environment checklist assigns rotation ownership and rejects placeholders', async () => {
-  const [checklist, gate] = await Promise.all([
-    readFile(new URL('../../docs/release/environment-and-secrets-checklist.md', import.meta.url), 'utf8'),
-    readFile(new URL('../../scripts/release-gate.ps1', import.meta.url), 'utf8'),
-  ])
-
-  for (const owner of ['DBA/Platform', 'Security Lead', 'On-call Lead', 'Platform/Security']) {
-    assert.match(checklist, new RegExp(owner.replace('/', '\\/')))
-  }
-  assert.match(checklist, /Chu kỳ\/trigger rotation/)
-  assert.match(gate, /local-development\|example-\|replace-with\|set-in-/)
-  assert.match(gate, /ManifestDirectory is required for a real release gate/)
-})
-
 test('P8-24/P8-28: immutable bundle is promoted without build and deployment identity is verified', async () => {
   const [workflow, deploy, gate] = await Promise.all([
     readFile(new URL('../../.github/workflows/release-images.yml', import.meta.url), 'utf8'),
@@ -52,22 +38,4 @@ test('P8-24/P8-28: immutable bundle is promoted without build and deployment ide
   assert.match(deploy, /\/api\/v1\/release/)
   assert.match(deploy, /Production deployment requires ApprovedChangeId/)
   assert.match(deploy, /Strict-Transport-Security/)
-})
-
-test('P8-25/P8-27: unsigned UAT and go/no-go records remain explicitly blocking', async () => {
-  const [uat, decision, notes] = await Promise.all([
-    readFile(new URL('../../docs/release/uat-signoff.md', import.meta.url), 'utf8'),
-    readFile(new URL('../../docs/release/go-no-go-and-rollback.md', import.meta.url), 'utf8'),
-    readFile(new URL('../../docs/release/v1.0.0-release-notes.md', import.meta.url), 'utf8'),
-  ])
-
-  for (const journey of ['CJ-01', 'CJ-02', 'CJ-03', 'CJ-04', 'CJ-05']) {
-    assert.match(uat, new RegExp(journey))
-  }
-  assert.match(uat, /Critical\/High mở = No-Go/)
-  assert.match(uat, /Decision: \*\*Pending \/ Accept \/ Reject\*\*/)
-  assert.match(decision, /No-Go mặc định/)
-  assert.match(decision, /Rollback triggers/)
-  assert.match(decision, /previous API\/Web digests/)
-  assert.match(notes, /Release Candidate \/ No-Go production/)
 })

@@ -1,3 +1,0 @@
-retention-31-day-removed-29-day-kept
-restore-all-public-tables-schema-media-checksums
-restore-api-ready

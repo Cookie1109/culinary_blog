@@ -1,8 +1,0 @@
-{
-  "exit": 0,
-  "controlledMetrics": 18,
-  "withinThreshold": true,
-  "summaryScriptUnchanged": true,
-  "source": "Authoritative Vercel accepted log records",
-  "organicRUM": false
-}

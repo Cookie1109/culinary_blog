@@ -1,5 +1,0 @@
-{
-  "target": "https://example.invalid",
-  "exit": 107,
-  "command": "k6 inspect (no HTTP execution)"
-}

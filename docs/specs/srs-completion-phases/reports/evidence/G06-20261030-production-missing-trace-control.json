@@ -1,4 +1,0 @@
-{
-  "exit": 1,
-  "stderr": "error while interpolating services.otel-collector.environment.OTEL_TRACE_BACKEND_ENDPOINT: required variable OTEL_TRACE_BACKEND_ENDPOINT is missing a value: Set the Jaeger or Tempo OTLP HTTP base URL\n"
-}
