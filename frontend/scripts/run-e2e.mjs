@@ -8,6 +8,7 @@ import http from 'node:http'
 import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { MINIO_TEST_IMAGE, ensureMinioTestImage } from './minio-test-image.mjs'
 
 const frontend = fileURLToPath(new URL('../', import.meta.url))
 const root = path.dirname(frontend.replace(/[\\/]$/, ''))
@@ -149,8 +150,9 @@ try {
     POSTGRES_PASSWORD: 'synthetic-g05-only',
   })
   const redis = await container('redis:7.4.5-alpine', [6379])
+  await ensureMinioTestImage()
   const minio = await container(
-    'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e',
+    MINIO_TEST_IMAGE,
     [9000],
     { MINIO_ROOT_USER: 'g05storage', MINIO_ROOT_PASSWORD: 'synthetic-g05-storage' },
     ['server', '/data'],
@@ -165,7 +167,7 @@ try {
     network,
     '--entrypoint',
     '/bin/sh',
-    'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e',
+    MINIO_TEST_IMAGE,
     '-ec',
     'mc alias set test http://storage:9000 g05storage synthetic-g05-storage >/dev/null && mc mb test/g05',
   ])
