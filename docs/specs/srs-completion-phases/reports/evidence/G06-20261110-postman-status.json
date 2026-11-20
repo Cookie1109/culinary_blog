@@ -1,6 +1,0 @@
-{
-  "command": "postman status",
-  "exit": 1,
-  "actual": "error: unknown command status",
-  "effect": "CLI capability gap; no initialization, workspace publication or test result invented. Live API assertions used existing real-app/browser/provider checks."
-}

@@ -1,8 +1,0 @@
-{
-  "originalRunnerSha256": "7fd5775e79b40a3b517662dc99f89a74a88b4138a18627503c9feb554f6542bc",
-  "temporaryRunnerSha256": "38437c3c8654fea76430856697e0b7b854f69c249219da9dfa17c0761607463f",
-  "onlyOverride": "minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
-  "clientVersion": "RELEASE.2025-08-13T08-35-41Z",
-  "clientCommit": "7394ce0dd2a80935aded936b09fa12cbb3cb8096",
-  "productionDefaultsChanged": false
-}

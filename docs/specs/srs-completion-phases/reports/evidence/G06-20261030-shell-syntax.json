@@ -1,4 +1,0 @@
-{
-  "infra/operations/minio-backup.sh": 0,
-  "infra/operations/restore-minio-drill.sh": 0
-}

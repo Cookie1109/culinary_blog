@@ -1,9 +1,0 @@
-{
-  "run": "5ae9c860af82",
-  "buildId": "DuFuwIA9Nwlu7KlpSfAmx",
-  "lockHash": "86b486bd0c8318cd00445b6182aa333d37c79e6e2aded59455c862815ba7db3a",
-  "purpose": "Lighthouse only; affected UI/CWV/budget reused from same build",
-  "reusedUiRun": "a90b2e00da2d",
-  "backgroundJobsEnabled": false,
-  "uiTestsRun": 0
-}

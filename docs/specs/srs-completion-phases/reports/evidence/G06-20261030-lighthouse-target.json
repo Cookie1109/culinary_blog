@@ -1,6 +1,0 @@
-{
-  "paths": "[\"/\",\"/recipes\",\"/categories\",\"/search\",\"/login\",\"/recipes/com-chien-hai-san\",\"/categories/banh-viet\"]",
-  "profile": "desktop 3 runs per route; synthetic stable HTTP loopback; no concurrent fault/load/scan/build",
-  "buildId": "HOABvUQUOl1ubTR8DFT1T",
-  "base": "http://127.0.0.1:63833"
-}

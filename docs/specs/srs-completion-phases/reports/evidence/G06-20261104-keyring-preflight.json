@@ -1,8 +1,0 @@
-{
-  "neonBackupPassed": true,
-  "keyRowsBefore": 0,
-  "keyMigrationRows": 1,
-  "mainMigrations": 5,
-  "certificateRotation": false,
-  "migrationApplyRequired": false
-}
