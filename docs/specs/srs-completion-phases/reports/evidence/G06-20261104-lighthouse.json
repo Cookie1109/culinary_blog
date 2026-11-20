@@ -1,0 +1,418 @@
+{
+  "generatedAtUtc": "2026-11-04T11:49:23.228Z",
+  "summaries": [
+    {
+      "url": "http://127.0.0.1:65063/",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.98,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 1105.9295,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004405296779694757,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 194516,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:65063/recipes",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.99,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 781.7948000000005,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00003268311813197882,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 204244,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:65063/categories",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 745.0342499999996,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004405296779694757,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 183505,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:65063/search",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.99,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 774.8854000000005,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004405296779694757,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 204244,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:65063/login",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 736.7435999999997,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00001745994221171526,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 190175,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:65063/recipes/g05-pho-chay",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 737.0188500000003,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.0005240218642546685,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 183505,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:65063/categories/banh-viet",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 731.3766,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004405296779694757,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 186838,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    }
+  ]
+}

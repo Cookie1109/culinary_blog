@@ -634,6 +634,14 @@ public sealed class RecipeDiscoveryApiTests(AuthApiFactory factory) : IClassFixt
         var draft = CreateRecipe(author.Id, vietnamese.Id, $"pho-bi-mat-{suffix}", "Phở bí mật", 5, 10, 2, RecipeDifficulty.Easy);
         dbContext.Recipes.AddRange(pho, bunBo, cake, draft);
         await dbContext.SaveChangesAsync();
+
+        // Recipe times are derived from steps, so seed the stored values the discovery filters read.
+        foreach (var (recipe, prep, cook) in new[] { (pho, 10, 20), (bunBo, 20, 30), (cake, 40, 45), (draft, 5, 10) })
+        {
+            await dbContext.Recipes.Where(item => item.Id == recipe.Id)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(item => item.PrepTime, prep).SetProperty(item => item.CookTime, cook));
+        }
+
         var earlier = DateTimeOffset.UtcNow.AddDays(-3);
         var later = DateTimeOffset.UtcNow.AddDays(-2);
         await dbContext.Recipes.Where(recipe => recipe.Id == pho.Id || recipe.Id == bunBo.Id)

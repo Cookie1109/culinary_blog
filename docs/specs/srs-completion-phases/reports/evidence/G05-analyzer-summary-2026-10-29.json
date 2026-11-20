@@ -1,0 +1,303 @@
+{
+  "mode": "Inventory only, warnings-as-errors=false; not acceptance",
+  "reportedWarnings": 5041,
+  "uniqueDiagnostics": 5041,
+  "xmlCommentAnalysisDisabled": false,
+  "ruleCounts": {
+    "SA1200": 878,
+    "SA1633": 201,
+    "SA1600": 1530,
+    "SA1143": 7,
+    "SA1309": 43,
+    "SA1101": 911,
+    "SA1116": 28,
+    "SA1503": 95,
+    "SA1513": 97,
+    "SA1601": 11,
+    "SA1515": 19,
+    "SA1408": 5,
+    "SA1519": 3,
+    "SA1516": 53,
+    "SA1413": 25,
+    "SA1500": 1,
+    "SA1122": 12,
+    "S3358": 7,
+    "S8969": 6,
+    "SA1201": 18,
+    "SA1117": 185,
+    "SA1407": 1,
+    "S5445": 2,
+    "SA1202": 11,
+    "S8949": 1,
+    "S1118": 1,
+    "S6444": 3,
+    "S3400": 1,
+    "SA1127": 6,
+    "SA1402": 168,
+    "SA1649": 26,
+    "SA1518": 4,
+    "SA1508": 5,
+    "SA1602": 16,
+    "SA1315": 2,
+    "CS1591": 615,
+    "SA1204": 15,
+    "SA1502": 1,
+    "S3267": 2,
+    "SA1119": 1,
+    "SA1009": 5,
+    "S6608": 1,
+    "S1172": 1,
+    "S5332": 2,
+    "SA1118": 3,
+    "SA1514": 2,
+    "S1481": 1,
+    "SA1520": 1,
+    "S3218": 1,
+    "SA1107": 2,
+    "SA1507": 1,
+    "S6966": 1,
+    "SA1111": 4
+  },
+  "sonarDiagnostics": [
+    {
+      "file": "backend/src/CulinaryBlog.Api/Presentation/ApiDocumentation.cs",
+      "line": 60,
+      "column": 27,
+      "code": "S3358",
+      "message": "Extract this nested ternary operation into an independent statement.",
+      "project": "backend/src/CulinaryBlog.Api/CulinaryBlog.Api.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Api/Presentation/AuthEndpoints.cs",
+      "line": 165,
+      "column": 55,
+      "code": "S8969",
+      "message": "Remove this null-forgiving operator; the compiler already knows this expression is not null here.",
+      "project": "backend/src/CulinaryBlog.Api/CulinaryBlog.Api.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Api/Presentation/ContentEndpoints.cs",
+      "line": 608,
+      "column": 29,
+      "code": "S5445",
+      "message": "'Path.GetTempFileName()' is insecure. Use 'Path.GetRandomFileName()' instead.",
+      "project": "backend/src/CulinaryBlog.Api/CulinaryBlog.Api.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Api/Presentation/JwtProblemDetailsEvents.cs",
+      "line": 37,
+      "column": 21,
+      "code": "S3358",
+      "message": "Extract this nested ternary operation into an independent statement.",
+      "project": "backend/src/CulinaryBlog.Api/CulinaryBlog.Api.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Api/Presentation/JwtProblemDetailsEvents.cs",
+      "line": 53,
+      "column": 16,
+      "code": "S8949",
+      "message": "Pass the 'context.RequestAborted' to this method to allow cancellation of the operation, or use 'CancellationToken.None' to opt out explicitly.",
+      "project": "backend/src/CulinaryBlog.Api/CulinaryBlog.Api.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Api/Program.cs",
+      "line": 205,
+      "column": 22,
+      "code": "S1118",
+      "message": "Add a 'protected' constructor or the 'static' keyword to the class declaration.",
+      "project": "backend/src/CulinaryBlog.Api/CulinaryBlog.Api.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Api/Security/ReleaseMetadata.cs",
+      "line": 70,
+      "column": 17,
+      "code": "S6444",
+      "message": "Pass a timeout to limit the execution time.",
+      "project": "backend/src/CulinaryBlog.Api/CulinaryBlog.Api.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Application/Abstractions/Caching/PublicCacheKeys.cs",
+      "line": 15,
+      "column": 26,
+      "code": "S3400",
+      "message": "Remove this method and declare a constant for this value.",
+      "project": "backend/src/CulinaryBlog.Application/CulinaryBlog.Application.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Application/Content/ContentUpdateValidators.cs",
+      "line": 23,
+      "column": 103,
+      "code": "S8969",
+      "message": "Remove this null-forgiving operator; the compiler already knows this expression is not null here.",
+      "project": "backend/src/CulinaryBlog.Application/CulinaryBlog.Application.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Application/Content/RecipeSort.cs",
+      "line": 23,
+      "column": 53,
+      "code": "S3358",
+      "message": "Extract this nested ternary operation into an independent statement.",
+      "project": "backend/src/CulinaryBlog.Application/CulinaryBlog.Application.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Audit/AuditLogService.cs",
+      "line": 129,
+      "column": 29,
+      "code": "S3267",
+      "message": "Loops should be simplified using the \"Where\" LINQ method",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Audit/AuditLogService.cs",
+      "line": 167,
+      "column": 24,
+      "code": "S3358",
+      "message": "Extract this nested ternary operation into an independent statement.",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Audit/AuditLogService.cs",
+      "line": 206,
+      "column": 38,
+      "code": "S3267",
+      "message": "Loops should be simplified using the \"Where\" LINQ method",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Content/ContentService.Composition.cs",
+      "line": 373,
+      "column": 29,
+      "code": "S5445",
+      "message": "'Path.GetTempFileName()' is insecure. Use 'Path.GetRandomFileName()' instead.",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Content/ContentService.cs",
+      "line": 1019,
+      "column": 43,
+      "code": "S6608",
+      "message": "Indexing at 0 should be used instead of the \"Enumerable\" extension method \"First\"",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Content/ContentService.cs",
+      "line": 456,
+      "column": 24,
+      "code": "S6444",
+      "message": "Pass a timeout to limit the execution time.",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Content/ContentService.cs",
+      "line": 501,
+      "column": 21,
+      "code": "S6444",
+      "message": "Pass a timeout to limit the execution time.",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Content/ContentService.cs",
+      "line": 736,
+      "column": 48,
+      "code": "S1172",
+      "message": "Remove this unused method parameter 'recipe'.",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Email/PasswordResetEmailSender.cs",
+      "line": 30,
+      "column": 28,
+      "code": "S5332",
+      "message": "EnableSsl should be set to true.",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Email/WelcomeEmailJob.cs",
+      "line": 40,
+      "column": 26,
+      "code": "S5332",
+      "message": "EnableSsl should be set to true.",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/src/CulinaryBlog.Infrastructure/Identity/AuthService.cs",
+      "line": 77,
+      "column": 35,
+      "code": "S8969",
+      "message": "Remove this null-forgiving operator; the compiler already knows this expression is not null here.",
+      "project": "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.IntegrationTests/AdminAuditLogsApiTests.cs",
+      "line": 38,
+      "column": 13,
+      "code": "S1481",
+      "message": "Remove the unused local variable 'user'.",
+      "project": "backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.IntegrationTests/CommandAtomicityTests.cs",
+      "line": 52,
+      "column": 91,
+      "code": "S3358",
+      "message": "Extract this nested ternary operation into an independent statement.",
+      "project": "backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.IntegrationTests/RecipeCompositionApiTests.cs",
+      "line": 176,
+      "column": 78,
+      "code": "S8969",
+      "message": "Remove this null-forgiving operator; the compiler already knows this expression is not null here.",
+      "project": "backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.IntegrationTests/RecipeCompositionApiTests.cs",
+      "line": 207,
+      "column": 75,
+      "code": "S8969",
+      "message": "Remove this null-forgiving operator; the compiler already knows this expression is not null here.",
+      "project": "backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.IntegrationTests/RecipeCompositionApiTests.cs",
+      "line": 230,
+      "column": 77,
+      "code": "S8969",
+      "message": "Remove this null-forgiving operator; the compiler already knows this expression is not null here.",
+      "project": "backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.IntegrationTests/RecipeCompositionApiTests.cs",
+      "line": 466,
+      "column": 27,
+      "code": "S3218",
+      "message": "Rename this method to not shadow the outer class' member with the same name.",
+      "project": "backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.IntegrationTests/RecipeCoreApiTests.cs",
+      "line": 304,
+      "column": 53,
+      "code": "S3358",
+      "message": "Extract this nested ternary operation into an independent statement.",
+      "project": "backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.IntegrationTests/RecipeDiscoveryApiTests.cs",
+      "line": 430,
+      "column": 13,
+      "code": "S6966",
+      "message": "Await DisposeAsync instead.",
+      "project": "backend/tests/CulinaryBlog.IntegrationTests/CulinaryBlog.IntegrationTests.csproj"
+    },
+    {
+      "file": "backend/tests/CulinaryBlog.UnitTests/AuthorizationPipelineTests.cs",
+      "line": 35,
+      "column": 156,
+      "code": "S3358",
+      "message": "Extract this nested ternary operation into an independent statement.",
+      "project": "backend/tests/CulinaryBlog.UnitTests/CulinaryBlog.UnitTests.csproj"
+    }
+  ]
+}

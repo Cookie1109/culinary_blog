@@ -2,6 +2,8 @@
 
 > Đích giao việc: GPT 6.1 Sol. Trạng thái ban đầu: **Chưa bắt đầu**. Đây là tài liệu thực hiện, chưa phải bằng chứng công việc đã đạt.
 
+Kết quả24/10/2026 trong G01: **Chưa đạt**. D1-01/02/04 đóng; D1-03 mở do ISR HTTP200 thay404 và npm audit4 high/1 moderate. Backend unit75, architecture3, integration99 và frontend104 đều pass/không skip ở lượt cuối. Xem [report gói](reports/package-G01-result.md#phase-03); không sửa nghiệp vụ ISR hoặc dependency ngoài phạm vi03.
+
 ## Giao việc bằng prompt này
 
 ```text
@@ -33,10 +35,10 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D1-01 · Môi trường:** kiểm tra Docker Engine, các image PostgreSQL/Redis/MinIO/SMTP thử nghiệm và runtime Node 22.23.3/.NET 10; chạy test bằng database/container riêng. Phân biệt lỗi môi trường với assertion nghiệp vụ.
-- [ ] **D1-02 · Sửa:** sửa Prettier của `next.config.mjs`, `scripts/check-isr.mjs`, `src/middleware.ts`, `tests/public-content-wiring.test.mjs`, `tests/rendering-cache-wiring.test.mjs`, `tests/visual-responsive-regression.test.mjs`; xác minh lại backend format và không sửa format lan sang file không liên quan.
+- [x] **D1-01 · Môi trường:** kiểm tra Docker Engine, các image PostgreSQL/Redis/MinIO/SMTP thử nghiệm và runtime Node 22.23.3/.NET 10; chạy test bằng database/container riêng. Phân biệt lỗi môi trường với assertion nghiệp vụ.
+- [x] **D1-02 · Sửa:** sửa Prettier của `next.config.mjs`, `scripts/check-isr.mjs`, `src/middleware.ts`, `tests/public-content-wiring.test.mjs`, `tests/rendering-cache-wiring.test.mjs`, `tests/visual-responsive-regression.test.mjs`; xác minh lại backend format và không sửa format lan sang file không liên quan.
 - [ ] **D1-03 · Kiểm chứng:** clean/locked restore theo runtime/lockfile đã chốt; chạy build, lint, typecheck, unit, architecture, frontend và integration. Lưu exit code, số pass/fail/skip, nguyên nhân và phiên bản; không ghi 99/99 nếu container chưa khởi tạo.
-- [ ] **D1-04 · Kiểm chứng:** ghi HEAD + trạng thái worktree, thời điểm, runtime, cấu hình test đã lược secrets. Sau này gắn release với commit/image digest để biết chính xác bản nào được đo.
+- [x] **D1-04 · Kiểm chứng:** ghi HEAD + trạng thái worktree, thời điểm, runtime, cấu hình test đã lược secrets. Sau này gắn release với commit/image digest để biết chính xác bản nào được đo.
 
 ## Trình tự thực hiện trong phase
 
@@ -53,10 +55,10 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Format liên quan xanh; baseline có đủ version/command/result.
-- [ ] Nếu thiếu môi trường: ghi Chờ môi trường, không ghi test pass; phần kiểm được vẫn hoàn tất.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Format liên quan xanh; baseline có đủ version/command/result.
+- [x] Nếu thiếu môi trường: ghi Chờ môi trường, không ghi test pass; phần kiểm được vẫn hoàn tất.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-03-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 

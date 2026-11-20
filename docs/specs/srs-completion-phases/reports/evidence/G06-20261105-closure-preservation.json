@@ -1,0 +1,14 @@
+{
+  "exactPrivateValueMatches": 0,
+  "privateNeedleCount": 8,
+  "gitEligibleFilesChecked": 1355,
+  "outsideScopeDrift": [],
+  "rootIndexEmpty": true,
+  "nginxDeltaExactlyOneLocation": true,
+  "pdfUnchanged": true,
+  "abcUnchanged": true,
+  "oldEvidenceFilesUnchanged": 85,
+  "candidatePushedCommit": "b4f3376e8001c283faf1773c87cf0e4ccc3b06e1",
+  "userContainersPreserved": 13,
+  "httpsStagingRemoved": true
+}

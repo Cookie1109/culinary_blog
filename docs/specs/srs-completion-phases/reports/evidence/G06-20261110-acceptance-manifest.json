@@ -1,0 +1,53 @@
+{
+  "atUtc": "2026-11-10T17:01:28.572924+00:00",
+  "closedTasks": [
+    "D9-02",
+    "D9-03",
+    "D9-05",
+    "D9-06",
+    "D9-07"
+  ],
+  "openTasks": [
+    "D9-01",
+    "D9-04",
+    "D9-09",
+    "D9-10"
+  ],
+  "fullG06Acceptance": false,
+  "rootHead": "ce4ae4eb8fd7d94b36b600ec01da024f4a9670e3",
+  "rootIndexEmpty": true,
+  "changedExistingFiles": {
+    "docs/operations/g06-remaining-inputs-2026-11-05.md": "c97590cce15bc8a85039023652ce3988f45218e93bf168ba1ef1add559c2b00e",
+    "docs/operations/neon-backup-windows.md": "2b53ebb79c9889d22d2f6c0ffa677a54f442f82c5d0a2e0db044b54ed03138d5",
+    "docs/specs/srs-completion-checklist.md": "6e9d4fbbaf501e099d86eb3244bdb6b9e818157a7991542f18fc7593dc5ad522",
+    "docs/specs/srs-completion-phases/phase-31-frontend-performance-and-inp.md": "2290f436f05748f574dd914d3624b7f0d2b0527777085620f952e61dcbace303",
+    "docs/specs/srs-completion-phases/phase-34-backup-and-restore.md": "1ce7d0ae0798a29757ca1cc5d2bd18d7b0833ff66989e64680b25be2f9ff9bbd",
+    "docs/specs/srs-completion-phases/progress.md": "0adb67955c73a0a1ac386a2fb6e37969a70b4c6a07d373174331b5d7fb43afd9",
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md": "83c56b5971a08a3e78a6550bc365204402246c1b1f0526ebea683f23a423bd0c"
+  },
+  "outsideScopeChanges": [],
+  "priorEvidenceFilesUnchanged": 432,
+  "proofs": {
+    "G06-20261110-acceptance-backup.json": "4652c4131efcf226fc602879d33569dd29f9d8f367f676b8a6017780026ffec4",
+    "G06-20261110-acceptance-frontend.json": "5400b1b4435d013357fcc7b2ba17e0479e494844e1693ddd2c8a8a8a00ddfd1c",
+    "G06-20261110-acceptance-open-conditions.json": "10e6ec3e21a1f53dcbe4d35fb722141d151bc35cbe814a7720a3f9f88f97c444",
+    "G06-20261110-acceptance-production-lighthouse.json": "dbb048614969a0add86a8c311f3ea4590e30352e15e464e51fa5abfaa83cdfa7"
+  },
+  "pdfABCAndDecisionRegisterUnchanged": true,
+  "applicationSourceAndGateThresholdsUnchanged": true,
+  "phase31TextClarification": "Originaltask allowsinteractionORRUM; clarified overly-narrowRUM-only line without numericgatechange. ActualproductionLHnewlyperformed42/42pass.",
+  "exactPrivateValueChecks": {
+    "needleCount": 16,
+    "gitEligibleFilesChecked": 1423,
+    "matches": 0
+  },
+  "publicSecurityReview": "See acceptance-public-scan-review.json",
+  "metadataExclusions": [
+    "Self,public-scan-review,validation; validationbindsmanifestandreviews. Oldmanifesttrackinghashesremainhistorical."
+  ],
+  "postmanStatus": {
+    "exit": 1,
+    "actual": "unknown command status; CLI capability gap, no test pass invented"
+  },
+  "forbiddenActionsPerformed": false
+}

@@ -1,0 +1,22 @@
+[
+  "backend/src/CulinaryBlog.Infrastructure/Content/ContentService.Composition.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Email/WelcomeEmailOutbox.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Email/WelcomeEmailWorker.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Identity/AuthService.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Jobs/JobLogContextFilter.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Jobs/MediaOutboxDispatcher.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Jobs/MediaOutboxMessage.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Persistence/Configurations/MediaOutboxMessageConfiguration.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Persistence/Configurations/RecipeConfiguration.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Persistence/Configurations/WelcomeEmailOutboxConfiguration.cs",
+  "backend/src/CulinaryBlog.Infrastructure/Persistence/Migrations/AppDbContextModelSnapshot.cs",
+  "backend/src/CulinaryBlog.Api/Telemetry/TelemetryExtensions.cs",
+  "backend/tests/CulinaryBlog.IntegrationTests/MigrationUpgradeTests.cs",
+  "backend/tests/CulinaryBlog.IntegrationTests/RecipeDiscoveryPerformanceTests.cs",
+  "backend/tests/CulinaryBlog.IntegrationTests/StructuredLoggingTests.cs",
+  "frontend/src/lib/env.ts",
+  "frontend/src/lib/api/axios.ts",
+  "frontend/src/lib/api/problem-details.ts",
+  "infra/operations/minio-backup.sh",
+  "infra/operations/restore-minio-drill.sh"
+]

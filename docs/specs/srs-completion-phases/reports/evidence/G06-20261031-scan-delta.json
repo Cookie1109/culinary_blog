@@ -1,0 +1,208 @@
+{
+  "baselineFiles": 1057,
+  "currentFiles": 1059,
+  "unchanged": 1012,
+  "changedHashes": {
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-tunnel-check.json": "da92c5bd3d48deab18ddd224c12041066bc9e8c0d85e9c3854b114ed4d69ce21",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-secret-triage.json": "45fe7b29f12b8a791e88fa9b76937c2f1711720e23ebc477766e923d858fbea5",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-runtime-volumes.txt": "c85a176fd978a445b4f9e39ab15b658250bae3c662bf96b304d0cb35406010fc",
+    "docs/specs/srs-completion-phases/phase-35-multi-instance-and-production-scaling.md": "2e892160fa09b692e8dcfb5724c10c9fadd6424f7d8e349531c614a473a481eb",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-interaction.txt": "46222704f402af6adaaa9b360c7fb69b8fabd3f4f81f7756c0e97a4ef314e3d3",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-minio4.json": "3aac437a50c75a68f0ae01c89635872df59ac739e2f3e7c9ec4cd510070a737c",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-source-scan-exits.json": "fc90d31e6c009c515c6972b2442588016240b7cf4969481dd226b507bf4138d3",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-secret-findings.json": "eb65996d0d3494b022e9371771ed6ffc0126bc4ba2259564067b6699f37cf4b2",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-manifest.json": "1a6757849af9816eef964540e0d1f55685b79a5376c96e26923ed4113788597f",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-multi-instance.txt": "fe8f2e5b85bdcfbbad712cbfef36c629fa8cf83368e6b9d3f4cc15bdc7ef8cbc",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-runtime-events.json": "222e768be4e1be6016604f28ce8930edbd75942415b414c568a73a011df0c3f4",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-cleanup-remaining.json": "baf78d65ae8a0780ed8eaf5b547f66935f667a750fe9fcdd53d08cc40f25ddfc",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-secret-snapshot.json": "f3296630a3ef6f935d6e37a05dcaedfd205583f2340c0e07deed83833063b27b",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-k6-smoke.txt": "3c0affcf7af53549ac79d66e51687ce8410b2d36ba9aaea860dc53868e914f1b",
+    "docs/operations/g06-environment-readiness-2026-10-30.md": "a811c3d4f86364cb44ebb83a643c0d1e537c40d9e6d6f52489fc32a7c0fd73ee",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-scan-snapshot-hashes.json": "7a674f874ff2ac6d9c95547d030bc49db4db937dbcb79cf6848f15ac27e3b95f",
+    "docs/operations/neon-minio-fix-preparation-2026-10-30.md": "5c503d1f177c3e57d88256da94980834719277b55121ca0fa54f0e9ba89c62db",
+    "docs/operations/neon-minio-fix-preparation-2026-10-30.json": "77857d1d456bbe13e718e257d298d745b6c7eb1bb50e6bfbf72a76755d6e0e31",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-scan-config.json": "de7b6e2ca11430c187f14a8aa73cc39af6f626c07850b97daade5e62d3be6c34",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-config-scan.txt": "aaee55f47819527b5dbc44f71c8f8a66f52789ade85eac33693ea4c4e87ae550",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-security-summary.json": "2f97b35912596eac99b061d1a6cf823ff3cb3b540bc6ae0d5c4baf0474c9c956",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-minio4.txt": "91ffc97d47757a53c4b83cd0e87cd7355af918d97d563cf6536a14c4118bf806",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-tunnel-media.json": "0dcc8f5da2e865cfbd1678a6dd8943a7b75f9ba92907485dcd0acdcd62da3719",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-multi-instance.json": "0479d91f269600c1063bb16774fa64c26e85edd8503f8d215b18aeea2376a350",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-interaction.json": "95c965b7238d7fb156407260c0122680387ee8f63fb987917d9bfa1be466f128",
+    "docs/specs/srs-completion-checklist.md": "244d35c4bff6e3772476600e60261b1294f4a0122521254a567bfbd0f39f6577",
+    "docs/operations/g06-environment-readiness-2026-10-30.json": "284f2a3dc46c02a222d21c752fa819c25778f7c1297fdbae296aebe00985034e",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-production-missing-trace-control.json": "72b7da9bce99ddf203883ec2c33dd16df92715f76495e914012a6088f7710365",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-restore-empty-controls.json": "1d2aa5b222785b7ce2bac3903c219093263fcc36eefc169ffdd267ab58c4688f",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-resume.json": "e4be2e90e96a19ce98310e3ca90b5344dcdde9ab5de8a1c0c40b3cc977ae68b2",
+    "docs/operations/neon-minio-readonly-check-2026-10-30.md": "1878abd3fb6946e5e8b947ffda207db665055989d5a676f946af6df57c7d9d6b",
+    "docs/operations/neon-minio-readonly-check-2026-10-30.json": "349a9cc529aa21a8c710af9b9ab860597124760b22d6267e5387f6a0a91bd418",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-smoke-target.json": "aea72a7cf4e8cf863369ee149fb551ff174ae48dc508aaf8429bf3dcc1e5c0e1",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-cleanup-summary.json": "ed45b74cfec5dcbc659c508735ae1217dbcad79ed33cd767fa5f09c9ff0ee4b6",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-runtime-resources.txt": "bc93e0c75edfabad515f7541cd4cf679a530eb67b044ff8ac233754347b31981",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-k6-smoke.json": "1c73df02b981461c501d6da312ce9c2e62ac5207f0f3204d142ea3f522bca694",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-shell-syntax.json": "2e7ae894a2d199e25168a8cdfc885cb21103bd4a359cbef64794e5d350bbf20c",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-web-cleanup.txt": "1fddbce231bcafc8728912e889cb922bd06816a947127a1ce120e86484c7ca94",
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md": "3564de4a793be702d4cef12b2ecf6ae2b01c8e89196a05aa9900e9f7b5191874",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-secret-scan.txt": "86874245024027c2dc04ec02b0d88f2b2ca401af8438c412387e02a6127c90b8",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-probe-build.txt": "8bf808f2d3408bb6c5d58674ffd4c6f53aa678ed4797e8b2a7cf998da142972e",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-render-readonly.json": "a859d9a5ef6d5180c670901dfe8cb4d442cecc5548b23cdfb4c2c6ea0c24452e",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-validation.json": "ab9d08d03cdbcd66cb5141b7ecc9dcc21cbab7e32b9568ab7df6dd073ea3436c",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-manifest.json": "f6537df16131bf92826d1d7dac16e1066bcc756520ee522da2a50cd1add1b80a",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-scanner-download.json": "c9f420b555e2edaff7214624b8ed384b6d21c1aa103ff9da504768684ced0076",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-cleanup-final.txt": "ef5ce7217315f3c33d5e467ef87a53c3a65e287ef951c1c4bae1445623877962",
+    "docs/specs/srs-completion-phases/progress.md": "62b733b69c3f0d371ca3169f9e8e0a40d2780181d2b727129318b0beb33a63e0"
+  },
+  "baselinePathsOutsideCurrentGitEligibleSet": [
+    {
+      "path": "backend/src/CulinaryBlog.Api/obj/CulinaryBlog.Api.csproj.nuget.dgspec.json",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Api/obj/CulinaryBlog.Api.csproj.nuget.g.props",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Api/obj/CulinaryBlog.Api.csproj.nuget.g.targets",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Api/obj/project.assets.json",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Api/obj/project.nuget.cache",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Application/obj/CulinaryBlog.Application.csproj.nuget.dgspec.json",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Application/obj/CulinaryBlog.Application.csproj.nuget.g.props",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Application/obj/CulinaryBlog.Application.csproj.nuget.g.targets",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Application/obj/project.assets.json",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Application/obj/project.nuget.cache",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Domain/obj/CulinaryBlog.Domain.csproj.nuget.dgspec.json",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Domain/obj/CulinaryBlog.Domain.csproj.nuget.g.props",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Domain/obj/CulinaryBlog.Domain.csproj.nuget.g.targets",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Domain/obj/project.assets.json",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Domain/obj/project.nuget.cache",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Infrastructure/obj/CulinaryBlog.Infrastructure.csproj.nuget.dgspec.json",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Infrastructure/obj/CulinaryBlog.Infrastructure.csproj.nuget.g.props",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Infrastructure/obj/CulinaryBlog.Infrastructure.csproj.nuget.g.targets",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Infrastructure/obj/project.assets.json",
+      "exists": true
+    },
+    {
+      "path": "backend/src/CulinaryBlog.Infrastructure/obj/project.nuget.cache",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/bin/Debug/net10.0/.msCoverageSourceRootsMapping_CulinaryBlog.IntegrationTests",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/CulinaryBlog.IntegrationTests.csproj.nuget.dgspec.json",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/CulinaryBlog.IntegrationTests.csproj.nuget.g.props",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/CulinaryBlog.IntegrationTests.csproj.nuget.g.targets",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/Debug/net10.0/.NETCoreApp,Version=v10.0.AssemblyAttributes.cs",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/Debug/net10.0/CulinaryBlog.IntegrationTests.AssemblyInfo.cs",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/Debug/net10.0/CulinaryBlog.IntegrationTests.AssemblyInfoInputs.cache",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/Debug/net10.0/CulinaryBlog.IntegrationTests.GeneratedMSBuildEditorConfig.editorconfig",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/Debug/net10.0/CulinaryBlog.IntegrationTests.GlobalUsings.g.cs",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/Debug/net10.0/CulinaryBlog.IntegrationTests.assets.cache",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/Debug/net10.0/CulinaryBlog.IntegrationTests.csproj.AssemblyReference.cache",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/project.assets.json",
+      "exists": true
+    },
+    {
+      "path": "backend/tests/CulinaryBlog.IntegrationTests/obj/project.nuget.cache",
+      "exists": true
+    },
+    {
+      "path": "tools/UpstashProbe/obj/Debug/net10.0/.NETCoreApp,Version=v10.0.AssemblyAttributes.cs",
+      "exists": true
+    },
+    {
+      "path": "tools/UpstashProbe/obj/Debug/net10.0/UpstashProbe.AssemblyInfo.cs",
+      "exists": true
+    },
+    {
+      "path": "tools/UpstashProbe/obj/Debug/net10.0/UpstashProbe.AssemblyInfoInputs.cache",
+      "exists": true
+    },
+    {
+      "path": "tools/UpstashProbe/obj/Debug/net10.0/UpstashProbe.GeneratedMSBuildEditorConfig.editorconfig",
+      "exists": true
+    },
+    {
+      "path": "tools/UpstashProbe/obj/Debug/net10.0/UpstashProbe.GlobalUsings.g.cs",
+      "exists": true
+    }
+  ]
+}

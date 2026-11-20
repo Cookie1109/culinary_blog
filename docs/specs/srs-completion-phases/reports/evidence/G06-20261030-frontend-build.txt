@@ -1,0 +1,61 @@
+
+> @culinary-blog/web@1.0.0 build
+> next build
+
+   ▲ Next.js 15.5.28
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 5.8s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/6) ...
+   Generating static pages (1/6) 
+   Generating static pages (2/6) 
+   Generating static pages (4/6) 
+ ✓ Generating static pages (6/6)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                    Size  First Load JS
+┌ ○ /_not-found                               156 B         103 kB
+├ ƒ /api/auth/[...nextauth]                   156 B         103 kB
+├ ƒ /api/private-media/[imageId]/[variant]    156 B         103 kB
+├ ƒ /api/public-media/[imageId]/[variant]     156 B         103 kB
+├ ƒ /api/revalidate                           156 B         103 kB
+├ ƒ /auth/login                               144 B         156 kB
+├ ƒ /auth/register                            182 B         155 kB
+├ ● /categories/[slug]                        131 B         116 kB
+├ ƒ /dashboard                              5.08 kB         147 kB
+├ ƒ /dashboard/audit                        7.41 kB         149 kB
+├ ƒ /dashboard/categories                   9.79 kB         159 kB
+├ ƒ /dashboard/recipes                        181 B         152 kB
+├ ƒ /dashboard/recipes/[id]/edit              238 B         170 kB
+├ ƒ /dashboard/recipes/[id]/preview         2.11 kB         114 kB
+├ ƒ /dashboard/recipes/new                    238 B         170 kB
+├ ƒ /dashboard/system                       1.78 kB         154 kB
+├ ƒ /forgot-password                          180 B         148 kB
+├ ƒ /login                                    142 B         156 kB
+├ ○ /opengraph-image                          156 B         103 kB
+├ ƒ /profile                                4.84 kB         157 kB
+├ ƒ /recipes                                  134 B         133 kB
+├ ● /recipes/[slug]                         2.12 kB         114 kB
+├ ƒ /register                                 183 B         155 kB
+├ ● /render-public/categories/[key]         2.12 kB         114 kB
+├ ● /render-public/category/[slug]/[page]     131 B         116 kB
+├ ● /render-public/home/[key]               12.1 kB         145 kB
+├ ƒ /reset-password                           180 B         148 kB
+├ ○ /robots.txt                               156 B         103 kB
+├ ƒ /search                                   135 B         133 kB
+└ ƒ /sitemap.xml                              156 B         103 kB
++ First Load JS shared by all                103 kB
+  ├ chunks/1255-dc3ddf72a1dc71a7.js         46.6 kB
+  ├ chunks/4bd1b696-f785427dddbba9fb.js     54.2 kB
+  └ other shared chunks (total)             2.15 kB
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+

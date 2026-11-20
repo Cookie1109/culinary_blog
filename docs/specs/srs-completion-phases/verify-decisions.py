@@ -65,8 +65,18 @@ correction_path = HERE / 'approvals/2026-10-23-abc-correction.md'
 correction = correction_path.read_text(encoding='utf-8')
 if superseded != expected_superseded:
     errors.append('All 11 prior package decisions must be superseded')
-if pending != {'DEC-02', 'DEC-09', 'DEC-11', 'DEC-13', 'DEC-15'}:
+sitemap_approval = (HERE / 'approvals/2026-10-27-sitemap-discovery.md').read_text(encoding='utf-8')
+if ('Chấp thuận phương án thay thế qua robots.txt' not in sitemap_approval
+        or 'call_e75c52ccad524f5786f84b48b5940591' not in sitemap_approval):
+    errors.append('Missing user provenance for sitemap replacement')
+if pending != {'DEC-09', 'DEC-11'}:
     errors.append(f'Unresolved source issues changed: {sorted(pending)}')
+clarification = (HERE / 'approvals/2026-10-25-g04-contract-clarifications.md').read_text(encoding='utf-8')
+if 'Bạn hãy chốt giúp tôi theo nguyên tắt tối ưu và hiệu quả nhất. Và đảm bảo phù hợp với PDF' not in clarification:
+    errors.append('Missing delegated G04 clarification provenance')
+for code in ('DEC-13', 'DEC-15', 'DEC-21'):
+    if '2026-10-25-g04-contract-clarifications.md' not in dict(blocks)[code]:
+        errors.append(f'{code}: missing delegated G04 rule reference')
 if set(re.findall(r'DEC-\d{2}', correction)) != expected_superseded:
     errors.append('Correction record must cover exactly the 11 prior decisions')
 if set(re.findall(r'DEC-\d{2}', approval)) != expected_superseded:
@@ -129,7 +139,20 @@ baseline_hashes = {
     '09_Test_Strategy.md': 'fa57621c17f18d213044d4443de19289f30da91faf21b9fced34db8bdb4bdba2',
 }
 for name, digest in baseline_hashes.items():
-    if hashlib.sha256((HERE.parent / 'phase-0' / name).read_bytes()).hexdigest() != digest:
+    baseline = (HERE.parent / 'phase-0' / name).read_bytes()
+    if name == '02_Decision_Log.md':
+        # ADR-011 only added an approved navigation note; every original byte
+        # remains covered by the original review hash. Do not waive other edits.
+        notes = [line for line in baseline.splitlines(keepends=True)
+                 if hashlib.sha256(line).hexdigest() ==
+                 'd1ed31af465d1576004b0bbf7220bf4461cbec40153f36c92f10e9b3c8fce185']
+        if len(notes) == 1:
+            adr = (HERE.parent / 'phase-0/adr/ADR-011-release-metadata-providers.md').read_text(encoding='utf-8')
+            if 'Đồng ý với điều kiện phải khớp với PDF' not in adr or \
+                    '8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063' not in adr:
+                errors.append('ADR-011 navigation note lacks approval/PDF provenance')
+            baseline = baseline.replace(notes[0] + b'\n', b'', 1)
+    if hashlib.sha256(baseline).hexdigest() != digest:
         errors.append(f'Baseline changed since review: {name}; check effective approvals')
 
 assert Decimal(365 * 24) * Decimal('0.005') == Decimal('43.800')

@@ -1,0 +1,79 @@
+{
+  "scanner": "ZAP 2.17.0",
+  "image": "ghcr.io/zaproxy/zaproxy:stable@sha256:781a2bdaea47324e7bab583e2263f21d257b0aee61ed51521a5be45f5f5081ef",
+  "scope": "Owned private internal HTTPS staging only; no public scanner/load",
+  "rulesSha256": "5bef35d9f8d496bd9a900c5c4a1497451ae444a901a254c8d0e058e6c2c5e662",
+  "applicationRateLimitChanged": false,
+  "scannerPacing": "One spider thread and scanner-side 1 request/second/host",
+  "exit": 0,
+  "gate": {
+    "FAIL": 0,
+    "WARN": 1,
+    "PASS": 59
+  },
+  "alerts": [
+    {
+      "pluginid": "10055",
+      "alert": "CSP: Wildcard Directive",
+      "riskcode": "2",
+      "confidence": "3",
+      "count": "3"
+    },
+    {
+      "pluginid": "10055",
+      "alert": "CSP: script-src unsafe-inline",
+      "riskcode": "2",
+      "confidence": "3",
+      "count": "3"
+    },
+    {
+      "pluginid": "10055",
+      "alert": "CSP: style-src unsafe-inline",
+      "riskcode": "2",
+      "confidence": "3",
+      "count": "3"
+    },
+    {
+      "pluginid": "10111",
+      "alert": "Authentication Request Identified",
+      "riskcode": "0",
+      "confidence": "3",
+      "count": "1"
+    },
+    {
+      "pluginid": "10019",
+      "alert": "Content-Type Header Missing",
+      "riskcode": "0",
+      "confidence": "2",
+      "count": "3"
+    },
+    {
+      "pluginid": "10024",
+      "alert": "Information Disclosure - Sensitive Information in URL",
+      "riskcode": "0",
+      "confidence": "2",
+      "count": "2"
+    },
+    {
+      "pluginid": "10015",
+      "alert": "Re-examine Cache-control Directives",
+      "riskcode": "0",
+      "confidence": "1",
+      "count": "5"
+    },
+    {
+      "pluginid": "10031",
+      "alert": "User Controllable HTML Element Attribute (Potential XSS)",
+      "riskcode": "0",
+      "confidence": "1",
+      "count": "1"
+    }
+  ],
+  "highOrCriticalAlerts": 0,
+  "rawReportSha256": "20693d08d28b8f26854cfac9ae22db95f393c71ba8b1c2edbb37190d7dec1d22",
+  "triage": {
+    "10055": "CSP unsafe-inline/wildcard warnings retained, existing gate WARN; not waived or marked remediated. Requires nonce/style policy work with affected UI validation.",
+    "10111,10019,10024,10015,10031": "Informational findings retained for review. URL form values were ZAP synthetic inputs; no user credentials.",
+    "firstAttempt": "Preserved private: fast spider hit original API quota, caused SSR500 on downstream429. Paced rerun kept app quota unchanged; no500 alert on rerun."
+  }
+}

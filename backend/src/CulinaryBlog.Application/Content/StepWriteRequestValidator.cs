@@ -10,9 +10,10 @@ internal sealed class StepWriteRequestValidator : AbstractValidator<StepWriteReq
     /// <summary>Initializes a new instance of the <see cref="StepWriteRequestValidator"/> class.</summary>
     public StepWriteRequestValidator()
     {
+        this.RuleFor(request => request.StepType).Must(value => value is "prep" or "cook");
         this.RuleFor(request => request.Title).NotEmpty().MaximumLength(200);
         this.RuleFor(request => request.Description).NotEmpty().MaximumLength(2000);
-        this.RuleFor(request => request.TimerMinutes).InclusiveBetween(0, double.MaxValue).When(request => request.TimerMinutes.HasValue);
+        this.RuleFor(request => request.TimerMinutes).InclusiveBetween(0, 24 * 60).When(request => request.TimerMinutes.HasValue);
         this.RuleFor(request => request.ImageUrl).MaximumLength(500).Must(BeSafeUrl)
             .When(request => !string.IsNullOrWhiteSpace(request.ImageUrl));
         this.RuleFor(request => request.StepNumber).GreaterThan(0).When(request => request.StepNumber.HasValue);

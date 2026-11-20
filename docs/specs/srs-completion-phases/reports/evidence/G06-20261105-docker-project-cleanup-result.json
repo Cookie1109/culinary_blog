@@ -1,0 +1,18 @@
+{
+  "atUtc": "2026-11-05T00:16:26.421076+00:00",
+  "deletedImageTags": [
+    "culinary-g06-api:20261104-cache",
+    "culinary-g06-api:20261104-patched",
+    "culinary-g06-api:20261104",
+    "culinary-g06-api:render-free-fix",
+    "culinary-g06-api:data-protection",
+    "culinary-g06-api:local",
+    "culinary-g06-web:rum-review",
+    "culinary-g06-web:local"
+  ],
+  "projectCacheRecordsSelected": 58,
+  "containersAndVolumesPreserved": true,
+  "currentArtifactsAndHotfixRollbackPreserved": true,
+  "globalPrune": false,
+  "passed": true
+}

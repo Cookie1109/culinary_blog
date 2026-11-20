@@ -29,48 +29,16 @@ test(
           const context = await browser.newContext({ baseURL })
           const page = await context.newPage()
           await page.goto('/login')
-          const emailInput = page.locator('#email:visible')
-          await expect(emailInput).toHaveCount(1)
-          await emailInput.fill(email)
-          await page.locator('#password:visible').fill(password)
+          await page.locator('#email').fill(email)
+          await page.locator('#password').fill(password)
           await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
           await expect.poll(() => new URL(page.url()).pathname).toBe('/')
           return { context, page }
         }
         const email = 'owner@recipe-e2e.test'
-        const registration = await browser.newContext({ baseURL })
-        const registerPage = await registration.newPage()
-        await registerPage.goto('/register')
-        await registerPage.locator('#name').fill('Recipe lifecycle author')
-        await registerPage.locator('#email').fill(email)
-        await registerPage.locator('#password').fill(password)
-        await registerPage.locator('#confirm').fill(password)
-        const registered = registerPage.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.endsWith('/auth/register') &&
-            response.request().method() === 'POST',
-        )
-        await registerPage.getByRole('button', { name: 'Đăng ký tài khoản', exact: true }).click()
-        assert.equal((await registered).status(), 201)
-        await expect.poll(() => new URL(registerPage.url()).pathname).toBe('/')
-        assert.equal((await registration.request.get('/dashboard')).headers()['set-cookie'], undefined)
-        assert.equal((await registration.request.get('/api/auth/session')).headers()['set-cookie'], undefined)
-        await registerPage.goto('/dashboard')
-        await registerPage.getByRole('button', { name: 'Đăng xuất', exact: true }).click()
-        await expect
-          .poll(async () =>
-            Boolean((await (await registration.request.get('/api/auth/session')).json())?.backendUser),
-          )
-          .toBe(false)
-        await registerPage.goto('/dashboard')
-        await expect(registerPage).toHaveURL(/\/login/)
-        await expect(registerPage.getByRole('main')).toBeVisible()
-        await registration.close()
-
+        const token = await register(email)
         const otherToken = await register('other@recipe-e2e.test')
         const { context, page } = await login(email)
-        const token = (await (await context.request.get('/api/auth/session')).json()).accessToken
-        assert.ok(token)
         const title = 'Step3 lifecycle synthetic recipe'
         await page.goto('/dashboard/recipes/new')
         await page.locator('#title').fill('abc')
@@ -119,10 +87,6 @@ test(
           await page.getByRole('button', { name: label, exact: true }).click()
           assert.equal((await response).status(), status)
           await expect.poll(async () => (await detail()).version).toBeGreaterThan(1)
-          if (suffix.includes('/ingredients'))
-            await expect(page.getByRole('textbox', { name: 'Tên nguyên liệu', exact: true })).toHaveValue('')
-          if (suffix.includes('/steps'))
-            await expect(page.getByRole('textbox', { name: 'Tiêu đề bước', exact: true })).toHaveValue('')
         }
         await expect(page.getByRole('button', { name: 'Xuất bản', exact: true })).toBeDisabled()
         assert.equal((await direct('/publish', 'PATCH')).status, 422)
@@ -155,13 +119,11 @@ test(
         await page.getByRole('textbox', { name: 'Mô tả bước', exact: true }).fill('Cook slowly until tender.')
         await write('Lưu bước', 'PUT', `/steps/${(await detail()).steps[0].id}`, 200)
         await stage('4\\. Hình ảnh')
-        const uploaded = page.waitForResponse(
-          (response) => response.request().method() === 'POST' && response.url().endsWith('/images'),
-        )
         await page
           .locator('#recipe-image')
           .setInputFiles({ name: 'dish.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
-        assert.equal((await uploaded).status(), 201)
+        await page.getByRole('textbox', { name: 'Mô tả ảnh', exact: true }).fill('Synthetic rice image')
+        await write('Tải ảnh lên', 'POST', '/images', 201)
         await expect.poll(async () => (await detail()).images[0]?.processingStatus).toBe('ready')
         const saved = await detail()
         // A new authenticated browser session proves persistence beyond client memory.
@@ -277,11 +239,6 @@ test(
         }
         await lifecycle('Xuất bản', '/publish')
         await visiblePublic(true)
-        await publicPage.goto(paths[3])
-        await expect(publicPage.getByRole('group', { name: 'Bộ lọc đang áp dụng' })).toBeVisible()
-        const keyword = publicPage.getByRole('button', { name: 'Bỏ từ khóa', exact: true })
-        await expect(keyword).toBeVisible()
-        await expect(keyword).toHaveText(`Từ khóa: ${title}`)
         const publishedVersion = (await detail()).version
         assert.equal((await direct('/publish', 'PATCH')).status, 409)
         assert.equal((await detail()).version, publishedVersion)

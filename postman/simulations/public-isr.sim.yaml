@@ -1,0 +1,5 @@
+simulation: public-isr
+routing: path
+mocks:
+  - routeKey: culinary
+    path: ../mocks/culinary-public/config.yaml

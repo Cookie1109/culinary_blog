@@ -43,6 +43,12 @@ Start-ScheduledTask -TaskName Culinary-G06-PostgreSQLBackup
 
 Không chạy đồng thời bản manual Python với task. Không restore đè Neon để thử. Script đã tự restore vào target mới trong mỗi lượt; khi cần khôi phục thật phải chọn target và kế hoạch riêng.
 
+## Phạm vi khôi phục đã đo
+
+Lượt TaskScheduler10/11/2026 bắt đầu16:07:16UTC và kết thúc16:07:27UTC; khôi phục/so đủ schema và dữ liệuDB4,384giây. Bản sao chứa snapshot nhất quán của lượt chạy đó. Lịch mỗi24giờ cho biết chu kỳ dự kiến khi máy hoạt động; độ mới thực tế phải tính từ timestamp snapshot gần nhất, không hứaRPO24giờ khi máy tắt. PDF không đặt ngưỡngRTO/RPO riêng. Không dùng4,384giây làm thời gian khôi phục toàn hệ thống.
+
+Media đã restore301object/301SHA trên target riêng ngày05/11; phần restore/verify3,135giây, toàn lượtbackup+restore8,916giây. Ngày10/11 đã đối chiếu toàn bộ301metadata và đọc lại một object đổiLastModified, SHA vẫn khớp. Đây là evidence phục hồi và tính bền qua restart của dữ liệu hiện tại, không phải cam kết phục hồi khi mất cả ổ đĩa chứaMinIO và mọi bản sao. Không cần tiếp tụcGoogleDrive để nghiệm thu các yêu cầu cụ thể của NFR-REL-003; MinIOproduction4node/bảo mật được theo dõi ở task riêng.
+
 ## Thay đổi script
 
 Source ở `infra/operations/backup-neon.py`, đăng ký lịch bằng `register-neon-backup.ps1`. Khi source thay đổi, phải kiểm lại phần ảnh hưởng rồi cập nhật SHA256 đã review trong config private; script từ chối chạy nếu hash khác. Kiểm retention:

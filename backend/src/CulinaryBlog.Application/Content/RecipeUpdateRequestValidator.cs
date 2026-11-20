@@ -16,7 +16,7 @@ internal sealed class RecipeUpdateRequestValidator : AbstractValidator<RecipeUpd
             .When(request => request.Description.IsSpecified).OverridePropertyName("Description");
         this.RuleFor(request => request.CategoryId.Value).NotNull().NotEqual(Guid.Empty)
             .When(request => request.CategoryId.IsSpecified).OverridePropertyName("CategoryId");
-        this.RuleFor(request => request.PrepTime.Value).NotNull().GreaterThan(0)
+        this.RuleFor(request => request.PrepTime.Value).NotNull().GreaterThanOrEqualTo(0)
             .When(request => request.PrepTime.IsSpecified).OverridePropertyName("PrepTime");
         this.RuleFor(request => request.CookTime.Value).NotNull().GreaterThanOrEqualTo(0)
             .When(request => request.CookTime.IsSpecified).OverridePropertyName("CookTime");

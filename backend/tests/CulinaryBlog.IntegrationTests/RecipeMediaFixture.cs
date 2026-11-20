@@ -6,7 +6,6 @@ using CulinaryBlog.Application.Media;
 using CulinaryBlog.Infrastructure.Configuration;
 using CulinaryBlog.Infrastructure.Media;
 using CulinaryBlog.Infrastructure.Persistence;
-using CulinaryBlog.IntegrationTests.Fixtures;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -30,7 +29,7 @@ public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
     private IMinioClient client = null!;
 
     /// <summary>Gets the minio.</summary>
-    public MinioContainer Minio { get; } = new MinioBuilder(MinioTestImage.Name)
+    public MinioContainer Minio { get; } = new MinioBuilder("minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e")
         .WithUsername("media-test").WithPassword("synthetic-media-only").WithPortBinding(ReservePort(), 9000).Build();
 
     /// <summary>Gets the app.</summary>
@@ -43,7 +42,6 @@ public sealed class RecipeMediaFixture : IAsyncLifetime, IAsyncDisposable
     /// <returns>A task representing the operation and its result.</returns>
     public async Task InitializeAsync()
     {
-        await MinioTestImage.PrepareAsync();
         await Task.WhenAll(this.factory.InitializeAsync(), this.Minio.StartAsync());
         this.client = new MinioClient().WithEndpoint(this.Minio.Hostname, this.Minio.GetMappedPublicPort(9000))
             .WithCredentials("media-test", "synthetic-media-only").WithTimeout(2000).Build();

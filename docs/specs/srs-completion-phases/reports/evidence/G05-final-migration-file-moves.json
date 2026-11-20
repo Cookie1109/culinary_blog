@@ -1,0 +1,35 @@
+[
+  {
+    "old": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\20260922150000_RecipeSearchVector.cs",
+    "new": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\RecipeSearchVector.cs",
+    "migrationIdPreserved": [
+      "20260922150000_RecipeSearchVector"
+    ]
+  },
+  {
+    "old": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\20261003120000_RecipeDiscoveryIndexes.cs",
+    "new": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\RecipeDiscoveryIndexes.cs",
+    "migrationIdPreserved": [
+      "20261003120000_RecipeDiscoveryIndexes"
+    ]
+  },
+  {
+    "old": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\20261025050000_PublicCacheGeneration.cs",
+    "new": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\PublicCacheGeneration.cs",
+    "migrationIdPreserved": [
+      "20261025050000_PublicCacheGeneration"
+    ]
+  },
+  {
+    "old": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\20261025053000_SharedRateLimitFallback.cs",
+    "new": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\SharedRateLimitFallback.cs",
+    "migrationIdPreserved": [
+      "20261025053000_SharedRateLimitFallback"
+    ]
+  },
+  {
+    "old": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\20261025064611_SrsIdentityAndDataTypes.cs",
+    "new": "backend\\src\\CulinaryBlog.Infrastructure\\Persistence\\Migrations\\20261025064611_SrsIdentityAndDataTypes.cs",
+    "migrationIdPreserved": []
+  }
+]

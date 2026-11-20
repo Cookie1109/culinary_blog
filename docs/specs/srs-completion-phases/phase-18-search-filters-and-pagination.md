@@ -30,7 +30,7 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D6-04 · Kiểm chứng:** FTS có/không dấu, weighted rank/relevanceScore, q ≥2 sau trim, special characters/injection, empty result; AND filters category/difficulty/maxCookTime/minServings/prep bounds/maxTime, sort hai chiều/tie-break, pageSize 1–50 và metadata. UI/URL/default relevance đồng nhất API, `maxCookTime=0` không bị mất.
+- [x] **D6-04 · Kiểm chứng:** FTS có/không dấu, weighted rank/relevanceScore, q ≥2 sau trim, special characters/injection, empty result; AND filters category/difficulty/maxCookTime/minServings/prep bounds/maxTime, sort hai chiều/tie-break, pageSize 1–50 và metadata. UI/URL/default relevance đồng nhất API, `maxCookTime=0` không bị mất.
 
 ## Trình tự thực hiện trong phase
 
@@ -47,11 +47,14 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Acceptance search/filter/sort/paging xanh; score và default đúng.
-- [ ] Không làm yếu assertion chỉ để phù hợp cách query đang viết.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Acceptance search/filter/sort/paging xanh; score và default đúng.
+- [x] Không làm yếu assertion chỉ để phù hợp cách query đang viết.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-18-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-17-recipe-category-composition.md) · [Tiếp theo để tham khảo](phase-19-media-storage-and-jobs.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+
+E28 —27/10/2026: [report chung G04](reports/package-G04-result.md#checkpoint27102026--chốt-http-và-nghiệm-thu-g04-local),15/15 task local; giữ bằng chứng chưa bị ảnh hưởng. Không áp migration vào database người dùng hoặc nhận triển khai demo là nghiệm thu production.

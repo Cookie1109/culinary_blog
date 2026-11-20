@@ -11,6 +11,8 @@ async function register(page: Page, name: string) {
   await page.locator('#confirm').fill(password)
   await page.getByRole('button', { name: 'Đăng ký tài khoản', exact: true }).click()
   await expect.poll(() => new URL(page.url()).pathname).toBe('/')
+  await page.goto('/dashboard')
+  await expect(page).toHaveURL(/dashboard/)
   return email
 }
 async function login(page: Page, email: string, secret = password) {
@@ -19,10 +21,10 @@ async function login(page: Page, email: string, secret = password) {
   await page.locator('#password').fill(secret)
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
   await expect.poll(() => new URL(page.url()).pathname).toBe('/')
+  await page.goto('/dashboard')
 }
 
 async function logout(page: Page) {
-  await page.goto('/dashboard')
   const signedOut = page.waitForResponse(
     (response) => response.url().includes('/api/auth/signout') && response.ok(),
   )
@@ -47,8 +49,6 @@ async function createDraft(page: Page, title: string) {
   await page.locator('#title').fill(title)
   await page.locator('#description').fill('Công thức synthetic dùng riêng cho kiểm thử browser.')
   await page.locator('#category').selectOption({ index: 1 })
-  await page.locator('#prepTime').fill('10')
-  await page.locator('#cookTime').fill('20')
   await page.locator('#servings').fill('2')
   const created = page.waitForResponse(
     (response) =>
@@ -80,6 +80,7 @@ async function createDraft(page: Page, title: string) {
     .getByRole('button', { name: /4\. Hình ảnh/ })
     .first()
     .click()
+  // Choosing a file uploads it immediately.
   const image = page.waitForResponse(
     (response) => response.url().endsWith('/images') && response.status() === 201,
   )
@@ -303,11 +304,11 @@ test('E2E-05 Vietnamese search, filters, paging, detail and URL history', async 
   const session = (await registration.json()).data
   const categories = await request.get(`${process.env.E2E_API_URL}/api/v1/categories`)
   const category = (await categories.json()).data[0]
-  for (const title of ['G05 Phở bò', 'G05 Phở gà', 'G05 Phở chay']) {
+  for (let index = 0; index < 13; index += 1) {
     const response = await request.post(`${process.env.E2E_API_URL}/api/v1/recipes`, {
       headers: { Authorization: `Bearer ${session.accessToken}` },
       data: {
-        title,
+        title: `G05 Phở ${index + 1}`,
         description: 'Search fixture recipe.',
         categoryId: category.id,
         prepTime: 5,
@@ -327,6 +328,14 @@ test('E2E-05 Vietnamese search, filters, paging, detail and URL history', async 
   }
   await page.goto('/search?q=pho')
   await expect(page.locator('article').first()).toContainText(/phở/i)
+  const allCategories = page.getByRole('button', { name: 'Xem thêm danh mục', exact: true })
+  await allCategories.click()
+  const categoryDialog = page.getByRole('dialog', { name: 'Tất cả danh mục' })
+  await expect(categoryDialog).toBeVisible()
+  await expect(categoryDialog.getByRole('button', { name: category.name, exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(categoryDialog).toBeHidden()
+  await expect(allCategories).toBeFocused()
   await page.locator('#recipes-search').fill('phở')
   await page.route(
     '**/search?*',
@@ -344,7 +353,8 @@ test('E2E-05 Vietnamese search, filters, paging, detail and URL history', async 
   await expect(page.locator('main')).toContainText(/phở/i)
   await page.locator('#recipes-sort-select').selectOption('az')
   await expect(page).toHaveURL(/sort=az/)
-  await page.goto(`/search?q=pho&pageSize=1&category=${category.slug}&difficulty=easy`)
+  await page.goto(`/search?q=pho&category=${category.slug}&difficulty=easy`)
+  await expect(page.locator('article')).toHaveCount(12)
   await page.getByRole('button', { name: 'Trang 2', exact: true }).click()
   await expect(page).toHaveURL(/page=2/)
   await page.goBack()
@@ -519,7 +529,6 @@ test('mobile touch menu keeps keyboard focus, closes with Escape and restores fo
     await expect(dialog).toBeVisible()
     await page.keyboard.press('Escape')
     await register(page, 'G05 Touch')
-    await page.goto('/dashboard')
     await page.locator('summary').tap()
     await expect(page.getByRole('navigation', { name: 'Điều hướng quản lý trên điện thoại' })).toBeVisible()
     const dashboardMenu = await new AxeBuilder({ page })

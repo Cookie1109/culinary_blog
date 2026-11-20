@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-26",
+  "timezone": "Asia/Bangkok",
+  "decision": "User revoked the Cloudinary migration and instructed to retain MinIO.",
+  "currentProvider": "MinIO",
+  "cloudinaryAdapterSdkCliTestsAndConfigRemoved": true,
+  "minioDataMigrated": false,
+  "sharedStackChanged": false,
+  "backendTests": [
+    {
+      "path": "tmp/minio-revert/regression/Admin_COOKIEE_2026-10-26_15_15_37_net10.0.trx",
+      "passed": 3,
+      "total": 3
+    },
+    {
+      "path": "tmp/minio-revert/regression/Admin_COOKIEE_2026-10-26_15_15_37_net10.0[1].trx",
+      "passed": 89,
+      "total": 89
+    },
+    {
+      "path": "tmp/minio-revert/regression/Admin_COOKIEE_2026-10-26_15_15_47_net10.0.trx",
+      "passed": 135,
+      "total": 135
+    }
+  ],
+  "passed": 227,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": "Existing real private MinIO four-format upload, resize/fallback/retries/outbox deletion, sitemap, health/security, migration/schema/OpenAPI and API regression.",
+  "gates": {
+    "lockedRestore": "passed",
+    "format": "passed",
+    "releaseBuild": "passed; zero warnings/errors",
+    "nugetAudit": "no vulnerable packages",
+    "composeConfig": "passed"
+  },
+  "frontend": "Unchanged; existing frontend/ISR/Google evidence retains its original scope.",
+  "deployment": {
+    "renderDeployed": false,
+    "minioCloudEndpointAndCredentials": "not provided; placeholders retained",
+    "secretsPrinted": false
+  },
+  "artifacts": [
+    {
+      "path": "tmp/minio-revert/restore.log",
+      "sha256": "2ad9967f2280d0195ad457a92fe6a353a8492625846632386df6dfc446efe4bc"
+    },
+    {
+      "path": "tmp/minio-revert/locked-restore.log",
+      "sha256": "ad16c5d302036d3229881b2f8be0082a8ac47fb7b00ad51d1e96378c541b108f"
+    },
+    {
+      "path": "tmp/minio-revert/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp/minio-revert/build.log",
+      "sha256": "ec81c399aa8a2bf2725bbd58c315b0c338ed566b3df83c9fe2558e48ae745795"
+    },
+    {
+      "path": "tmp/minio-revert/backend-tests.log",
+      "sha256": "733e2d1e360ba5bd2400791256c948535789811cd303fd53c7fb497f8352d0c5"
+    },
+    {
+      "path": "tmp/minio-revert/dependency-audit.log",
+      "sha256": "eb510d7085ddbbc35f587b155bb282d7377f56c7e2ba217da233a13d631f024b"
+    },
+    {
+      "path": "tmp/minio-revert/compose.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp/minio-revert/regression/Admin_COOKIEE_2026-10-26_15_15_37_net10.0.trx",
+      "sha256": "add239a14479832098fe24515ae422c99d2490ce2266693fb5139ec4b064fa72"
+    },
+    {
+      "path": "tmp/minio-revert/regression/Admin_COOKIEE_2026-10-26_15_15_37_net10.0[1].trx",
+      "sha256": "bfed5f25356fe0827f56db10a270e6017a6625ea9bad99fb278590ab72a08f44"
+    },
+    {
+      "path": "tmp/minio-revert/regression/Admin_COOKIEE_2026-10-26_15_15_47_net10.0.trx",
+      "sha256": "8b23121fc306828a0ea9c250bd0cb615389e0a8a2159db2f7a2ed212273fc734"
+    }
+  ]
+}

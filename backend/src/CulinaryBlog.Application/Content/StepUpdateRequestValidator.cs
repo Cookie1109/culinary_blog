@@ -10,11 +10,12 @@ internal sealed class StepUpdateRequestValidator : AbstractValidator<StepUpdateR
     /// <summary>Initializes a new instance of the <see cref="StepUpdateRequestValidator"/> class.</summary>
     public StepUpdateRequestValidator()
     {
+        this.RuleFor(request => request.StepType.Value).Must(value => value is "prep" or "cook").When(request => request.StepType.IsSpecified).OverridePropertyName("StepType");
         this.RuleFor(request => request.Title.Value).NotEmpty().MaximumLength(200)
             .When(request => request.Title.IsSpecified).OverridePropertyName("Title");
         this.RuleFor(request => request.Description.Value).NotEmpty().MaximumLength(2000)
             .When(request => request.Description.IsSpecified).OverridePropertyName("Description");
-        this.RuleFor(request => request.TimerMinutes.Value).InclusiveBetween(0, double.MaxValue)
+        this.RuleFor(request => request.TimerMinutes.Value).InclusiveBetween(0, 24 * 60)
             .When(request => request.TimerMinutes.IsSpecified).OverridePropertyName("TimerMinutes");
         this.RuleFor(request => request.ImageUrl.Value).MaximumLength(500).Must(value => string.IsNullOrWhiteSpace(value) || (Uri.TryCreate(value, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
             .When(request => request.ImageUrl.IsSpecified).OverridePropertyName("ImageUrl");

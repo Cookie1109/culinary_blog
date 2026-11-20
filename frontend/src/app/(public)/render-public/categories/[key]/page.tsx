@@ -4,7 +4,8 @@ import { Categories } from '@/features/culinary/pages/Categories'
 import { getPublicCategories, getPublishedRecipes } from '@/lib/api/public-content-server'
 import { createPageMetadata } from '@/lib/seo'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 export const metadata: Metadata = createPageMetadata({
   title: 'Danh mục món ăn',
   description: 'Duyệt các công thức nấu ăn theo từng danh mục.',
@@ -13,10 +14,6 @@ export const metadata: Metadata = createPageMetadata({
 
 const PREFERRED_CATEGORY_IMAGES: Record<string, string> = {
   'mon-nuoc': '/api/v1/media/f9b63828-3e72-91a1-2e19-9a0c890dfbaa/medium',
-}
-
-export function generateStaticParams() {
-  return []
 }
 
 export default async function CategoriesPage({ params }: { params: Promise<{ key: string }> }) {

@@ -59,7 +59,7 @@ test('category detail route uses the public category endpoint and maps API 404 t
     'utf8',
   )
 
-  assert.match(route, /getPublishedCategory\(slug, page, revalidate\)/)
+  assert.match(route, /getPublishedCategory\(slug, page\)/)
   assert.match(route, /notFound\(\)/)
   assert.match(serverClient, /\/categories\/\$\{encodeURIComponent\(slug\)\}/)
   assert.match(serverClient, /response\.status === 404/)
@@ -96,7 +96,7 @@ test('recipe detail route maps an API 404 to the Next.js not-found response', as
     'utf8',
   )
 
-  assert.match(source, /getPublishedRecipe\(slug, revalidate\)/)
+  assert.match(source, /getPublishedRecipe\(slug\)/)
   assert.match(source, /notFound\(\)/)
   assert.match(serverClient, /response\.status === 404/)
 })

@@ -43,6 +43,16 @@ public sealed class PublicContentRefreshScheduler(
     /// <returns>A task representing the operation and its result.</returns>
     public async Task ScheduleAsync(CancellationToken cancellationToken = default)
     {
+        try
+        {
+            await redis.GetSubscriber().PublishAsync(
+                RedisChannel.Literal("culinary:v1:recipe-changes"), "changed").ConfigureAwait(false);
+        }
+        catch (Exception exception) when (IsRedisFailure(exception, cancellationToken))
+        {
+            RedisUnavailable(logger, exception);
+        }
+
         if (!configuration.GetValue("BackgroundJobs:Enabled", true))
         {
             return;

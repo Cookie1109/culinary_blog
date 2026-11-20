@@ -1,0 +1,611 @@
+{
+  "api": {
+    "schemaVersion": 2,
+    "createdAt": "2026-10-29T17:45:49.904166906Z",
+    "artifactName": "/input.tar",
+    "metadata": {
+      "Size": 1103706112,
+      "OS": {
+        "Family": "ubuntu",
+        "Name": "24.04"
+      },
+      "ImageID": "sha256:5eeeae423621477139d612691521d6c1ca4fbf88c5968b1d56277c8a8e131233",
+      "DiffIDs": [
+        "sha256:32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16",
+        "sha256:42c74cbc219f6ecbfdc40832e0f974b993deacf71cb80c81e5920edbdfa64ca2",
+        "sha256:4014493bfd8c51555f149f8475fbbc26a94efa36b2b4266746ccdf23a7be819d",
+        "sha256:1c41cda582c2e63018d90f1b922d1f613ccc80d48a1b8915581d67e7f417975b",
+        "sha256:b77b1d83b00adf1740c2b436ae85b076fed806003ae7c9fd03915b1a56e422a4",
+        "sha256:53edabc8547a5fc8f1df165d1b888d29d070b5d55ad8f5e7884f4e812353b783",
+        "sha256:d4197a639bfd55c426332a951bb36d7dd54882cd8bbfaea7be0c65f101f42cd0",
+        "sha256:245f677b275915f01671b983cfc08a501ab9d71719feb218a5bda07ffb183e05",
+        "sha256:0614b5bda9227444a8ca2d8242582ea62b04c552168af41ad01ca1eff3323764",
+        "sha256:b7272e95681214bc4cc05134c0370762cb64bf76d8d345e8fb280507e04b3ba5"
+      ],
+      "RepoTags": [
+        "culinary-g06-api:local"
+      ],
+      "Reference": "culinary-g06-api:local",
+      "ImageConfig": {
+        "architecture": "amd64",
+        "created": "2026-10-29T17:27:53.445007327Z",
+        "history": [
+          {
+            "created": "2026-10-02T08:10:52.386018095Z",
+            "created_by": "/bin/sh -c #(nop)  ARG RELEASE",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-02T08:10:52.440009331Z",
+            "created_by": "/bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-02T08:10:52.472504693Z",
+            "created_by": "/bin/sh -c #(nop)  LABEL org.opencontainers.image.version=24.04",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-02T08:10:54.613002376Z",
+            "created_by": "/bin/sh -c #(nop) ADD file:7121eb4a5ba391efb4ba9a38c532d1c5dc2d22d276f04e062f357eea36ee62c4 in / "
+          },
+          {
+            "created": "2026-10-02T08:10:55.064306818Z",
+            "created_by": "/bin/sh -c #(nop)  CMD [\"/bin/bash\"]",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-13T20:45:10.898357063Z",
+            "created_by": "ENV APP_UID=1654 ASPNETCORE_HTTP_PORTS=8080 DOTNET_RUNNING_IN_CONTAINER=true",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-13T20:45:10.898357063Z",
+            "created_by": "RUN /bin/sh -c apt-get update     && apt-get install -y --no-install-recommends         ca-certificates                 libc6         libgcc-s1         libicu74         libssl3t64         libstdc++6         tzdata         tzdata-legacy     && rm -rf /var/lib/apt/lists/* # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-13T20:45:12.455746444Z",
+            "created_by": "RUN /bin/sh -c groupadd         --gid=$APP_UID         app     && useradd --no-log-init         --uid=$APP_UID         --gid=$APP_UID         --create-home         app # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-13T20:46:23.015932373Z",
+            "created_by": "ENV DOTNET_VERSION=10.0.13",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-13T20:46:23.015932373Z",
+            "created_by": "COPY /dotnet /usr/share/dotnet # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-13T20:46:24.100228885Z",
+            "created_by": "RUN /bin/sh -c ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-13T20:46:41.910311272Z",
+            "created_by": "ENV ASPNET_VERSION=10.0.13",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-13T20:46:41.910311272Z",
+            "created_by": "COPY /dotnet /usr/share/dotnet # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-29T17:12:50.458773073Z",
+            "created_by": "RUN /bin/sh -c apt-get update     && apt-get install -y --no-install-recommends curl libbrotli1     && rm -rf /var/lib/apt/lists/* # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-29T17:12:50.601196724Z",
+            "created_by": "WORKDIR /app",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-29T17:27:52.599094208Z",
+            "created_by": "COPY /app/publish . # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-29T17:27:53.445007327Z",
+            "created_by": "RUN /bin/sh -c mkdir -p /app/logs /app/data-protection && chown \"$APP_UID\" /app/logs /app/data-protection # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-29T17:27:53.445007327Z",
+            "created_by": "USER 1654",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-29T17:27:53.445007327Z",
+            "created_by": "EXPOSE [8080/tcp]",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-29T17:27:53.445007327Z",
+            "created_by": "ENTRYPOINT [\"dotnet\" \"CulinaryBlog.Api.dll\"]",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          }
+        ],
+        "os": "linux",
+        "rootfs": {
+          "type": "layers",
+          "diff_ids": [
+            "sha256:32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16",
+            "sha256:42c74cbc219f6ecbfdc40832e0f974b993deacf71cb80c81e5920edbdfa64ca2",
+            "sha256:4014493bfd8c51555f149f8475fbbc26a94efa36b2b4266746ccdf23a7be819d",
+            "sha256:1c41cda582c2e63018d90f1b922d1f613ccc80d48a1b8915581d67e7f417975b",
+            "sha256:b77b1d83b00adf1740c2b436ae85b076fed806003ae7c9fd03915b1a56e422a4",
+            "sha256:53edabc8547a5fc8f1df165d1b888d29d070b5d55ad8f5e7884f4e812353b783",
+            "sha256:d4197a639bfd55c426332a951bb36d7dd54882cd8bbfaea7be0c65f101f42cd0",
+            "sha256:245f677b275915f01671b983cfc08a501ab9d71719feb218a5bda07ffb183e05",
+            "sha256:0614b5bda9227444a8ca2d8242582ea62b04c552168af41ad01ca1eff3323764",
+            "sha256:b7272e95681214bc4cc05134c0370762cb64bf76d8d345e8fb280507e04b3ba5"
+          ]
+        },
+        "config": {
+          "Entrypoint": [
+            "dotnet",
+            "CulinaryBlog.Api.dll"
+          ],
+          "Env": [
+            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "APP_UID=1654",
+            "ASPNETCORE_HTTP_PORTS=8080",
+            "DOTNET_RUNNING_IN_CONTAINER=true",
+            "DOTNET_VERSION=10.0.13",
+            "ASPNET_VERSION=10.0.13"
+          ],
+          "Labels": {
+            "org.opencontainers.image.version": "24.04"
+          },
+          "User": "1654",
+          "WorkingDir": "/app",
+          "ExposedPorts": {
+            "8080/tcp": {}
+          }
+        }
+      },
+      "Layers": [
+        {
+          "Size": 80693248,
+          "Digest": "sha256:f2b4ef06ff01a67d4bed7657a4ae379a7d07934b7c3e743454a22a0d5275fb2b",
+          "DiffID": "sha256:32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16"
+        },
+        {
+          "Size": 43223552,
+          "Digest": "sha256:efdf6b44845c4fe3e24ba690ff1e0ef2aa7df9e2bc2e1c943498cefae75bd118",
+          "DiffID": "sha256:42c74cbc219f6ecbfdc40832e0f974b993deacf71cb80c81e5920edbdfa64ca2"
+        },
+        {
+          "Size": 24576,
+          "Digest": "sha256:456132b86eeaf45afaa8081118ad42fa24a1a5d093f0e26ff7714e7b4742dd4f",
+          "DiffID": "sha256:4014493bfd8c51555f149f8475fbbc26a94efa36b2b4266746ccdf23a7be819d"
+        },
+        {
+          "Size": 82908672,
+          "Digest": "sha256:bc2779583e092a64db5ff30d209b65ba7aa647631e450ab0f77f0749ae1e8353",
+          "DiffID": "sha256:1c41cda582c2e63018d90f1b922d1f613ccc80d48a1b8915581d67e7f417975b"
+        },
+        {
+          "Size": 2560,
+          "Digest": "sha256:550612595a7e8a6d7aa7d04b8e3d39322ef59c1ce74d2e54564f747f98f12752",
+          "DiffID": "sha256:b77b1d83b00adf1740c2b436ae85b076fed806003ae7c9fd03915b1a56e422a4"
+        },
+        {
+          "Size": 27179520,
+          "Digest": "sha256:5ddf84f0f9ba7e1acb2deb5295d242abed105bc3847526a412d80657151f8c0c",
+          "DiffID": "sha256:53edabc8547a5fc8f1df165d1b888d29d070b5d55ad8f5e7884f4e812353b783"
+        },
+        {
+          "Size": 6048768,
+          "Digest": "sha256:c53ab9d8175101a505510be03c1f79faf111a2e8fb71d3d4feaacb13b59c6248",
+          "DiffID": "sha256:d4197a639bfd55c426332a951bb36d7dd54882cd8bbfaea7be0c65f101f42cd0"
+        },
+        {
+          "Size": 1536,
+          "Digest": "sha256:29fc8a1c0ed377a864b6fa10163240cab8f768e26fcc48553090236773d602d8",
+          "DiffID": "sha256:245f677b275915f01671b983cfc08a501ab9d71719feb218a5bda07ffb183e05"
+        },
+        {
+          "Size": 863621120,
+          "Digest": "sha256:37d9fc59d64e46ba84912da08a414ae6ad5c5299470f53500fa3e62c7aa5b4a7",
+          "DiffID": "sha256:0614b5bda9227444a8ca2d8242582ea62b04c552168af41ad01ca1eff3323764"
+        },
+        {
+          "Size": 2560,
+          "Digest": "sha256:b799daa92b7e835023828dc2081d97aef42d1c33308af1bbe9e0895d1cee87a8",
+          "DiffID": "sha256:b7272e95681214bc4cc05134c0370762cb64bf76d8d345e8fb280507e04b3ba5"
+        }
+      ]
+    },
+    "highCriticalCount": 0,
+    "exit": 0
+  },
+  "web": {
+    "schemaVersion": 2,
+    "createdAt": "2026-10-29T17:58:04.940904914Z",
+    "artifactName": "/input.tar",
+    "metadata": {
+      "Size": 222839296,
+      "OS": {
+        "Family": "debian",
+        "Name": "13.7"
+      },
+      "ImageID": "sha256:9f3bd06cdc0f7031d63b6543946159cbee0c0f9cd532123a28795dd0b10f77ef",
+      "DiffIDs": [
+        "sha256:9486261b5a13f63ca6904b36721527ac8f19df53d300560138d69ae9b4c203de",
+        "sha256:621c35e751a51a9a9dc3e80aa0b7fe8be2a93402ea6ccd307d30852cd7776cda",
+        "sha256:763a77745f27b86cf26b97887b6842d83720e63b1c48848c0ba9ee54e351d63a",
+        "sha256:f0d0eff4c2312a7bd6e21797bdfea5eb35f60e76b555ce2b22794424af2cad36",
+        "sha256:275a30dd8ce958b21daa9ad962c6fbc09f98306ee2f486b65c9075dc257b1412",
+        "sha256:4d049f83d9cf21d1f5cc0e11deaf36df02790d0e60c1a3829538fb4b61685368",
+        "sha256:af5aa97ebe6ce1604747ec1e21af7136ded391bcabe4acef882e718a87c86bcc",
+        "sha256:6f1cdceb6a3146f0ccb986521156bef8a422cdbb0863396f7f751f575ba308f4",
+        "sha256:bd3cdfae1d3fdd83a2231d608969b38b82349777c2fff9a7c12d54f8ac5c9b38",
+        "sha256:4cde6b0bb6f50a5f255eef7b2a42162c661cf776b803225dcac9a659e396bb6b",
+        "sha256:ad51d0769d16ba578106a177987dfe3d2e02c1668c852b795b2f6b024068242a",
+        "sha256:187cfc6d1e3e8a40a5e64653bcd3239c140807dcf1c09e48021178705a5a6139",
+        "sha256:f2392a9484bf6b18f06beaf705b994e31dbb2716c99cf7d03c9c495cd107f364",
+        "sha256:8a3b315d45080ecb38e39d42d28e951303c67c2ce7482bcdbbc3b5424be19013",
+        "sha256:2cef49adb7d7902c61ecdd385036e3c7fb7c9f0ada96a41901797c77b7daedd7",
+        "sha256:c0e409312adc366898967307565f692bb33d43a439d3de48e27d14b742389725",
+        "sha256:e4ba966d7f0527dfe0fcb559e4e18d4da42c4e6beae924719255e0dedb554ed0",
+        "sha256:1f5d28bd51650f429293f7730ede274b81dc0744aa918bc887133c4ad610258c",
+        "sha256:6e18ad80f3d64a8cbbcd1ff2e8a0d5ce7282cf664e816b86183a59d30a618e8a",
+        "sha256:c16b2ec4b1493bad1b1de23d659c899e60abb166bda756d02792f0a03ba54a43",
+        "sha256:7db505d90756626f425c6c5468eca565c82f589b144ecaa4f411ad9bbf79e614",
+        "sha256:d99e6a7fc3457e2fe86160ade531b8036e86ad14e576e5c09d4e94da2e132ff6",
+        "sha256:a5731bd79cb1d63efa730bcf242492c638da606b35de2479312bcb0e75bd38c0",
+        "sha256:635308e4fb45c0e59b7367303c862fd02a15232264785eca54e43955dce6eb37",
+        "sha256:8038369419aac97d0713557d122c03d55bbdabe63d06d858800d9448b9c983e1"
+      ],
+      "RepoTags": [
+        "culinary-g06-web:local"
+      ],
+      "Reference": "culinary-g06-web:local",
+      "ImageConfig": {
+        "architecture": "amd64",
+        "created": "2026-10-29T17:57:22.948602196Z",
+        "history": [
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//base-files/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//netbase/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//tzdata/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//tzdata-legacy/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//media-types/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build //common:rootfs"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build //common:passwd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build //common:home"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build //common:group"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build //common:tmp"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build //static:nsswitch"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build //common:os_release_debian13"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build //common:cacerts_debian13_amd64_tar"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//libc6/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//libssl3t64/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//libzstd1/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//zlib1g/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//libgomp1/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//libstdc++6/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//libgcc-s1/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @trixie//gcc-14-base/amd64:data_statusd"
+          },
+          {
+            "created": "1970-01-01T00:00:00Z",
+            "created_by": "bazel build @nodejs22_amd64//:data"
+          },
+          {
+            "created": "2026-10-29T17:41:09.403980607Z",
+            "created_by": "ENV NODE_ENV=production",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-29T17:41:09.403980607Z",
+            "created_by": "ENV PORT=3000",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-29T17:41:09.403980607Z",
+            "created_by": "ENV HOSTNAME=0.0.0.0",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-29T17:41:09.403980607Z",
+            "created_by": "WORKDIR /app",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-29T17:57:22.75892324Z",
+            "created_by": "COPY --chown=65532:65532 /workspace/frontend/.next/standalone ./ # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-29T17:57:22.948602196Z",
+            "created_by": "COPY --chown=65532:65532 /workspace/frontend/.next/static ./.next/static # buildkit",
+            "comment": "buildkit.dockerfile.v0"
+          },
+          {
+            "created": "2026-10-29T17:57:22.948602196Z",
+            "created_by": "USER 65532:65532",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-29T17:57:22.948602196Z",
+            "created_by": "EXPOSE [3000/tcp]",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          },
+          {
+            "created": "2026-10-29T17:57:22.948602196Z",
+            "created_by": "CMD [\"server.js\"]",
+            "comment": "buildkit.dockerfile.v0",
+            "empty_layer": true
+          }
+        ],
+        "os": "linux",
+        "rootfs": {
+          "type": "layers",
+          "diff_ids": [
+            "sha256:9486261b5a13f63ca6904b36721527ac8f19df53d300560138d69ae9b4c203de",
+            "sha256:621c35e751a51a9a9dc3e80aa0b7fe8be2a93402ea6ccd307d30852cd7776cda",
+            "sha256:763a77745f27b86cf26b97887b6842d83720e63b1c48848c0ba9ee54e351d63a",
+            "sha256:f0d0eff4c2312a7bd6e21797bdfea5eb35f60e76b555ce2b22794424af2cad36",
+            "sha256:275a30dd8ce958b21daa9ad962c6fbc09f98306ee2f486b65c9075dc257b1412",
+            "sha256:4d049f83d9cf21d1f5cc0e11deaf36df02790d0e60c1a3829538fb4b61685368",
+            "sha256:af5aa97ebe6ce1604747ec1e21af7136ded391bcabe4acef882e718a87c86bcc",
+            "sha256:6f1cdceb6a3146f0ccb986521156bef8a422cdbb0863396f7f751f575ba308f4",
+            "sha256:bd3cdfae1d3fdd83a2231d608969b38b82349777c2fff9a7c12d54f8ac5c9b38",
+            "sha256:4cde6b0bb6f50a5f255eef7b2a42162c661cf776b803225dcac9a659e396bb6b",
+            "sha256:ad51d0769d16ba578106a177987dfe3d2e02c1668c852b795b2f6b024068242a",
+            "sha256:187cfc6d1e3e8a40a5e64653bcd3239c140807dcf1c09e48021178705a5a6139",
+            "sha256:f2392a9484bf6b18f06beaf705b994e31dbb2716c99cf7d03c9c495cd107f364",
+            "sha256:8a3b315d45080ecb38e39d42d28e951303c67c2ce7482bcdbbc3b5424be19013",
+            "sha256:2cef49adb7d7902c61ecdd385036e3c7fb7c9f0ada96a41901797c77b7daedd7",
+            "sha256:c0e409312adc366898967307565f692bb33d43a439d3de48e27d14b742389725",
+            "sha256:e4ba966d7f0527dfe0fcb559e4e18d4da42c4e6beae924719255e0dedb554ed0",
+            "sha256:1f5d28bd51650f429293f7730ede274b81dc0744aa918bc887133c4ad610258c",
+            "sha256:6e18ad80f3d64a8cbbcd1ff2e8a0d5ce7282cf664e816b86183a59d30a618e8a",
+            "sha256:c16b2ec4b1493bad1b1de23d659c899e60abb166bda756d02792f0a03ba54a43",
+            "sha256:7db505d90756626f425c6c5468eca565c82f589b144ecaa4f411ad9bbf79e614",
+            "sha256:d99e6a7fc3457e2fe86160ade531b8036e86ad14e576e5c09d4e94da2e132ff6",
+            "sha256:a5731bd79cb1d63efa730bcf242492c638da606b35de2479312bcb0e75bd38c0",
+            "sha256:635308e4fb45c0e59b7367303c862fd02a15232264785eca54e43955dce6eb37",
+            "sha256:8038369419aac97d0713557d122c03d55bbdabe63d06d858800d9448b9c983e1"
+          ]
+        },
+        "config": {
+          "Cmd": [
+            "server.js"
+          ],
+          "Entrypoint": [
+            "/nodejs/bin/node"
+          ],
+          "Env": [
+            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt",
+            "NODE_ENV=production",
+            "PORT=3000",
+            "HOSTNAME=0.0.0.0"
+          ],
+          "User": "65532:65532",
+          "WorkingDir": "/app",
+          "ExposedPorts": {
+            "3000/tcp": {}
+          },
+          "ArgsEscaped": true
+        }
+      },
+      "Layers": [
+        {
+          "Size": 491520,
+          "Digest": "sha256:2cc7ee286bf3a9e6af5f71756d7fc8e22e23ce65fec9047d774511ffcef79fa8",
+          "DiffID": "sha256:9486261b5a13f63ca6904b36721527ac8f19df53d300560138d69ae9b4c203de"
+        },
+        {
+          "Size": 40960,
+          "Digest": "sha256:c172f21841dff4c8cf45cde46589c1c2616cefe7e819965e92e6d3475c428aa0",
+          "DiffID": "sha256:621c35e751a51a9a9dc3e80aa0b7fe8be2a93402ea6ccd307d30852cd7776cda"
+        },
+        {
+          "Size": 1157120,
+          "Digest": "sha256:218cf840d0d95a86231eb9d33d26ac8a520a4299c6096cb70a0c2fb2a87c9e0a",
+          "DiffID": "sha256:763a77745f27b86cf26b97887b6842d83720e63b1c48848c0ba9ee54e351d63a"
+        },
+        {
+          "Size": 1331200,
+          "Digest": "sha256:f6069939f718601b38d25ec5ed5631ed047e4da24acec2e252f8f29d251be718",
+          "DiffID": "sha256:f0d0eff4c2312a7bd6e21797bdfea5eb35f60e76b555ce2b22794424af2cad36"
+        },
+        {
+          "Size": 102400,
+          "Digest": "sha256:d6b1b89eccacc15c2420b2776d72c1dae334a00805ed9af54bf2f71e4d536f28",
+          "DiffID": "sha256:275a30dd8ce958b21daa9ad962c6fbc09f98306ee2f486b65c9075dc257b1412"
+        },
+        {
+          "Size": 1536,
+          "Digest": "sha256:2780920e5dbfbe103d03a583ed75345306e572ec5a48cb10361f046767d9f29a",
+          "DiffID": "sha256:4d049f83d9cf21d1f5cc0e11deaf36df02790d0e60c1a3829538fb4b61685368"
+        },
+        {
+          "Size": 2560,
+          "Digest": "sha256:7c12895b777bcaa8ccae0605b4de635b68fc32d60fa08f421dc3818bf55ee212",
+          "DiffID": "sha256:af5aa97ebe6ce1604747ec1e21af7136ded391bcabe4acef882e718a87c86bcc"
+        },
+        {
+          "Size": 2560,
+          "Digest": "sha256:3214acf345c0cc6bbdb56b698a41ccdefc624a09d6beb0d38b5de0b2303ecaf4",
+          "DiffID": "sha256:6f1cdceb6a3146f0ccb986521156bef8a422cdbb0863396f7f751f575ba308f4"
+        },
+        {
+          "Size": 2560,
+          "Digest": "sha256:52630fc75a18675c530ed9eba5f55eca09b03e91bd5bc15307918bbc1a7e7296",
+          "DiffID": "sha256:bd3cdfae1d3fdd83a2231d608969b38b82349777c2fff9a7c12d54f8ac5c9b38"
+        },
+        {
+          "Size": 1536,
+          "Digest": "sha256:dd64bf2dd177757451a98fcdc999a339c35dee5d9872d8f4dc69c8f3c4dd0112",
+          "DiffID": "sha256:4cde6b0bb6f50a5f255eef7b2a42162c661cf776b803225dcac9a659e396bb6b"
+        },
+        {
+          "Size": 2048,
+          "Digest": "sha256:b839dfae01f66e15c6a8b63520557ed315bdfe036342fa7a0c537259f10d7a9a",
+          "DiffID": "sha256:ad51d0769d16ba578106a177987dfe3d2e02c1668c852b795b2f6b024068242a"
+        },
+        {
+          "Size": 3072,
+          "Digest": "sha256:ebddc55facdc6b1f7e0f30816a5fc7cc62f38abdf76c0a8b0a0ce52085754795",
+          "DiffID": "sha256:187cfc6d1e3e8a40a5e64653bcd3239c140807dcf1c09e48021178705a5a6139"
+        },
+        {
+          "Size": 276480,
+          "Digest": "sha256:c4bc6f35ff5e25aa1afe7a148a0b6f10a760f54e298f86a4a4d44b91f1afbfab",
+          "DiffID": "sha256:f2392a9484bf6b18f06beaf705b994e31dbb2716c99cf7d03c9c495cd107f364"
+        },
+        {
+          "Size": 13291520,
+          "Digest": "sha256:b96fe2995f90d0ef0bf14f9b4a67b5f4e77d478e6108166e0565adc9efd6e4a3",
+          "DiffID": "sha256:8a3b315d45080ecb38e39d42d28e951303c67c2ce7482bcdbbc3b5424be19013"
+        },
+        {
+          "Size": 8038400,
+          "Digest": "sha256:810e2b405a0884835290e120ef380aa14dd1f53198a0cfa2260147e736d82cd5",
+          "DiffID": "sha256:2cef49adb7d7902c61ecdd385036e3c7fb7c9f0ada96a41901797c77b7daedd7"
+        },
+        {
+          "Size": 870400,
+          "Digest": "sha256:bd8962e292918c50c90edebd9684c053bc386b9c5503acd8fec75d0c6f93a0b7",
+          "DiffID": "sha256:c0e409312adc366898967307565f692bb33d43a439d3de48e27d14b742389725"
+        },
+        {
+          "Size": 174080,
+          "Digest": "sha256:cac2ae0193cb073e7492050b05fc342a888651b4bbc966908c8793f889c299ba",
+          "DiffID": "sha256:e4ba966d7f0527dfe0fcb559e4e18d4da42c4e6beae924719255e0dedb554ed0"
+        },
+        {
+          "Size": 358400,
+          "Digest": "sha256:dd0d9bfd3bee080ad25a464362ec4f37ec5ca625695a4d7179fe69d207dc068d",
+          "DiffID": "sha256:1f5d28bd51650f429293f7730ede274b81dc0744aa918bc887133c4ad610258c"
+        },
+        {
+          "Size": 2662400,
+          "Digest": "sha256:7cc70dfd88cf2327bb827123c9156f7cb95de95b2f98f3a7a931296aacec5786",
+          "DiffID": "sha256:6e18ad80f3d64a8cbbcd1ff2e8a0d5ce7282cf664e816b86183a59d30a618e8a"
+        },
+        {
+          "Size": 194560,
+          "Digest": "sha256:8224d91da70b7992430d3b04040ea38ecdef4a7b719bee38397c89aaa886e198",
+          "DiffID": "sha256:c16b2ec4b1493bad1b1de23d659c899e60abb166bda756d02792f0a03ba54a43"
+        },
+        {
+          "Size": 122880,
+          "Digest": "sha256:1a4be5562d92d659f95e0b44b245ea5208bf5317481b9a351b07fad7fe5265ec",
+          "DiffID": "sha256:7db505d90756626f425c6c5468eca565c82f589b144ecaa4f411ad9bbf79e614"
+        },
+        {
+          "Size": 124979200,
+          "Digest": "sha256:7255d342dc6c559165d8b6b21ec572b476d8e68ff47814aa5843ef5323e51929",
+          "DiffID": "sha256:d99e6a7fc3457e2fe86160ade531b8036e86ad14e576e5c09d4e94da2e132ff6"
+        },
+        {
+          "Size": 1536,
+          "Digest": "sha256:da3911c42dacb4296b4ab23969c5ed5a1245684040faca24e2f0ade46ac686e1",
+          "DiffID": "sha256:a5731bd79cb1d63efa730bcf242492c638da606b35de2479312bcb0e75bd38c0"
+        },
+        {
+          "Size": 66207232,
+          "Digest": "sha256:4df71f6605a4a3456166a4bbdb6471e26771710f1949c05f2ddd117c668455bf",
+          "DiffID": "sha256:635308e4fb45c0e59b7367303c862fd02a15232264785eca54e43955dce6eb37"
+        },
+        {
+          "Size": 2523136,
+          "Digest": "sha256:59bd00f111bf24c3577888a92c39432fe6ad45c429baf5cc816891f97a726277",
+          "DiffID": "sha256:8038369419aac97d0713557d122c03d55bbdabe63d06d858800d9448b9c983e1"
+        }
+      ]
+    },
+    "highCriticalCount": 0,
+    "exit": 0
+  },
+  "sourceScan": {
+    "snapshotFiles": 1019,
+    "secretsRawExit": 1,
+    "secretsFindings": 199,
+    "triage": "182 digest/fingerprints,14 Render identifiers,3 prose;0 unresolved; no rule/allowlist change",
+    "configExit": 0
+  }
+}

@@ -32,8 +32,8 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D7-04 · Sửa/kiểm chứng:** CI chạy locked restore, backend format/build/test/architecture/coverage, frontend API generation/format/lint/typecheck/build/tests, integration và browser E2E theo thứ tự có artifact/log khi lỗi. Không bỏ test để làm pipeline xanh.
-- [ ] **D7-05 · Quyết định/sửa:** đóng D0 về SonarAnalyzer/StyleCop/Airbnb/Jest/Testing Library; bổ sung công cụ/ruleset đúng yêu cầu hoặc ghi phương án thay thế được chấp thuận và scope kiểm tra tương đương. Rà compiler/analyzer warnings và cảnh báo Next ESLint, không tự tắt cảnh báo nghiệp vụ để đạt số 0.
+- [x] **D7-04 · Sửa/kiểm chứng:** CI chạy locked restore, backend format/build/test/architecture/coverage, frontend API generation/format/lint/typecheck/build/tests, integration và browser E2E theo thứ tự có artifact/log khi lỗi. Không bỏ test để làm pipeline xanh.
+- [x] **D7-05 · Quyết định/sửa:** đóng D0 về SonarAnalyzer/StyleCop/Airbnb/Jest/Testing Library; bổ sung công cụ/ruleset đúng yêu cầu hoặc ghi phương án thay thế được chấp thuận và scope kiểm tra tương đương. Rà compiler/analyzer warnings và cảnh báo Next ESLint, không tự tắt cảnh báo nghiệp vụ để đạt số 0.
 
 ## Trình tự thực hiện trong phase
 
@@ -50,11 +50,15 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Workflow dùng tiêu chí đúng và có lệnh local tái lập/negative gate test.
-- [ ] Không ghi CI remote xanh nếu chưa có run thực.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Workflow dùng tiêu chí đúng và có lệnh local tái lập/negative gate test.
+- [x] Không ghi CI remote xanh nếu chưa có run thực.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-29-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-28-browser-and-screen-reader.md) · [Tiếp theo để tham khảo](phase-30-load-and-database-plans.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+## Checkpoint G05 ngày 29/10/2026
+
+Kết quả nguồn cuối ngày29/10/2026, gates và giới hạn môi trường ở [report G05](reports/package-G05-result.md#phase-29). Checkbox task chỉ đóng theo evidence trong report; trạng thái ban đầu ở đầu tài liệu được giữ như lịch sử.

@@ -1,0 +1,9 @@
+version: 1
+name: culinary-profile
+slug: culinary-profile
+protocol: http
+interceptRequests: true
+scenarios:
+  - name: default
+    path: ./default.js
+    default: true

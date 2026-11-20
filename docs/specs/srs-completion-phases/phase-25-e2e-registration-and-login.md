@@ -31,8 +31,8 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D8-03 · Sửa/kiểm chứng E2E-01:** đăng ký từ UI → Author/auto-login → profile → welcome email capture; kiểm lỗi field/duplicate và hồ sơ sửa được. SMTP failure được kiểm riêng không rollback user.
-- [ ] **D8-04 · Sửa/kiểm chứng E2E-02:** local login → route riêng → hết access token/refresh → logout; token/session cũ không dùng được. Google smoke/provider test D3 được bổ sung riêng, không thay luồng local hoặc đánh provider thật từ mock.
+- [x] **D8-03 · Sửa/kiểm chứng E2E-01:** đăng ký từ UI → Author/auto-login → profile → welcome email capture; kiểm lỗi field/duplicate và hồ sơ sửa được. SMTP failure được kiểm riêng không rollback user.
+- [x] **D8-04 · Sửa/kiểm chứng E2E-02:** local login → route riêng → hết access token/refresh → logout; token/session cũ không dùng được. Google smoke/provider test D3 được bổ sung riêng, không thay luồng local hoặc đánh provider thật từ mock.
 
 ## Trình tự thực hiện trong phase
 
@@ -49,11 +49,15 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] E2E-01 và E2E-02 chạy lại một lệnh và có assertion cuối.
-- [ ] Không skip expiry/refresh vì test chậm; dùng clock/config test phù hợp không đổi production.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] E2E-01 và E2E-02 chạy lại một lệnh và có assertion cuối.
+- [x] Không skip expiry/refresh vì test chậm; dùng clock/config test phù hợp không đổi production.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-25-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-24-integration-matrix-and-playwright.md) · [Tiếp theo để tham khảo](phase-26-e2e-recipes-publish-search.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+## Checkpoint G05 ngày 29/10/2026
+
+Kết quả nguồn cuối ngày29/10/2026, gates và giới hạn môi trường ở [report G05](reports/package-G05-result.md#phase-25). Checkbox task chỉ đóng theo evidence trong report; trạng thái ban đầu ở đầu tài liệu được giữ như lịch sử.

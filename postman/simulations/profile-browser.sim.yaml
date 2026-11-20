@@ -1,0 +1,5 @@
+simulation: profile-browser
+routing: path
+mocks:
+  - routeKey: culinary
+    path: ../mocks/culinary-profile/config.yaml

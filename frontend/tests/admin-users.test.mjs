@@ -141,8 +141,7 @@ test('Admin directory renders roles and filters before pagination; changing filt
     await h.change('user-search', '  fixture@users.test  ')
     await h.event(document.querySelector('form'), 'submit')
     assert.equal(h.calls.at(-1).search, 'fixture@users.test')
-    await h.change('users-page-size', '50')
-    assert.equal(h.calls.at(-1).pageSize, 50)
+    assert.equal(h.calls.at(-1).pageSize, 7)
     assert.equal(h.calls.at(-1).page, 1)
   } finally {
     await h.close()

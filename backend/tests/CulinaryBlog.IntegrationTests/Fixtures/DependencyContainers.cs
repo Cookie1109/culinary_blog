@@ -20,7 +20,7 @@ public sealed class DependencyContainers : IAsyncLifetime
     public RedisContainer Redis { get; } = new RedisBuilder("redis:7.4.5-alpine").Build();
 
     /// <summary>Gets the minio.</summary>
-    public MinioContainer Minio { get; } = new MinioBuilder(MinioTestImage.Name)
+    public MinioContainer Minio { get; } = new MinioBuilder("minio/minio:RELEASE.2025-09-07T16-13-09Z")
         .WithUsername("culinary-test")
         .WithPassword("integration-test-only")
         .Build();
@@ -29,7 +29,6 @@ public sealed class DependencyContainers : IAsyncLifetime
     /// <returns>A task representing the operation and its result.</returns>
     public async Task InitializeAsync()
     {
-        await MinioTestImage.PrepareAsync();
         await Task.WhenAll(this.PostgreSql.StartAsync(), this.Redis.StartAsync(), this.Minio.StartAsync());
     }
 

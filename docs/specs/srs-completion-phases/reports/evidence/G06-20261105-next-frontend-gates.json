@@ -1,0 +1,33 @@
+{
+  "nodeVersion": "22.23.3",
+  "nodeTests": {
+    "root": 153,
+    "candidate": 135
+  },
+  "sourceExits": {
+    "candidate-format-write": 0,
+    "root-node-tests": 0,
+    "root-lint": 0,
+    "root-format": 0,
+    "candidate-node-tests": 0,
+    "candidate-lint": 0,
+    "candidate-format": 0,
+    "candidate-build": 0
+  },
+  "candidateCommits": [
+    "924047806c4271443cc4537da617e62f20df0c62",
+    "d50f9dd439000a1ae865b0b84fc6d7465a4926c6"
+  ],
+  "branch": "fix/cwv-metrics-20261105",
+  "pushedNormally": true,
+  "newCommitSecretFindings": 0,
+  "nativeBuildId": "tWVKFb5qF1kb1-HXqamyT",
+  "reusedComponentTests": {
+    "tests": 22,
+    "suites": 3,
+    "reason": "No src UI, package lock or component source edits in these two commits; prior b4 component tests remain valid"
+  },
+  "freshLighthouse": true,
+  "backendTestsReused": "Backend and Docker runtime config unchanged; existing157unit/3architecture/290integration not rerun",
+  "scope": "Thin Vercel frontend fix only, full root artifact remains undeployed"
+}

@@ -1,0 +1,15 @@
+{
+  "freshBrowserCwvRun": "97897f892eb9",
+  "freshBuildId": "xdiPVekHnUeTXXctWK3dd",
+  "reusedFullUiRun": "434fab819477",
+  "uiBuildId": "9JeyYnBpCBsxU9luSXP8H",
+  "fullUiCount": 7,
+  "journeyReuseRun": "434fab819477",
+  "changedSinceUiRun": [
+    "frontend/src/app/api/web-vitals/route.ts",
+    "frontend/src/components/web-vitals.tsx",
+    "frontend/src/lib/web-vitals.ts"
+  ],
+  "reason": "Only telemetry client, route masking and metric receiver changed; application UI/layout/auth/API business source unchanged. Fresh37 Jest tests and six real browser CWV visits cover these changes; full UI workflows and backend journey are reused, not executed again.",
+  "runnerMessageCorrection": "The archived runner still says only route masking changed; actual three-file hash diff above is authoritative."
+}

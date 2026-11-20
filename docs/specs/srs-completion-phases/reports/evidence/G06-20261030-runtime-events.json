@@ -1,0 +1,380 @@
+[
+  {
+    "name": "setup-ready",
+    "at": "2026-10-29T10:52:11.314734+00:00",
+    "base": "http://127.0.0.1:57144"
+  },
+  {
+    "name": "synthetic-register",
+    "at": "2026-10-29T10:52:31.373957+00:00",
+    "users": "7",
+    "tokens": "1"
+  },
+  {
+    "name": "redis-stopping",
+    "at": "2026-10-29T10:52:31.374947+00:00"
+  },
+  {
+    "name": "redis-outage-assertions",
+    "at": "2026-10-29T10:52:39.400204+00:00",
+    "live": 200,
+    "ready": 503,
+    "aggregate": 503
+  },
+  {
+    "name": "redis-recovered",
+    "at": "2026-10-29T10:52:40.471990+00:00",
+    "seconds": 1.071
+  },
+  {
+    "name": "minio-stopping",
+    "at": "2026-10-29T10:52:40.472635+00:00"
+  },
+  {
+    "name": "minio-outage-assertions",
+    "at": "2026-10-29T10:52:48.962384+00:00",
+    "live": 200,
+    "ready": 200,
+    "aggregate": 503
+  },
+  {
+    "name": "minio-recovered",
+    "at": "2026-10-29T10:52:50.527779+00:00",
+    "seconds": 1.565
+  },
+  {
+    "name": "smtp-stopping",
+    "at": "2026-10-29T10:52:50.528217+00:00"
+  },
+  {
+    "name": "smtp-outage-assertions",
+    "at": "2026-10-29T10:52:51.270725+00:00",
+    "live": 200,
+    "ready": 200,
+    "aggregate": 200
+  },
+  {
+    "name": "smtp-recovered",
+    "at": "2026-10-29T10:52:51.852007+00:00",
+    "seconds": 0.581
+  },
+  {
+    "name": "postgres-stopping",
+    "at": "2026-10-29T10:52:51.852662+00:00"
+  },
+  {
+    "name": "synthetic-register",
+    "at": "2026-10-29T10:59:58.258023+00:00",
+    "users": "9",
+    "tokens": "3"
+  },
+  {
+    "name": "redis-stopping",
+    "at": "2026-10-29T10:59:58.265711+00:00"
+  },
+  {
+    "name": "redis-outage-assertions",
+    "at": "2026-10-29T11:00:07.726986+00:00",
+    "live": 200,
+    "ready": 503,
+    "aggregate": 503
+  },
+  {
+    "name": "redis-recovered",
+    "at": "2026-10-29T11:00:09.692087+00:00",
+    "seconds": 1.965
+  },
+  {
+    "name": "minio-stopping",
+    "at": "2026-10-29T11:00:09.692686+00:00"
+  },
+  {
+    "name": "minio-outage-assertions",
+    "at": "2026-10-29T11:00:21.955314+00:00",
+    "live": 200,
+    "ready": 200,
+    "aggregate": 503
+  },
+  {
+    "name": "minio-recovered",
+    "at": "2026-10-29T11:00:25.951997+00:00",
+    "seconds": 3.996
+  },
+  {
+    "name": "smtp-stopping",
+    "at": "2026-10-29T11:00:25.952566+00:00"
+  },
+  {
+    "name": "smtp-outage-assertions",
+    "at": "2026-10-29T11:00:26.637056+00:00",
+    "live": 200,
+    "ready": 200,
+    "aggregate": 200
+  },
+  {
+    "name": "smtp-recovered",
+    "at": "2026-10-29T11:00:27.128000+00:00",
+    "seconds": 0.49
+  },
+  {
+    "name": "postgres-stopping",
+    "at": "2026-10-29T11:00:27.128484+00:00"
+  },
+  {
+    "name": "postgres-outage-assertions",
+    "at": "2026-10-29T11:01:30.943859+00:00",
+    "live": 200,
+    "ready": 503,
+    "aggregate": 503
+  },
+  {
+    "name": "postgres-recovered",
+    "at": "2026-10-29T11:01:33.426939+00:00",
+    "seconds": 2.483
+  },
+  {
+    "name": "synthetic-register",
+    "at": "2026-10-29T11:04:16.700687+00:00",
+    "users": "11",
+    "tokens": "5"
+  },
+  {
+    "name": "redis-stopping",
+    "at": "2026-10-29T11:04:16.701360+00:00"
+  },
+  {
+    "name": "redis-outage-assertions",
+    "at": "2026-10-29T11:04:25.075906+00:00",
+    "live": 200,
+    "ready": 503,
+    "aggregate": 503
+  },
+  {
+    "name": "redis-recovered",
+    "at": "2026-10-29T11:04:27.760898+00:00",
+    "seconds": 2.684
+  },
+  {
+    "name": "minio-stopping",
+    "at": "2026-10-29T11:04:27.761400+00:00"
+  },
+  {
+    "name": "minio-outage-assertions",
+    "at": "2026-10-29T11:04:36.670654+00:00",
+    "live": 200,
+    "ready": 200,
+    "aggregate": 503
+  },
+  {
+    "name": "minio-recovered",
+    "at": "2026-10-29T11:04:40.574820+00:00",
+    "seconds": 3.904
+  },
+  {
+    "name": "smtp-stopping",
+    "at": "2026-10-29T11:04:40.575373+00:00"
+  },
+  {
+    "name": "smtp-outage-assertions",
+    "at": "2026-10-29T11:04:41.042521+00:00",
+    "live": 200,
+    "ready": 200,
+    "aggregate": 200
+  },
+  {
+    "name": "smtp-recovered",
+    "at": "2026-10-29T11:04:41.446932+00:00",
+    "seconds": 0.404
+  },
+  {
+    "name": "postgres-stopping",
+    "at": "2026-10-29T11:04:41.447530+00:00"
+  },
+  {
+    "name": "postgres-outage-assertions",
+    "at": "2026-10-29T11:05:45.083355+00:00",
+    "live": 200,
+    "ready": 503,
+    "aggregate": 503
+  },
+  {
+    "name": "postgres-recovered",
+    "at": "2026-10-29T11:05:49.071911+00:00",
+    "seconds": 3.988
+  },
+  {
+    "name": "api-worker-restart-token-survives",
+    "at": "2026-10-29T11:05:55.380554+00:00",
+    "users": "12"
+  },
+  {
+    "name": "setup-ready",
+    "at": "2026-10-29T17:28:47.783001+00:00",
+    "base": "http://127.0.0.1:55546"
+  },
+  {
+    "name": "synthetic-register",
+    "at": "2026-10-29T17:30:39.156924+00:00",
+    "users": "7",
+    "tokens": "1"
+  },
+  {
+    "name": "redis-stopping",
+    "at": "2026-10-29T17:30:39.157440+00:00"
+  },
+  {
+    "name": "redis-outage-assertions",
+    "at": "2026-10-29T17:30:46.812965+00:00",
+    "live": 200,
+    "ready": 503,
+    "aggregate": 503
+  },
+  {
+    "name": "redis-recovered",
+    "at": "2026-10-29T17:30:47.701773+00:00",
+    "seconds": 0.888
+  },
+  {
+    "name": "minio-stopping",
+    "at": "2026-10-29T17:30:47.702302+00:00"
+  },
+  {
+    "name": "minio-outage-assertions",
+    "at": "2026-10-29T17:31:00.261340+00:00",
+    "live": 200,
+    "ready": 200,
+    "aggregate": 503
+  },
+  {
+    "name": "minio-recovered",
+    "at": "2026-10-29T17:31:01.733717+00:00",
+    "seconds": 1.472
+  },
+  {
+    "name": "smtp-stopping",
+    "at": "2026-10-29T17:31:01.734205+00:00"
+  },
+  {
+    "name": "smtp-outage-assertions",
+    "at": "2026-10-29T17:31:02.259781+00:00",
+    "live": 200,
+    "ready": 200,
+    "aggregate": 200
+  },
+  {
+    "name": "smtp-recovered",
+    "at": "2026-10-29T17:31:02.672521+00:00",
+    "seconds": 0.412
+  },
+  {
+    "name": "postgres-stopping",
+    "at": "2026-10-29T17:31:02.673000+00:00"
+  },
+  {
+    "name": "postgres-outage-assertions",
+    "at": "2026-10-29T17:32:07.158755+00:00",
+    "live": 200,
+    "ready": 503,
+    "aggregate": 503
+  },
+  {
+    "name": "postgres-recovered",
+    "at": "2026-10-29T17:32:11.105276+00:00",
+    "seconds": 3.946
+  },
+  {
+    "name": "api-worker-restart-token-survives",
+    "at": "2026-10-29T17:32:16.234647+00:00",
+    "users": "8"
+  },
+  {
+    "name": "otlp-received-http-ef-metrics",
+    "at": "2026-10-29T17:32:23.687559+00:00",
+    "metricsBytes": 329183,
+    "traceBytes": 712695
+  },
+  {
+    "name": "retention-31-day-removed-29-day-kept",
+    "at": "2026-10-29T17:34:27.289661+00:00"
+  },
+  {
+    "name": "retention-31-day-removed-29-day-kept",
+    "at": "2026-10-29T17:36:49.379291+00:00"
+  },
+  {
+    "name": "restore-all-public-tables-schema-media-checksums",
+    "at": "2026-10-29T17:36:59.976555+00:00",
+    "tables": 19,
+    "seconds": 20.883,
+    "wal": {
+      "wal_level": "replica",
+      "fsync": "on",
+      "full_page_writes": "on",
+      "synchronous_commit": "on"
+    }
+  },
+  {
+    "name": "retention-31-day-removed-29-day-kept",
+    "at": "2026-10-29T17:43:37.535165+00:00"
+  },
+  {
+    "name": "restore-all-public-tables-schema-media-checksums",
+    "at": "2026-10-29T17:43:49.867009+00:00",
+    "tables": 19,
+    "seconds": 23.657,
+    "wal": {
+      "wal_level": "replica",
+      "fsync": "on",
+      "full_page_writes": "on",
+      "synchronous_commit": "on"
+    }
+  },
+  {
+    "name": "retention-31-day-removed-29-day-kept",
+    "at": "2026-10-29T17:46:14.065556+00:00"
+  },
+  {
+    "name": "restore-all-public-tables-schema-media-checksums",
+    "at": "2026-10-29T17:46:24.959923+00:00",
+    "tables": 19,
+    "seconds": 22.274,
+    "wal": {
+      "wal_level": "replica",
+      "fsync": "on",
+      "full_page_writes": "on",
+      "synchronous_commit": "on"
+    }
+  },
+  {
+    "name": "restore-api-ready",
+    "at": "2026-10-29T17:46:28.736798+00:00",
+    "seconds": 26.05,
+    "restoreTargetSeconds": 14.671
+  },
+  {
+    "name": "retention-31-day-removed-29-day-kept",
+    "at": "2026-10-29T17:48:24.501621+00:00"
+  },
+  {
+    "name": "restore-all-public-tables-schema-media-checksums",
+    "at": "2026-10-29T17:48:34.004682+00:00",
+    "tables": 19,
+    "seconds": 18.911,
+    "wal": {
+      "wal_level": "replica",
+      "fsync": "on",
+      "full_page_writes": "on",
+      "synchronous_commit": "on"
+    }
+  },
+  {
+    "name": "restore-api-ready",
+    "at": "2026-10-29T17:48:37.777662+00:00",
+    "seconds": 22.684,
+    "restoreTargetSeconds": 13.275
+  },
+  {
+    "name": "cleanup-complete",
+    "at": "2026-10-29T18:10:34.274052+00:00"
+  }
+]

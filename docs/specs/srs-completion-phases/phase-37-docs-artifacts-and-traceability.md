@@ -34,14 +34,14 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 ## Task gốc phải đóng
 
 - [ ] **D10-01 · Kiểm chứng/sửa:** fresh setup theo README bằng Docker Compose <5 phút trong điều kiện package/image đã được nêu; kiểm env sample/ports/migrations/seed/Scalar. Cập nhật ADR, CHANGELOG/SemVer, API docs, test commands và known deviations đúng bản cuối.
-- [ ] **D10-02 · Kiểm chứng:** feature/code freeze, commit SHA và API/Web image digest xác định; build/release manifest/SBOM/provenance và `/api/v1/release` khớp khi dùng release pipeline hiện có. Chạy lại regression/gates bị ảnh hưởng trên cùng artifact, không suy kết quả worktree sang GitHub/container cũ.
-- [ ] **D10-03 · Kiểm chứng:** điền evidence cho đủ bảng 74 mã bên dưới và acceptance chi tiết D0, gồm ID test/case, pass/fail/pending, run URL/file, thời điểm, runtime/dataset/môi trường. Cập nhật báo cáo trạng thái và tài liệu Phase 8 cũ để không còn câu pass/deferred/deviation mâu thuẫn với bản mới.
+- [ ] **D10-02 · Kiểm chứng:** xác định commit/build hoặc image digest của đúng bản demo; dùng bằng chứng phát hành sẵn có, không tạo mới SBOM/provenance hoặc hồ sơ riêng chỉ để demo. Nếu dùng release pipeline hiện có, giữ các gate và đối chiếu `/api/v1/release`. Chạy lại regression/gates bị ảnh hưởng trên cùng artifact, không suy kết quả worktree sang GitHub/container cũ.
+- [ ] **D10-03 · Kiểm chứng:** gộp tình trạng yêu cầu PDF vào một bản tổng hợp ngắn gồm phiên bản demo, kiểm thử/bằng chứng đã có, lỗi và phần chưa nghiệm thu. Không bắt buộc điền toàn bộ metadata của bảng 74 mã hoặc tạo báo cáo trùng; giữ bảng làm tham chiếu. Sửa mô tả pass/deferred/deviation mâu thuẫn với kết quả thực tế.
 
 ## Trình tự thực hiện trong phase
 
 1. Fresh setup<5 phút với điều kiện image/package nêu rõ, docs commands/env/Scalar/ADR/changelog khớp.
 2. Gắn commit/worktree/build/API-Web digests và release identity khi đã có artifact; không fake digest/CI run.
-3. Tổng hợp kết quả tất cả phase, đủ74 mã và acceptance; phân biệt phase code đạt với phần external pending, sửa mô tả lịch sử gây hiểu nhầm.
+3. Gộp kết quả vào bản tổng hợp ngắn theo [phạm vi demo05/11](demo-scope-2026-11-05.md); dùng lại evidence, giữ yêu cầu PDF và phần chưa nghiệm thu, không điền lặp bảng74mã.
 
 ## Cách kiểm chứng
 

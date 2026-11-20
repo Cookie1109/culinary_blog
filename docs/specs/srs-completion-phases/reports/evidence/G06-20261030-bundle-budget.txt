@@ -1,0 +1,35 @@
+
+> @culinary-blog/web@1.0.0 budget:check
+> node scripts/check-bundle-budget.mjs
+
+================================================================================
+ CULINARY BLOG - BUNDLE BUDGET AUDIT (NFR-QA P6-22)
+ Budget Threshold: First-load JS gzip <= 200 KB
+================================================================================
+Route                                            Raw JS (kB)   Gzip (kB)  Status
+--------------------------------------------------------------------------------
+/_not-found/page                                    458.5 kB    143.3 kB  ✓ PASS
+/(auth)/register/page                               520.7 kB    166.4 kB  ✓ PASS
+/(auth)/auth/login/page                             520.7 kB    166.8 kB  ✓ PASS
+/(auth)/forgot-password/page                        501.4 kB    158.8 kB  ✓ PASS
+/(auth)/auth/register/page                          520.7 kB    166.4 kB  ✓ PASS
+/(auth)/reset-password/page                         501.4 kB    158.8 kB  ✓ PASS
+/(auth)/login/page                                  520.7 kB    166.8 kB  ✓ PASS
+/(public)/categories/[slug]/page                      507 kB    161.6 kB  ✓ PASS
+/(public)/recipes/[slug]/page                       501.4 kB    159.2 kB  ✓ PASS
+/(public)/render-public/category/[slug]/[page]/page        507 kB    161.6 kB  ✓ PASS
+/(public)/search/page                               559.3 kB    178.4 kB  ✓ PASS
+/(public)/render-public/home/[key]/page             533.7 kB      169 kB  ✓ PASS
+/(public)/render-public/categories/[key]/page       501.4 kB    159.2 kB  ✓ PASS
+/(public)/recipes/page                              559.3 kB    178.4 kB  ✓ PASS
+/(dashboard)/profile/page                           552.8 kB    177.3 kB  ✓ PASS
+/(dashboard)/dashboard/categories/page              580.1 kB    185.4 kB  ✓ PASS
+/(dashboard)/dashboard/audit/page                   542.8 kB    172.4 kB  ✓ PASS
+/(dashboard)/dashboard/recipes/[id]/edit/page       607.9 kB    193.2 kB  ✓ PASS
+/(dashboard)/dashboard/recipes/new/page             607.9 kB    193.2 kB  ✓ PASS
+/(dashboard)/dashboard/page                         534.4 kB    170.2 kB  ✓ PASS
+/(dashboard)/dashboard/recipes/page                 553.8 kB    175.4 kB  ✓ PASS
+/(dashboard)/dashboard/system/page                  557.4 kB      177 kB  ✓ PASS
+/(dashboard)/dashboard/recipes/[id]/preview/page      511.1 kB    162.9 kB  ✓ PASS
+================================================================================
+✅ Bundle budget check PASSED: All routes are strictly within the 200 KB gzip budget!

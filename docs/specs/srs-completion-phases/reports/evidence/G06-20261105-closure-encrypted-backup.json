@@ -1,0 +1,22 @@
+{
+  "atUtc": "2026-11-05T05:41:28.396236+00:00",
+  "format": "7z, AES-256 data encryption and encrypted headers (-mhe=on)",
+  "passwordInput": "stdin prompts, never command arguments",
+  "decryptionKey": "Generated256-bit random key, separate private ACL file outside archive; not uploaded/disclosed",
+  "contains": {
+    "currentMediaObjects": 301,
+    "neonDump": 1,
+    "neonSnapshotManifest": 1,
+    "dataProtectionCertificate": 1,
+    "manifestAndRestoreGuide": 2
+  },
+  "verifiedFileHashes": 304,
+  "archiveBytes": 94639410,
+  "archiveSha256": "69622fad11deebd41b2d96c353ef105cb3ac6aecaf5193ac09de6a659274f542",
+  "correctKeyRoundtripPassed": true,
+  "wrongKeyNegativeControlExit": 2,
+  "offHostUploaded": false,
+  "schedulerRegistered": false,
+  "productionRtoRpoClaimed": false,
+  "elapsedSeconds": 2.228
+}

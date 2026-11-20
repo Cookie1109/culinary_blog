@@ -12,18 +12,11 @@ test('P6-24: Homepage visual/responsive layouts across mobile, tablet, and deskt
     source('src/features/culinary/components/CategoryCard.tsx'),
   ])
 
-  // Hero section is a full-bleed layout with the active recipe image and text overlay.
-  assert.match(home, /relative w-full overflow-hidden/, 'Homepage hero must be full-bleed with overlay copy')
-  assert.match(home, /const image = recipeImage\(recipe\)/)
-  assert.match(home, /src=\{`\$\{publicMediaUrl\(image\)\}/)
-  assert.match(home, /<Image/)
-
-  // Fluid typography on hero title
-  assert.match(
-    home,
-    /text-3xl\s+sm:text-5xl\s+leading-\[1\.1\]\s+text-white\s+lg:text-7xl\s+break-words/,
-    'Hero heading must scale smoothly with viewport',
-  )
+  // Editorial hero stacks on mobile and uses two columns on desktop.
+  assert.match(home, /lg:grid-cols-2/)
+  assert.match(home, /src=\{heroImage\}/)
+  assert.match(home, /aspect-\[29\/30\]/)
+  assert.match(home, /sm:text-6xl xl:text-\[76px\]/)
 
   // Featured recipes carousel shows one card on mobile and three on desktop.
   assert.match(
@@ -42,13 +35,10 @@ test('P6-24: Homepage visual/responsive layouts across mobile, tablet, and deskt
   assert.match(categories, /<CategoryCard key=\{category\.id\} category=\{category\}/)
   assert.match(categoryCard, /aspect-\[4\/3\]/)
 
-  // The latest carousel receives exactly five recipes and advances every 15 seconds.
+  // The featured collection retains server data and pagination.
   assert.match(homeRoute, /getPublishedRecipes\(1, 12, revalidate\)/)
-  assert.match(home, /recipePage\.data\.slice\(0, 5\)/)
   assert.match(home, /listPublishedRecipes\(loadedPage \+ 1, recipePage\.meta\.pageSize\)/)
   assert.match(home, /loadingMoreRecipes/)
-  assert.match(home, /setInterval/)
-  assert.match(home, /15_000/)
 
   // Both featured lists provide labelled previous/next controls.
   assert.match(home, /label="Xem các công thức nổi bật trước"/)

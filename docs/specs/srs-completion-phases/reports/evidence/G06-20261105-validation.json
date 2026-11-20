@@ -1,0 +1,21 @@
+{
+  "atUtc": "2026-11-05T00:50:07.200636+00:00",
+  "manifestEvidenceHashesMatch": true,
+  "trackedSourceHashesMatch": true,
+  "codeDriftSinceBuild": false,
+  "pdfAndABCCorrectionPreserved": true,
+  "sixProgressRowsUpdatedOnly": true,
+  "taskCheckboxesPreservedWithEvidence": true,
+  "allLocalDiagnosticGatesPass": true,
+  "fullG06Closed": false,
+  "secretFindingsUnresolved": 0,
+  "historyLeaks": 0,
+  "sourceRawScannerExit": 1,
+  "sourceRawFindingsAreReviewedNoncredentials": 128,
+  "reportFollowupScannerExit": 0,
+  "syntheticResourcesRemaining": 0,
+  "userContainersAndVolumesPreserved": true,
+  "gitIndexEmpty": true,
+  "manifestSha256": "12e0f38119f5fe4dac67e5eb6ce9be7a23536f92e019d3440b38674febfd401f",
+  "passed": true
+}

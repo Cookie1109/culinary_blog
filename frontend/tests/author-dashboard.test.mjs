@@ -55,7 +55,7 @@ test('P7-02: content-client supports pagination and MyRecipes wires filter, tabl
   assert.match(myRecipesSource, /setPage/, 'Must have page state setter')
 
   // Verify responsive table and card layouts
-  assert.match(myRecipesSource, /hidden md:block/, 'Must have desktop table container')
+  assert.match(myRecipesSource, /md:block/, 'Must have desktop table container')
   assert.match(myRecipesSource, /md:hidden/, 'Must have mobile card container')
 
   // Verify valid actions

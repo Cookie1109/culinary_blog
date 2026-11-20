@@ -1,0 +1,15 @@
+Test run for D:\Culinary_Blog\backend\tests\CulinaryBlog.UnitTests\bin\Release\net10.0\CulinaryBlog.UnitTests.dll (.NETCoreApp,Version=v10.0)
+Test run for D:\Culinary_Blog\backend\tests\CulinaryBlog.ArchitectureTests\bin\Release\net10.0\CulinaryBlog.ArchitectureTests.dll (.NETCoreApp,Version=v10.0)
+Test run for D:\Culinary_Blog\backend\tests\CulinaryBlog.IntegrationTests\bin\Release\net10.0\CulinaryBlog.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+A total of 1 test files matched the specified pattern.
+A total of 1 test files matched the specified pattern.
+Results File: D:\Culinary_Blog\tmp\package-G06\resume-20261030\regression\g06-resume_net10.0_20261030002921.trx
+
+Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 26 ms - CulinaryBlog.ArchitectureTests.dll (net10.0)
+Results File: D:\Culinary_Blog\tmp\package-G06\resume-20261030\regression\g06-resume_net10.0_20261030002922.trx
+
+Passed!  - Failed:     0, Passed:   129, Skipped:     0, Total:   129, Duration: 669 ms - CulinaryBlog.UnitTests.dll (net10.0)
+Results File: D:\Culinary_Blog\tmp\package-G06\resume-20261030\regression\g06-resume_net10.0_20261030003333.trx
+
+Passed!  - Failed:     0, Passed:   240, Skipped:     0, Total:   240, Duration: 4 m 5 s - CulinaryBlog.IntegrationTests.dll (net10.0)

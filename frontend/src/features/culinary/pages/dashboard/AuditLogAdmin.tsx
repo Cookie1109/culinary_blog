@@ -267,7 +267,7 @@ export function AuditLogAdmin() {
                       </td>
                       <td className="px-5 py-3">
                         <span
-                          className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                          className={`inline-block px-2 py-0.5 text-xs font-medium ${
                             LEVEL_BADGE[entry.level] ??
                             'bg-secondary text-muted-foreground border border-border'
                           }`}

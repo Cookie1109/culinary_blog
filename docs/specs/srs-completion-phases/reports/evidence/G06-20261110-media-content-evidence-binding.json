@@ -1,0 +1,16 @@
+{
+  "atUtc": "2026-11-10T15:06:31.001618+00:00",
+  "objectCount": 301,
+  "unchangedMetadataObjects": 300,
+  "metadataChangedObjects": 1,
+  "changedObjectReads": [
+    {
+      "bytes": 13572,
+      "sha256": "ea36186aba15dd9af283ef86aea68037d8b10994bf7d2efb9846623f8a01d35a",
+      "matchesPriorFullRestoreManifest": true
+    }
+  ],
+  "allCurrentContentsBoundToPriorVerifiedRestore": true,
+  "newBackupOrUploadPerformed": false,
+  "scope": "Only the one metadata-changed object reread; prior301-object SHA256 restore evidence reused for unchanged contents"
+}

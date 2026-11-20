@@ -1,0 +1,386 @@
+{
+  "dateAsiaBangkok": "2026-11-11",
+  "srsSha256": "8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063",
+  "completedTasks": [
+    "D10-01",
+    "D10-02",
+    "D10-03",
+    "D10-06",
+    "D10-07"
+  ],
+  "remainingTasks": [
+    "D10-04",
+    "D10-05"
+  ],
+  "demo": {
+    "renderCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+    "renderDeployment": "dep-dbpppj0n74is738lsrjg",
+    "vercelCommit": "df0dbb927e0430a485d47570e8849a11340065cb",
+    "vercelDeployment": "dpl_CzWEgVuacUVkQFs9oKSweUPb1YHM"
+  },
+  "setup": {
+    "source": "git archive of published main, 41f619b",
+    "dockerServer": "29.7.2",
+    "compose": "5.5.1",
+    "defaultImageAttempt": {
+      "commit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+      "project": "culinary-g07-readme-20261111",
+      "elapsedSeconds": 3.5281338,
+      "exit": 1
+    },
+    "defaultImageError": "Docker Hub refused pull of the pinned minio/mc image",
+    "quayPinnedServerAndClient": 401,
+    "availableImagesAttempt": {
+      "project": "culinary-g07-readme-20261111",
+      "elapsedSeconds": 224.0737086,
+      "exit": 0
+    },
+    "minioServer": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "minioClient": "sha256:00ecdeeba1186561b111b290c7877e4fc24f087bd31d456f642f19434739dda0",
+    "builtApi": "sha256:1e46ff1dca01713578b47baafccf30d11a7d2ff13b1da2986f0cfaf6eda15757",
+    "builtWeb": "sha256:40b1ede1f6fa6f618d5da706b1ac5b6e7a381ee1ac67c9930307945f51a7ea7a",
+    "ports": "loopback mappings on a disposable Compose project",
+    "migrations": 5,
+    "seed": {
+      "recipes": 100,
+      "categories": 20,
+      "authors": 5
+    },
+    "openapi": "3.1.1",
+    "verifiedHttp200": [
+      "/",
+      "/health",
+      "/health/ready",
+      "/scalar",
+      "/openapi/v1.json",
+      "/api/v1/recipes"
+    ],
+    "workspaceImageOverrideConfigVerified": true,
+    "cleanup": {
+      "cleanupExit": 0,
+      "containersRemaining": 0,
+      "volumesRemaining": 0,
+      "otherContainersPreserved": true
+    }
+  },
+  "browserRuns": [
+    {
+      "mode": "journeys",
+      "exit": 1,
+      "startedAtUtc": "2026-11-10T22:54:32.394Z",
+      "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+      "checks": [
+        {
+          "name": "CJ-01 register, auto-login and profile",
+          "status": "pass",
+          "result": {
+            "registration": 201,
+            "authenticatedProfile": true
+          }
+        },
+        {
+          "name": "CJ-02 logout and login",
+          "status": "fail",
+          "message": "locator.fill: Timeout 30000ms exceeded. Call log:   - waiting for locator('#email')     - waiting for \"https://culinary-blog.vercel.app/\" navigation to finish..."
+        },
+        {
+          "name": "CJ-03 author creates private draft with content and image",
+          "status": "pass",
+          "result": {
+            "draft": 201,
+            "ingredient": 201,
+            "step": 201,
+            "upload": 201,
+            "anonymousDraft": 404
+          }
+        },
+        {
+          "name": "CJ-05 ownership and admin route denial for another Author",
+          "status": "fail",
+          "message": "page.waitForResponse: Timeout 30000ms exceeded while waiting for event \"response\""
+        },
+        {
+          "name": "CJ-04 publish, detail and search",
+          "status": "pass",
+          "result": {
+            "publish": 200,
+            "publicDetail": 200,
+            "publicSearch": 200,
+            "searchResultVisible": true
+          }
+        },
+        {
+          "name": "Remove only the G07 recipe",
+          "status": "pass",
+          "result": {
+            "delete": 204,
+            "anonymousAfterDelete": 404
+          }
+        },
+        {
+          "name": "UX public at desktop, tablet and mobile breakpoints",
+          "status": "fail",
+          "message": "locator.waitFor: Timeout 30000ms exceeded. Call log:   - waiting for locator('main').first() to be visible "
+        },
+        {
+          "name": "Release identity unchanged through the run",
+          "status": "pass",
+          "result": {
+            "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+            "frontendAsset": "/_next/static/chunks/webpack-cd8faa2d60519b3e.js",
+            "sha256": "43fa05d80e42a4da541a924cc9856680077e6ae4b816cd90bc2c74bf90b3950d"
+          }
+        }
+      ],
+      "ux": [],
+      "chromium": "156.0.8078.4",
+      "startIdentity": {
+        "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+        "frontendAsset": "/_next/static/chunks/webpack-cd8faa2d60519b3e.js",
+        "sha256": "43fa05d80e42a4da541a924cc9856680077e6ae4b816cd90bc2c74bf90b3950d"
+      },
+      "completedAtUtc": "2026-11-10T22:56:42.169Z"
+    },
+    {
+      "mode": "followup",
+      "exit": 1,
+      "startedAtUtc": "2026-11-10T22:57:43.593Z",
+      "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+      "checks": [
+        {
+          "name": "CJ-01 register, auto-login and profile",
+          "status": "pass",
+          "result": {
+            "registration": 201,
+            "authenticatedProfile": true
+          }
+        },
+        {
+          "name": "CJ-02 logout and login",
+          "status": "fail",
+          "message": "expect(received).toBe(expected) // Object.is equality  Expected: false Received: true"
+        },
+        {
+          "name": "Prepare private draft for CJ-05",
+          "status": "pass",
+          "result": {
+            "draft": 201,
+            "anonymousDraft": 404
+          }
+        },
+        {
+          "name": "CJ-05 ownership and admin route denial for another Author",
+          "status": "pass",
+          "result": {
+            "otherAuthorPrivateRead": 403,
+            "authorAdminRoute": 403,
+            "uiAccessDenied": true,
+            "adminPositiveFlow": "not executed"
+          }
+        },
+        {
+          "name": "Remove only the G07 recipe",
+          "status": "pass",
+          "result": {
+            "delete": 204,
+            "anonymousAfterDelete": 404
+          }
+        },
+        {
+          "name": "UX public at desktop, tablet and mobile breakpoints",
+          "status": "fail",
+          "message": "One or more accessibility or overflow checks failed"
+        },
+        {
+          "name": "Release identity unchanged through the run",
+          "status": "pass",
+          "result": {
+            "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+            "frontendAsset": "/_next/static/chunks/webpack-cd8faa2d60519b3e.js",
+            "sha256": "43fa05d80e42a4da541a924cc9856680077e6ae4b816cd90bc2c74bf90b3950d"
+          }
+        }
+      ],
+      "ux": [
+        {
+          "width": 320,
+          "path": "/auth/login",
+          "overflow": false,
+          "mainLandmarks": 0,
+          "violations": []
+        },
+        {
+          "width": 320,
+          "path": "/recipes",
+          "overflow": false,
+          "mainLandmarks": 1,
+          "violations": [
+            "aria-prohibited-attr"
+          ]
+        },
+        {
+          "width": 320,
+          "path": "/search?q=pho",
+          "overflow": false,
+          "mainLandmarks": 1,
+          "violations": [
+            "label-content-name-mismatch"
+          ]
+        },
+        {
+          "width": 768,
+          "path": "/auth/login",
+          "overflow": false,
+          "mainLandmarks": 0,
+          "violations": []
+        },
+        {
+          "width": 768,
+          "path": "/recipes",
+          "overflow": false,
+          "mainLandmarks": 1,
+          "violations": [
+            "aria-prohibited-attr"
+          ]
+        },
+        {
+          "width": 768,
+          "path": "/search?q=pho",
+          "overflow": false,
+          "mainLandmarks": 1,
+          "violations": [
+            "label-content-name-mismatch"
+          ]
+        },
+        {
+          "width": 1440,
+          "path": "/auth/login",
+          "overflow": false,
+          "mainLandmarks": 0,
+          "violations": []
+        },
+        {
+          "width": 1440,
+          "path": "/recipes",
+          "overflow": false,
+          "mainLandmarks": 1,
+          "violations": [
+            "aria-prohibited-attr"
+          ]
+        },
+        {
+          "width": 1440,
+          "path": "/search?q=pho",
+          "overflow": false,
+          "mainLandmarks": 1,
+          "violations": [
+            "label-content-name-mismatch"
+          ]
+        }
+      ],
+      "chromium": "156.0.8078.4",
+      "startIdentity": {
+        "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+        "frontendAsset": "/_next/static/chunks/webpack-cd8faa2d60519b3e.js",
+        "sha256": "43fa05d80e42a4da541a924cc9856680077e6ae4b816cd90bc2c74bf90b3950d"
+      },
+      "completedAtUtc": "2026-11-10T22:58:21.124Z"
+    },
+    {
+      "mode": "login-only",
+      "exit": 0,
+      "startedAtUtc": "2026-11-10T23:01:40.880Z",
+      "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+      "checks": [
+        {
+          "name": "CJ-01 register, auto-login and profile",
+          "status": "pass",
+          "result": {
+            "registration": 201,
+            "authenticatedProfile": true
+          }
+        },
+        {
+          "name": "Email login from a fresh browser context",
+          "status": "pass",
+          "result": {
+            "login": true,
+            "authenticatedDashboard": true,
+            "renewsCookieOnSessionGet": true
+          }
+        },
+        {
+          "name": "Release identity unchanged through the run",
+          "status": "pass",
+          "result": {
+            "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+            "frontendAsset": "/_next/static/chunks/webpack-cd8faa2d60519b3e.js",
+            "sha256": "43fa05d80e42a4da541a924cc9856680077e6ae4b816cd90bc2c74bf90b3950d"
+          }
+        }
+      ],
+      "ux": [],
+      "chromium": "156.0.8078.4",
+      "startIdentity": {
+        "backendCommit": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+        "frontendAsset": "/_next/static/chunks/webpack-cd8faa2d60519b3e.js",
+        "sha256": "43fa05d80e42a4da541a924cc9856680077e6ae4b816cd90bc2c74bf90b3950d"
+      },
+      "completedAtUtc": "2026-11-10T23:01:54.800Z"
+    }
+  ],
+  "workspaceChecks": {
+    "node": "22.18.0",
+    "dotnetSdk": "10.0.403",
+    "adminUsersE2e": {
+      "run": "f3c4418c9c12",
+      "pass": 3,
+      "fail": 0,
+      "exit": 0
+    },
+    "authCookieJest": {
+      "pass": 4,
+      "fail": 0,
+      "exit": 0
+    },
+    "releaseTemplateExit": 0,
+    "inventoryExit": 0,
+    "decisionRegisterExit": 0
+  },
+  "operations": {
+    "renderAggregateHealth": 200,
+    "maintenanceEnabled": false,
+    "backupTask": "Culinary-G06-PostgreSQLBackup",
+    "backupEnabled": true,
+    "backupScheduleUtc": "03:00 daily",
+    "lastBackupTaskExit": 0,
+    "lastBackupTaskLocalTime": "2026-11-10T23:07:16+07:00",
+    "productionGoNoGo": "No-Go"
+  },
+  "github": {
+    "mainCiRun": 41825925509,
+    "backendJob": 126560512540,
+    "frontendJob": 126562330379,
+    "browserJob": 126562968717,
+    "coverage": {
+      "applicationCovered": 414,
+      "applicationTotal": 506,
+      "percent": 81.82
+    },
+    "unitPassed": 105,
+    "integrationPassed": 171,
+    "architecturePassed": 3,
+    "mappedOperations": 28,
+    "runtimeInventory": 45,
+    "frontendEslintAndPrettier": "success",
+    "browserSuites": {
+      "pass": 3,
+      "fail": 1,
+      "error": "dotnet ef database update has no explicit context with two DbContexts"
+    },
+    "openIssues": [
+      25,
+      29
+    ]
+  }
+}

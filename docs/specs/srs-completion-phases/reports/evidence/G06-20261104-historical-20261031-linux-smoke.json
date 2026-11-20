@@ -1,0 +1,63 @@
+{
+  "project": "culinary-g06-dp-7f46deb83d5b",
+  "startedAtUtc": "2026-10-31T15:59:28.399308+00:00",
+  "scope": "Narrow hotfix Linux runtime against5migration application schema; isolated only, not Render deployment",
+  "userContainersBefore": [
+    "8408c093a358 culinary-blog-web-1",
+    "3a245feff450 culinary-blog-api-1",
+    "2a652e4c9469 culinary-blog-nginx-1",
+    "af42e245f804 culinary-blog-grafana-1",
+    "3fd1322e8cf8 culinary-blog-prometheus-1",
+    "d799d8731baa culinary-blog-redis-1",
+    "69149e4526cf culinary-blog-postgres-1",
+    "fc7008680210 culinary-blog-otel-collector-1",
+    "335418437c6f culinary-blog-minio-1",
+    "3f9d4aba9a36 culinary-blog-alertmanager-1",
+    "9daa52e7bcad culinary-blog-seq-1",
+    "1c92fc34db55 culinary-blog-mailhog-1",
+    "416d7c5a0b4a culinary-blog-blackbox-exporter-1"
+  ],
+  "apiImage": "sha256:dacef4fe135dc6b129ed6fd848dc6f65ae24d91e1ab8546df28acfe1a808262a",
+  "missingKeyMigrationFailsStartup": true,
+  "passed": true,
+  "uid": "1654",
+  "keyMigrations": 1,
+  "appMigrationsBeforeAndAfter": 5,
+  "idempotentSqlReapplied": true,
+  "firstApiContainer": "cea9ea884e70b0d0375bfbfb0552bebbffd0d57fd8c40cdcd42fcd60e7f58488",
+  "secondApiContainer": "200a08f55be786fe8c1916e19eecf9fedcd0825983ff0f4df5b0e29d3bb7cf1e",
+  "keysBeforeAndAfterRecreate": {
+    "count": 1,
+    "encrypted": true,
+    "plaintext": false,
+    "fingerprints": [
+      "8f7c6e0a8cef1dae6d9b363c99668185c91d195e9712314482dd7b610fe215d2"
+    ]
+  },
+  "keyPathNotCreated": true,
+  "readyAfterRecreate": true,
+  "lastApiState": {
+    "Status": "running",
+    "ExitCode": 0
+  },
+  "remainingContainers": [],
+  "remainingVolumes": [],
+  "remainingNetworks": [],
+  "userContainersAfter": [
+    "8408c093a358 culinary-blog-web-1",
+    "3a245feff450 culinary-blog-api-1",
+    "2a652e4c9469 culinary-blog-nginx-1",
+    "af42e245f804 culinary-blog-grafana-1",
+    "3fd1322e8cf8 culinary-blog-prometheus-1",
+    "d799d8731baa culinary-blog-redis-1",
+    "69149e4526cf culinary-blog-postgres-1",
+    "fc7008680210 culinary-blog-otel-collector-1",
+    "335418437c6f culinary-blog-minio-1",
+    "3f9d4aba9a36 culinary-blog-alertmanager-1",
+    "9daa52e7bcad culinary-blog-seq-1",
+    "1c92fc34db55 culinary-blog-mailhog-1",
+    "416d7c5a0b4a culinary-blog-blackbox-exporter-1"
+  ],
+  "userIdentitiesPreserved": true,
+  "finishedAtUtc": "2026-10-31T15:59:42.276389+00:00"
+}

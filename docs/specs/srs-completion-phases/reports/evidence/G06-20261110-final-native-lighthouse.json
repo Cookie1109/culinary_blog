@@ -1,0 +1,453 @@
+{
+  "build": {
+    "exit": 0,
+    "build": "s5rZOTW5vqQkMvgAx7_Cm",
+    "paths": [
+      "/",
+      "/recipes",
+      "/categories",
+      "/search",
+      "/login",
+      "/recipes/goi-bo-bop-thau",
+      "/categories/mon-nuoc"
+    ]
+  },
+  "command": "python tmp/package-G06/resume-20261110/lighthouse_final_native.py; Node22.23.3 frontend/scripts/run-lighthouse-release.mjs",
+  "exit": 0,
+  "routes": 7,
+  "runsPerRoute": 3,
+  "assertions": 42,
+  "passed": 41,
+  "requiredFailures": 0,
+  "warnings": [
+    {
+      "url": "http://127.0.0.1:61098/",
+      "name": "categories:performance",
+      "severity": "warn",
+      "passed": false,
+      "value": 0.89,
+      "expectation": {
+        "minScore": 0.9
+      }
+    }
+  ],
+  "summary": {
+    "generatedAtUtc": "2026-11-10T16:10:33.177Z",
+    "summaries": [
+      {
+        "url": "http://127.0.0.1:61098/",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": false,
+            "value": 0.89,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 2108.103,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 4.742989876687132e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 188917,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:61098/recipes",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.98,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 1117.592,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 4.405296779694757e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 188468,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:61098/categories",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.99,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 780.2485000000001,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 4.405296779694757e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 180677,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:61098/search",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.97,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 1206.6535,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 4.405296779694757e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 188468,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:61098/login",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 691.12655,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 1.745994221171526e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 182591,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:61098/recipes/goi-bo-bop-thau",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.99,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 814.5670000000002,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 0.0003183139602122974,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 180677,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:61098/categories/mon-nuoc",
+        "results": [
+          {
+            "name": "categories:performance",
+            "severity": "warn",
+            "passed": true,
+            "value": 0.99,
+            "expectation": {
+              "minScore": 0.9
+            }
+          },
+          {
+            "name": "largest-contentful-paint",
+            "severity": "error",
+            "passed": true,
+            "value": 783.5643999999998,
+            "expectation": {
+              "maxNumericValue": 2500
+            }
+          },
+          {
+            "name": "cumulative-layout-shift",
+            "severity": "error",
+            "passed": true,
+            "value": 5.475353095267302e-05,
+            "expectation": {
+              "maxNumericValue": 0.1
+            }
+          },
+          {
+            "name": "total-blocking-time",
+            "severity": "error",
+            "passed": true,
+            "value": 0,
+            "expectation": {
+              "maxNumericValue": 200
+            }
+          },
+          {
+            "name": "resource-summary:script:size",
+            "severity": "error",
+            "passed": true,
+            "value": 183195,
+            "expectation": {
+              "maxNumericValue": 204800
+            }
+          },
+          {
+            "name": "meta-description",
+            "severity": "error",
+            "passed": true,
+            "value": 1,
+            "expectation": {
+              "minScore": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "scope": "Native standalone candidate loopback, existing Render public-read dependency; not the Vercel provider artifact or organic RUM. TBT does not certify INP."
+}

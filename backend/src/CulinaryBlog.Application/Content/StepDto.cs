@@ -11,10 +11,12 @@ namespace CulinaryBlog.Application.Content;
 /// <param name="Description">The description supplied to this operation.</param>
 /// <param name="TimerMinutes">The timer minutes supplied to this operation.</param>
 /// <param name="ImageUrl">The image url supplied to this operation.</param>
+/// <param name="StepType">The prep or cook classification.</param>
 public sealed record StepDto(
     Guid Id,
     int StepNumber,
     string Title,
     string Description,
     double? TimerMinutes,
-    string? ImageUrl);
+    string? ImageUrl,
+    string StepType = "cook");

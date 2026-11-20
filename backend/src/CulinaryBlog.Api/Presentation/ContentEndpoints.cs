@@ -43,6 +43,14 @@ internal static class ContentEndpoints
             .WithSummary("Create a category (Admin)")
             .WithDescription("Category names must contain between 2 and 50 characters and must not contain HTML.")
             .Produces<DataEnvelope<CategoryDto>>(StatusCodes.Status201Created);
+        categories.MapPost("/image", UploadCategoryImageAsync).RequireAuthorization("AdminPolicy")
+            .WithSummary("Upload a category image (Admin)")
+            .WithDescription("JPEG, PNG, WebP or AVIF; maximum 5 MB. Returns the path to store as the category imageUrl.")
+            .Accepts<CategoryImageBody>("multipart/form-data")
+            .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(6 * 1024 * 1024))
+            .Produces<DataEnvelope<CategoryImageDto>>(StatusCodes.Status201Created)
+            .RequireRateLimiting("upload")
+            .DisableAntiforgery();
         categories.MapPut("/{id:guid}", UpdateCategoryAsync).RequireAuthorization("AdminPolicy")
             .WithSummary("Update a category (Admin)")
             .WithDescription("Category names must contain between 2 and 50 characters and must not contain HTML.")
@@ -142,6 +150,10 @@ internal static class ContentEndpoints
         endpoints.MapGet("/api/v1/media/{imageId:guid}/{variant}", OpenMediaAsync).AllowAnonymous()
             .WithTags("Images").WithSummary("Read an original, medium or thumbnail image")
             .WithDescription("Published recipe images are public; private images require an owner or Admin JWT.")
+            .Produces(StatusCodes.Status200OK, contentType: "application/octet-stream");
+
+        endpoints.MapGet("/api/v1/media/category/{fileName}", OpenCategoryImageAsync).AllowAnonymous()
+            .WithTags("Images").WithSummary("Read an uploaded category image")
             .Produces(StatusCodes.Status200OK, contentType: "application/octet-stream");
 
         var mine = endpoints.MapGroup("/api/v1/me/recipes").RequireAuthorization("AuthorPolicy").WithTags("MyRecipes");
@@ -769,6 +781,51 @@ internal static class ContentEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> UploadCategoryImageAsync(
+        ClaimsPrincipal principal,
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!httpContext.Request.HasFormContentType)
+        {
+            throw new ContentProblemException("FILE_MIME_INVALID", "A multipart image upload is required.", ContentProblemKind.BadRequest);
+        }
+
+        IFormCollection form;
+        try
+        {
+            form = await httpContext.Request.ReadFormAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (InvalidDataException)
+        {
+            throw new ContentProblemException("FILE_MIME_INVALID", "A valid multipart image upload is required.", ContentProblemKind.BadRequest);
+        }
+
+        var file = form.Files.GetFile("file");
+        if (file is null || form.Files.Count != 1)
+        {
+            throw new ContentProblemException("FILE_MIME_INVALID", "Select one category image.", ContentProblemKind.BadRequest);
+        }
+
+        await using var content = file.OpenReadStream();
+        var image = await sender.Send(
+            new UploadCategoryImageCommand(principal.IsInRole("Admin"), content, file.Length, file.ContentType),
+            cancellationToken).ConfigureAwait(false);
+        return Results.Created(image.Url, new DataEnvelope<CategoryImageDto>(image));
+    }
+
+    private static async Task<IResult> OpenCategoryImageAsync(
+        string fileName,
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var file = await sender.Send(new OpenCategoryImageQuery(fileName), cancellationToken).ConfigureAwait(false);
+        httpContext.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        return Results.Stream(file.Content, file.ContentType, enableRangeProcessing: true);
+    }
+
     private static async Task<IResult> OpenMediaAsync(
         Guid imageId,
         string variant,
@@ -849,4 +906,6 @@ internal static class ContentEndpoints
     private sealed record RecipeMutationMeta(long RecipeVersion);
 
     private sealed record RecipeMutationEnvelope<T>(T Data, RecipeMutationMeta Meta);
+
+    private sealed record CategoryImageBody(IFormFile File);
 }

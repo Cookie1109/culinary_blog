@@ -184,7 +184,7 @@ public sealed class DatabaseInitializer(
                 seed.CookTime,
                 seed.Servings,
                 seed.Difficulty,
-                null,
+                seed.Instructions,
                 nutrition);
             recipe.Publish(
                 publishedAt.AddDays(recipeIndex),
@@ -218,7 +218,8 @@ public sealed class DatabaseInitializer(
                     step.Title,
                     step.Description,
                     step.TimerMinutes,
-                    null));
+                    null,
+                    step.StepType));
             }
 
             await this.EnsureRecipeImageAsync(recipeId, seed, cancellationToken).ConfigureAwait(false);

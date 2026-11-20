@@ -1,0 +1,42 @@
+{
+  "baselineFiles": 1206,
+  "changedExistingFiles": {
+    "docs/operations/g06-release-proposal.md": "a21667ed16093424310d0f0e38bcdc6d920847217e222ac0db561a6540017a53",
+    "backend/tests/CulinaryBlog.UnitTests/AuthorizationPipelineTests.cs": "1f06bc3259db7aaf8f4dedd29fd1cdfcb3f072ba8b670d64834ccf370d63b5c2",
+    "frontend/e2e/critical-journeys.spec.ts": "145ae94393520f652eb4649f9d2a5ca8ce8092f2823122aeb0accc42f0902c27",
+    "backend/src/CulinaryBlog.Application/Abstractions/Caching/IPublicCacheVersion.cs": "f3a39fc3b0a4ca5232dd0769e46649c0f4a61ea3f6a195fa357209f7b2149fcc",
+    "backend/tests/CulinaryBlog.IntegrationTests/MigrationUpgradeTests.cs": "24afef45644a578508b237c6486b9690f58d6a4b8f8262b5654b951cdf4f4bff",
+    "backend/tests/CulinaryBlog.UnitTests/ContentPipelineTests.cs": "b293aa15b594dfc40b6f45518a36ef4a961e24b69838b2cc2e52c60f56940111",
+    "docs/specs/srs-completion-checklist.md": "8a49d403c9cf442f96d911eb5cefa8ff2c82bd26d15a24b767ddb883cfd865d4",
+    "backend/tests/CulinaryBlog.UnitTests/ApplicationBehaviorTests.cs": "321f09d0b393998c4605f2b2154a896c10d6e7146e0f08bb8b508c7f91963863",
+    "docs/operations/render-data-protection-2026-10-31.md": "fab4a75d31de778a91465a04453bb372b889fbbb63fba29cbde19f4efd60b3ec",
+    "backend/src/CulinaryBlog.Application/Behaviors/CacheInvalidationBehavior.cs": "f363a575bb2966f8dc0917cf30ea9de68a822054bbde3dda1a152b864001986c",
+    ".dockerignore": "f68a63c7181f74805920fb07f7bc16d35cc627d240ed4c714952e64f4882e0d2",
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md": "321632dba3581c9b0888edd5dae80ff26d640f63963884777117610b28c00bd3",
+    "backend/tests/CulinaryBlog.IntegrationTests/OutputCacheApiTests.cs": "2df1b304a4a89797f2e45d53cdf2ab0e27f087c68fcf69e0fc9ae4d3a790a28f",
+    "backend/tests/CulinaryBlog.UnitTests/ApplicationRequestTests.cs": "310796b594a1879bdd31e8e43f91187153fc94de2226b8f203a21d28244f3bd2",
+    "backend/tests/CulinaryBlog.IntegrationTests/RedisApplicationCacheTests.cs": "d32052dcde4f053e87112e3aa8309eee417167914a672c662a0fdaa808b6bff9",
+    "docs/specs/srs-completion-phases/progress.md": "8af6b687b0ddc0f7073e07bbb8a87f7ddf6c415211284629387638435ec3b284",
+    "frontend/src/features/culinary/pages/RecipesList.tsx": "b5eb1347466a4ecffb53b130a03ea55a4817a465a580a14c5b144295ac6a2fe3",
+    "docs/operations/g06-authorized-rollout-2026-10-31.md": "ab0e8b339e355e3e3343dd53a2e4cc5ef068dc76ad14138c4a0b2a871fb96bdb",
+    "backend/tests/CulinaryBlog.IntegrationTests/AuthApiFactory.cs": "7c9ed6fd9947ba2e414e9bc4445c827348fef56e8d33bbcb91d612261cca9557",
+    "backend/src/CulinaryBlog.Infrastructure/Caching/DatabasePublicCacheVersion.cs": "18a029f148bebf436dbacddc08a1bd2caac919178c9d7d6b8e558aef3913263f",
+    "backend/src/CulinaryBlog.Api/Dockerfile": "f95f05e363820b32635d0777a2a8f5d2899bdf88067726712baa165ceb431ccd"
+  },
+  "unchangedExistingCount": 1185,
+  "unexpectedChangedExistingFiles": [],
+  "newCodeFiles": [
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/Migrations/PublishedContentCacheGeneration.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/DraftCacheIsolationTests.cs"
+  ],
+  "missingBaselineFiles": [],
+  "gitIndexEmpty": true,
+  "rootHead": "ce4ae4eb8fd7d94b36b600ec01da024f4a9670e3",
+  "remoteMain": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+  "noNewCommitPushThisResume": true,
+  "userContainersPreservedAfterAllTests": 13,
+  "allRemainingContainerIdentitiesPreserved": 21,
+  "remainingVolumesPreserved": 41,
+  "syntheticRetryResourcesRemoved": true,
+  "currentCFreeBytes": 35139059712
+}

@@ -1,0 +1,33 @@
+{
+  "checkedAtUtc": "2026-11-04T23:49:09.253280+00:00",
+  "userReportedEndpointSavedAndRedeployed": false,
+  "cloudChangesByAgent": false,
+  "checks": [
+    {
+      "path": "/api/v1/release",
+      "status": null,
+      "errorType": "TimeoutError",
+      "elapsedSeconds": 35.517
+    },
+    {
+      "path": "/health/ready",
+      "status": null,
+      "errorType": "TimeoutError",
+      "elapsedSeconds": 35.507
+    },
+    {
+      "path": "/health",
+      "status": null,
+      "errorType": "TimeoutError",
+      "elapsedSeconds": 35.506
+    },
+    {
+      "path": "/api/v1/recipes?pageSize=1",
+      "status": null,
+      "errorType": "TimeoutError",
+      "elapsedSeconds": 35.506
+    }
+  ],
+  "mediaChecks": [],
+  "verified": false
+}

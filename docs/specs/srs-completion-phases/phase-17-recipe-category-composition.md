@@ -31,9 +31,9 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D6-01 · Kiểm chứng:** category CRUD/quyền Admin, tên unique/giới hạn field, Name tăng dần public/count Published, quản trị orderIndex rõ nghĩa, detail pagination, xóa category còn recipe bị conflict, soft delete theo baseline.
-- [ ] **D6-02 · Kiểm chứng:** public/owner/Admin recipe list/detail và wizard Draft; owner/Admin update với ETag/If-Match, stale race 409, missing header 400 theo baseline. Publish cần ingredient + step; unpublish/archive/unarchive/delete đúng transition và không lộ private content/media sau đó.
-- [ ] **D6-03 · Kiểm chứng:** ingredient CRUD/nullability/limits/order; step CRUD/title/timer/append và renumber liên tục trong transaction; ảnh primary duy nhất kể cả concurrent write. Xác minh quyền và version cho từng mutation con, rollback khi một phần thao tác lỗi.
+- [x] **D6-01 · Kiểm chứng:** category CRUD/quyền Admin, tên unique/giới hạn field, Name tăng dần public/count Published, quản trị orderIndex rõ nghĩa, detail pagination, xóa category còn recipe bị conflict, soft delete theo baseline.
+- [x] **D6-02 · Kiểm chứng:** public/owner/Admin recipe list/detail và wizard Draft; owner/Admin update với ETag/If-Match, stale race 409, missing header 400 theo baseline. Publish cần ingredient + step; unpublish/archive/unarchive/delete đúng transition và không lộ private content/media sau đó.
+- [x] **D6-03 · Kiểm chứng:** ingredient CRUD/nullability/limits/order; step CRUD/title/timer/append và renumber liên tục trong transaction; ảnh primary duy nhất kể cả concurrent write. Xác minh quyền và version cho từng mutation con, rollback khi một phần thao tác lỗi.
 
 ## Trình tự thực hiện trong phase
 
@@ -50,11 +50,14 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Acceptance category/recipe/composition có mã/test và kết quả mới.
-- [ ] Không coi “đã có API” là đủ khi UI/privacy/concurrency chưa chứng minh.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Acceptance category/recipe/composition có mã/test và kết quả mới.
+- [x] Không coi “đã có API” là đủ khi UI/privacy/concurrency chưa chứng minh.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-17-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-16-rate-limit-and-headers.md) · [Tiếp theo để tham khảo](phase-18-search-filters-and-pagination.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+
+E28 —27/10/2026: [report chung G04](reports/package-G04-result.md#checkpoint27102026--chốt-http-và-nghiệm-thu-g04-local),15/15 task local; giữ bằng chứng chưa bị ảnh hưởng. Không áp migration vào database người dùng hoặc nhận triển khai demo là nghiệm thu production.

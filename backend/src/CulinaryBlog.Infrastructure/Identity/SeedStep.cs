@@ -8,4 +8,5 @@ namespace CulinaryBlog.Infrastructure.Identity;
 /// <param name="Title">The title supplied to this operation.</param>
 /// <param name="Description">The description supplied to this operation.</param>
 /// <param name="TimerMinutes">The timer minutes supplied to this operation.</param>
-internal sealed record SeedStep(string Title, string Description, int? TimerMinutes);
+/// <param name="StepType">The step classification: "prep" or "cook".</param>
+internal sealed record SeedStep(string Title, string Description, int? TimerMinutes, string StepType = "cook");

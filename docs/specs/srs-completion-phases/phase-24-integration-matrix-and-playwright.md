@@ -31,8 +31,8 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D8-01 · Kiểm chứng:** lập bảng **mỗi endpoint ít nhất một happy path và một error case**, gắn với FR/acceptance; chạy full integration sau D6. Bao phủ toàn role matrix, invalid/body/query/header, not-found/duplicate, ETag race, privacy/cache, jobs, storage và migration; không suy từ tổng 99 test là đã đủ endpoint.
-- [ ] **D8-02 · Sửa:** thêm Playwright config/fixtures và script một lệnh dựng/chờ/test/dọn tài nguyên thuộc test; dữ liệu synthetic được cô lập, không dùng DB người dùng. Đặt tên script và ghi README sau khi triển khai, không quảng cáo lệnh chưa tồn tại là đã chạy được.
+- [x] **D8-01 · Kiểm chứng:** lập bảng **mỗi endpoint ít nhất một happy path và một error case**, gắn với FR/acceptance; chạy full integration sau D6. Bao phủ toàn role matrix, invalid/body/query/header, not-found/duplicate, ETag race, privacy/cache, jobs, storage và migration; không suy từ tổng 99 test là đã đủ endpoint.
+- [x] **D8-02 · Sửa:** thêm Playwright config/fixtures và script một lệnh dựng/chờ/test/dọn tài nguyên thuộc test; dữ liệu synthetic được cô lập, không dùng DB người dùng. Đặt tên script và ghi README sau khi triển khai, không quảng cáo lệnh chưa tồn tại là đã chạy được.
 
 ## Trình tự thực hiện trong phase
 
@@ -49,11 +49,15 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Harness có browser thực chạy và endpoint matrix có evidence.
-- [ ] Không đánh đủ năm E2E ở phase scaffold này.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Harness có browser thực chạy và endpoint matrix có evidence.
+- [x] Không đánh đủ năm E2E ở phase scaffold này.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-24-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-23-unit-coverage-gate.md) · [Tiếp theo để tham khảo](phase-25-e2e-registration-and-login.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+## Checkpoint G05 ngày 29/10/2026
+
+Kết quả nguồn cuối ngày29/10/2026, gates và giới hạn môi trường ở [report G05](reports/package-G05-result.md#phase-24). Checkbox task chỉ đóng theo evidence trong report; trạng thái ban đầu ở đầu tài liệu được giữ như lịch sử.

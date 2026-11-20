@@ -1,0 +1,83 @@
+{
+  "checkedAtUtc": "2026-11-05T00:23:55.569014+00:00",
+  "userReportedEndpointSavedAndRedeployed": false,
+  "cloudChangesByAgent": false,
+  "checks": [
+    {
+      "path": "/api/v1/release",
+      "status": 200,
+      "elapsedSeconds": 0.709,
+      "contentType": "application/json; charset=utf-8",
+      "body": {
+        "data": {
+          "provider": "Render",
+          "commitSha": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+          "apiImageDigest": null,
+          "webImageDigest": null,
+          "apiServiceId": "srv-dbf5mmoae00c73esdplg",
+          "apiInstanceId": "srv-dbf5mmoae00c73esdplg-hibernate-57cd64f476-k652w",
+          "webDeploymentId": null
+        },
+        "meta": {}
+      }
+    },
+    {
+      "path": "/health/ready",
+      "status": 200,
+      "elapsedSeconds": 0.597,
+      "contentType": "application/json; charset=utf-8",
+      "body": {
+        "status": "Healthy"
+      }
+    },
+    {
+      "path": "/health",
+      "status": 200,
+      "elapsedSeconds": 0.823,
+      "contentType": "application/json; charset=utf-8",
+      "body": {
+        "status": "Healthy"
+      }
+    },
+    {
+      "path": "/api/v1/recipes?pageSize=1",
+      "status": 200,
+      "elapsedSeconds": 5.229,
+      "contentType": "application/json; charset=utf-8",
+      "recipeCount": 1
+    }
+  ],
+  "mediaChecks": [
+    {
+      "path": "/api/v1/media/e23cf32a-815a-df7f-52b6-da80a7c89e9b/original",
+      "status": 200,
+      "elapsedSeconds": 1.501,
+      "contentType": "image/jpeg",
+      "bytes": 611927,
+      "sha256": "2cb2c25b5f653179ab03821faf9459f4f0d3f11b74f059177379842bdc42d080"
+    },
+    {
+      "path": "/api/v1/media/e23cf32a-815a-df7f-52b6-da80a7c89e9b/medium",
+      "status": 200,
+      "elapsedSeconds": 0.995,
+      "contentType": "image/webp",
+      "bytes": 286816,
+      "sha256": "f9f13112f3c4ded4df8ee840ee508b76063c7e3e651385b7b696189add38bbee"
+    },
+    {
+      "path": "/api/v1/media/e23cf32a-815a-df7f-52b6-da80a7c89e9b/thumbnail",
+      "status": 200,
+      "elapsedSeconds": 0.991,
+      "contentType": "image/webp",
+      "bytes": 77094,
+      "sha256": "5eb980b56a820beb6c6d861408f77f9e21f36a2bdc1faa4a031574cd579dbbf2"
+    }
+  ],
+  "detail": {
+    "path": "/api/v1/recipes/goi-bo-bop-thau",
+    "status": 200,
+    "elapsedSeconds": 1.609,
+    "contentType": "application/json; charset=utf-8"
+  },
+  "verified": true
+}

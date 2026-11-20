@@ -4,6 +4,29 @@
  */
 
 export interface paths {
+    "/recipe-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream committed recipe changes
+         * @description Public SSE stream. Sends connected on subscription and changed after committed
+         *     content mutations. Payload is an empty JSON object and contains no recipe or
+         *     user data. Heartbeat comments keep the connection alive. Reconnect and refetch
+         *     authorized data after connected; intermediate events are coalesced, not replayed.
+         */
+        get: operations["streamRecipeChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -226,6 +249,23 @@ export interface paths {
         get: operations["getProfileAvatar"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/categories/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Admin only. Returns the path to store as the category imageUrl. */
+        post: operations["uploadCategoryImage"];
         delete?: never;
         options?: never;
         head?: never;
@@ -587,6 +627,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/category/{fileName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCategoryImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/{imageId}/{variant}": {
         parameters: {
             query?: never;
@@ -770,7 +826,10 @@ export interface components {
             name: string;
             slug: string;
             description?: string | null;
-            /** Format: uri */
+            /**
+             * Format: uri-reference
+             * @description Absolute HTTP(S) URL or an uploaded /api/v1/media/ path
+             */
             imageUrl?: string | null;
             orderIndex: number;
             recipeCount: number;
@@ -779,7 +838,10 @@ export interface components {
             /** @description 2–50 characters; HTML tags are not allowed. */
             name: string;
             description?: string | null;
-            /** Format: uri */
+            /**
+             * Format: uri-reference
+             * @description Absolute HTTP(S) URL or an uploaded /api/v1/media/ path
+             */
             imageUrl?: string | null;
             orderIndex?: number;
         };
@@ -836,6 +898,7 @@ export interface components {
             description: string;
             /** Format: uuid */
             categoryId: string;
+            /** @description Tự động tính từ các bước chuẩn bị */
             prepTime: number;
             cookTime: number;
             servings: number;
@@ -851,6 +914,7 @@ export interface components {
             description?: string;
             /** Format: uuid */
             categoryId?: string;
+            /** @description Tự động tính từ các bước chuẩn bị */
             prepTime?: number;
             cookTime?: number;
             servings?: number;
@@ -861,6 +925,8 @@ export interface components {
         StepUpdateRequest: {
             title?: string;
             description?: string;
+            /** @enum {string} */
+            stepType?: "prep" | "cook";
             /** @description Thời gian theo phút, hỗ trợ phần lẻ để biểu diễn giây */
             timerMinutes?: number | null;
             /** Format: uri */
@@ -871,6 +937,8 @@ export interface components {
         StepWrite: {
             title: string;
             description: string;
+            /** @enum {string} */
+            stepType?: "prep" | "cook";
             /** @description Thời gian theo phút, hỗ trợ phần lẻ để biểu diễn giây */
             timerMinutes?: number | null;
             /** Format: uri */
@@ -1094,6 +1162,30 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    streamRecipeChanges: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Continuous server-sent events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example event: changed
+                     *     data: {}
+                     */
+                    "text/event-stream": string;
+                };
+            };
+        };
+    };
     getApiMetadata: {
         parameters: {
             query?: never;
@@ -1477,6 +1569,50 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+        };
+    };
+    uploadCategoryImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description JPEG, PNG, WebP or AVIF, up to 5 MB
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Image stored */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            /**
+                             * Format: uri-reference
+                             * @example /api/v1/media/category/0123456789abcdef0123456789abcdef.jpg
+                             */
+                            url: string;
+                        };
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
+            503: components["responses"]["Problem"];
         };
     };
     listCategories: {
@@ -2241,6 +2377,34 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             429: components["responses"]["RateLimitExceeded"];
+        };
+    };
+    getCategoryImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fileName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/webp": string;
+                    "image/avif": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimitExceeded"];
+            503: components["responses"]["Problem"];
         };
     };
     getRecipeImageVariant: {

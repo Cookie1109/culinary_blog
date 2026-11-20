@@ -30,9 +30,9 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D7-01 · Sửa:** đọc report uncovered Application commands/queries/validators/behaviors sau D2/D3; thêm unit test hành vi thành công, invalid input, forbidden/not-found/conflict, failure/cancellation/cache. Test phải phát hiện sai nghiệp vụ, không chỉ khớp cách viết handler.
-- [ ] **D7-02 · Sửa:** đạt **Application unit line coverage ≥80%**, đo riêng layer từ bộ unit; không lấy Domain hoặc integration coverage thay thế, không loại trừ mã nghiệp vụ để tăng tỷ lệ. Giữ báo cáo line/branch và phân tích phần còn thiếu.
-- [ ] **D7-03 · Sửa:** thêm gate đọc coverage XML và fail khi dưới 80%, dùng được local và CI; kiểm gate bằng một fixture/report dưới ngưỡng rồi khôi phục, lưu exit code. Gate phải nhắm đúng Application, không chỉ upload report.
+- [x] **D7-01 · Sửa:** đọc report uncovered Application commands/queries/validators/behaviors sau D2/D3; thêm unit test hành vi thành công, invalid input, forbidden/not-found/conflict, failure/cancellation/cache. Test phải phát hiện sai nghiệp vụ, không chỉ khớp cách viết handler.
+- [x] **D7-02 · Sửa:** đạt **Application unit line coverage ≥80%**, đo riêng layer từ bộ unit; không lấy Domain hoặc integration coverage thay thế, không loại trừ mã nghiệp vụ để tăng tỷ lệ. Giữ báo cáo line/branch và phân tích phần còn thiếu.
+- [x] **D7-03 · Sửa:** thêm gate đọc coverage XML và fail khi dưới 80%, dùng được local và CI; kiểm gate bằng một fixture/report dưới ngưỡng rồi khôi phục, lưu exit code. Gate phải nhắm đúng Application, không chỉ upload report.
 
 ## Trình tự thực hiện trong phase
 
@@ -49,11 +49,15 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Coverage mục tiêu đạt và gate đã được thực thi, không chỉ có YAML.
-- [ ] Không thêm test phản chiếu implementation mà không bảo vệ acceptance.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Coverage mục tiêu đạt và gate đã được thực thi, không chỉ có YAML.
+- [x] Không thêm test phản chiếu implementation mà không bảo vệ acceptance.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-23-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 
 [Quay về điều phối](README.md) · [Trước](phase-22-schema-migrations-openapi.md) · [Tiếp theo để tham khảo](phase-24-integration-matrix-and-playwright.md) — liên kết tiếp theo không phải chỉ thị tự thực hiện.
+
+## Checkpoint G05 ngày 29/10/2026
+
+Kết quả nguồn cuối ngày29/10/2026, gates và giới hạn môi trường ở [report G05](reports/package-G05-result.md#phase-23). Checkbox task chỉ đóng theo evidence trong report; trạng thái ban đầu ở đầu tài liệu được giữ như lịch sử.

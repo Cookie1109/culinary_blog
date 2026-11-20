@@ -1,0 +1,266 @@
+{
+  "recordedAtUtc": "2026-10-26T22:55:46.028377+00:00",
+  "main": "f6ec7bf092ad4a64fd4b3845de5ef00ae12a8a5e",
+  "scope": "Category input2–50/no HTML, database varchar100 unchanged; no production data writes",
+  "ci": {
+    "headSha": "f6ec7bf092ad4a64fd4b3845de5ef00ae12a8a5e",
+    "runId": 40412485400,
+    "url": "https://github.com/Cookie1109/culinary_blog/actions/runs/40412485400",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "frontend",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "backend",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "security",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "compose",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "dependency-review",
+        "status": "completed",
+        "conclusion": "skipped"
+      }
+    ],
+    "vercel": [
+      {
+        "context": "Vercel",
+        "state": "success",
+        "url": "https://vercel.com/cookie1109s-projects/culinary-blog/3DFaBrmYDQw4KJ2bWKiVNMXBGThE"
+      }
+    ]
+  },
+  "runtime": {
+    "checkedAtUtc": "2026-10-26T22:33:12.954007+00:00",
+    "passed": true,
+    "release": {
+      "status": 200,
+      "body": {
+        "data": {
+          "provider": "Render",
+          "commitSha": "f6ec7bf092ad4a64fd4b3845de5ef00ae12a8a5e",
+          "apiImageDigest": null,
+          "webImageDigest": null,
+          "apiServiceId": "srv-dbf5mmoae00c73esdplg",
+          "apiInstanceId": "srv-dbf5mmoae00c73esdplg-hibernate-5ff8785c68-m45f7",
+          "webDeploymentId": null
+        },
+        "meta": {}
+      }
+    },
+    "readiness": {
+      "status": 200,
+      "body": {
+        "status": "Healthy"
+      }
+    },
+    "categories": {
+      "status": 200,
+      "count": 20,
+      "longestNameLength": 19,
+      "names": [
+        "Món nước",
+        "Cơm và xôi",
+        "Món kho và rim",
+        "Món xào",
+        "Canh và súp",
+        "Món cuốn và gỏi",
+        "Bánh Việt",
+        "Món nướng",
+        "Món chay",
+        "Món ăn vặt",
+        "Món tráng miệng",
+        "Món hầm",
+        "Hải sản",
+        "Đặc sản vùng miền",
+        "Món hấp",
+        "Món lẩu",
+        "Món chiên",
+        "Món luộc",
+        "Đồ chua và món muối",
+        "Đồ uống Việt"
+      ]
+    },
+    "vercelHomeStatus": 200,
+    "productionWritesPerformed": false,
+    "authenticatedAdminFormLiveTestPerformed": false,
+    "adminFormEvidence": "React DOM tests for create/update plus deployed-source CI; no production admin mutations"
+  },
+  "tests": [
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name/category-name-before.trx",
+      "total": 7,
+      "passed": 3,
+      "failed": 4
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name/category-name-unit.trx",
+      "total": 74,
+      "passed": 74,
+      "failed": 0
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name/category-name-integration.trx",
+      "total": 116,
+      "passed": 116,
+      "failed": 0
+    },
+    {
+      "path": "tmp/g04/category-name/category-name-root-unit.trx",
+      "total": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "path": "tmp/g04/category-name/category-name-root-integration.trx",
+      "total": 179,
+      "passed": 179,
+      "failed": 0
+    }
+  ],
+  "frontend": {
+    "mainPassed": 110,
+    "rootG04Passed": 126
+  },
+  "rootTestEnvironmentFix": "AuthApiFactory initializes Hangfire schema only in owned Testcontainers DB; background workers stay disabled. Earlier full root run176/179 had3 missing-schema failures; final179/179 passed. Not included in published category commit.",
+  "fixtureNamesShortenedOnly": [
+    "Changed audit category→Changed audit",
+    "Performance filler→Perf filler"
+  ],
+  "changedPublishedFiles": [
+    "backend/src/CulinaryBlog.Api/Presentation/ContentEndpoints.cs",
+    "backend/src/CulinaryBlog.Application/Content/ContentValidators.cs",
+    "backend/src/CulinaryBlog.Domain/Categories/Category.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/AdminAuditLogsApiTests.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/RecipeCoreApiTests.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/RecipeDiscoveryPerformanceTests.cs",
+    "backend/tests/CulinaryBlog.UnitTests/CategoryNameValidationTests.cs",
+    "docs/operations/category-name-validation.md",
+    "docs/specs/phase-0/openapi.v1.yaml",
+    "frontend/src/features/culinary/pages/dashboard/CategoryAdmin.tsx",
+    "frontend/src/lib/api/schema.d.ts",
+    "frontend/tests/ux-ui-behavior.test.mjs"
+  ],
+  "rootOnlyChanges": [
+    "backend/tests/CulinaryBlog.IntegrationTests/AuthApiFactory.cs",
+    "frontend/src/features/culinary/forms/content-schemas.ts"
+  ],
+  "g04ClosedTasks": 9,
+  "g04TotalTasks": 15,
+  "httpValidation400StillPendingAtThisCheckpoint": true,
+  "artifacts": [
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name/category-name-before.trx",
+      "sha256": "9cf0f7fdd37ab6859bef3443692539d4d597d09ae7caf422e7140721420eb912",
+      "bytes": 17597
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name/category-name-unit.trx",
+      "sha256": "98f20b413cc005915f24dbc8494bf2fe0eb5e389f9757cb78c2775a0c597f3e2",
+      "bytes": 109079
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name/category-name-integration.trx",
+      "sha256": "0644b1109971b5032a9d1e5dcd326504c21a6aaf7e447881d302cd62c4f77ca0",
+      "bytes": 12407303
+    },
+    {
+      "path": "tmp/g04/category-name/category-name-root-unit.trx",
+      "sha256": "ce2c7314d7378d5fec25d9c407942dcd9f5bb2e3c73814c9367a410d8de794a5",
+      "bytes": 11549
+    },
+    {
+      "path": "tmp/g04/category-name/category-name-root-integration.trx",
+      "sha256": "82158c3f18426026c886b01c147c661eff45236e8e8d6bc1384509ad0fc5845a",
+      "bytes": 48994720
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-ci.json",
+      "sha256": "172705ec62ffc8a527a4c9d8498e87d8af5f464538be3d01e13a55312ebf257a",
+      "bytes": 912
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-ci-backend.log",
+      "sha256": "23f9c5a56864178d2d0fbeb393b95fca4ea60e71eeec472a650185f57fa83445",
+      "bytes": 24989
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-ci-frontend.log",
+      "sha256": "750876490ce73c15b9cd31fdd7efaed7e8006386e8f4ca13580e2dc24823b578",
+      "bytes": 69764
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-runtime.json",
+      "sha256": "269e1471f8e502bfac04f1b091e5ee0e2bb584b7979c5a35ec39f5b2f8fce531",
+      "bytes": 1409
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-build.log",
+      "sha256": "7186c25b87df1fcf363279b24f107729c679552ae3800670664a432d3e9b5c32",
+      "bytes": 6496
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-test.log",
+      "sha256": "da098a3375380cb869f87a333efd12bdfd17c387540ae7c52feb28c9cbcb09c3",
+      "bytes": 53732
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-typecheck.log",
+      "sha256": "3b6d60260bae8e7cd5f86d4a06f8cd19947e7936f9656824ae7ba0ae7e82e061",
+      "bytes": 118
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-lint.log",
+      "sha256": "c5669f923276eeab1ed7e690e61e4fdda30ee1ebb7492062109e5c40d03d9c45",
+      "bytes": 134
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-format.log",
+      "sha256": "b151f4ee2da1154dce8cad649fe0bc4262d2b227aa87f779e92e34e894f83bf2",
+      "bytes": 260
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-budget-check.log",
+      "sha256": "8b503e4933f76145e8c60832baa970351f55626026fbb5a36ff6694b6d88e5c2",
+      "bytes": 6948
+    },
+    {
+      "path": "tmp/release-metadata-publish/artifacts/category-name-push.log",
+      "sha256": "da9a88e48d6d531717eda79bd7f722db241791c8783590b956f29cebeb5bb064",
+      "bytes": 305
+    },
+    {
+      "path": "tmp/g04/category-name-test.log",
+      "sha256": "13ffeba455eccac7b50af1cc800746e4b60175573773eb2333359ecee75b74d5",
+      "bytes": 30921
+    },
+    {
+      "path": "tmp/g04/category-name-typecheck.log",
+      "sha256": "762a89eb7522665c0455289bb21320c6c070be06061713ed0a57ecbf2d3632f0",
+      "bytes": 58
+    },
+    {
+      "path": "tmp/g04/category-name-integration.log",
+      "sha256": "27f70b5de1f3e384c80dfc5d507f64d1ca7e64bc9600fd886c96497ae6c8b295",
+      "bytes": 21614
+    },
+    {
+      "path": "tmp/g04/category-name-integration-final.log",
+      "sha256": "bedac854aa86a4ed190a18df042b33f13dc3e179d8741254c9b2d75c7675336f",
+      "bytes": 1207
+    }
+  ]
+}

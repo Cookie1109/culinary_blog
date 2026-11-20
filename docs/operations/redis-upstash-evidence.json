@@ -1,0 +1,138 @@
+{
+  "date": "2026-10-26",
+  "timezone": "Asia/Bangkok",
+  "status": "Upstash live compatibility passed; private Redis configuration prepared; Render not switched",
+  "existingDatabaseUsed": true,
+  "paidResourceCreated": false,
+  "endpointSha256": "5cb4bf2f34e443f3de8158fd426a7eae45e3f464ce471d81201c0188876cc58d",
+  "credentialSource": "User-supplied image followed by explicit text credential; masked stdin to private env",
+  "rest": {
+    "checkedAtUtc": "2026-10-26T13:31:04.333451+00:00",
+    "endpointSha256": "5cb4bf2f34e443f3de8158fd426a7eae45e3f464ce471d81201c0188876cc58d",
+    "restPing": true,
+    "restWritesPerformed": false,
+    "tcpTlsCertificateVerified": true,
+    "tcpAuthenticationTested": false,
+    "tcpPasswordProvided": true,
+    "renderChanged": false,
+    "restHttpStatus": 200,
+    "tcpTlsVersion": "TLSv1.3",
+    "suppliedTokenVerifiedAndSaved": true
+  },
+  "tcpSdk": {
+    "checkedAtUtc": "2026-10-26T13:30:10.0145642+00:00",
+    "clientVersion": "3.0.0.0",
+    "ssl": true,
+    "certificateValidationBypassed": false,
+    "database": 0,
+    "checks": {
+      "tcpAuthenticationAndPing": true,
+      "set": true,
+      "get": true,
+      "ttl": true,
+      "delete": true,
+      "distributedCacheWriteRead": true,
+      "distributedCacheRemove": true,
+      "tagSets": true,
+      "luaHashAndExpiry": true,
+      "luaSortedSetAndExpiry": true,
+      "outputCacheWriteRead": true,
+      "outputCacheTagEviction": true,
+      "redlockAcquire": true,
+      "redlockMutualExclusion": true,
+      "redlockReleaseAndReacquire": true,
+      "connectionStringRoundTrip": true
+    },
+    "prefix": "culinary:upstash-probe:29176c466cf941789ef41d7da9e5b98f:",
+    "sourceRedisChanged": false,
+    "renderChanged": false,
+    "postgresMinioChanged": false,
+    "privateRenderValuePrepared": true,
+    "passed": true,
+    "ownNamespaceCleaned": true
+  },
+  "packages": [
+    "Microsoft.AspNetCore.OutputCaching.StackExchangeRedis/10.0.13",
+    "Microsoft.Extensions.Caching.StackExchangeRedis/10.0.13",
+    "RedLock.net/2.3.2",
+    "StackExchange.Redis/3.2.0"
+  ],
+  "build": {
+    "passed": true,
+    "warnings": 0,
+    "errors": 0
+  },
+  "preparation": {
+    "preparedAtUtc": "2026-10-26T13:32:14.324040+00:00",
+    "endpointSha256": "5cb4bf2f34e443f3de8158fd426a7eae45e3f464ce471d81201c0188876cc58d",
+    "environmentVariable": "ConnectionStrings__Redis",
+    "importFile": "D:\\Culinary_Blog\\tmp\\upstash\\render-redis.env",
+    "updatedPrivateDrafts": [
+      {
+        "file": "backend/.env",
+        "onlyRedisVariableChanged": true
+      },
+      {
+        "file": "tmp/render/backend-render.env.draft",
+        "onlyRedisVariableChanged": true
+      }
+    ],
+    "renderConfigurationApplied": false,
+    "productionDeployed": false,
+    "localComposeConfigurationChanged": false,
+    "postgresMinioSettingsChanged": false
+  },
+  "applicationBusinessSourceChanged": false,
+  "apiHostStarted": false,
+  "postgresMinioChanged": false,
+  "localRedisChanged": false,
+  "renderChanged": false,
+  "productionDeployPerformed": false,
+  "credentialScanInGitInputsPassed": true,
+  "privateFilesGitIgnored": true,
+  "privateDirectoryAclRestricted": true,
+  "discovery": {
+    "orbit": "Attempted; HTTPError, no result relied upon",
+    "primarySources": [
+      "https://upstash.com/docs/redis/overall/compatibility",
+      "https://upstash.com/docs/redis/features/restapi",
+      "https://github.com/StackExchange/StackExchange.Redis/blob/main/docs/Configuration.md"
+    ]
+  },
+  "pending": [
+    "Separate approval/manual application of ConnectionStrings__Redis on Render",
+    "Verify Render runtime connectivity and API behavior after approved deployment",
+    "Neon/app 5 versus 11 migration and Hangfire review remain separate blockers to full backend cutover"
+  ],
+  "privateEvidence": [
+    {
+      "file": "rest-check.json",
+      "sha256": "b9863fcb625840dc0d8872c1602160ec1f257fe4b241d7495918e22c74ee6c64"
+    },
+    {
+      "file": "tcp-check.json",
+      "sha256": "1b88e860a785c740d4ec546ac96f88db8a996ddafa10b6da048f4fa09b3a3725"
+    },
+    {
+      "file": "render-preparation.json",
+      "sha256": "7b329feb5ef0c44d40c07b15d3253ac96cb645a330036fed6cffc40e98ba5cf8"
+    }
+  ],
+  "latestReadOnlyPing": {
+    "checkedAtUtc": "2026-10-26T15:36:18.3403473+00:00",
+    "clientVersion": "3.0.0.0",
+    "ssl": true,
+    "certificateValidationBypassed": false,
+    "database": 0,
+    "checks": {
+      "tcpAuthenticationAndPing": true
+    },
+    "prefix": "culinary:upstash-probe:871412e67ea945df80bdfcf342790b4a:",
+    "sourceRedisChanged": false,
+    "renderChanged": false,
+    "postgresMinioChanged": false,
+    "passed": true,
+    "redisDataWritesPerformed": false
+  },
+  "combinedRenderPreparationReport": "render-neon-upstash-review-evidence.json"
+}

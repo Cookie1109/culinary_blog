@@ -30,6 +30,7 @@ internal sealed class AuthorizationBehavior<TRequest, TResponse>(IApplicationAct
             CreateCategoryCommand r => new AccessRule(Admin: true, ClaimedAdmin: r.IsAdmin),
             UpdateCategoryCommand r => new AccessRule(Admin: true, ClaimedAdmin: r.IsAdmin),
             DeleteCategoryCommand r => new AccessRule(Admin: true, ClaimedAdmin: r.IsAdmin),
+            UploadCategoryImageCommand r => new AccessRule(Admin: true, ClaimedAdmin: r.IsAdmin),
             GetAdminRecipeQuery => new AccessRule(Admin: true),
             ListAdminRecipesQuery => new AccessRule(Admin: true),
             ListAuditLogsQuery => new AccessRule(Admin: true),

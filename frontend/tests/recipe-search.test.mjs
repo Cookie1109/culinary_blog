@@ -69,8 +69,12 @@ test('SSR defaults keyword search to relevance and browsing to newest, preservin
   assert.equal(h.requests[0].sort, 'relevance')
   await h.page({ searchParams: Promise.resolve({}) })
   assert.equal(h.requests[1].sort, 'newest')
+  assert.equal(h.requests[1].pageSize, 12)
   await h.page({ searchParams: Promise.resolve({ q: 'ga', sort: 'quickest' }) })
   assert.equal(h.requests[2].sort, 'quickest')
+  await h.page({ searchParams: Promise.resolve({ page: '2', pageSize: '50' }) })
+  assert.equal(h.requests[3].page, 2)
+  assert.equal(h.requests[3].pageSize, 12)
 })
 
 test('SSR rejects invalid short query locally and renders retry state on upstream failure', async () => {

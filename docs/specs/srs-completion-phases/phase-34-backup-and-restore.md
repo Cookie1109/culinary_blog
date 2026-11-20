@@ -30,7 +30,9 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D9-07 · Sửa/kiểm chứng:** backup PostgreSQL mỗi ngày 03:00 theo múi giờ D0, retention 30 ngày; kiểm tra WAL/durability, persistent DB/MinIO volumes và tokens DB survive restart. Restore vào môi trường sạch so đủ dữ liệu/schema/media; ghi RTO/RPO, checksum/storage độc lập và runbook. Không chạy restore đè DB người dùng.
+- [x] **D9-07 · Sửa/kiểm chứng:** backup PostgreSQL mỗi ngày 03:00 theo múi giờ D0, retention 30 ngày; kiểm tra WAL/durability, persistent DB/MinIO volumes và tokens DB survive restart. Restore vào môi trường sạch so đủ dữ liệu/schema/media; ghi RTO/RPO, checksum/storage độc lập và runbook. Không chạy restore đè DB người dùng.
+
+Nghiệm thu10/11/2026 theo PDF trang43 và DEC-10: lịch03UTC/30ngày đã bật và thực chạy thành công, khôi phục30bảng/2044dòng/5migration/keyring mã hóa, WAL/rowhash/tokencontinuity và namedvolume đã có bằng chứng. Restore301ảnh/301SHA trước được đối chiếu với nội dung hiện tại; không backup ảnh mới. KhoDB Windows tách khỏi nguồnNeon. Điều kiện máy/user/Docker/mạng hoạt động được ghi trong runbook; PDF không bắt GoogleDrive, kho ảnh ngoàiPC, máy chạy khi đã tắt hoặc một cam kếtRTO/RPO mới. MinIOproduction4+node và bản váserver vẫn thuộc D9-04/D9-10 còn mở, không được suy đạt từ task này. Xem [review nghiệm thu](reports/package-G06-result.md#acceptance-review-10112026).
 
 ## Trình tự thực hiện trong phase
 
@@ -47,10 +49,10 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Điều kiện hoàn thành và bàn giao
 
-- [ ] Restore drill mới tái lập và lịch/retention hợp đồng có evidence.
-- [ ] Phần production storage chưa kiểm được được giữ pending.
-- [ ] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
-- [ ] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
+- [x] Restore drill mới tái lập và lịch/retention hợp đồng có evidence.
+- [x] Phần production storage chưa kiểm được được giữ pending.
+- [x] Report có kết quả của từng task, file/code/test/decision, bằng chứng và các điều kiện còn mở; không chứa secrets.
+- [x] Cập nhật `progress.md` và checkbox task gốc tương ứng nếu đủ điều kiện. Nếu task có một phần chưa đạt, để ô gốc mở.
 
 Tạo report **`reports/phase-34-result.md`** từ [mẫu report](reports/README.md). Report chưa tồn tại ở thời điểm chia phase; không tạo nội dung PASS trước khi thực hiện.
 

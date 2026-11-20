@@ -1,0 +1,70 @@
+{
+  "atUtc": "2026-10-31T13:09:02.653311+00:00",
+  "jsonValid": true,
+  "brokenLocalLinks": [],
+  "oldCoreSourceCount": 697,
+  "expectedOldCoreChanges": [
+    "frontend/src/app/layout.tsx",
+    "infra/demo/minio-tunnel.nginx.conf.template"
+  ],
+  "existingApplicationFilesChanged": [
+    "frontend/Dockerfile",
+    "frontend/package-lock.json",
+    "frontend/package.json",
+    "frontend/src/app/layout.tsx",
+    "infra/demo/minio-tunnel.nginx.conf.template"
+  ],
+  "introducedApplicationFiles": [
+    "frontend/scripts/check-web-vitals.mjs",
+    "frontend/scripts/summarize-web-vitals.mjs",
+    "frontend/src/app/api/web-vitals/route.ts",
+    "frontend/src/components/web-vitals.tsx",
+    "frontend/src/lib/web-vitals.ts",
+    "frontend/tests/web-vitals-client.test.jsx",
+    "frontend/tests/web-vitals-route.test.jsx",
+    "frontend/tests/web-vitals-summary.test.mjs",
+    "infra/operations/minio-tools.Dockerfile",
+    "infra/operations/minio-tools/go.mod",
+    "infra/operations/minio-tools/go.sum",
+    "performance/k6/recipe-journey.js"
+  ],
+  "frontendSourceHashesVerified": 107,
+  "pdfAndAbcUnchanged": true,
+  "frontendGates": {
+    "jest": 0,
+    "lint": 0,
+    "node": 0,
+    "types": 0,
+    "format": 0
+  },
+  "finalTypecheck": {
+    "exit": 0
+  },
+  "imageGates": {
+    "webScan": 0,
+    "toolScan": 0,
+    "webBuild": 0
+  },
+  "secretTriageUnresolved": 0,
+  "knownPrivateValues": {
+    "filesChecked": 61,
+    "matchingFiles": []
+  },
+  "jwtInPublishedArtifacts": [],
+  "originalD9Checkboxes": [
+    "D9-02",
+    "D9-05",
+    "D9-06"
+  ],
+  "userContainerIdentitiesPreserved": true,
+  "remainingOwnedBrowserLabContainers": {
+    "1b9adf9a7b7f": [],
+    "434fab819477": [],
+    "a0c3ca858d2d": [],
+    "97897f892eb9": [],
+    "9a98888d7b32": []
+  },
+  "authorizedGatewayRunning": true,
+  "newEndpoint": "https://retail-buying-measuring-helping.trycloudflare.com",
+  "renderEndpointUpdate": "Awaiting user action/result; dashboard host unavailable"
+}

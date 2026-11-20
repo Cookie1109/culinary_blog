@@ -1,0 +1,107 @@
+{
+  "buildId": "HOABvUQUOl1ubTR8DFT1T",
+  "base": "http://127.0.0.1:63833",
+  "browser": "Playwright bundled Chromium; desktop 1440x900, no CPU/network throttling",
+  "method": "Event Timing grouped by interactionId; <50 interactions per page visit use longest observed latency; events under16ms are not reported; diagnostic local sample, not production RUM/percentile acceptance",
+  "visits": [
+    {
+      "route": "/login",
+      "entries": [
+        {
+          "id": 6954,
+          "name": "pointerdown",
+          "duration": 16,
+          "startTime": 1622.2000000001863
+        },
+        {
+          "id": 6954,
+          "name": "pointerup",
+          "duration": 16,
+          "startTime": 1622.2000000001863
+        },
+        {
+          "id": 6954,
+          "name": "click",
+          "duration": 16,
+          "startTime": 1622.2000000001863
+        }
+      ],
+      "trusted": 9,
+      "start": 1793297178422,
+      "supported": true,
+      "end": 1793297182512,
+      "visibility": "visible",
+      "interactionsAbove16ms": 1,
+      "maxObservedMs": 16,
+      "belowThresholdBoundMs": null
+    },
+    {
+      "route": "/recipes",
+      "entries": [
+        {
+          "id": 7052,
+          "name": "keydown",
+          "duration": 16,
+          "startTime": 864.3999999999069
+        },
+        {
+          "id": 7052,
+          "name": "keypress",
+          "duration": 16,
+          "startTime": 864.3999999999069
+        },
+        {
+          "id": 7066,
+          "name": "keydown",
+          "duration": 16,
+          "startTime": 1188.6000000000931
+        },
+        {
+          "id": 7066,
+          "name": "keypress",
+          "duration": 16,
+          "startTime": 1188.6000000000931
+        },
+        {
+          "id": 7066,
+          "name": "click",
+          "duration": 16,
+          "startTime": 1189.3999999999069
+        }
+      ],
+      "trusted": 3,
+      "start": 1793297182622,
+      "supported": true,
+      "end": 1793297186265,
+      "visibility": "visible",
+      "interactionsAbove16ms": 2,
+      "maxObservedMs": 16,
+      "belowThresholdBoundMs": null
+    },
+    {
+      "route": "/search",
+      "entries": [
+        {
+          "id": 9349,
+          "name": "keydown",
+          "duration": 16,
+          "startTime": 814.4000000003725
+        },
+        {
+          "id": 9349,
+          "name": "keypress",
+          "duration": 16,
+          "startTime": 814.4000000003725
+        }
+      ],
+      "trusted": 3,
+      "start": 1793297186369,
+      "supported": true,
+      "end": 1793297189972,
+      "visibility": "visible",
+      "interactionsAbove16ms": 1,
+      "maxObservedMs": 16,
+      "belowThresholdBoundMs": null
+    }
+  ]
+}

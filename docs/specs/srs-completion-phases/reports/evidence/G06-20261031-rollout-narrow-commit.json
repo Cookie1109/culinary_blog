@@ -1,0 +1,29 @@
+{
+  "commit": "4cfe24348b29e82c0e622d73941ceacbfd7dfa2e",
+  "parent": "e6107839283767594c598f84e70dbf139a626655",
+  "branch": "fix/render-free-keyring-20261031",
+  "files": [
+    "backend/Directory.Packages.props",
+    "backend/src/CulinaryBlog.Api/Program.cs",
+    "backend/src/CulinaryBlog.Api/packages.lock.json",
+    "backend/src/CulinaryBlog.Infrastructure/CulinaryBlog.Infrastructure.csproj",
+    "backend/src/CulinaryBlog.Infrastructure/DependencyInjection.cs",
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/DataProtectionKeyDbContext.cs",
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/20261031134534_PersistDataProtectionKeys.Designer.cs",
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/20261031134534_PersistDataProtectionKeys.cs",
+    "backend/src/CulinaryBlog.Infrastructure/Persistence/KeyMigrations/DataProtectionKeyDbContextModelSnapshot.cs",
+    "backend/src/CulinaryBlog.Infrastructure/packages.lock.json",
+    "backend/tests/CulinaryBlog.ArchitectureTests/packages.lock.json",
+    "backend/tests/CulinaryBlog.IntegrationTests/DataProtectionPersistenceTests.cs",
+    "backend/tests/CulinaryBlog.IntegrationTests/packages.lock.json",
+    "scripts/new-data-protection-certificate.ps1"
+  ],
+  "mainBranchChanged": false,
+  "originalWorkspaceIndexChanged": false,
+  "pushed": true,
+  "pushExit": 0,
+  "remoteRefVerified": true,
+  "prePushBackendFormatExit": 0,
+  "prePushFrontendFormatExit": 0,
+  "localHookWasNotBypassed": true
+}

@@ -119,7 +119,7 @@ test('public imagery and heavy interactions use lazy loading without delaying LC
     source('src/features/culinary/pages/dashboard/RecipeCompositionWizard.tsx'),
   ])
 
-  assert.match(home, /loading=\{index === 0 \? 'eager' : 'lazy'\}/)
+  assert.match(home, /priority\s+loading="eager"/)
   assert.match(recipeCard, /loading="lazy"/)
   assert.match(categoryCard, /loading="lazy"/)
   assert.match(detail, /priority\s+loading="eager"/)

@@ -1,0 +1,36 @@
+{
+  "checkedAtUtc": "2026-11-04T11:17:33.354783+00:00",
+  "scope": "One normal GET each to live release, readiness and frontend; no login/mutation/load/DAST",
+  "checks": [
+    {
+      "url": "https://culinary-blog-api.onrender.com/api/v1/release",
+      "method": "GET",
+      "errorType": "TimeoutError",
+      "seconds": 35.566
+    },
+    {
+      "url": "https://culinary-blog-api.onrender.com/health/ready",
+      "method": "GET",
+      "errorType": "TimeoutError",
+      "seconds": 35.554
+    },
+    {
+      "url": "https://culinary-blog.vercel.app/",
+      "method": "GET",
+      "status": 200,
+      "seconds": 2.319,
+      "headers": {
+        "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+        "Content-Security-Policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com; font-src 'self'; connect-src 'self'",
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "Access-Control-Allow-Origin": null
+      },
+      "responseSha256": "4249276b5e4eab2aa744ddc5e839c5ebe77f1254b96fd796a87ffef552cc3f7b"
+    }
+  ],
+  "providerApiCredentialsPresent": {
+    "RENDER_API_KEY": false,
+    "VERCEL_TOKEN": false
+  }
+}

@@ -184,7 +184,7 @@ export function Login({ googleEnabled }: { googleEnabled: boolean }) {
               disabled={isLoading || isSubmitting}
               className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 text-sm font-medium uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 'Đang đăng nhập…'
               ) : (
                 <>

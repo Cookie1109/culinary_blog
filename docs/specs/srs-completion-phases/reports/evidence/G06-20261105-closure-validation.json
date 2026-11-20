@@ -1,0 +1,19 @@
+{
+  "valid": true,
+  "manifestSha256": "5de6773d3766f0d8e4cfb042f9d4edf131cbd2dc4e916c9bd270c4d0345774ae",
+  "proofFilesChecked": 20,
+  "checks": [
+    "old evidence immutable",
+    "all changed/new files in scope",
+    "root index empty",
+    "only8-line Nginx code delta this turn",
+    "PDF/A/B/C unchanged",
+    "exact private-value scan0matches",
+    "public Gitleaks rawexit1 metadatafalsepositive /0unresolved",
+    "candidate normal push verified",
+    "user13container IDs preserved",
+    "staging resources removed",
+    "checkboxes3closed6open",
+    "all six progress rows/current report links valid"
+  ]
+}

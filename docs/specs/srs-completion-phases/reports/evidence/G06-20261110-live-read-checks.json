@@ -1,0 +1,84 @@
+{
+  "atUtc": "2026-11-10T15:03:17.299294+00:00",
+  "scope": "Ordinary read-only live health/API/media checks after authorized endpoint repair; no load/DAST/migration",
+  "checks": [
+    {
+      "check": "Render readiness",
+      "status": 200,
+      "seconds": 0.458,
+      "contentType": "application/json; charset=utf-8",
+      "sha256": "6d0c0ec7bb784d95db9ff7698a87ec3f1270bad9959f375e968d974ea38ff6d9"
+    },
+    {
+      "check": "Vercel page",
+      "status": 200,
+      "seconds": 5.67,
+      "contentType": "text/html; charset=utf-8",
+      "sha256": "d20da57d9ba41233da56586d634cda4d4c3ed2e328507550f65e2b0974db9526"
+    },
+    {
+      "check": "Vercel same-origin categories",
+      "status": 200,
+      "seconds": 0.314,
+      "contentType": "application/json; charset=utf-8",
+      "sha256": "83ff0747064ed84a582bb84870aeeed9682cb0533343404393ece8a1001b13a0"
+    },
+    {
+      "check": "Vercel same-origin recipe listing",
+      "status": 200,
+      "seconds": 0.407,
+      "contentType": "application/json; charset=utf-8",
+      "sha256": "33230f79efef99ce142c936df86feaa09b636cea113ea3a91e239a7e1c1c6adf"
+    },
+    {
+      "check": "Render recipe detail",
+      "status": 200,
+      "seconds": 0.344,
+      "contentType": "application/json; charset=utf-8",
+      "sha256": "80480791a157c578777d3f1039349ee8bdc091cf755e7de90507a03cca25d73a"
+    },
+    {
+      "check": "Render media original",
+      "status": 200,
+      "seconds": 1.977,
+      "contentType": "image/jpeg",
+      "sha256": "2cb2c25b5f653179ab03821faf9459f4f0d3f11b74f059177379842bdc42d080"
+    },
+    {
+      "check": "Vercel media original",
+      "status": 200,
+      "seconds": 3.831,
+      "contentType": "image/jpeg",
+      "sha256": "2cb2c25b5f653179ab03821faf9459f4f0d3f11b74f059177379842bdc42d080"
+    },
+    {
+      "check": "Render media medium",
+      "status": 200,
+      "seconds": 1.313,
+      "contentType": "image/webp",
+      "sha256": "f9f13112f3c4ded4df8ee840ee508b76063c7e3e651385b7b696189add38bbee"
+    },
+    {
+      "check": "Vercel media medium",
+      "status": 200,
+      "seconds": 2.249,
+      "contentType": "image/webp",
+      "sha256": "f9f13112f3c4ded4df8ee840ee508b76063c7e3e651385b7b696189add38bbee"
+    },
+    {
+      "check": "Render media thumbnail",
+      "status": 200,
+      "seconds": 1.016,
+      "contentType": "image/webp",
+      "sha256": "5eb980b56a820beb6c6d861408f77f9e21f36a2bdc1faa4a031574cd579dbbf2"
+    },
+    {
+      "check": "Vercel media thumbnail",
+      "status": 200,
+      "seconds": 2.375,
+      "contentType": "image/webp",
+      "sha256": "5eb980b56a820beb6c6d861408f77f9e21f36a2bdc1faa4a031574cd579dbbf2"
+    }
+  ],
+  "passed": true
+}

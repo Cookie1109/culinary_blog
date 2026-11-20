@@ -1,0 +1,209 @@
+{
+  "build": "DuFuwIA9Nwlu7KlpSfAmx",
+  "from": "2026-11-04T11:44:10.185Z",
+  "to": "2026-11-04T11:44:28.674Z",
+  "distinctMetrics": 18,
+  "excluded": 0,
+  "missingMetrics": [],
+  "acceptance": "Pending verification of deployment identity and sample adequacy; descriptive p75 alone does not close D9-03.",
+  "groups": [
+    {
+      "route": "/login",
+      "device": "desktop",
+      "name": "LCP",
+      "samples": 1,
+      "p75": 176,
+      "threshold": 2500,
+      "withinThreshold": true
+    },
+    {
+      "route": "/login",
+      "device": "desktop",
+      "name": "INP",
+      "samples": 1,
+      "p75": 16,
+      "threshold": 200,
+      "withinThreshold": true
+    },
+    {
+      "route": "/login",
+      "device": "desktop",
+      "name": "CLS",
+      "samples": 1,
+      "p75": 0,
+      "threshold": 0.1,
+      "withinThreshold": true
+    },
+    {
+      "route": "/recipes",
+      "device": "desktop",
+      "name": "LCP",
+      "samples": 1,
+      "p75": 176,
+      "threshold": 2500,
+      "withinThreshold": true
+    },
+    {
+      "route": "/recipes",
+      "device": "desktop",
+      "name": "INP",
+      "samples": 1,
+      "p75": 16,
+      "threshold": 200,
+      "withinThreshold": true
+    },
+    {
+      "route": "/recipes",
+      "device": "desktop",
+      "name": "CLS",
+      "samples": 1,
+      "p75": 0.00003954559033136146,
+      "threshold": 0.1,
+      "withinThreshold": true
+    },
+    {
+      "route": "/search",
+      "device": "desktop",
+      "name": "LCP",
+      "samples": 1,
+      "p75": 172,
+      "threshold": 2500,
+      "withinThreshold": true
+    },
+    {
+      "route": "/search",
+      "device": "desktop",
+      "name": "INP",
+      "samples": 1,
+      "p75": 24,
+      "threshold": 200,
+      "withinThreshold": true
+    },
+    {
+      "route": "/search",
+      "device": "desktop",
+      "name": "CLS",
+      "samples": 1,
+      "p75": 0.00003954559033136146,
+      "threshold": 0.1,
+      "withinThreshold": true
+    },
+    {
+      "route": "/login",
+      "device": "mobile",
+      "name": "LCP",
+      "samples": 1,
+      "p75": 96,
+      "threshold": 2500,
+      "withinThreshold": true
+    },
+    {
+      "route": "/login",
+      "device": "mobile",
+      "name": "INP",
+      "samples": 1,
+      "p75": 16,
+      "threshold": 200,
+      "withinThreshold": true
+    },
+    {
+      "route": "/login",
+      "device": "mobile",
+      "name": "CLS",
+      "samples": 1,
+      "p75": 0,
+      "threshold": 0.1,
+      "withinThreshold": true
+    },
+    {
+      "route": "/recipes",
+      "device": "mobile",
+      "name": "LCP",
+      "samples": 1,
+      "p75": 160,
+      "threshold": 2500,
+      "withinThreshold": true
+    },
+    {
+      "route": "/recipes",
+      "device": "mobile",
+      "name": "INP",
+      "samples": 1,
+      "p75": 8,
+      "threshold": 200,
+      "withinThreshold": true
+    },
+    {
+      "route": "/recipes",
+      "device": "mobile",
+      "name": "CLS",
+      "samples": 1,
+      "p75": 0,
+      "threshold": 0.1,
+      "withinThreshold": true
+    },
+    {
+      "route": "/search",
+      "device": "mobile",
+      "name": "LCP",
+      "samples": 1,
+      "p75": 152,
+      "threshold": 2500,
+      "withinThreshold": true
+    },
+    {
+      "route": "/search",
+      "device": "mobile",
+      "name": "INP",
+      "samples": 1,
+      "p75": 16,
+      "threshold": 200,
+      "withinThreshold": true
+    },
+    {
+      "route": "/search",
+      "device": "mobile",
+      "name": "CLS",
+      "samples": 1,
+      "p75": 0,
+      "threshold": 0.1,
+      "withinThreshold": true
+    }
+  ],
+  "visits": [
+    {
+      "route": "/login",
+      "device": "desktop"
+    },
+    {
+      "route": "/recipes",
+      "device": "desktop"
+    },
+    {
+      "route": "/search",
+      "device": "desktop"
+    },
+    {
+      "route": "/login",
+      "device": "mobile"
+    },
+    {
+      "route": "/recipes",
+      "device": "mobile"
+    },
+    {
+      "route": "/search",
+      "device": "mobile"
+    }
+  ],
+  "requestCount": 6,
+  "statuses": [
+    204,
+    204,
+    204,
+    204,
+    204,
+    204
+  ],
+  "measurement": "Local browser pipeline check, six controlled visits; not production field acceptance."
+}

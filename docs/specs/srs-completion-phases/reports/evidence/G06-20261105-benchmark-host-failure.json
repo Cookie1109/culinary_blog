@@ -1,0 +1,14 @@
+{
+  "checkedAtUtc": "2026-11-05T00:05:14.453867+00:00",
+  "scope": "Local host failure; never production acceptance",
+  "project": "culinary-g06-6b34b3e25608",
+  "failure": "C drive0bytes free; Docker DesktopEngine returned500; k6HTTP0/timeouts near end",
+  "loadExit": 1,
+  "stressStarted": false,
+  "cacheFinalMeasured": false,
+  "cleanupExit": 1,
+  "cleanupPending": true,
+  "ownK6ProcessesRemaining": 0,
+  "approvalPending": "Move NuGet HTTP cache825507487bytes to D and restart Docker if needed; preserve user volumes/data; no global prune",
+  "metricsRetained": true
+}

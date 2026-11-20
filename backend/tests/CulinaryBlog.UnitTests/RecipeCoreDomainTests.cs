@@ -285,6 +285,31 @@ public sealed class RecipeCoreDomainTests
         Assert.Equal("RECIPE_INVALID_TRANSITION", exception.Code);
     }
 
+    /// <summary>Checks classified durations after editing and deleting steps.</summary>
+    [Fact]
+    public void TimesAreDerivedFromActiveSteps()
+    {
+        var recipe = CreateRecipe();
+        var prep = RecipeStep.Create(Guid.NewGuid(), recipe.Id, 1, "Prep", "Wash", 1.5, null, "prep");
+        var cook = RecipeStep.Create(Guid.NewGuid(), recipe.Id, 2, "Cook", "Boil", 10, null);
+        var untimed = RecipeStep.Create(Guid.NewGuid(), recipe.Id, 3, "Serve", "Serve", null, null);
+        RecipeStep[] steps = [prep, cook, untimed];
+        recipe.RecalculateTimes(steps);
+        Assert.Equal(1, recipe.PrepTime);
+        Assert.Equal(10, recipe.CookTime);
+        cook.Update(2, "Prepare", "Mix", 2, null, "prep");
+        recipe.RecalculateTimes(steps);
+        Assert.Equal(3, recipe.PrepTime);
+        Assert.Equal(0, recipe.CookTime);
+        prep.Delete();
+        recipe.RecalculateTimes(steps);
+        Assert.Equal(2, recipe.PrepTime);
+        recipe.RecalculateTimes([]);
+        Assert.Equal(0, recipe.PrepTime);
+        Assert.Equal(0, recipe.CookTime);
+        Assert.Throws<DomainException>(() => RecipeStep.Create(Guid.NewGuid(), recipe.Id, 1, "Bad", "Bad", 1, null, "other"));
+    }
+
     private static Recipe CreateRecipe() => Recipe.Create(
         Guid.NewGuid(),
         Guid.NewGuid().ToString(),

@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-31 Asia/Bangkok",
+  "head": "7ed7a5835ab6d79ec72c9aa6d21fae72a24d206e",
+  "scope": "G06 phases30-35, partial; D9-02/05/06 closed, six tasks open",
+  "baseSourceManifest": {
+    "path": "docs/specs/srs-completion-phases/reports/evidence/G06-20261030-manifest.json",
+    "sha256": "1a6757849af9816eef964540e0d1f55685b79a5376c96e26923ed4113788597f",
+    "sourceCount": 697,
+    "sourceDrift": []
+  },
+  "pdfSha256": "8a82ccf3771918797f304117179c7a3b1086abfed8735ca42e9cd070f3461063",
+  "applicationSourceChanged": false,
+  "helperHashes": {
+    "tmp/package-G06/resume-20261031/finalize.py": "b89d8148be1245c03dbe9ac155786167a0cb7af6cf29cdfef57d6849dfa9f537",
+    "tmp/package-G06/resume-20261031/minio_cluster.py": "a95cbd06cc8d276169f87344cfe7ac6bde1bf501aa675e0eb370e0145c2e2bfb",
+    "tmp/package-G06/resume-20261031/multi_instance.py": "ba55890dcdbea9b74b1ae54b71b3a4726b0c7a6d10f47d81b4e1331518646e5f",
+    "tmp/package-G06/resume-20261031/render_check.py": "262d54dd1ec74d413af88da53806f99e77da65d56cc5034dc4d42d4927f4a3ee",
+    "tmp/package-G06/resume-20261031/scan_delta.py": "2d957e998955250dcc9459bd7f0c396b0a19f5968406fc372361c2d7ad146b3a",
+    "tmp/package-G06/resume-20261031/triage_delta.py": "454c016f318aa0112e255001191d295741e523c2eb73c375c11029b849ca24e6",
+    "tmp/package-G06/resume-20261031/tunnel_media_check.py": "3c253cde96902cff7172af0592e5721ca8fa8df2f0e0e10c4404f13b616ef204",
+    "tmp/package-G06/resume-20261031/validate.py": "45a6acb6c3b90ea1ce8289f9e525caf9d12037463db9a40460157a0aff5900ab",
+    "tmp/package-G06/resume-20261031/Probe/Probe.csproj": "15ac1bb05dd158e3d4d49839e277abdbe272df33239e78d8d8020ac95681b44b",
+    "tmp/package-G06/resume-20261031/Probe/Program.cs": "beb1ef3f35f769a7a156fb2beb8525fa5bda33d7e5714f84872e331f00d897d9",
+    "tmp/package-G06/resume-20261031/nginx.conf": "add7235b0b50ece1fa493179cf925cc8a24bc6e45a858620a523d9708e85f1ba",
+    "tmp/package-G06/resume-20261031/compose.json": "5acf040982e6c2853652c5b9d2eabc8c05f0ab795b3a48e16bc56f7d732886c4",
+    "tmp/package-G06/resume-20261031/minio4-compose.json": "0338bf2ab22abffa540d5b5cdcde2d51ee54b6f69371722eaf2c42c1e38e6f69"
+  },
+  "trackingHashes": {
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md": "e9fdabe614ac0d397af91f813dd23cebfc04549b2dbe1b5ba5238643d1b70188",
+    "docs/specs/srs-completion-phases/progress.md": "d9d396a3f8104c1501b94df28772a3c31914617362fab3e53bbc16a325d74322",
+    "docs/specs/srs-completion-checklist.md": "244d35c4bff6e3772476600e60261b1294f4a0122521254a567bfbd0f39f6577",
+    "docs/specs/srs-completion-phases/phase-35-multi-instance-and-production-scaling.md": "2e892160fa09b692e8dcfb5724c10c9fadd6424f7d8e349531c614a473a481eb",
+    "docs/operations/neon-minio-fix-preparation-2026-10-30.md": "5c503d1f177c3e57d88256da94980834719277b55121ca0fa54f0e9ba89c62db",
+    "docs/operations/neon-minio-readonly-check-2026-10-30.md": "1878abd3fb6946e5e8b947ffda207db665055989d5a676f946af6df57c7d9d6b",
+    "docs/operations/g06-environment-readiness-2026-10-30.md": "a811c3d4f86364cb44ebb83a643c0d1e537c40d9e6d6f52489fc32a7c0fd73ee"
+  },
+  "evidenceHashes": {
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-minio4.json": "3aac437a50c75a68f0ae01c89635872df59ac739e2f3e7c9ec4cd510070a737c",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-minio4.txt": "91ffc97d47757a53c4b83cd0e87cd7355af918d97d563cf6536a14c4118bf806",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-multi-instance.json": "0479d91f269600c1063bb16774fa64c26e85edd8503f8d215b18aeea2376a350",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-multi-instance.txt": "fe8f2e5b85bdcfbbad712cbfef36c629fa8cf83368e6b9d3f4cc15bdc7ef8cbc",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-probe-build.txt": "8bf808f2d3408bb6c5d58674ffd4c6f53aa678ed4797e8b2a7cf998da142972e",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-render-readonly.json": "a859d9a5ef6d5180c670901dfe8cb4d442cecc5548b23cdfb4c2c6ea0c24452e",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-resume.json": "e4be2e90e96a19ce98310e3ca90b5344dcdde9ab5de8a1c0c40b3cc977ae68b2",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-scan-delta.json": "33b4eea331e3af09cfe34c872077714db8fe28e877b656dafefbe492a49d1b0a",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-scanner-download.json": "c9f420b555e2edaff7214624b8ed384b6d21c1aa103ff9da504768684ced0076",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-secret-findings.json": "8d29864726d634ed00631e7d4b0b6bd0441565297e9e9777202af2462d3868eb",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-secret-scan.txt": "14d9bbf68e75208728c480f5e11a6c47e98ed5f0857f8eb904ac1bac0b06b79e",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-secret-triage.json": "04e6ffc32becd4f39328b710cd7adc984876563c440e3b7920cd73962b522a34",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-tunnel-check.json": "da92c5bd3d48deab18ddd224c12041066bc9e8c0d85e9c3854b114ed4d69ce21",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-tunnel-media.json": "0dcc8f5da2e865cfbd1678a6dd8943a7b75f9ba92907485dcd0acdcd62da3719",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-validation.json": "ee44b8d14609e500245ef39eb4cd60e6b3f9604f65bd6fb210964ecba20056f5"
+  },
+  "cleanup": {
+    "twoApiProject": "culinary-g06-20261031",
+    "fourNodeProject": "culinary-g06-minio4-20261031",
+    "remainingTestContainers": 0,
+    "remainingTestVolumes": 0,
+    "remainingTestNetworks": 0,
+    "userContainersPreserved": true,
+    "approvedDemoGatewayAndCloudflaredKeptRunning": true
+  },
+  "remaining": [
+    "DEC-11/load/stress/scaling protocol and approved resource/target",
+    "Production CWV/INP G06 artifact and sample window",
+    "HTTPS staging G06 identity and dynamic/TLS authorization",
+    "Independent operational backup storage and reviewed tools",
+    "Production MinIO4+nodes/CDN topology identity"
+  ],
+  "notes": [
+    "Helpers use synthetic local test credentials; private cloud credentials excluded",
+    "User saved/redeployed Render endpoint; agent verified read path, did not change Render environment",
+    "Render e610783 is distinct from local G06 image/source; no Neon live migration",
+    "Unchanged scoped source/locks/artifacts retain old gates; changed/new Git-eligible files receive pinned Gitleaks delta scan with zero unresolved triage. Final records/checksums are post-snapshot metadata only."
+  ],
+  "scanner": {
+    "version": "8.30.1",
+    "binarySha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+    "downloadChecksumVerified": true,
+    "rawExit": 1,
+    "deltaFiles": 47,
+    "candidateCount": 160,
+    "unresolved": 0,
+    "rulesOrAllowlistsChanged": false
+  }
+}

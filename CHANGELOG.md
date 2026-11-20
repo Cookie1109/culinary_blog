@@ -4,7 +4,12 @@ Tất cả thay đổi đáng chú ý của Culinary Blog được ghi tại đ�
 
 ## [Unreleased]
 
-### Release gate
+### Demo môn học
+
+- Ghi lại phiên bản demo Render/Vercel, bằng chứng kiểm thử và phần SRS còn thiếu trong [bàn giao G07](docs/specs/srs-completion-phases/reports/package-G07-result.md).
+- Compose local nhận image MinIO và MinIO Client đã nạp sẵn qua `MINIO_IMAGE` và `MINIO_MC_IMAGE` khi registry từ chối tải image mặc định.
+
+### Release gate production
 
 - Chờ ZAP trên staging HTTPS, browser UAT và Product Owner sign-off.
 - Chờ go/no-go, production deployment và theo dõi tăng cường 24–48 giờ.

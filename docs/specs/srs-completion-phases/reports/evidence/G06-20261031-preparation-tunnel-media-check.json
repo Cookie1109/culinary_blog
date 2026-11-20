@@ -1,0 +1,31 @@
+{
+  "endpoint": "https://retail-buying-measuring-helping.trycloudflare.com",
+  "readOnly": true,
+  "objectWritesOrDeletes": false,
+  "currentObjectCount": 301,
+  "neonSnapshotReferencedKeys": 300,
+  "referencedKeysPresent": 300,
+  "referencedKeysMissing": 0,
+  "priorRenderSnapshotMediaChecks": [
+    {
+      "variant": "original",
+      "sha256": "2cb2c25b5f653179ab03821faf9459f4f0d3f11b74f059177379842bdc42d080",
+      "matchesPriorRenderSnapshotBytes": true,
+      "anonymousStatus": 403
+    },
+    {
+      "variant": "medium",
+      "sha256": "f9f13112f3c4ded4df8ee840ee508b76063c7e3e651385b7b696189add38bbee",
+      "matchesPriorRenderSnapshotBytes": true,
+      "anonymousStatus": 403
+    },
+    {
+      "variant": "thumbnail",
+      "sha256": "5eb980b56a820beb6c6d861408f77f9e21f36a2bdc1faa4a031574cd579dbbf2",
+      "matchesPriorRenderSnapshotBytes": true,
+      "anonymousStatus": 403
+    }
+  ],
+  "rootCredentialUsed": false,
+  "passed": true
+}

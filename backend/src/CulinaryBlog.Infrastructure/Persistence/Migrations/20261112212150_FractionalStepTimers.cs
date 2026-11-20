@@ -1,6 +1,5 @@
 // Culinary Blog. Authorship is recorded in the repository history.
 
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -8,8 +7,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CulinaryBlog.Infrastructure.Persistence.Migrations;
 
 /// <inheritdoc />
-[DbContext(typeof(AppDbContext))]
-[Migration("20261112212150_FractionalStepTimers")]
 public partial class FractionalStepTimers : Migration
 {
     /// <inheritdoc />

@@ -170,6 +170,7 @@ internal sealed partial class ContentService(
             throw Conflict("CATEGORY_NAME_EXISTS", "A category with this name already exists.");
         }
 
+        var previousImageUrl = category.ImageUrl;
         category.Update(request.Name, request.Description, request.ImageUrl, request.OrderIndex);
         try
         {
@@ -178,6 +179,11 @@ internal sealed partial class ContentService(
         catch (DbUpdateException exception) when (IsUniqueViolation(exception, "NormalizedName"))
         {
             throw Conflict("CATEGORY_NAME_EXISTS", "A category with this name already exists.");
+        }
+
+        if (!string.Equals(previousImageUrl, category.ImageUrl, StringComparison.Ordinal))
+        {
+            await this.RemoveUnusedCategoryImageAsync(previousImageUrl, cancellationToken).ConfigureAwait(false);
         }
 
         var count = await dbContext.Recipes.CountAsync(
@@ -245,7 +251,7 @@ internal sealed partial class ContentService(
             var ingredients = (request.Ingredients ?? []).Select(item => RecipeIngredient.Create(
                 Guid.NewGuid(), recipe.Id, item.Name, item.Quantity, item.Unit, item.Notes, item.OrderIndex)).ToArray();
             var steps = (request.Steps ?? []).Select((item, index) => RecipeStep.Create(
-                Guid.NewGuid(), recipe.Id, index + 1, item.Title, item.Description, item.TimerMinutes, item.ImageUrl)).ToArray();
+                Guid.NewGuid(), recipe.Id, index + 1, item.Title, item.Description, item.TimerMinutes, item.ImageUrl, item.StepType)).ToArray();
             dbContext.RecipeIngredients.AddRange(ingredients);
             dbContext.RecipeSteps.AddRange(steps);
             try
@@ -1129,7 +1135,7 @@ internal sealed partial class ContentService(
             .Select(item => new
             {
                 item.RecipeId,
-                Dto = new StepDto(item.Id, item.StepNumber, item.Title, item.Description, item.TimerMinutes, item.ImageUrl),
+                Dto = new StepDto(item.Id, item.StepNumber, item.Title, item.Description, item.TimerMinutes, item.ImageUrl, item.StepType),
             })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -1209,7 +1215,7 @@ internal sealed partial class ContentService(
         var steps = await dbContext.RecipeSteps.AsNoTracking()
             .Where(item => item.RecipeId == recipe.Id)
             .OrderBy(item => item.StepNumber)
-            .Select(item => new StepDto(item.Id, item.StepNumber, item.Title, item.Description, item.TimerMinutes, item.ImageUrl))
+            .Select(item => new StepDto(item.Id, item.StepNumber, item.Title, item.Description, item.TimerMinutes, item.ImageUrl, item.StepType))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
         var imageEntities = await dbContext.RecipeImages.AsNoTracking()

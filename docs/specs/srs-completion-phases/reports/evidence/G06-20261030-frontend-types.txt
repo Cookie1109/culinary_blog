@@ -1,0 +1,4 @@
+
+> @culinary-blog/web@1.0.0 typecheck
+> tsc --noEmit && tsc --noEmit -p tsconfig.e2e.json
+

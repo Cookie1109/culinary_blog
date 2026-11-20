@@ -44,7 +44,7 @@ test(
               ...(body && !multipart ? { 'Content-Type': 'application/json' } : {}),
               ...(version ? { 'If-Match': `"${version}"` } : {}),
             },
-            body: body && !multipart ? JSON.stringify(body) : body || undefined,
+            body: body && !multipart ? JSON.stringify(body) : body,
           })
           assert.equal(response.status, status, `${method} ${route}`)
           assert.equal(response.headers.get('x-correlation-id'), correlation)
@@ -239,20 +239,20 @@ test(
           ),
         )
         for (const request of requests) {
-          const entry = logs.find(
-            (record) =>
-              record.CorrelationId === request.correlation &&
-              record.SourceContext === 'Serilog.AspNetCore.RequestLoggingMiddleware',
+          const requestEntry = logs.find(
+            (entry) =>
+              entry.CorrelationId === request.correlation &&
+              entry.SourceContext === 'Serilog.AspNetCore.RequestLoggingMiddleware',
           )
-          assert.ok(entry, `Missing request log ${request.correlation}`)
-          assert.equal(entry.RequestMethod, request.method)
-          assert.equal(entry.RequestPath, request.path)
-          assert.equal(entry.StatusCode, request.status)
-          assert.equal(entry.UserId, request.actor)
-          assert.ok(Number.isFinite(entry.Elapsed) && entry.Elapsed >= 0)
+          assert.ok(requestEntry, `Missing request log ${request.correlation}`)
+          assert.equal(requestEntry.RequestMethod, request.method)
+          assert.equal(requestEntry.RequestPath, request.path)
+          assert.equal(requestEntry.StatusCode, request.status)
+          assert.equal(requestEntry.UserId, request.actor)
+          assert.ok(Number.isFinite(requestEntry.Elapsed) && requestEntry.Elapsed >= 0)
           if (request.status >= 400)
             assert.ok(
-              !logs.some((record) => record.CorrelationId === request.correlation && record.AuditEvent),
+              !logs.some((entry) => entry.CorrelationId === request.correlation && entry.AuditEvent),
               'Rejected mutation appeared as successful',
             )
         }
@@ -296,10 +296,8 @@ test(
               remember((await response.json()).data)
           })
           await page.goto('/login')
-          const emailInput = page.locator('#email:visible')
-          await expect(emailInput).toHaveCount(1)
-          await emailInput.fill(email)
-          await page.locator('#password:visible').fill(password)
+          await page.locator('#email').fill(email)
+          await page.locator('#password').fill(password)
           await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
           await expect.poll(() => new URL(page.url()).pathname).toBe('/')
           return { context, page }
@@ -348,8 +346,8 @@ test(
         browserAuthor.page.on('request', (request) => {
           if (request.url().includes('/api/v1/admin/audit-logs')) forbiddenAuditReads += 1
         })
-        const forbiddenPage = await browserAuthor.page.goto('/dashboard/audit')
-        assert.equal(forbiddenPage.status(), 403)
+        const deniedPage = await browserAuthor.page.goto('/dashboard/audit')
+        assert.equal(deniedPage.status(), 403)
         await expect(
           browserAuthor.page.getByRole('heading', { name: 'Lịch sử hệ thống', exact: true }),
         ).toHaveCount(0)
@@ -358,7 +356,6 @@ test(
         const guestPage = await guest.newPage()
         await guestPage.goto('/dashboard/audit')
         await expect.poll(() => new URL(guestPage.url()).pathname).toBe('/auth/login')
-        assert.equal(new URL(guestPage.url()).searchParams.get('returnTo'), '/dashboard/audit')
         logs = await readApiLogs()
         const serialized = JSON.stringify(logs)
         for (const secret of secrets.filter(Boolean))

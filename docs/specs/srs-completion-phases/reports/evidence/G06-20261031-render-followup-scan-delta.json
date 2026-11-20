@@ -1,0 +1,24 @@
+{
+  "baseline": "30/10 snapshot merged with31/10 delta; history unchanged at HEAD7ed7a58",
+  "baselineFiles": 1173,
+  "currentFiles": 1123,
+  "unchanged": 1116,
+  "changedHashes": {
+    "docs/operations/render-data-protection-2026-10-31.md": "1f6cf2020d49ca78221ab671f186d2f26e2389155bc81cf0e1d6359335e2317e",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-render-followup-path-probe.txt": "87a551ec4639ab63df78d864f13f2a15526c221fd06e9675e8d76662b354270e",
+    "docs/specs/srs-completion-checklist.md": "5237e36cfa84c9162c8856237ce65f758e673bfff50f0de3da14414a38d69c80",
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md": "c744724bc47d33a56e694010a6a161426c522cb47f731c25a3fe3d49660d488f",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-render-followup-live-dockerfile.txt": "42740cddac832dd8b68e2fc1a0e3c0176c05e28d406ccd9922bf3c59d46bb06a",
+    "docs/specs/srs-completion-phases/progress.md": "1f553794c96dcda84a3e4ac778521102aa21a2d0e17481b03be9d37d014fb0c5",
+    "docs/specs/srs-completion-phases/reports/evidence/G06-20261031-render-followup-readonly.json": "f7ec0ce2e482fe4667b193c58b3341f676d296a619359d919ecffb5ddd4b6bc3"
+  },
+  "rawExit": 1,
+  "findingCount": 2,
+  "metadataWrittenAfterSnapshot": [
+    "G06-20261031-render-followup-secret-triage.json",
+    "G06-20261031-render-followup-scan-delta.json",
+    "G06-20261031-render-followup-scan-snapshot.json",
+    "G06-20261031-render-followup-manifest.json",
+    "G06-20261031-render-followup-validation.json"
+  ]
+}

@@ -1,0 +1,10 @@
+  CulinaryBlog.Domain -> D:\Culinary_Blog\backend\src\CulinaryBlog.Domain\bin\Release\net10.0\CulinaryBlog.Domain.dll
+  CulinaryBlog.Application -> D:\Culinary_Blog\backend\src\CulinaryBlog.Application\bin\Release\net10.0\CulinaryBlog.Application.dll
+  CulinaryBlog.Infrastructure -> D:\Culinary_Blog\backend\src\CulinaryBlog.Infrastructure\bin\Release\net10.0\CulinaryBlog.Infrastructure.dll
+  CulinaryBlog.Api -> D:\Culinary_Blog\backend\src\CulinaryBlog.Api\bin\Release\net10.0\CulinaryBlog.Api.dll
+  CulinaryBlog.IntegrationTests -> D:\Culinary_Blog\backend\tests\CulinaryBlog.IntegrationTests\bin\Release\net10.0\CulinaryBlog.IntegrationTests.dll
+Test run for D:\Culinary_Blog\backend\tests\CulinaryBlog.IntegrationTests\bin\Release\net10.0\CulinaryBlog.IntegrationTests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: D:\Culinary_Blog\tmp\package-G06\outbox\outbox.trx
+
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 21 s - CulinaryBlog.IntegrationTests.dll (net10.0)

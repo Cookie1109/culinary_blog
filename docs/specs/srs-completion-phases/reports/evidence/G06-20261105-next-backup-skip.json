@@ -1,0 +1,12 @@
+{
+  "userRequestedSkip": true,
+  "scope": "Stop photo/Drive backup work and continue other G06 tasks",
+  "uploadAlreadyFinishedBeforeSkip": true,
+  "uploadExit": 0,
+  "cloudDownloadRestoreVerified": false,
+  "schedulerRegistered": false,
+  "furtherBackupActivityStopped": true,
+  "existingBackupDataDeleted": false,
+  "D9-07": "Open; user skip does not amend PDF",
+  "privateKeyCustodyConfirmedByUser": true
+}

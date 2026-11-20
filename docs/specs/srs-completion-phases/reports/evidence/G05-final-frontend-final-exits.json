@@ -1,0 +1,26 @@
+[
+  {
+    "gate": "generate:api",
+    "exit": 0
+  },
+  {
+    "gate": "format",
+    "exit": 0
+  },
+  {
+    "gate": "lint",
+    "exit": 0
+  },
+  {
+    "gate": "typecheck",
+    "exit": 0
+  },
+  {
+    "gate": "test",
+    "exit": 0
+  },
+  {
+    "gate": "test:components",
+    "exit": 0
+  }
+]

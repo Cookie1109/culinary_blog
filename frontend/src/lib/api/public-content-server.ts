@@ -36,17 +36,17 @@ async function publicRequest<T>(path: string, options: PublicRequestOptions): Pr
 }
 
 export async function getPublicCategories(revalidate: number) {
-  return (await publicRequest<DataEnvelope<Category[]>>('/categories', { revalidate })).data
+  return (await publicRequest<DataEnvelope<Category[]>>('/categories', { revalidate, noStore: true })).data
 }
 
 export function getPublishedRecipes(page: number, pageSize: number, revalidate: number) {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
-  return publicRequest<PageEnvelope<Recipe>>(`/recipes?${query}`, { revalidate })
+  return publicRequest<PageEnvelope<Recipe>>(`/recipes?${query}`, { revalidate, noStore: true })
 }
 
-export async function getPublishedRecipe(slug: string, revalidate: number) {
+export async function getPublishedRecipe(slug: string) {
   const response = await fetch(`${apiBaseUrl}/recipes/${encodeURIComponent(slug)}`, {
-    next: { revalidate, tags: [PUBLIC_CONTENT_TAG] },
+    cache: 'no-store',
     headers: { Accept: 'application/json' },
   })
 
@@ -55,10 +55,10 @@ export async function getPublishedRecipe(slug: string, revalidate: number) {
   return ((await response.json()) as DataEnvelope<Recipe>).data
 }
 
-export async function getPublishedCategory(slug: string, page: number, revalidate: number) {
+export async function getPublishedCategory(slug: string, page: number) {
   const query = new URLSearchParams({ page: String(page), pageSize: '12' })
   const response = await fetch(`${apiBaseUrl}/categories/${encodeURIComponent(slug)}?${query}`, {
-    next: { revalidate, tags: [PUBLIC_CONTENT_TAG] },
+    cache: 'no-store',
     headers: { Accept: 'application/json' },
   })
 

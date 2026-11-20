@@ -1,0 +1,13 @@
+{
+  "purpose": "diagnostic smoke only, not DEC-11 or production acceptance",
+  "apiResource": "2 CPU / 4 GiB",
+  "base": "http://127.0.0.1:63031",
+  "writeRequests": 0,
+  "network": "HTTP loopback direct API, no TLS/WAN",
+  "vus": 5,
+  "dataset": "synthetic seeded recipes/categories and G06 test fixtures",
+  "cacheSettleSeconds": 20,
+  "rateOverrides": "Global1000000/Auth1000 only synthetic stack",
+  "duration": "30s",
+  "prometheus": "http://127.0.0.1:52056"
+}

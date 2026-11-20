@@ -1,0 +1,10 @@
+{
+  "equal": true,
+  "checked": [
+    "headers",
+    "redirects",
+    "rewrites"
+  ],
+  "profile": "NODE_ENV=production,VERCEL=0; Docker/Nginx API path unchanged",
+  "configOutputSha256": "3740beb076d04f8a570cfa33d071d19d4f22fcf5dec6916d00120401adbcd1bf"
+}

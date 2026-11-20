@@ -1,0 +1,29 @@
+{
+  "scanner": "Trivy0.74.0",
+  "imageId": "sha256:941fc536d7dbca5f730b9fdf61cfe6cb67cf7347fbf01ae521cc0a0e434fa701",
+  "base": "postgres@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395",
+  "os": {
+    "Family": "alpine",
+    "Name": "3.24.4"
+  },
+  "command": "trivy image --scanners vuln --severity HIGH,CRITICAL --format json --exit-code 1 [pinned image]",
+  "exit": 0,
+  "High": 0,
+  "Critical": 0,
+  "rawReportSha256": "2c27686d88ba8aba60cb0222466a0dd3d20ec3df84f0b3f00eb41d9007a2445c",
+  "fix": "Dedicated non-root PostgreSQL18.6 image removes unused gosu binary; no scanner ignore added. Client user1000; clean restore PostgreSQL user70/tmpfs/network none.",
+  "negativeControlsRetained": [
+    {
+      "artifact": "postgres18-bookworm",
+      "highCritical": 123,
+      "reportSha256": "8372e29102f8f5ca64087176be8ecb8993dd24116f7b97aaf889145d4bd323b9"
+    },
+    {
+      "artifact": "postgres18-alpine before removing unused gosu",
+      "highCritical": 26,
+      "reportSha256": "107e252a44b30c502d71ed28303590cce2811b134fb65cf6cb7ff1581bd1d0b3"
+    }
+  ],
+  "sourceDockerfileSha256": "4b48b29b737cd452b55bd78c3970e3df7f9d9cc94e55d5224c7a6e6438040ff6",
+  "backupScriptSha256": "553c29ea61e041b7c0d7686c9097b493f85092c285eda3707b850e07e151fd09"
+}

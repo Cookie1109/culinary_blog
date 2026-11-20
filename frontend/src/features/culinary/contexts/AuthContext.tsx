@@ -37,7 +37,7 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
+  logout: (redirectTo?: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   updateProfile: (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>, avatarFile?: File) => Promise<void>
 }
@@ -151,21 +151,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [establishAuthSession],
   )
 
-  const logout = useCallback(async () => {
-    // Finish an in-flight rotation before revoking the tab's latest token.
-    await refreshing.current
-    const refreshToken = readRefreshToken()
-    clearRefreshToken()
-    if (refreshToken) {
-      try {
-        await revokeBackendSession(refreshToken)
-      } catch {
-        // Local and Auth.js state are still cleared if the API is unavailable.
+  const logout = useCallback(
+    async (redirectTo?: string) => {
+      // Finish an in-flight rotation before revoking the tab's latest token.
+      await refreshing.current
+      const refreshToken = readRefreshToken()
+      clearRefreshToken()
+      if (refreshToken) {
+        try {
+          await revokeBackendSession(refreshToken)
+        } catch {
+          // Local and Auth.js state are still cleared if the API is unavailable.
+        }
       }
-    }
-    await signOut({ redirect: false })
-    queryClient.removeQueries()
-  }, [queryClient])
+      if (redirectTo) {
+        // A full navigation keeps private-route guards from bouncing the user to the login page.
+        queryClient.removeQueries()
+        await signOut({ redirectTo, redirect: true })
+        return
+      }
+      await signOut({ redirect: false })
+      queryClient.removeQueries()
+    },
+    [queryClient],
+  )
 
   const updateProfile = useCallback(
     async (data: Partial<Pick<User, 'name' | 'bio' | 'avatar'>>, avatarFile?: File) => {

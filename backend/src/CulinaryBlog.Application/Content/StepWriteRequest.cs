@@ -10,9 +10,11 @@ namespace CulinaryBlog.Application.Content;
 /// <param name="TimerMinutes">The timer minutes supplied to this operation.</param>
 /// <param name="ImageUrl">The image url supplied to this operation.</param>
 /// <param name="StepNumber">The step number supplied to this operation.</param>
+/// <param name="StepType">The prep or cook classification.</param>
 public sealed record StepWriteRequest(
     string Title,
     string Description,
     double? TimerMinutes = null,
     string? ImageUrl = null,
-    int? StepNumber = null);
+    int? StepNumber = null,
+    string StepType = "cook");

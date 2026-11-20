@@ -1,0 +1,15 @@
+{
+  "startedAtUtc": "2026-11-04T12:00:49.980820+00:00",
+  "targetHostSha256": "d334da2d87166996471a5f77dadc8d744f60d1973cefa47bf628167c577b5250",
+  "writesToNeon": false,
+  "archiveBytes": 204453,
+  "archiveSha256": "04c1ca684c3e5648ca5c376368912e89a9c4f161a0d7bd0027fc4842f065f129",
+  "archiveListVerified": true,
+  "snapshotTables": 30,
+  "snapshotRows": 2043,
+  "mainMigrationCount": 5,
+  "keyringPresentBefore": true,
+  "sameExportedSnapshotUsed": true,
+  "passed": true,
+  "finishedAtUtc": "2026-11-04T12:01:00.308991+00:00"
+}

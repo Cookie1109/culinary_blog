@@ -1,4 +1,5 @@
 import { authenticatedApiRequest, authenticatedUpload } from '@/lib/api/auth-client'
+import { authenticatedAxios } from '@/lib/api/axios'
 import { apiRequest } from '@/lib/api/client'
 import type { components } from './schema'
 
@@ -64,6 +65,7 @@ export interface RecipeStep {
   stepNumber: number
   title: string
   description: string
+  stepType?: 'prep' | 'cook'
   timerMinutes: number | null
   imageUrl: string | null
 }
@@ -71,6 +73,7 @@ export interface RecipeStep {
 export interface StepWrite {
   title: string
   description: string
+  stepType?: 'prep' | 'cook'
   timerMinutes: number | null
   imageUrl: string | null
   stepNumber?: number
@@ -410,4 +413,15 @@ export function deleteRecipeImage(recipeId: string, imageId: string, version: nu
     method: 'DELETE',
     headers: { 'If-Match': `"${version}"` },
   })
+}
+
+export async function uploadCategoryImage(file: File, onProgress: (percent: number) => void) {
+  const form = new FormData()
+  form.set('file', file)
+  const response = await authenticatedAxios.post<DataEnvelope<{ url: string }>>('/categories/image', form, {
+    onUploadProgress: (event) => {
+      if (event.total) onProgress(Math.round((event.loaded / event.total) * 100))
+    },
+  })
+  return response.data.data.url
 }

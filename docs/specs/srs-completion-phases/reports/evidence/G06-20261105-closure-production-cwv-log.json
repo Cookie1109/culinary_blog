@@ -1,0 +1,36 @@
+{
+  "deployment": "dpl_HCgPP4wkGH9ybFHAi6xWgF2e1b96",
+  "exportAtUtc": "2026-11-05T05:37:46.815459+00:00",
+  "metricLogs": 16,
+  "controlledMetricLogs": 13,
+  "unattributedMetricLogs": 3,
+  "controlledCounts": {
+    "CLS": 4,
+    "INP": 5,
+    "LCP": 4
+  },
+  "cohorts": [
+    {
+      "route": "/login",
+      "device": "desktop",
+      "metrics": [
+        "CLS",
+        "INP",
+        "LCP"
+      ]
+    },
+    {
+      "route": "/login",
+      "device": "mobile",
+      "metrics": [
+        "CLS",
+        "INP",
+        "LCP"
+      ]
+    }
+  ],
+  "userReportedRealVisit": true,
+  "fieldAcceptance": "Initial noncontrolled /recipes desktop cohort observed after user confirmed Chrome visit; representative window/full-artifact acceptance remains pending.",
+  "observerFailure": "Two production browser observer commands exited1 because only LCP was captured by request listener; provider logs independently show accepted pagehide CLS/INP for those controlled visits. Failures kept; not rewritten as exit0.",
+  "rawProviderLogPublished": false
+}

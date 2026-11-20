@@ -1,0 +1,14 @@
+{
+  "serviceId": "srv-dbf5mmoae00c73esdplg",
+  "startedAtUtc": "2026-11-04T12:02:42.817913+00:00",
+  "changedKeys": [
+    "ObjectStorage__Endpoint",
+    "DataProtection__PersistKeysToDatabase",
+    "DataProtection__CertificateBase64"
+  ],
+  "certificateValueLogged": false,
+  "allOtherValuesPreserved": true,
+  "deployTriggered": false,
+  "endpoint": "https://ron-christmas-browsers-midwest.trycloudflare.com",
+  "finishedAtUtc": "2026-11-04T12:02:44.455003+00:00"
+}

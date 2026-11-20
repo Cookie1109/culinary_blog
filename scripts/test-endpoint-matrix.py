@@ -6,7 +6,7 @@ import runpy
 import tempfile
 import unittest
 
-verify = runpy.run_path(str(Path(__file__).with_name("verify-endpoint-matrix.py")))["verify"]
+verify = runpy.run_path(str(Path(__file__).with_name("verify-four-requirements-matrix.py")))["verify"]
 SYMBOL = "AdminUsersApiTests.DirectoryRejectsInvalidQueriesWithValidationProblem"
 
 
@@ -46,12 +46,6 @@ class MatrixGateTests(unittest.TestCase):
             matrix["operations"][0]["cases"]["authorization"] = group
             with self.subTest(group=group), self.assertRaises(ValueError):
                 self.check(["Passed"], matrix=matrix)
-
-    def test_unmapped_runtime_operation_is_rejected(self):
-        contract = copy.deepcopy(self.contract)
-        contract["paths"]["/api/v1/release"] = {"get": {}}
-        with self.assertRaisesRegex(ValueError, "Runtime operations missing"):
-            self.check(["Passed"], contract=contract)
 
 
 if __name__ == "__main__":

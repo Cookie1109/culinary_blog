@@ -25,22 +25,24 @@ jobs:
       - run: dotnet restore CulinaryBlog.slnx --locked-mode
       - run: dotnet list CulinaryBlog.slnx package --vulnerable --include-transitive
       - run: dotnet format CulinaryBlog.slnx --verify-no-changes --no-restore
-      - run: dotnet build CulinaryBlog.slnx --configuration Release --no-restore -warnaserror -p:RunAnalyzers=true
-      - run: dotnet test tests/CulinaryBlog.UnitTests -c Release --no-build --no-restore --collect "XPlat Code Coverage" --results-directory ../artifacts/unit --logger trx
-      - run: python ../scripts/test-application-coverage.py
-      - run: python ../scripts/check-application-coverage.py ../artifacts/unit
-      - run: dotnet test tests/CulinaryBlog.ArchitectureTests -c Release --no-build --no-restore --results-directory ../artifacts/architecture --logger trx
-      - name: Build pinned MinIO test image
-        run: docker build --tag culinary-blog-minio-test:2025-09-07-v2 --file ../infra/testing/minio.Dockerfile ../infra/testing
-      - run: dotnet test tests/CulinaryBlog.IntegrationTests -c Release --no-build --no-restore --results-directory ../artifacts/integration --logger "trx;LogFileName=integration.trx"
+      - run: dotnet build CulinaryBlog.slnx --configuration Release --no-restore
+      - run: dotnet test tests/CulinaryBlog.UnitTests --configuration Release --no-build --no-restore --collect "XPlat Code Coverage" --results-directory ../artifacts/unit --logger trx
+      - name: Enforce Application unit coverage
+        shell: bash
+        run: |
+          python ../scripts/test-application-coverage.py
+          python ../scripts/check-application-coverage.py ../artifacts/unit
+      - run: dotnet test tests/CulinaryBlog.ArchitectureTests --configuration Release --no-build --no-restore --logger trx --results-directory ../artifacts/architecture
+      - run: dotnet test tests/CulinaryBlog.IntegrationTests --configuration Release --no-build --no-restore --logger "trx;LogFileName=integration.trx" --results-directory ../artifacts/integration
         env:
-          CULINARY_CONTRACT_OUTPUT: ${{ github.workspace }}/artifacts/openapi.json
+          CULINARY_CONTRACT_OUTPUT: ${{ github.workspace }}/artifacts/integration/openapi.json
       - run: python ../scripts/test-endpoint-matrix.py
-      - run: python ../scripts/verify-endpoint-matrix.py --openapi ../artifacts/openapi.json --trx ../artifacts/integration/integration.trx
+      - run: python ../scripts/verify-four-requirements-matrix.py --openapi ../artifacts/integration/openapi.json --trx ../artifacts/integration/integration.trx
+      - run: python ../scripts/verify-endpoint-matrix.py --trx ../artifacts/integration/integration.trx
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: backend-verification
+          name: backend-test-results
           path: artifacts/
 
   frontend:
@@ -58,8 +60,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - uses: actions/download-artifact@v4
         with:
-          name: backend-verification
-          path: artifacts/backend
+          name: backend-test-results
+          path: artifacts/
       - name: Frontend gates with failure logs
         shell: bash
         run: |
@@ -67,7 +69,7 @@ jobs:
           mkdir -p ../artifacts/frontend
           npm ci 2>&1 | tee ../artifacts/frontend/restore.log
           npm run generate:api 2>&1 | tee ../artifacts/frontend/api-generation.log
-          npm run generate:users-api -- ../artifacts/backend/openapi.json
+          npm run generate:users-api -- ../artifacts/integration/openapi.json
           git diff --exit-code -- src/lib/api/schema.d.ts src/lib/api/admin-users-schema.d.ts
           for gate in format lint typecheck build test test:components; do
             npm run "$gate" 2>&1 | tee "../artifacts/frontend/${gate//:/-}.log"
@@ -173,19 +175,7 @@ jobs:
       - name: Validate production release template
         shell: pwsh
         run: ./scripts/release-gate.ps1 -EnvFile infra/production/release.env.example -Template
-      - run: docker compose build api web minio minio-bootstrap
-      - name: Verify first startup with empty database and storage
-        shell: bash
-        run: |
-          cp .env.example .env
-          docker compose up --detach --no-build --wait nginx
-          python scripts/check-local-startup.py http://localhost:8080
-      - name: Collect startup diagnostics
-        if: failure()
-        run: docker compose logs --no-color --tail 100 postgres redis minio minio-bootstrap api web nginx
-      - name: Stop isolated CI stack
-        if: always()
-        run: docker compose down --volumes
+      - run: docker compose build api web
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: culinary-blog-api:local

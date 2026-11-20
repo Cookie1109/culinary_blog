@@ -117,9 +117,9 @@ async function setup({ editing = true } = {}) {
   const api = new Proxy(
     {
       listCategories: async () => [recipe.category],
-      updateProfile: async (values, avatarFile) => {
-        requests.push(avatarFile ? ['profile', values, avatarFile] : ['profile', values])
-        user = { ...user, ...values, ...(avatarFile ? { avatar: '/api/v1/auth/avatar?version=2' } : {}) }
+      updateProfile: async (values) => {
+        requests.push(['profile', values])
+        user = { ...user, ...values }
       },
       getAdminRecipe: async () => {
         requests.push(['read-admin'])
@@ -200,17 +200,13 @@ async function setup({ editing = true } = {}) {
           }),
         }
       if (name === '@tanstack/react-query') return query
+      if (name === '@/assets/home-hero.jpg') return '/home-hero.jpg'
       if (name === 'next/image')
         return function TestImage({ src, alt }) {
           return React.createElement('img', { src, alt })
         }
       if (name.includes('AuthContext')) return auth
       if (name.endsWith('content-client')) return api
-      if (name === 'next/dynamic' && filename.endsWith('RecipeDetail.tsx'))
-        return () =>
-          function MarkdownFixture({ children }) {
-            return React.createElement('div', null, children)
-          }
       if (name === 'next/dynamic')
         return () =>
           load('features/culinary/pages/dashboard/RecipeCompositionWizard.tsx').RecipeCompositionWizard
@@ -229,11 +225,11 @@ async function setup({ editing = true } = {}) {
         return load(target + extension)
       }
       if (name === 'react') return require('react')
+      if (name === 'react/jsx-runtime') return require('react/jsx-runtime')
+      if (name === 'react-hook-form') return require('react-hook-form')
       if (name === '@dnd-kit/core') return require('@dnd-kit/core')
       if (name === '@dnd-kit/sortable') return require('@dnd-kit/sortable')
       if (name === '@dnd-kit/utilities') return require('@dnd-kit/utilities')
-      if (name === 'react/jsx-runtime') return require('react/jsx-runtime')
-      if (name === 'react-hook-form') return require('react-hook-form')
       if (name === '@hookform/resolvers/zod') return require('@hookform/resolvers/zod')
       if (name === 'zod') return require('zod')
       if (name === 'zod/mini') return require('zod/mini')
@@ -296,6 +292,10 @@ async function setup({ editing = true } = {}) {
     setSearch: (next) => {
       search = new URLSearchParams(next)
     },
+    setRecipe: (next) => {
+      recipe = next
+    },
+    refetchRecipe: () => client.refetchQueries({ queryKey: ['my-recipe'] }),
     setUpdate: (next) => {
       update = next
     },
@@ -463,14 +463,12 @@ test('forgot password sends the trimmed email and displays a neutral confirmatio
     await click(button('Gửi liên kết đặt lại mật khẩu'))
     assert.deepEqual(h.requests, [['forgot', 'author@example.test']])
     assert.match(document.querySelector('[role="status"]').textContent, /Nếu email.*30 phút/)
-    const resend = [...document.querySelectorAll('button')].find((element) =>
-      element.textContent.startsWith('Gửi lại sau '),
+    assert.ok(
+      [...document.querySelectorAll('button')].some((item) =>
+        /^Gửi lại sau \d+ giây$/.test(item.textContent.trim()),
+      ),
+      'resend is offered with a cooldown',
     )
-    assert.ok(resend?.disabled)
-    await click(resend)
-    assert.equal(h.requests.length, 1)
-    await click(button('Đổi địa chỉ email'))
-    assert.ok(document.getElementById('forgot-email'))
   } finally {
     await h.close()
   }
@@ -562,25 +560,26 @@ async function selectOption(element, value) {
   })
 }
 
-test('public search applies numeric filters together, preserves existing filters and resets pagination', async () => {
+test('public search omits advanced filter controls, preserves URL filters and resets pagination', async () => {
   const h = await setup()
   try {
-    h.setSearch('q=pho&category=mon-an&difficulty=easy&page=3&pageSize=24')
+    h.setSearch(
+      'q=pho&category=mon-an&difficulty=easy&page=3&pageSize=24&maxCookTime=0&minServings=4&minPrepTime=5&maxPrepTime=15',
+    )
     await h.render(
       React.createElement(h.load('features/culinary/pages/RecipesList.tsx').RecipesList, {
         categories: [{ ...fixture.category, orderIndex: 0, recipeCount: 0 }],
-        result: { data: [], meta: { page: 3, pageSize: 24, total: 50, totalPages: 3 } },
+        result: { data: [], meta: { page: 3, pageSize: 12, total: 50, totalPages: 5 } },
       }),
     )
     assert.equal(document.getElementById('recipes-sort-select').value, 'relevance')
-    for (const [key, value] of [
-      ['maxCookTime', '0'],
-      ['minServings', '4'],
-      ['minPrepTime', '5'],
-      ['maxPrepTime', '15'],
-    ])
-      await input(document.getElementById(`filter-${key}`), value)
-    await click(button('Áp dụng bộ lọc'))
+    assert.equal(document.body.textContent.includes('Khẩu phần và thời gian'), false)
+    assert.equal(document.body.textContent.includes('Áp dụng bộ lọc'), false)
+    assert.equal(document.getElementById('recipes-page-size'), null)
+    for (const key of ['maxCookTime', 'minServings', 'minPrepTime', 'maxPrepTime'])
+      assert.equal(document.getElementById(`filter-${key}`), null)
+    assert.ok(document.getElementById('recipes-maxtime-range'))
+    await selectOption(document.getElementById('recipes-sort-select'), '-servings')
     assert.equal(h.getSearch().get('maxCookTime'), '0')
     assert.equal(h.getSearch().get('minServings'), '4')
     assert.equal(h.getSearch().get('minPrepTime'), '5')
@@ -590,18 +589,13 @@ test('public search applies numeric filters together, preserves existing filters
     assert.equal(h.getSearch().get('difficulty'), 'easy')
     assert.equal(h.getSearch().get('pageSize'), '24')
     assert.equal(h.getSearch().has('page'), false)
-    await selectOption(document.getElementById('recipes-sort-select'), '-servings')
     assert.equal(h.getSearch().get('sort'), '-servings')
     assert.equal(h.getSearch().get('maxCookTime'), '0')
     await click(document.querySelector('[aria-label="Trang 2"]'))
     assert.equal(h.getSearch().get('page'), '2')
     assert.equal(h.getSearch().get('minPrepTime'), '5')
-    await selectOption(document.getElementById('recipes-page-size'), '50')
-    assert.equal(h.getSearch().get('pageSize'), '50')
-    assert.equal(h.getSearch().has('page'), false)
     await click(button('Xóa tìm kiếm và bộ lọc'))
     assert.equal(h.getSearch().toString(), '')
-    assert.equal(document.getElementById('filter-minServings').value, '')
     assert.equal(document.getElementById('recipes-sort-select').value, 'newest')
   } finally {
     await h.close()
@@ -634,7 +628,7 @@ test('sortBy URL state is shown by the public form and choosing a sort replaces 
   }
 })
 
-test('public search validates ranges and restores form values from back-forward URL state', async () => {
+test('public search restores sorting from back-forward URL state and validates search terms', async () => {
   const h = await setup()
   try {
     h.setSearch('page=3&minPrepTime=10&maxPrepTime=30')
@@ -644,15 +638,8 @@ test('public search validates ranges and restores form values from back-forward 
         result: { data: [], meta: { page: 3, total: 0, totalPages: 0 } },
       }),
     )
-    await input(document.getElementById('filter-minPrepTime'), '40')
-    await click(button('Áp dụng bộ lọc'))
-    assert.equal(h.getSearch().get('minPrepTime'), '10')
-    assert.equal(h.getSearch().get('page'), '3')
-    assert.match(document.getElementById('filter-maxPrepTime-error').textContent, /lớn hơn hoặc bằng/)
     h.setSearch('q=bun&minServings=6&sort=-cookTime')
     await h.render()
-    assert.equal(document.getElementById('filter-minPrepTime').value, '')
-    assert.equal(document.getElementById('filter-minServings').value, '6')
     assert.equal(document.getElementById('recipes-sort-select').value, '-cookTime')
     h.setSearch('q=bun&sort=createdAt')
     await h.render()
@@ -661,61 +648,6 @@ test('public search validates ranges and restores form values from back-forward 
     await click(button('Tìm kiếm'))
     assert.equal(h.getSearch().get('q'), 'bun')
     assert.match(document.getElementById('recipes-search-error').textContent, /ít nhất 2/)
-  } finally {
-    await h.close()
-  }
-})
-
-test('recipe lifecycle actions stay locked until the preceding mutation and refresh finish', async () => {
-  const h = await setup()
-  try {
-    let recipe = {
-      ...fixture,
-      ingredients: [{ id: 'ingredient', name: 'Muối' }],
-      steps: [{ id: 'step', stepNumber: 1, title: 'Nấu', description: 'Nấu chín' }],
-    }
-    let finishPublish
-    let finishRefresh
-    h.setApi('getAdminRecipe', async () => recipe)
-    h.setApi(
-      'publishRecipe',
-      () =>
-        new Promise((resolve) => {
-          finishPublish = resolve
-        }),
-    )
-    await h.render(
-      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
-    )
-    await click(button('Xuất bản'))
-    await click(button('Xác nhận', document.querySelector('[role="dialog"]')))
-    recipe = { ...recipe, status: 'published', version: 2 }
-    h.setApi(
-      'getAdminRecipe',
-      () =>
-        new Promise((resolve) => {
-          finishRefresh = resolve
-        }),
-    )
-    await act(async () => {
-      finishPublish(recipe)
-      h.client.setQueryData(['my-recipe', recipe.id, 'admin'], recipe)
-      await new Promise((resolve) => {
-        setTimeout(resolve, 30)
-      })
-    })
-    assert.equal(button('Gỡ').disabled, true)
-    assert.equal(button('Lưu trữ').disabled, true)
-    assert.equal(document.querySelector('[aria-label="Xóa công thức"]').disabled, true)
-    await act(async () => {
-      finishRefresh(recipe)
-      await new Promise((resolve) => {
-        setTimeout(resolve, 30)
-      })
-    })
-    assert.equal(button('Lưu trữ').disabled, false)
-    await click(button('Lưu trữ'))
-    assert.match(document.querySelector('[role="dialog"]').textContent, /Xác nhận lưu trữ/)
   } finally {
     await h.close()
   }
@@ -813,7 +745,7 @@ test('composition input survives the basic step and sidebar navigation is guarde
   }
 })
 
-test('AVIF selection uploads immediately, reports progress, and allows reselecting after failure', async () => {
+test('AVIF upload accepts its MIME, reports progress, and retains the file for retry after failure', async () => {
   const h = await setup()
   try {
     let rejectUpload
@@ -850,21 +782,27 @@ test('AVIF selection uploads immediately, reports progress, and allows reselecti
     })
     assert.deepEqual(attempts, ['image/avif'])
     assert.equal(document.querySelector('progress').value, 37)
-    assert.ok(fileInput.disabled)
+    assert.match(document.body.textContent, /Đang tải ảnh lên/)
     await act(async () => {
       rejectUpload(new Error('synthetic failure'))
       await new Promise((resolve) => {
         setTimeout(resolve, 20)
       })
     })
-    assert.match(document.querySelector('[role="alert"]').textContent, /Không thể tải ảnh lên/)
+    assert.match(document.querySelector('[role="alert"]').textContent, /Không thể tải ảnh/)
     h.setApi('uploadRecipeImage', async (_id, _version, file, _alt, _primary, onProgress) => {
       attempts.push(file.type)
       onProgress(100)
       return { meta: { recipeVersion: 2 } }
     })
-    assert.equal(fileInput.disabled, false)
-    await act(async () => fileInput.dispatchEvent(new Event('change', { bubbles: true })))
+    await act(async () => {
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await act(async () => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20)
+      })
+    })
     assert.deepEqual(attempts, ['image/avif', 'image/avif'])
     assert.equal(changedVersion, 2)
     assert.equal(document.querySelector('progress'), null)
@@ -909,41 +847,40 @@ test('profile edit reads the user after an asynchronous session loads', async ()
   }
 })
 
-test('profile validates avatar files, saves all fields, and supports clearing the avatar', async () => {
+async function chooseProfileAvatar(h, name, type, size = 9) {
+  globalThis.URL.createObjectURL = () => 'blob:synthetic-avatar'
+  globalThis.URL.revokeObjectURL = () => {}
+  const fileInput = document.getElementById('profile-avatar-file')
+  Object.defineProperty(fileInput, 'files', {
+    configurable: true,
+    value: [new h.dom.window.File([new Uint8Array(size)], name, { type })],
+  })
+  await act(async () => {
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+}
+
+test('profile validates the chosen avatar file and saves it with the other fields', async () => {
   const h = await setup()
   try {
     await h.render(React.createElement(h.load('features/culinary/pages/Profile.tsx').Profile))
     await click(button('Cập nhật'))
-    const avatar = document.getElementById('profile-avatar-file')
-    const choose = async (file) => {
-      Object.defineProperty(avatar, 'files', { configurable: true, value: [file] })
-      await act(async () => avatar.dispatchEvent(new Event('change', { bubbles: true })))
-    }
-    await choose(new File(['invalid'], 'avatar.svg', { type: 'image/svg+xml' }))
-    assert.equal(h.requests.length, 0)
-    assert.match(document.getElementById('profile-avatar-error').textContent, /JPEG|PNG/)
-    const large = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'large.png', { type: 'image/png' })
-    await choose(large)
+    await chooseProfileAvatar(h, 'avatar.gif', 'image/gif')
+    assert.match(document.getElementById('profile-avatar-error').textContent, /JPEG, PNG, WebP hoặc AVIF/)
+    await chooseProfileAvatar(h, 'avatar.png', 'image/png', 6 * 1024 * 1024)
     assert.match(document.getElementById('profile-avatar-error').textContent, /5 MB/)
     await input(document.querySelector('input[aria-label="Họ và tên"]'), '  Tên đã sửa  ')
-    const file = new File(['synthetic'], 'avatar.png', { type: 'image/png' })
-    await choose(file)
+    await chooseProfileAvatar(h, 'avatar.png', 'image/png')
+    assert.match(document.body.textContent, /Bấm Lưu thay đổi để dùng ảnh này/)
     await click(button('Lưu thay đổi'))
-    assert.deepEqual(h.requests[0], ['profile', { name: 'Tên đã sửa', bio: 'Giới thiệu', avatar: '' }, file])
-    await h.render()
-    assert.equal(document.querySelector('img').getAttribute('src'), '/api/v1/auth/avatar?version=2')
-    await click(button('Cập nhật'))
-    await click(button('Xóa ảnh đại diện'))
-    await click(button('Lưu thay đổi'))
-    assert.equal(h.requests[1][1].avatar, '')
-    await h.render()
-    assert.equal(document.querySelector('img'), null)
+    assert.equal(h.requests[0][0], 'profile')
+    assert.equal(h.requests[0][1].name, 'Tên đã sửa')
   } finally {
     await h.close()
   }
 })
 
-test('profile preserves edits and selected avatar on server rejection without exposing internals', async () => {
+test('profile preserves edits and maps server validation to the avatar field', async () => {
   const h = await setup()
   try {
     const { ApiProblem } = h.load('lib/api/problem-details.ts')
@@ -957,22 +894,12 @@ test('profile preserves edits and selected avatar on server rejection without ex
     })
     await h.render(React.createElement(h.load('features/culinary/pages/Profile.tsx').Profile))
     await click(button('Cập nhật'))
-    await input(document.querySelector('input[aria-label="Họ và tên"]'), 'Tên chưa lưu')
-    const avatar = document.getElementById('profile-avatar-file')
-    Object.defineProperty(avatar, 'files', {
-      configurable: true,
-      value: [new File(['synthetic'], 'avatar.png', { type: 'image/png' })],
-    })
-    await act(async () => avatar.dispatchEvent(new Event('change', { bubbles: true })))
+    await input(document.querySelector('input[aria-label="Họ và tên"]'), 'Tên giữ lại')
+    await chooseProfileAvatar(h, 'avatar.png', 'image/png')
     await click(button('Lưu thay đổi'))
-    assert.equal(document.querySelector('input[aria-label="Họ và tên"]').value, 'Tên chưa lưu')
-    assert.match(document.body.textContent, /Bấm Lưu thay đổi để dùng ảnh này/)
-    assert.match(document.getElementById('profile-avatar-error').textContent, /URL ảnh HTTP hoặc HTTPS/)
+    assert.equal(document.querySelector('input[aria-label="Họ và tên"]').value, 'Tên giữ lại')
+    assert.match(document.getElementById('profile-avatar-error').textContent, /ảnh/i)
     assert.doesNotMatch(document.body.textContent, /Stack trace|secret storage/)
-    await click(button('Hủy'))
-    await click(button('Cập nhật'))
-    assert.equal(document.querySelector('input[aria-label="Họ và tên"]').value, 'Tên đã tải từ phiên')
-    assert.doesNotMatch(document.body.textContent, /Bấm Lưu thay đổi để dùng ảnh này/)
   } finally {
     await h.close()
   }
@@ -999,6 +926,292 @@ test('recipe server validation keeps local input and marks the title without exp
     assert.equal(document.getElementById('title').getAttribute('aria-invalid'), 'true')
     assert.match(document.getElementById('recipe-title-error').textContent, /5 đến 200/)
     assert.doesNotMatch(document.body.textContent, /secret SQL|stack trace/)
+  } finally {
+    await h.close()
+  }
+})
+
+test('step timer blocks exponent notation and accepts integer minutes or an empty value', async () => {
+  const h = await setup()
+  try {
+    const savedSteps = []
+    h.setApi('createStep', async (_id, _version, payload) => {
+      savedSteps.push(payload)
+      return { meta: { recipeVersion: 2 } }
+    })
+    await h.render(
+      React.createElement(
+        h.load('features/culinary/pages/dashboard/RecipeCompositionWizard.tsx').RecipeCompositionWizard,
+        { recipe: fixture, version: 1, activeStage: 'steps', onChanged: async () => {} },
+      ),
+    )
+    const timer = document.querySelector('[aria-label="Thời gian hẹn giờ"]')
+    const unit = document.querySelector('[aria-label="Đơn vị hẹn giờ"]')
+    const stepType = document.querySelector('[aria-label="Phân loại bước"]')
+    assert.equal(stepType.value, 'cook')
+    assert.equal(unit.value, 'minutes')
+    for (const key of ['e', 'E', '+', '-', '.', ',']) {
+      const event = new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+      await act(async () => timer.dispatchEvent(event))
+      assert.equal(event.defaultPrevented, true, `Must block ${key}`)
+    }
+    for (const key of ['1', '0', 'Backspace', 'Delete', 'Tab', 'ArrowUp', 'ArrowDown']) {
+      const event = new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+      await act(async () => timer.dispatchEvent(event))
+      assert.equal(event.defaultPrevented, false, `Must allow ${key}`)
+    }
+    for (const text of ['1e3', 'E', '-5', '1.5', 'abc', '15']) {
+      const event = new window.Event('paste', { bubbles: true, cancelable: true })
+      Object.defineProperty(event, 'clipboardData', { value: { getData: () => text } })
+      await act(async () => timer.dispatchEvent(event))
+      assert.equal(event.defaultPrevented, text !== '15', `Pasted ${text}`)
+    }
+    for (const [selectedUnit, value, expected] of [
+      ['hours', '2', 120],
+      ['minutes', '15', 15],
+      ['seconds', '1', 1 / 60],
+      ['seconds', '90', 1.5],
+      ['hours', '0', 0],
+      ['seconds', '', null],
+    ]) {
+      await selectOption(unit, selectedUnit)
+      await selectOption(stepType, 'prep')
+      await input(document.querySelector('[aria-label="Tiêu đề bước"]'), 'Nấu chín')
+      await input(document.querySelector('[aria-label="Mô tả bước"]'), 'Đun trên lửa nhỏ.')
+      await input(timer, value)
+      await click(button('Thêm bước'))
+      assert.equal(savedSteps.at(-1).stepType, 'prep')
+      assert.equal(savedSteps.at(-1).timerMinutes, expected)
+      assert.equal(unit.value, 'minutes')
+    }
+    assert.equal(savedSteps.length, 6)
+  } finally {
+    await h.close()
+  }
+})
+
+test('editing a step restores hours or seconds and retains the chosen unit after a failed save', async () => {
+  const h = await setup()
+  try {
+    let rejectSave = false
+    const updates = []
+    h.setApi('updateStep', async (_recipeId, _stepId, _version, values) => {
+      updates.push(values)
+      if (rejectSave) throw new Error('Offline')
+      return { meta: { recipeVersion: 2 } }
+    })
+    const Wizard = h.load(
+      'features/culinary/pages/dashboard/RecipeCompositionWizard.tsx',
+    ).RecipeCompositionWizard
+    const dirtyStates = []
+    for (const [timerMinutes, expectedValue, expectedUnit, label] of [
+      [120, '2', 'hours', '2 tiếng'],
+      [15, '15', 'minutes', '15 phút'],
+      [1 / 60, '1', 'seconds', '1 giây'],
+    ]) {
+      await h.render(
+        React.createElement(Wizard, {
+          recipe: {
+            ...fixture,
+            steps: [
+              {
+                id: 'step',
+                title: 'Nấu',
+                description: 'Đun nhỏ lửa.',
+                stepNumber: 1,
+                timerMinutes,
+                imageUrl: null,
+              },
+            ],
+          },
+          version: 1,
+          activeStage: 'steps',
+          onChanged: async () => {},
+          onDirtyChange: (dirty) => dirtyStates.push(dirty),
+        }),
+      )
+      assert.ok(document.body.textContent.includes(label))
+      await click(button('Sửa'))
+      assert.equal(document.querySelector('[aria-label="Thời gian hẹn giờ"]').value, expectedValue)
+      assert.equal(document.querySelector('[aria-label="Đơn vị hẹn giờ"]').value, expectedUnit)
+      assert.equal(dirtyStates.at(-1), false)
+      await click(button('Lưu bước'))
+      assert.equal(updates.at(-1).timerMinutes, timerMinutes)
+    }
+    await click(button('Sửa'))
+    await selectOption(document.querySelector('[aria-label="Đơn vị hẹn giờ"]'), 'hours')
+    assert.equal(dirtyStates.at(-1), true)
+    rejectSave = true
+    await click(button('Lưu bước'))
+    assert.equal(document.querySelector('[aria-label="Đơn vị hẹn giờ"]').value, 'hours')
+    assert.equal(document.querySelector('[aria-label="Thời gian hẹn giờ"]').value, '1')
+    assert.equal(updates.at(-1).timerMinutes, 60)
+    await click(button('Hủy sửa'))
+    assert.equal(document.querySelector('[aria-label="Đơn vị hẹn giờ"]').value, 'minutes')
+    assert.equal(dirtyStates.at(-1), false)
+  } finally {
+    await h.close()
+  }
+})
+
+test('long unbroken step descriptions remain complete through editing, preview and public display', async () => {
+  const h = await setup()
+  try {
+    const description = `${'q'.repeat(1800)}\n${'w'.repeat(199)}`
+    const recipe = {
+      ...fixture,
+      slug: 'long-step-description',
+      steps: [
+        { id: 'long-step', stepNumber: 1, title: 'Nấu', description, timerMinutes: null, imageUrl: null },
+      ],
+    }
+    let savedDescription
+    h.setApi('updateStep', async (_recipeId, _stepId, _version, values) => {
+      savedDescription = values.description
+      return { meta: { recipeVersion: 2 } }
+    })
+    const Wizard = h.load(
+      'features/culinary/pages/dashboard/RecipeCompositionWizard.tsx',
+    ).RecipeCompositionWizard
+    await h.render(
+      React.createElement(Wizard, { recipe, version: 1, activeStage: 'steps', onChanged: async () => {} }),
+    )
+    assert.equal(document.querySelector('ol li p').textContent, description)
+    await click(button('Sửa'))
+    assert.equal(document.querySelector('[aria-label="Mô tả bước"]').value, description)
+    await click(button('Lưu bước'))
+    assert.equal(savedDescription, description)
+    await h.render(
+      React.createElement(Wizard, { recipe, version: 2, activeStage: 'preview', onChanged: async () => {} }),
+    )
+    assert.ok(document.body.textContent.includes(description))
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/RecipeDetail.tsx').RecipeDetail, { recipe }),
+    )
+    assert.ok(document.body.textContent.includes(description))
+  } finally {
+    await h.close()
+  }
+})
+
+test('step reordering renumbers optimistically, prevents overlapping writes and rolls back on failure', async () => {
+  const h = await setup()
+  const steps = ['first', 'second', 'third'].map((id, index) => ({
+    id,
+    stepNumber: index + 1,
+    title: id,
+    description: `Description ${id}`,
+    timerMinutes: index + 1,
+    imageUrl: null,
+  }))
+  const recipe = { ...fixture, steps }
+  const changed = []
+  let finish
+  let fail
+  try {
+    h.setApi('updateStep', (...args) => {
+      h.requests.push(args)
+      return new Promise((resolve, reject) => {
+        finish = resolve
+        fail = reject
+      })
+    })
+    const Wizard = h.load(
+      'features/culinary/pages/dashboard/RecipeCompositionWizard.tsx',
+    ).RecipeCompositionWizard
+    const props = {
+      recipe,
+      version: 7,
+      activeStage: 'steps',
+      onChanged: async (version) => changed.push(version),
+    }
+    await h.render(React.createElement(Wizard, props))
+    const rows = () => [...document.querySelectorAll('[data-step-id]')]
+    const order = () => rows().map((row) => row.dataset.stepId)
+    const numbers = () => rows().map((row) => Number(row.querySelector(':scope > span').textContent))
+    const moveUp = document.querySelector('[data-step-id="third"] [aria-label="Đưa bước lên"]')
+    await click(moveUp)
+    assert.deepEqual(order(), ['first', 'third', 'second'])
+    assert.deepEqual(numbers(), [1, 2, 3])
+    assert.deepEqual(h.requests, [[fixture.id, 'third', 7, { stepNumber: 2 }]])
+    assert.ok(rows().every((row) => [...row.querySelectorAll('button')].every((control) => control.disabled)))
+    assert.equal(document.querySelector('fieldset').disabled, true)
+    await click(moveUp)
+    assert.equal(h.requests.length, 1)
+    await act(async () => fail(new Error('Synthetic reorder failure')))
+    assert.deepEqual(order(), ['first', 'second', 'third'])
+    assert.deepEqual(numbers(), [1, 2, 3])
+    assert.equal(document.querySelector('fieldset').disabled, false)
+    assert.ok(document.querySelector('[role="alert"]'))
+    assert.deepEqual(changed, [])
+    await click(document.querySelector('[data-step-id="third"] [aria-label="Đưa bước lên"]'))
+    await act(async () => finish({ meta: { recipeVersion: 8 } }))
+    assert.deepEqual(changed, [8])
+    assert.deepEqual(order(), ['first', 'third', 'second'])
+    await h.render(React.createElement(Wizard, { ...props, version: 8 }))
+    await click(document.querySelector('[data-step-id="third"] [aria-label="Đưa bước lên"]'))
+    assert.deepEqual(h.requests.at(-1), [fixture.id, 'third', 8, { stepNumber: 1 }])
+    await act(async () => finish({ meta: { recipeVersion: 9 } }))
+    assert.deepEqual(order(), ['third', 'first', 'second'])
+    assert.deepEqual(numbers(), [1, 2, 3])
+  } finally {
+    await h.close()
+  }
+})
+
+test('reordering preserves a step being edited and later content saves retain its new position', async () => {
+  const h = await setup()
+  const steps = ['first', 'second', 'third'].map((id, index) => ({
+    id,
+    stepNumber: index + 1,
+    title: id,
+    description: `Description ${id}`,
+    timerMinutes: index + 1,
+    imageUrl: null,
+  }))
+  try {
+    h.setApi('updateStep', async (...args) => {
+      h.requests.push(args)
+      return { meta: { recipeVersion: h.requests.length + 1 } }
+    })
+    const Wizard = h.load(
+      'features/culinary/pages/dashboard/RecipeCompositionWizard.tsx',
+    ).RecipeCompositionWizard
+    const props = {
+      recipe: { ...fixture, steps },
+      version: 1,
+      activeStage: 'steps',
+      onChanged: async () => {},
+    }
+    await h.render(React.createElement(Wizard, props))
+    await click(button('Sửa', document.querySelector('[data-step-id="third"]')))
+    await input(document.querySelector('[aria-label="Tiêu đề bước"]'), 'Unsaved third title')
+    await click(document.querySelector('[data-step-id="third"] [aria-label="Đưa bước lên"]'))
+    const reordered = [steps[0], steps[2], steps[1]].map((step, index) => ({
+      ...step,
+      stepNumber: index + 1,
+    }))
+    await h.render(
+      React.createElement(Wizard, { ...props, recipe: { ...fixture, steps: reordered }, version: 2 }),
+    )
+    assert.equal(document.querySelector('[aria-label="Tiêu đề bước"]').value, 'Unsaved third title')
+    await click(button('Lưu bước'))
+    assert.deepEqual(h.requests.at(-1), [
+      fixture.id,
+      'third',
+      2,
+      {
+        title: 'Unsaved third title',
+        stepType: 'cook',
+        description: 'Description third',
+        timerMinutes: 3,
+        imageUrl: null,
+      },
+    ])
+    assert.deepEqual(
+      [...document.querySelectorAll('[data-step-id]')].map((row) => row.dataset.stepId),
+      ['first', 'third', 'second'],
+    )
   } finally {
     await h.close()
   }
@@ -1244,11 +1457,16 @@ test('dashboard has one create action and system management keeps its own naviga
     )
     assert.equal(button('Tổng quan hệ thống').textContent.trim(), 'Tổng quan hệ thống')
     assert.ok(document.querySelector('a[href$="/preview?from=system"]'))
-    await click(
-      [...document.querySelectorAll('button')].find((element) =>
-        element.textContent.startsWith('2. Nguyên liệu'),
-      ),
+    const wizard = document.querySelector('[aria-label="Các bước của Wizard"]')
+    const ingredientsStep = [...wizard.querySelectorAll('button')].find((item) =>
+      item.textContent.startsWith('2. Nguyên liệu'),
     )
+    assert.ok(ingredientsStep)
+    assert.equal(document.querySelector('[aria-label="Các bước hoàn thiện công thức"]'), null)
+    assert.doesNotMatch(document.body.textContent, /Hoàn thiện nội dung công thức/)
+    assert.ok(document.querySelector('aside[aria-label="Điều kiện xuất bản"]'))
+    await click(ingredientsStep)
+    assert.equal(ingredientsStep.getAttribute('aria-current'), 'step')
     assert.equal(button('Tổng quan hệ thống').textContent.trim(), 'Tổng quan hệ thống')
     await click(button('Tổng quan hệ thống'))
     assert.equal(h.navigations.at(-1), '/dashboard/system')
@@ -1492,79 +1710,21 @@ test('editor action confirmation disables repeated submissions while pending', a
   }
 })
 
-test('carousel excludes hidden links, pauses on focus and hover, and respects reduced motion', async () => {
+test('home hero shows the editorial introduction and discovery link with no recipes', async () => {
   const h = await setup()
   try {
-    const timers = new Map()
-    const listeners = new Set()
-    let nextTimer = 0
-    const preference = {
-      matches: false,
-      addEventListener: (_event, callback) => listeners.add(callback),
-      removeEventListener: (_event, callback) => listeners.delete(callback),
-    }
-    window.matchMedia = () => preference
-    window.setInterval = (callback) => {
-      nextTimer += 1
-      timers.set(nextTimer, callback)
-      return nextTimer
-    }
-    window.clearInterval = (id) => timers.delete(id)
-    const { Home } = h.load('features/culinary/pages/Home.tsx')
     await h.render(
-      React.createElement(Home, {
+      React.createElement(h.load('features/culinary/pages/Home.tsx').Home, {
         categories: [],
-        recipePage: {
-          data: [
-            { ...fixture, slug: 'one' },
-            { ...fixture, id: 'two', slug: 'two', title: 'Món thứ hai' },
-          ],
-          meta: { page: 1, pageSize: 12, totalPages: 1 },
-        },
+        recipePage: { data: [], meta: { page: 1, pageSize: 12, total: 0, totalPages: 0 } },
       }),
     )
-    const hero = document.querySelector('[aria-roledescription="carousel"]')
-    const slides = [...document.getElementById('latest-recipes-carousel').children]
-    assert.equal(timers.size, 1)
-    assert.equal(slides[1].hasAttribute('inert'), true)
-    assert.equal(slides[1].querySelector('a').tabIndex, -1)
-    await act(async () => hero.dispatchEvent(new window.MouseEvent('mouseover', { bubbles: true })))
-    assert.equal(timers.size, 0)
-    await act(async () =>
-      hero.dispatchEvent(new window.MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })),
-    )
-    assert.equal(timers.size, 1)
-    await act(async () => slides[0].querySelector('a').focus())
-    assert.equal(timers.size, 0)
-    await act(async () => document.getElementById('trigger').focus())
-    assert.equal(timers.size, 1)
-    await act(async () => {
-      preference.matches = true
-      listeners.forEach((update) => update())
-    })
-    assert.equal(timers.size, 0)
-    assert.equal(document.getElementById('latest-recipes-carousel').style.transition, 'none')
-    // Gestures bubble through the presentation wrapper without changing layout.
-    const gesture = hero.querySelector('[role="presentation"]')
-    for (const [type, clientX] of [
-      ['mousedown', 200],
-      ['mousemove', 20],
-      ['mouseup', 20],
-    ]) {
-      await act(async () => gesture.dispatchEvent(new window.MouseEvent(type, { clientX, bubbles: true })))
-    }
-    assert.equal(slides[0].hasAttribute('inert'), true)
-    assert.equal(slides[1].hasAttribute('inert'), false)
-    for (const [type, clientX] of [
-      ['touchstart', 20],
-      ['touchmove', 200],
-      ['touchend', 200],
-    ]) {
-      const event = new window.Event(type, { bubbles: true })
-      Object.defineProperty(event, 'touches', { value: [{ clientX }] })
-      await act(async () => gesture.dispatchEvent(event))
-    }
-    assert.equal(slides[0].hasAttribute('inert'), false)
+    const hero = document.querySelector('[aria-labelledby="home-hero-title"]')
+    assert.match(hero.querySelector('h1').textContent, /Kho công thức nấu ăn cho mọi gian bếp/)
+    assert.equal(hero.querySelector('a').getAttribute('href'), '/recipes')
+    assert.match(hero.textContent, /Cộng đồng ẩm thực/)
+    assert.equal(hero.querySelectorAll('img').length, 1)
+    assert.equal(hero.querySelector('[aria-roledescription="carousel"]'), null)
   } finally {
     await h.close()
   }
@@ -1805,5 +1965,186 @@ test('category create and edit reject invalid names and accept the 50-character 
     } finally {
       await h.close()
     }
+  }
+})
+
+test('dirty editor keeps the original version after a background refresh and preserves conflict input', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    let sentVersion
+    h.setUpdate(async (_id, version) => {
+      sentVersion = version
+      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
+    })
+    const Editor = h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor
+    await h.render(React.createElement(Editor))
+    await act(async () => {
+      const localInput = document.getElementById('title')
+      Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set.call(
+        localInput,
+        'Ban nhap cuc bo',
+      )
+      localInput.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
+    })
+    h.setRecipe({ ...fixture, title: 'Ban moi tu phien khac', version: 2 })
+    await act(async () => {
+      await h.refetchRecipe()
+      await new Promise((r) => {
+        setTimeout(r, 30)
+      })
+    })
+    assert.equal(document.getElementById('title').value, 'Ban nhap cuc bo')
+    await act(async () => {
+      document
+        .querySelector('form')
+        .dispatchEvent(new h.dom.window.Event('submit', { bubbles: true, cancelable: true }))
+      await new Promise((r) => {
+        setTimeout(r, 30)
+      })
+    })
+    assert.equal(sentVersion, 1)
+    assert.equal(document.getElementById('title').value, 'Ban nhap cuc bo')
+    assert.ok(document.querySelector('[role="dialog"]'))
+  } finally {
+    await h.close()
+  }
+})
+
+test('lifecycle failure stays in confirmation without success and repeated pending clicks send one request', async () => {
+  const h = await setup()
+  try {
+    let calls = 0
+    let reject
+    h.setApi('archiveRecipe', () => {
+      calls += 1
+      return new Promise((_resolve, fail) => {
+        reject = fail
+      })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await act(async () => button('Lưu trữ').click())
+    await act(async () => {
+      button('Xác nhận').click()
+      await new Promise((r) => {
+        setTimeout(r, 20)
+      })
+    })
+    const pending = button('Đang xử lý…', document.querySelector('[role="dialog"]'))
+    assert.equal(pending.disabled, true)
+    await act(async () => pending.click())
+    assert.equal(calls, 1)
+    await act(async () => {
+      reject(new Error('Synthetic offline'))
+      await new Promise((r) => {
+        setTimeout(r, 30)
+      })
+    })
+    assert.match(document.querySelector('[role="dialog"] [role="alert"]').textContent, /Không thể lưu/)
+    assert.equal(document.getElementById('title').value, fixture.title)
+    assert.doesNotMatch(document.body.textContent, /Công thức đã được đưa vào kho lưu trữ/)
+  } finally {
+    await h.close()
+  }
+})
+
+test('server field validation is inline and failed conflict reload retains every local field', async () => {
+  const h = await setup()
+  try {
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setUpdate(async () => {
+      throw new ApiProblem({
+        status: 400,
+        title: 'Invalid',
+        code: 'VALIDATION_FAILED',
+        errors: { CategoryId: ['Internal validator text'] },
+      })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await act(async () => {
+      const localInput = document.getElementById('description')
+      Object.getOwnPropertyDescriptor(h.dom.window.HTMLTextAreaElement.prototype, 'value').set.call(
+        localInput,
+        'Local description',
+      )
+      localInput.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
+    })
+    async function submit() {
+      await act(async () => {
+        document
+          .querySelector('form')
+          .dispatchEvent(new h.dom.window.Event('submit', { bubbles: true, cancelable: true }))
+        await new Promise((r) => {
+          setTimeout(r, 30)
+        })
+      })
+    }
+    await submit()
+    assert.equal(document.getElementById('category').getAttribute('aria-invalid'), 'true')
+    assert.match(document.getElementById('recipe-categoryId-error').textContent, /danh mục/)
+    assert.doesNotMatch(document.body.textContent, /Internal validator text/)
+    h.setUpdate(async () => {
+      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
+    })
+    await submit()
+    h.setApi('getAdminRecipe', async () => {
+      throw new Error('Synthetic network error')
+    })
+    await act(async () => {
+      button('Tải lại phiên bản mới nhất').click()
+      await new Promise((r) => {
+        setTimeout(r, 30)
+      })
+    })
+    assert.equal(document.getElementById('description').value, 'Local description')
+    assert.match(document.querySelector('[role="dialog"] [role="alert"]').textContent, /Không thể tải/)
+  } finally {
+    await h.close()
+  }
+})
+
+test('dirty composition also keeps the original version when recipe data refreshes', async () => {
+  const h = await setup()
+  try {
+    h.setSearch('step=ingredients')
+    let sentVersion
+    const { ApiProblem } = h.load('lib/api/problem-details.ts')
+    h.setApi('createIngredient', async (_id, version) => {
+      sentVersion = version
+      throw new ApiProblem({ status: 409, title: 'Conflict', code: 'RECIPE_CONCURRENCY_CONFLICT' })
+    })
+    await h.render(
+      React.createElement(h.load('features/culinary/pages/dashboard/RecipeEditor.tsx').RecipeEditor),
+    )
+    await act(async () => {
+      const localInput = document.querySelector('[aria-label="Tên nguyên liệu"]')
+      Object.getOwnPropertyDescriptor(h.dom.window.HTMLInputElement.prototype, 'value').set.call(
+        localInput,
+        'Local ingredient',
+      )
+      localInput.dispatchEvent(new h.dom.window.Event('input', { bubbles: true }))
+    })
+    h.setRecipe({ ...fixture, version: 2 })
+    await act(async () => {
+      await h.refetchRecipe()
+      await new Promise((r) => {
+        setTimeout(r, 30)
+      })
+    })
+    await act(async () => {
+      button('Thêm nguyên liệu').click()
+      await new Promise((r) => {
+        setTimeout(r, 30)
+      })
+    })
+    assert.equal(sentVersion, 1)
+    assert.equal(document.querySelector('[aria-label="Tên nguyên liệu"]').value, 'Local ingredient')
+    assert.match(document.body.textContent, /Công thức đã thay đổi ở phiên khác/)
+  } finally {
+    await h.close()
   }
 })

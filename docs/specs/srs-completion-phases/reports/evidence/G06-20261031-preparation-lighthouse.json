@@ -1,0 +1,418 @@
+{
+  "generatedAtUtc": "2026-10-31T07:05:19.483Z",
+  "summaries": [
+    {
+      "url": "http://127.0.0.1:52876/",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.95,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 1530.7393999999995,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004742989876687132,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 194209,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:52876/recipes",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.98,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 1051.4371500000002,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004405296779694757,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 204775,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:52876/categories",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.99,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 859.26365,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004405296779694757,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 183347,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:52876/search",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 0.98,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 1047.83545,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004405296779694757,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 204775,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:52876/login",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 737.2009500000001,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00001745994221171526,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 190025,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:52876/recipes/com-chien-hai-san",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 774.3010000000002,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.0001594800815261106,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 183347,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:52876/categories/banh-viet",
+      "results": [
+        {
+          "name": "categories:performance",
+          "severity": "warn",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 0.9
+          }
+        },
+        {
+          "name": "largest-contentful-paint",
+          "severity": "error",
+          "passed": true,
+          "value": 761.10975,
+          "expectation": {
+            "maxNumericValue": 2500
+          }
+        },
+        {
+          "name": "cumulative-layout-shift",
+          "severity": "error",
+          "passed": true,
+          "value": 0.00004405296779694757,
+          "expectation": {
+            "maxNumericValue": 0.1
+          }
+        },
+        {
+          "name": "total-blocking-time",
+          "severity": "error",
+          "passed": true,
+          "value": 0,
+          "expectation": {
+            "maxNumericValue": 200
+          }
+        },
+        {
+          "name": "resource-summary:script:size",
+          "severity": "error",
+          "passed": true,
+          "value": 186680,
+          "expectation": {
+            "maxNumericValue": 204800
+          }
+        },
+        {
+          "name": "meta-description",
+          "severity": "error",
+          "passed": true,
+          "value": 1,
+          "expectation": {
+            "minScore": 1
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 .git
 .dotnet
+**/.env*
+!**/.env.example
 **/.next
 **/*.tsbuildinfo
 **/bin

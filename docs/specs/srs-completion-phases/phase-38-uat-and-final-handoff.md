@@ -32,7 +32,7 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 
 ## Task gốc phải đóng
 
-- [ ] **D10-04 · Môi trường/nghiệm thu:** UAT đủ CJ-01–05/UX trên staging đúng artifact, triage defects, có người nghiệm thu/giảng viên/QA thực hiện đúng vai trò; không tự ký thay, không đổi Pending thành Accept chỉ vì test tự động xanh.
+- [ ] **D10-04 · Demo/kiểm chứng:** kiểm năm luồng chính CJ-01–05 và UX trên đúng artifact demo, ghi lỗi và kết quả thực tế. Bỏ bước lập biên bản UAT/chữ ký nghiệm thu riêng trong kế hoạch demo; không tự ký hoặc nhận đã có chấp thuận của giảng viên, không đổi Pending thành Accept từ riêng test tự động.
 - [ ] **D10-05 · Kiểm chứng:** nếu nằm trong phạm vi triển khai, hoàn tất checklist secrets/TLS/DNS/backup/alert/maintenance, go/no-go và rollback/recovery theo tài liệu hiện có. Kế hoạch này không tự cho phép gửi thông báo, publish workspace, deploy production hoặc thực hiện restore dữ liệu thật.
 - [ ] **D10-06 · Kiểm chứng:** review diff theo từng nhóm, ghi commit mô tả rõ chức năng bằng tiếng Việt không dấu khi thực hiện commit theo yêu cầu người dùng. Không gộp các PDF người dùng đang chuyển thư mục hoặc thay đổi ngoài phạm vi; phân biệt việc lập kế hoạch hiện tại với lần commit/push triển khai sau.
 - [ ] **D10-07 · Nghiệm thu:** chỉ kết luận “hoàn thành toàn bộ SRS” khi các acceptance bắt buộc đều đạt hoặc có điều chỉnh rõ ràng được chấp thuận, không còn pending không giải thích. Nếu mới đạt local/chức năng cốt lõi, kết luận đúng mức đó và liệt kê điều kiện còn mở; không đưa phần trăm tự suy đoán.
@@ -40,7 +40,7 @@ Các file/vùng mã cần đọc đầu tiên (đường dẫn thư mục hoặc
 ## Trình tự thực hiện trong phase
 
 1. Tập hợp CJ01–05/UX trên đúng artifact, defects/deviations và điều kiện môi trường còn mở.
-2. Chuẩn bị/hỗ trợ UAT và release/rollback review; người có thẩm quyền xác nhận, không tự ký thay.
+2. Theo [phạm vi demo05/11](demo-scope-2026-11-05.md), kiểm các luồng demo và review release/rollback; không lập biên bản UAT/chữ ký riêng hoặc tự nhận có chấp thuận.
 3. Review diff và final gates; ghi kết luận đúng mức. Chỉ commit/push/deploy/gửi thông báo khi có yêu cầu/ủy quyền áp dụng cho hành động đó.
 
 ## Cách kiểm chứng

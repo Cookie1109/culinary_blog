@@ -1,0 +1,1071 @@
+{
+  "config": {
+    "argv": [
+      "D:\\Culinary_Blog\\tmp\\srs-audit\\runtime\\node-v22.23.3-win-x64\\node.exe",
+      "D:\\Culinary_Blog\\frontend\\node_modules\\@playwright\\test\\cli.js",
+      "test"
+    ],
+    "configFile": "D:\\Culinary_Blog\\frontend\\playwright.config.ts",
+    "rootDir": "D:/Culinary_Blog/frontend/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Culinary_Blog/tmp/package-G05/e2e/4eb88b02faf8/browser",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/Culinary_Blog/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\Culinary_Blog\\tmp\\package-G05\\e2e\\4eb88b02faf8\\browser",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "D:\\Culinary_Blog\\frontend\\e2e",
+        "snapshotDir": "D:\\Culinary_Blog\\frontend\\e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 120000,
+        "use": {
+          "baseURL": "http://127.0.0.1:57066",
+          "browserName": "chromium",
+          "screenshot": "only-on-failure",
+          "trace": "off"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "D:\\Culinary_Blog\\tmp\\package-G05\\e2e\\4eb88b02faf8/playwright.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "critical-journeys.spec.ts",
+      "file": "critical-journeys.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "E2E-01 register, auto-login, profile and captured welcome mail",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11289,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T05:31:14.251Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7b59474845f91a7ee47a-0cabb3d6bcf7cf107801",
+          "file": "critical-journeys.spec.ts",
+          "line": 96,
+          "column": 5
+        },
+        {
+          "title": "E2E-02 local login, access expiry, rotation, logout and rejection of old refresh",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 67829,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T05:31:25.950Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7b59474845f91a7ee47a-4690e634cd778c9fc01b",
+          "file": "critical-journeys.spec.ts",
+          "line": 129,
+          "column": 5
+        },
+        {
+          "title": "E2E-03 create draft using UI wizard and preserve private visibility",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3532,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T05:32:33.794Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7b59474845f91a7ee47a-95f54f27ed01726124fa",
+          "file": "critical-journeys.spec.ts",
+          "line": 171,
+          "column": 5
+        },
+        {
+          "title": "E2E-04 publish and unpublish invalidate all public views",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 35273,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T05:32:37.337Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7b59474845f91a7ee47a-414c3e80d941be80d104",
+          "file": "critical-journeys.spec.ts",
+          "line": 208,
+          "column": 5
+        },
+        {
+          "title": "E2E-05 Vietnamese search, filters, paging, detail and URL history",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7317,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T05:33:12.620Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7b59474845f91a7ee47a-0e12d10d5f10d9210919",
+          "file": "critical-journeys.spec.ts",
+          "line": 299,
+          "column": 5
+        },
+        {
+          "title": "responsive public, auth, profile and dashboard have no overflow or axe AA violations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 41900,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T05:33:19.949Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "ui-contrast-320-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-320-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXNvcnQtc2VsZWN0IiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXBhZ2Utc2l6ZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-320-_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXNvcnQtc2VsZWN0IiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXBhZ2Utc2l6ZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-320-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-320-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-320-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-320-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6Im5hbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY29uZmlybSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-320-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImZvcmdvdC1lbWFpbCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-320-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_profile",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImNoYW5nZS1jdXJyZW50LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtbmV3LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtY29uZmlybS1wYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-320-_profile",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-320-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6IklOUFVUIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-320-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-320-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InRpdGxlIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJkZXNjcmlwdGlvbiIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiaW5zdHJ1Y3Rpb25zIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjYXRlZ29yeSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZGlmZmljdWx0eSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoic2VydmluZ3MiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjb29rVGltZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY2Fsb3JpZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByb3RlaW4iLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImNhcmJvaHlkcmF0ZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZhdCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmliZXIiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InNvZGl1bSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-320-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-767-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXNvcnQtc2VsZWN0IiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXBhZ2Utc2l6ZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-767-_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXNvcnQtc2VsZWN0IiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXBhZ2Utc2l6ZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-767-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-767-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-767-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-767-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6Im5hbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY29uZmlybSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-767-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImZvcmdvdC1lbWFpbCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-767-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_profile",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImNoYW5nZS1jdXJyZW50LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtbmV3LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtY29uZmlybS1wYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-767-_profile",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-767-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6IklOUFVUIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-767-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-767-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InRpdGxlIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJkZXNjcmlwdGlvbiIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiaW5zdHJ1Y3Rpb25zIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjYXRlZ29yeSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZGlmZmljdWx0eSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoic2VydmluZ3MiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjb29rVGltZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY2Fsb3JpZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByb3RlaW4iLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImNhcmJvaHlkcmF0ZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZhdCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmliZXIiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InNvZGl1bSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-767-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-768-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXNvcnQtc2VsZWN0IiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXBhZ2Utc2l6ZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-768-_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXNvcnQtc2VsZWN0IiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJyZWNpcGVzLXBhZ2Utc2l6ZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-768-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-768-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-768-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-768-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6Im5hbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY29uZmlybSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-768-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImZvcmdvdC1lbWFpbCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-768-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_profile",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImNoYW5nZS1jdXJyZW50LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtbmV3LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtY29uZmlybS1wYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-768-_profile",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-768-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6IklOUFVUIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-768-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-768-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InRpdGxlIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJkZXNjcmlwdGlvbiIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiaW5zdHJ1Y3Rpb25zIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjYXRlZ29yeSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZGlmZmljdWx0eSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoic2VydmluZ3MiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjb29rVGltZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY2Fsb3JpZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByb3RlaW4iLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImNhcmJvaHlkcmF0ZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZhdCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmliZXIiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InNvZGl1bSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-768-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1199-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4Q29va1RpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZpbHRlci1taW5TZXJ2aW5ncyIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmlsdGVyLW1pblByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4UHJlcFRpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtc29ydC1zZWxlY3QiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtcGFnZS1zaXplIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-1199-_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4Q29va1RpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZpbHRlci1taW5TZXJ2aW5ncyIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmlsdGVyLW1pblByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4UHJlcFRpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtc29ydC1zZWxlY3QiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtcGFnZS1zaXplIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-1199-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1199-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1199-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1199-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6Im5hbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY29uZmlybSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1199-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImZvcmdvdC1lbWFpbCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1199-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_profile",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImNoYW5nZS1jdXJyZW50LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtbmV3LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtY29uZmlybS1wYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1199-_profile",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1199-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1199-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1199-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InRpdGxlIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJkZXNjcmlwdGlvbiIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiaW5zdHJ1Y3Rpb25zIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjYXRlZ29yeSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZGlmZmljdWx0eSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoic2VydmluZ3MiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjb29rVGltZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY2Fsb3JpZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByb3RlaW4iLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImNhcmJvaHlkcmF0ZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZhdCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmliZXIiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InNvZGl1bSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1199-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1200-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4Q29va1RpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZpbHRlci1taW5TZXJ2aW5ncyIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmlsdGVyLW1pblByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4UHJlcFRpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtc29ydC1zZWxlY3QiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtcGFnZS1zaXplIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-1200-_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4Q29va1RpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZpbHRlci1taW5TZXJ2aW5ncyIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmlsdGVyLW1pblByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4UHJlcFRpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtc29ydC1zZWxlY3QiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtcGFnZS1zaXplIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-1200-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1200-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1200-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1200-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6Im5hbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY29uZmlybSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1200-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImZvcmdvdC1lbWFpbCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1200-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_profile",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImNoYW5nZS1jdXJyZW50LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtbmV3LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtY29uZmlybS1wYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1200-_profile",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1200-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6IklOUFVUIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-1200-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1200-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InRpdGxlIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJkZXNjcmlwdGlvbiIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiaW5zdHJ1Y3Rpb25zIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjYXRlZ29yeSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZGlmZmljdWx0eSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoic2VydmluZ3MiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjb29rVGltZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY2Fsb3JpZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByb3RlaW4iLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImNhcmJvaHlkcmF0ZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZhdCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmliZXIiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InNvZGl1bSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1200-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1440-_",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4Q29va1RpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZpbHRlci1taW5TZXJ2aW5ncyIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmlsdGVyLW1pblByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4UHJlcFRpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtc29ydC1zZWxlY3QiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtcGFnZS1zaXplIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-1440-_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InJlY2lwZXMtc2VhcmNoIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4Q29va1RpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZpbHRlci1taW5TZXJ2aW5ncyIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmlsdGVyLW1pblByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJmaWx0ZXItbWF4UHJlcFRpbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtc29ydC1zZWxlY3QiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InJlY2lwZXMtcGFnZS1zaXplIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-1440-_search_q_pho",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1440-_recipes_com_chien_hai_san",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1440-_categories_com_va_xoi",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1440-_auth_login",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6Im5hbWUiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImVtYWlsIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJwYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY29uZmlybSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1440-_auth_register",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImZvcmdvdC1lbWFpbCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1440-_forgot_password",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_profile",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6ImNoYW5nZS1jdXJyZW50LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtbmV3LXBhc3N3b3JkIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjaGFuZ2UtY29uZmlybS1wYXNzd29yZCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1440-_profile",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "axe-1440-_dashboard",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6IklOUFVUIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfV0="
+                    },
+                    {
+                      "name": "axe-1440-_dashboard_recipes",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    },
+                    {
+                      "name": "ui-contrast-1440-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W3siY29udHJvbCI6InRpdGxlIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJkZXNjcmlwdGlvbiIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiaW5zdHJ1Y3Rpb25zIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjYXRlZ29yeSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZGlmZmljdWx0eSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoic2VydmluZ3MiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByZXBUaW1lIiwicmF0aW8iOjUuNDM1MzcyNDY0MTY5MzEyfSx7ImNvbnRyb2wiOiJjb29rVGltZSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiY2Fsb3JpZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InByb3RlaW4iLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImNhcmJvaHlkcmF0ZXMiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6ImZhdCIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn0seyJjb250cm9sIjoiZmliZXIiLCJyYXRpbyI6NS40MzUzNzI0NjQxNjkzMTJ9LHsiY29udHJvbCI6InNvZGl1bSIsInJhdGlvIjo1LjQzNTM3MjQ2NDE2OTMxMn1d"
+                    },
+                    {
+                      "name": "axe-1440-_dashboard_recipes_new",
+                      "contentType": "application/json",
+                      "body": "W10="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7b59474845f91a7ee47a-91615661295dabb7382e",
+          "file": "critical-journeys.spec.ts",
+          "line": 378,
+          "column": 5
+        },
+        {
+          "title": "mobile touch menu keeps keyboard focus, closes with Escape and restores focus",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2083,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T05:34:01.860Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7b59474845f91a7ee47a-ad0a105ed0b384959acb",
+          "file": "critical-journeys.spec.ts",
+          "line": 487,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-29T05:31:13.767Z",
+    "duration": 170285.807,
+    "expected": 7,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

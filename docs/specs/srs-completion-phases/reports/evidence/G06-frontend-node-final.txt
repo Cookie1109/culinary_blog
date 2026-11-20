@@ -1,0 +1,851 @@
+
+> @culinary-blog/web@1.0.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: P7-07: CategoryAdmin provides complete CRUD, orderIndex ordering, delete conflict UX, and accessible confirm dialog
+ok 1 - P7-07: CategoryAdmin provides complete CRUD, orderIndex ordering, delete conflict UX, and accessible confirm dialog
+  ---
+  duration_ms: 10.524
+  type: 'test'
+  ...
+# Subtest: P7-08: Admin recipe listing and actions wire /admin/recipes, author display, and audit-compliant mutations
+ok 2 - P7-08: Admin recipe listing and actions wire /admin/recipes, author display, and audit-compliant mutations
+  ---
+  duration_ms: 4.5699
+  type: 'test'
+  ...
+# Subtest: P7-10: Dashboard layout and configuration wire Hangfire operations for admin
+ok 3 - P7-10: Dashboard layout and configuration wire Hangfire operations for admin
+  ---
+  duration_ms: 7.4851
+  type: 'test'
+  ...
+# Subtest: P7-11: Admin application audit/log view is implemented with telemetry security policies
+ok 4 - P7-11: Admin application audit/log view is implemented with telemetry security policies
+  ---
+  duration_ms: 10.4982
+  type: 'test'
+  ...
+# Subtest: P7-18/P7-19: Direct navigation and admin scope remain role-gated
+ok 5 - P7-18/P7-19: Direct navigation and admin scope remain role-gated
+  ---
+  duration_ms: 41.9178
+  type: 'test'
+  ...
+# Subtest: P7-20: Admin screens cover loading, empty, error, and permission-denied states
+ok 6 - P7-20: Admin screens cover loading, empty, error, and permission-denied states
+  ---
+  duration_ms: 2.0885
+  type: 'test'
+  ...
+# Subtest: concurrent expired-access retries rotate once and logout revokes the latest token
+ok 7 - concurrent expired-access retries rotate once and logout revokes the latest token
+  ---
+  duration_ms: 256.9669
+  type: 'test'
+  ...
+# Subtest: failed refresh clears the tab and ends the session without an infinite retry
+ok 8 - failed refresh clears the tab and ends the session without an infinite retry
+  ---
+  duration_ms: 33.7974
+  type: 'test'
+  ...
+# Subtest: system overview uses administrative counts and the shared managed list
+ok 9 - system overview uses administrative counts and the shared managed list
+  ---
+  duration_ms: 9.0898
+  type: 'test'
+  ...
+# Subtest: dashboard sidebar keeps navigation states exclusive and links the user card to profile
+ok 10 - dashboard sidebar keeps navigation states exclusive and links the user card to profile
+  ---
+  duration_ms: 6.0286
+  type: 'test'
+  ...
+# Subtest: P7-02: content-client supports pagination and MyRecipes wires filter, table/card, and actions
+ok 11 - P7-02: content-client supports pagination and MyRecipes wires filter, table/card, and actions
+  ---
+  duration_ms: 3.7969
+  type: 'test'
+  ...
+# Subtest: P7-03: RecipeEditor provides 5-step wizard, save state tracking, and navigation guard
+ok 12 - P7-03: RecipeEditor provides 5-step wizard, save state tracking, and navigation guard
+  ---
+  duration_ms: 2.6889
+  type: 'test'
+  ...
+# Subtest: P7-04: Confirmation UX is implemented for publish, unpublish, archive, unarchive, and soft-delete
+ok 13 - P7-04: Confirmation UX is implemented for publish, unpublish, archive, unarchive, and soft-delete
+  ---
+  duration_ms: 5.0576
+  type: 'test'
+  ...
+# Subtest: P7-05: Validation summary checklist calculates criteria and provides deep link navigation
+ok 14 - P7-05: Validation summary checklist calculates criteria and provides deep link navigation
+  ---
+  duration_ms: 4.5182
+  type: 'test'
+  ...
+# Subtest: P7-06: Concurrency conflict UX provides reload, discard, and clipboard preservation
+ok 15 - P7-06: Concurrency conflict UX provides reload, discard, and clipboard preservation
+  ---
+  duration_ms: 1.7037
+  type: 'test'
+  ...
+# Subtest: P7-17: Author UI wires the complete recipe lifecycle to real API operations
+ok 16 - P7-17: Author UI wires the complete recipe lifecycle to real API operations
+  ---
+  duration_ms: 4.5167
+  type: 'test'
+  ...
+# Subtest: P7-20: Dashboard supports Author/Admin and the recipe list retains loading, empty and error states
+ok 17 - P7-20: Dashboard supports Author/Admin and the recipe list retains loading, empty and error states
+  ---
+  duration_ms: 5.3729
+  type: 'test'
+  ...
+# Subtest: SRS 5.1: Author dashboard retains personal totals, recent recipes and route access
+ok 18 - SRS 5.1: Author dashboard retains personal totals, recent recipes and route access
+  ---
+  duration_ms: 3.483
+  type: 'test'
+  ...
+# Subtest: first-load budget includes every ancestor layout and deduplicates shared JS, excluding CSS
+ok 19 - first-load budget includes every ancestor layout and deduplicates shared JS, excluding CSS
+  ---
+  duration_ms: 4.3149
+  type: 'test'
+  ...
+# Subtest: a route cannot hide an over-budget layout or pass with missing artifacts
+ok 20 - a route cannot hide an over-budget layout or pass with missing artifacts
+  ---
+  duration_ms: 12.5216
+  type: 'test'
+  ...
+# Subtest: both edges route browser image proxies to Next.js instead of the backend API
+ok 21 - both edges route browser image proxies to Next.js instead of the backend API
+  ---
+  duration_ms: 22.1351
+  type: 'test'
+  ...
+# Subtest: Docker frontend development uses bind-mounted source and drive-local caches without rebuilding
+ok 22 - Docker frontend development uses bind-mounted source and drive-local caches without rebuilding
+  ---
+  duration_ms: 4.6956
+  type: 'test'
+  ...
+# Subtest: preview gateway exposes recipe/assets and rejects writes, private paths, traversal and credential forwarding
+ok 23 - preview gateway exposes recipe/assets and rejects writes, private paths, traversal and credential forwarding
+  ---
+  duration_ms: 200.9275
+  type: 'test'
+  ...
+# Subtest: preview gateway rewrites trusted recipe redirects and blocks redirects outside its recipe scope
+ok 24 - preview gateway rewrites trusted recipe redirects and blocks redirects outside its recipe scope
+  ---
+  duration_ms: 20.3031
+  type: 'test'
+  ...
+# Subtest: Airbnb, Hooks, accessibility and Next rules reject controlled failures
+ok 25 - Airbnb, Hooks, accessibility and Next rules reject controlled failures
+  ---
+  duration_ms: 3205.782
+  type: 'test'
+  ...
+# Subtest: P6-22: budget.json defines Core Web Vitals and resource size budgets
+ok 26 - P6-22: budget.json defines Core Web Vitals and resource size budgets
+  ---
+  duration_ms: 13.5952
+  type: 'test'
+  ...
+# Subtest: P6-22: lighthouserc.json specifies required public URLs and assertions matching NFR-QA budgets
+ok 27 - P6-22: lighthouserc.json specifies required public URLs and assertions matching NFR-QA budgets
+  ---
+  duration_ms: 3.0303
+  type: 'test'
+  ...
+# Subtest: P6-22 & P6-23: All built routes strictly satisfy the <= 200 KB First Load JS gzip budget
+not ok 28 - P6-22 & P6-23: All built routes strictly satisfy the <= 200 KB First Load JS gzip budget
+  ---
+  duration_ms: 478.0336
+  type: 'test'
+  location: 'D:\\Culinary_Blog\\frontend\\tests\\performance-qa.test.mjs:77:1'
+  failureType: 'testCodeFailure'
+  error: 'Route /(dashboard)/dashboard/recipes/[id]/edit/page exceeds 200 KB gzip budget: 206.1 kB'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Culinary_Blog/frontend/tests/performance-qa.test.mjs:90:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: P6-23: Bundle analyzer and code splitting optimizations are wired in next.config.mjs and package.json
+ok 29 - P6-23: Bundle analyzer and code splitting optimizations are wired in next.config.mjs and package.json
+  ---
+  duration_ms: 5.503
+  type: 'test'
+  ...
+# Subtest: public imagery and heavy interactions use lazy loading without delaying LCP images
+ok 30 - public imagery and heavy interactions use lazy loading without delaying LCP images
+  ---
+  duration_ms: 2.6475
+  type: 'test'
+  ...
+# Subtest: P8-05 and P8-06: k6 defines smoke/load/stress profiles and latency percentiles
+ok 31 - P8-05 and P8-06: k6 defines smoke/load/stress profiles and latency percentiles
+  ---
+  duration_ms: 14.3235
+  type: 'test'
+  ...
+# Subtest: P8-07: k6 verifies application cache hit rate from Prometheus
+ok 32 - P8-07: k6 verifies application cache hit rate from Prometheus
+  ---
+  duration_ms: 1.5316
+  type: 'test'
+  ...
+# Subtest: P8-08: release Lighthouse run stores artifacts and reuses enforced budgets
+ok 33 - P8-08: release Lighthouse run stores artifacts and reuses enforced budgets
+  ---
+  duration_ms: 2.8973
+  type: 'test'
+  ...
+# Subtest: P8-09: performance runner records environment and only runs measured gates
+ok 34 - P8-09: performance runner records environment and only runs measured gates
+  ---
+  duration_ms: 2.8518
+  type: 'test'
+  ...
+# Subtest: P8-22: production Compose only deploys digest-pinned images behind TLS Nginx
+ok 35 - P8-22: production Compose only deploys digest-pinned images behind TLS Nginx
+  ---
+  duration_ms: 12.3491
+  type: 'test'
+  ...
+# Subtest: P8-23: release environment checklist assigns rotation ownership and rejects placeholders
+ok 36 - P8-23: release environment checklist assigns rotation ownership and rejects placeholders
+  ---
+  duration_ms: 2.7408
+  type: 'test'
+  ...
+# Subtest: P8-24/P8-28: immutable bundle is promoted without build and deployment identity is verified
+ok 37 - P8-24/P8-28: immutable bundle is promoted without build and deployment identity is verified
+  ---
+  duration_ms: 2.7986
+  type: 'test'
+  ...
+# Subtest: P8-25/P8-27: unsigned UAT and go/no-go records remain explicitly blocking
+ok 38 - P8-25/P8-27: unsigned UAT and go/no-go records remain explicitly blocking
+  ---
+  duration_ms: 5.7055
+  type: 'test'
+  ...
+# Subtest: P8-16/P8-17: daily PostgreSQL and versioned object backups retain 30 days
+ok 39 - P8-16/P8-17: daily PostgreSQL and versioned object backups retain 30 days
+  ---
+  duration_ms: 12.1424
+  type: 'test'
+  ...
+# Subtest: P8-18/P8-19: restore and failure drills verify recovery and write RTO/RPO evidence
+ok 40 - P8-18/P8-19: restore and failure drills verify recovery and write RTO/RPO evidence
+  ---
+  duration_ms: 2.7124
+  type: 'test'
+  ...
+# Subtest: P8-20/P8-21: runtime limits, bounded logs, readiness probing, and routed alerts are configured
+ok 41 - P8-20/P8-21: runtime limits, bounded logs, readiness probing, and routed alerts are configured
+  ---
+  duration_ms: 3.1482
+  type: 'test'
+  ...
+# Subtest: P8-21a: maintenance announcement is runtime-configured and shown across layouts
+ok 42 - P8-21a: maintenance announcement is runtime-configured and shown across layouts
+  ---
+  duration_ms: 3.9236
+  type: 'test'
+  ...
+# Subtest: P8-12: browser refresh tokens stay in sessionStorage and out of Auth.js JWT state
+ok 43 - P8-12: browser refresh tokens stay in sessionStorage and out of Auth.js JWT state
+  ---
+  duration_ms: 19.6874
+  type: 'test'
+  ...
+# Subtest: P8-12: application and production edge define the required security headers and TLS floor
+ok 44 - P8-12: application and production edge define the required security headers and TLS floor
+  ---
+  duration_ms: 1.9116
+  type: 'test'
+  ...
+# Subtest: P8-11/P8-14/P8-15: CI gates source, image, license, secret, dependency, and ZAP findings
+ok 45 - P8-11/P8-14/P8-15: CI gates source, image, license, secret, dependency, and ZAP findings
+  ---
+  duration_ms: 3.0862
+  type: 'test'
+  ...
+# Subtest: public pages use API data instead of bundled recipe fixtures
+ok 46 - public pages use API data instead of bundled recipe fixtures
+  ---
+  duration_ms: 12.1449
+  type: 'test'
+  ...
+# Subtest: home, listing, and detail expose the required public discovery content
+ok 47 - home, listing, and detail expose the required public discovery content
+  ---
+  duration_ms: 8.197
+  type: 'test'
+  ...
+# Subtest: category detail route uses the public category endpoint and maps API 404 to not-found
+ok 48 - category detail route uses the public category endpoint and maps API 404 to not-found
+  ---
+  duration_ms: 3.7498
+  type: 'test'
+  ...
+# Subtest: recipe listing submits search terms and route failures offer retry and offline guidance
+ok 49 - recipe listing submits search terms and route failures offer retry and offline guidance
+  ---
+  duration_ms: 23.0122
+  type: 'test'
+  ...
+# Subtest: recipe detail route maps an API 404 to the Next.js not-found response
+ok 50 - recipe detail route maps an API 404 to the Next.js not-found response
+  ---
+  duration_ms: 12.3953
+  type: 'test'
+  ...
+# Subtest: content-client exports publishing lifecycle patch methods
+ok 51 - content-client exports publishing lifecycle patch methods
+  ---
+  duration_ms: 13.1047
+  type: 'test'
+  ...
+# Subtest: recipe dashboard components wire publish and unpublish actions
+ok 52 - recipe dashboard components wire publish and unpublish actions
+  ---
+  duration_ms: 5.8066
+  type: 'test'
+  ...
+# PUBLIC_RECIPE_SEARCH_FAILED
+# Subtest: Vietnamese keyword normalization handles combining marks, spaces, uppercase and đ
+ok 53 - Vietnamese keyword normalization handles combining marks, spaces, uppercase and đ
+  ---
+  duration_ms: 3.7619
+  type: 'test'
+  ...
+# Subtest: description snippets expose a keyword near the end of long content
+ok 54 - description snippets expose a keyword near the end of long content
+  ---
+  duration_ms: 5.818
+  type: 'test'
+  ...
+# Subtest: SSR defaults keyword search to relevance and browsing to newest, preserving explicit sort
+ok 55 - SSR defaults keyword search to relevance and browsing to newest, preserving explicit sort
+  ---
+  duration_ms: 43.6057
+  type: 'test'
+  ...
+# Subtest: SSR rejects invalid short query locally and renders retry state on upstream failure
+ok 56 - SSR rejects invalid short query locally and renders retry state on upstream failure
+  ---
+  duration_ms: 39.9923
+  type: 'test'
+  ...
+# Subtest: pagination stays bounded while exposing first, last and adjacent pages
+ok 57 - pagination stays bounded while exposing first, last and adjacent pages
+  ---
+  duration_ms: 0.2467
+  type: 'test'
+  ...
+# Subtest: keyword validation agrees for URL and form input without sending punctuation-only requests
+ok 58 - keyword validation agrees for URL and form input without sending punctuation-only requests
+  ---
+  duration_ms: 0.1819
+  type: 'test'
+  ...
+# Subtest: public revalidated caches use the agreed TTLs and shared public-content tag
+ok 59 - public revalidated caches use the agreed TTLs and shared public-content tag
+  ---
+  duration_ms: 8.4733
+  type: 'test'
+  ...
+# Subtest: recipe listing renders search and filter query-state data dynamically on the server
+ok 60 - recipe listing renders search and filter query-state data dynamically on the server
+  ---
+  duration_ms: 1.8479
+  type: 'test'
+  ...
+# Subtest: private preview uses authenticated no-store reads and a private media proxy
+ok 61 - private preview uses authenticated no-store reads and a private media proxy
+  ---
+  duration_ms: 3.7101
+  type: 'test'
+  ...
+# Subtest: public recipe imagery uses next/image with responsive sizes and placeholders
+ok 62 - public recipe imagery uses next/image with responsive sizes and placeholders
+  ---
+  duration_ms: 3.7446
+  type: 'test'
+  ...
+# Subtest: P6-17: responsive breakpoints, fluid typography, and wrap behaviors are implemented
+ok 63 - P6-17: responsive breakpoints, fluid typography, and wrap behaviors are implemented
+  ---
+  duration_ms: 5.09
+  type: 'test'
+  ...
+# Subtest: P6-18: semantic HTML, landmarks, heading hierarchy, and accessible names are properly wired
+ok 64 - P6-18: semantic HTML, landmarks, heading hierarchy, and accessible names are properly wired
+  ---
+  duration_ms: 1.9803
+  type: 'test'
+  ...
+# Subtest: P6-19: keyboard navigation, visible focus, escape handlers, and focus trap are robustly implemented
+ok 65 - P6-19: keyboard navigation, visible focus, escape handlers, and focus trap are robustly implemented
+  ---
+  duration_ms: 1.9092
+  type: 'test'
+  ...
+# Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+# Subtest: P6-20: color contrast meets WCAG AA standards and screen reader async announcements are present
+ok 66 - P6-20: color contrast meets WCAG AA standards and screen reader async announcements are present
+  ---
+  duration_ms: 1.9752
+  type: 'test'
+  ...
+# Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+# Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+# Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+# Subtest: P6-21: axe-core automated audit on public views produces 0 critical or serious violations
+ok 67 - P6-21: axe-core automated audit on public views produces 0 critical or serious violations
+  ---
+  duration_ms: 448.9453
+  type: 'test'
+  ...
+# Subtest: the real recipe page renders parseable JSON-LD without allowing a closing-script injection
+ok 68 - the real recipe page renders parseable JSON-LD without allowing a closing-script injection
+  ---
+  duration_ms: 133.1578
+  type: 'test'
+  ...
+# Subtest: metadata bounds the complete branded title and provides a meaningful 150–160 character description
+ok 69 - metadata bounds the complete branded title and provides a meaningful 150–160 character description
+  ---
+  duration_ms: 1.263
+  type: 'test'
+  ...
+# Subtest: Recipe JSON-LD uses actual values, preserves original images after resize failure and escapes script content
+ok 70 - Recipe JSON-LD uses actual values, preserves original images after resize failure and escapes script content
+  ---
+  duration_ms: 1.5175
+  type: 'test'
+  ...
+# Subtest: P6-25: Mock recipe fixture possesses valid structure for schema projection
+ok 71 - P6-25: Mock recipe fixture possesses valid structure for schema projection
+  ---
+  duration_ms: 1.4524
+  type: 'test'
+  ...
+# Subtest: P6-25: Schema.org Recipe JSON-LD generator meets Google Rich Results specification
+ok 72 - P6-25: Schema.org Recipe JSON-LD generator meets Google Rich Results specification
+  ---
+  duration_ms: 12.4522
+  type: 'test'
+  ...
+# Subtest: P6-25: JSON-LD serialization snapshot protects against script injection (XSS)
+ok 73 - P6-25: JSON-LD serialization snapshot protects against script injection (XSS)
+  ---
+  duration_ms: 2.6665
+  type: 'test'
+  ...
+# Subtest: P6-25: Page metadata snapshots for Home, Recipe Detail, Categories, and Recipes
+ok 74 - P6-25: Page metadata snapshots for Home, Recipe Detail, Categories, and Recipes
+  ---
+  duration_ms: 2.768
+  type: 'test'
+  ...
+# Subtest: P6-25: Private preview route snapshot strictly enforces noindex, nofollow and private media
+ok 75 - P6-25: Private preview route snapshot strictly enforces noindex, nofollow and private media
+  ---
+  duration_ms: 1.545
+  type: 'test'
+  ...
+# Subtest: P6-25: Sitemap and robots snapshot validation for canonical crawlability
+ok 76 - P6-25: Sitemap and robots snapshot validation for canonical crawlability
+  ---
+  duration_ms: 14.6949
+  type: 'test'
+  ...
+# Subtest: public routes expose canonical, Open Graph, Twitter, and index directives
+ok 77 - public routes expose canonical, Open Graph, Twitter, and index directives
+  ---
+  duration_ms: 14.9365
+  type: 'test'
+  ...
+# Subtest: published recipe emits complete and safely serialized Recipe JSON-LD
+ok 78 - published recipe emits complete and safely serialized Recipe JSON-LD
+  ---
+  duration_ms: 2.0349
+  type: 'test'
+  ...
+# Subtest: private routes are excluded from crawling and the sitemap remains published-only
+ok 79 - private routes are excluded from crawling and the sitemap remains published-only
+  ---
+  duration_ms: 6.2597
+  type: 'test'
+  ...
+# Subtest: robots points to the canonical sitemap and blocks private routes
+ok 80 - robots points to the canonical sitemap and blocks private routes
+  ---
+  duration_ms: 8.69
+  type: 'test'
+  ...
+# Subtest: public sitemap route streams the generated backend artifact without caching stale content
+ok 81 - public sitemap route streams the generated backend artifact without caching stale content
+  ---
+  duration_ms: 16.3365
+  type: 'test'
+  ...
+# Subtest: revalidation callback is secret-protected and invalidates public content paths
+ok 82 - revalidation callback is secret-protected and invalidates public content paths
+  ---
+  duration_ms: 2.1138
+  type: 'test'
+  ...
+# Subtest: robots advertises the canonical sitemap URL
+ok 83 - robots advertises the canonical sitemap URL
+  ---
+  duration_ms: 1.1751
+  type: 'test'
+  ...
+# Subtest: recipe detail displays the original image when background resize fails
+ok 84 - recipe detail displays the original image when background resize fails
+  ---
+  duration_ms: 515.3956
+  type: 'test'
+  ...
+# Subtest: composition ingredients deletion confirms, blocks duplicate writes and keeps errors recoverable
+ok 85 - composition ingredients deletion confirms, blocks duplicate writes and keeps errors recoverable
+  ---
+  duration_ms: 415.2631
+  type: 'test'
+  ...
+# Subtest: composition steps deletion confirms, blocks duplicate writes and keeps errors recoverable
+ok 86 - composition steps deletion confirms, blocks duplicate writes and keeps errors recoverable
+  ---
+  duration_ms: 242.944
+  type: 'test'
+  ...
+# Subtest: composition images deletion confirms, blocks duplicate writes and keeps errors recoverable
+ok 87 - composition images deletion confirms, blocks duplicate writes and keeps errors recoverable
+  ---
+  duration_ms: 226.1914
+  type: 'test'
+  ...
+# Subtest: password change rejects weak or mismatched passwords and preserves the form on server rejection
+ok 88 - password change rejects weak or mismatched passwords and preserves the form on server rejection
+  ---
+  duration_ms: 149.1338
+  type: 'test'
+  ...
+# Subtest: successful password change locks duplicate submissions and returns to login after logout
+ok 89 - successful password change locks duplicate submissions and returns to login after logout
+  ---
+  duration_ms: 122.7018
+  type: 'test'
+  ...
+# Subtest: forgot password sends the trimmed email and displays a neutral confirmation with resend
+ok 90 - forgot password sends the trimmed email and displays a neutral confirmation with resend
+  ---
+  duration_ms: 110.6446
+  type: 'test'
+  ...
+# Subtest: reset password rejects missing links and decodes fragment tokens without leaking them in navigation
+ok 91 - reset password rejects missing links and decodes fragment tokens without leaking them in navigation
+  ---
+  duration_ms: 148.4794
+  type: 'test'
+  ...
+# Subtest: expired reset links show recovery guidance and do not log the user out
+ok 92 - expired reset links show recovery guidance and do not log the user out
+  ---
+  duration_ms: 93.866
+  type: 'test'
+  ...
+# Subtest: public search applies numeric filters together, preserves existing filters and resets pagination
+ok 93 - public search applies numeric filters together, preserves existing filters and resets pagination
+  ---
+  duration_ms: 206.1198
+  type: 'test'
+  ...
+# Subtest: sortBy URL state is shown by the public form and choosing a sort replaces its aliases
+ok 94 - sortBy URL state is shown by the public form and choosing a sort replaces its aliases
+  ---
+  duration_ms: 107.2223
+  type: 'test'
+  ...
+# Subtest: public search validates ranges and restores form values from back-forward URL state
+ok 95 - public search validates ranges and restores form values from back-forward URL state
+  ---
+  duration_ms: 235.0813
+  type: 'test'
+  ...
+# Subtest: invalid save-and-leave keeps the editor and describes the error inside the dialog
+ok 96 - invalid save-and-leave keeps the editor and describes the error inside the dialog
+  ---
+  duration_ms: 203.4498
+  type: 'test'
+  ...
+# Subtest: save-and-leave waits for success, locks duplicate actions, and retains content on rejection
+ok 97 - save-and-leave waits for success, locks duplicate actions, and retains content on rejection
+  ---
+  duration_ms: 430.8005
+  type: 'test'
+  ...
+# Subtest: composition input survives the basic step and sidebar navigation is guarded
+ok 98 - composition input survives the basic step and sidebar navigation is guarded
+  ---
+  duration_ms: 178.6519
+  type: 'test'
+  ...
+# Subtest: AVIF upload accepts its MIME, reports progress, and retains the file for retry after failure
+ok 99 - AVIF upload accepts its MIME, reports progress, and retains the file for retry after failure
+  ---
+  duration_ms: 156.6611
+  type: 'test'
+  ...
+# Subtest: default category does not mark a new untouched recipe as dirty
+ok 100 - default category does not mark a new untouched recipe as dirty
+  ---
+  duration_ms: 150.6068
+  type: 'test'
+  ...
+# Subtest: profile edit reads the user after an asynchronous session loads
+ok 101 - profile edit reads the user after an asynchronous session loads
+  ---
+  duration_ms: 131.8421
+  type: 'test'
+  ...
+# Subtest: profile validates avatar URLs, saves all fields, and supports clearing the avatar
+ok 102 - profile validates avatar URLs, saves all fields, and supports clearing the avatar
+  ---
+  duration_ms: 157.3581
+  type: 'test'
+  ...
+# Subtest: profile preserves edits and maps server validation to the avatar field
+ok 103 - profile preserves edits and maps server validation to the avatar field
+  ---
+  duration_ms: 127.983
+  type: 'test'
+  ...
+# Subtest: recipe server validation keeps local input and marks the title without exposing internal details
+ok 104 - recipe server validation keeps local input and marks the title without exposing internal details
+  ---
+  duration_ms: 157.1766
+  type: 'test'
+  ...
+# Subtest: ingredient server rejection stays beside the field and retains input for retry
+ok 105 - ingredient server rejection stays beside the field and retains input for retry
+  ---
+  duration_ms: 115.7002
+  type: 'test'
+  ...
+# Subtest: registration submits trimmed identity fields while preserving password characters
+ok 106 - registration submits trimmed identity fields while preserving password characters
+  ---
+  duration_ms: 97.434
+  type: 'test'
+  ...
+# Subtest: category edit updates the list optimistically and rolls back without losing form data
+ok 107 - category edit updates the list optimistically and rolls back without losing form data
+  ---
+  duration_ms: 132.4358
+  type: 'test'
+  ...
+# Subtest: recipe schema blocks negative quantities and nutrition before calling the API
+ok 108 - recipe schema blocks negative quantities and nutrition before calling the API
+  ---
+  duration_ms: 170.1415
+  type: 'test'
+  ...
+# Subtest: managed search calls the server, URL scope resets, and mobile cards include archive
+ok 109 - managed search calls the server, URL scope resets, and mobile cards include archive
+  ---
+  duration_ms: 167.2648
+  type: 'test'
+  ...
+# Subtest: system overview combines administrative totals, recipe management and history without scope tabs
+ok 110 - system overview combines administrative totals, recipe management and history without scope tabs
+  ---
+  duration_ms: 90.7038
+  type: 'test'
+  ...
+# Subtest: SRS 5.1: authors can use the dashboard but cannot load administrative overview or audit data
+ok 111 - SRS 5.1: authors can use the dashboard but cannot load administrative overview or audit data
+  ---
+  duration_ms: 185.6321
+  type: 'test'
+  ...
+# Subtest: SRS 2.3/5.1: Admin retains a personal dashboard without fetching other authors data
+ok 112 - SRS 2.3/5.1: Admin retains a personal dashboard without fetching other authors data
+  ---
+  duration_ms: 72.4971
+  type: 'test'
+  ...
+# Subtest: sidebar preserves personal dashboard for both roles and gives only Admin a separate system entry
+ok 113 - sidebar preserves personal dashboard for both roles and gives only Admin a separate system entry
+  ---
+  duration_ms: 156.1551
+  type: 'test'
+  ...
+# Subtest: dashboard has one create action and system management keeps its own navigation context
+ok 114 - dashboard has one create action and system management keeps its own navigation context
+  ---
+  duration_ms: 275.7114
+  type: 'test'
+  ...
+# Subtest: category list opens one focused form, retains save errors and prevents dismissal while saving
+ok 115 - category list opens one focused form, retains save errors and prevents dismissal while saving
+  ---
+  duration_ms: 156.3666
+  type: 'test'
+  ...
+# Subtest: history shows actor, action, object and UTC+7 time with a detail dialog
+ok 116 - history shows actor, action, object and UTC+7 time with a detail dialog
+  ---
+  duration_ms: 99.9131
+  type: 'test'
+  ...
+# Subtest: modal traps focus, uses the latest close handler, keeps focus on rerender, and restores it
+ok 117 - modal traps focus, uses the latest close handler, keeps focus on rerender, and restores it
+  ---
+  duration_ms: 242.8011
+  type: 'test'
+  ...
+# Subtest: registration explains password rules and links validation errors to fields
+ok 118 - registration explains password rules and links validation errors to fields
+  ---
+  duration_ms: 91.8183
+  type: 'test'
+  ...
+# Subtest: back and forward navigation restore the editor until unsaved changes are resolved
+ok 119 - back and forward navigation restore the editor until unsaved changes are resolved
+  ---
+  duration_ms: 179.2724
+  type: 'test'
+  ...
+# Subtest: recipe action failures remain visible inside the confirmation dialog
+ok 120 - recipe action failures remain visible inside the confirmation dialog
+  ---
+  duration_ms: 111.4592
+  type: 'test'
+  ...
+# Subtest: editor action confirmation disables repeated submissions while pending
+ok 121 - editor action confirmation disables repeated submissions while pending
+  ---
+  duration_ms: 198.6099
+  type: 'test'
+  ...
+# Subtest: carousel excludes hidden links, pauses on focus and hover, and respects reduced motion
+ok 122 - carousel excludes hidden links, pauses on focus and hover, and respects reduced motion
+  ---
+  duration_ms: 127.4706
+  type: 'test'
+  ...
+# Subtest: content form schemas reject category HTML and accept long Instructions without an invented text limit
+ok 123 - content form schemas reject category HTML and accept long Instructions without an invented text limit
+  ---
+  duration_ms: 22.751
+  type: 'test'
+  ...
+# Subtest: recipe search normalizes Vietnamese, validates short input, and defaults to relevance
+ok 124 - recipe search normalizes Vietnamese, validates short input, and defaults to relevance
+  ---
+  duration_ms: 163.0977
+  type: 'test'
+  ...
+# Subtest: recipe search shows plain cards and removes one filter without losing the query
+ok 125 - recipe search shows plain cards and removes one filter without losing the query
+  ---
+  duration_ms: 119.1218
+  type: 'test'
+  ...
+# Subtest: recipe search keeps empty and network error states distinct and retries the same query
+ok 126 - recipe search keeps empty and network error states distinct and retries the same query
+  ---
+  duration_ms: 184.6259
+  type: 'test'
+  ...
+# Subtest: search navigation can preserve browser history and scrolling without changing legacy defaults
+ok 127 - search navigation can preserve browser history and scrolling without changing legacy defaults
+  ---
+  duration_ms: 117.8083
+  type: 'test'
+  ...
+# Subtest: recipe search blocks Enter during Vietnamese IME composition
+ok 128 - recipe search blocks Enter during Vietnamese IME composition
+  ---
+  duration_ms: 101.007
+  type: 'test'
+  ...
+# Subtest: recipe search recovers from an out-of-range page without discarding filters
+ok 129 - recipe search recovers from an out-of-range page without discarding filters
+  ---
+  duration_ms: 119.8291
+  type: 'test'
+  ...
+# Subtest: category create and edit reject invalid names and accept the 50-character boundary
+ok 130 - category create and edit reject invalid names and accept the 50-character boundary
+  ---
+  duration_ms: 393.7233
+  type: 'test'
+  ...
+# Subtest: P6-24: Homepage visual/responsive layouts across mobile, tablet, and desktop
+ok 131 - P6-24: Homepage visual/responsive layouts across mobile, tablet, and desktop
+  ---
+  duration_ms: 18.6983
+  type: 'test'
+  ...
+# Subtest: P6-24: Recipes listing visual/responsive search, sidebar filters, and card grid
+ok 132 - P6-24: Recipes listing visual/responsive search, sidebar filters, and card grid
+  ---
+  duration_ms: 2.5175
+  type: 'test'
+  ...
+# Subtest: P6-24: Recipe detail visual/responsive gallery, split columns, and typography
+ok 133 - P6-24: Recipe detail visual/responsive gallery, split columns, and typography
+  ---
+  duration_ms: 1.7387
+  type: 'test'
+  ...
+# Subtest: P6-24: Categories and CategoryDetail responsive layouts
+ok 134 - P6-24: Categories and CategoryDetail responsive layouts
+  ---
+  duration_ms: 1.5965
+  type: 'test'
+  ...
+# Subtest: P6-24: AppLayout navigation switches between desktop bar and mobile drawer with focus trap
+ok 135 - P6-24: AppLayout navigation switches between desktop bar and mobile drawer with focus trap
+  ---
+  duration_ms: 1.3413
+  type: 'test'
+  ...
+# Subtest: P6-24: Image components specify responsive sizes and blur placeholders to eliminate CLS
+ok 136 - P6-24: Image components specify responsive sizes and blur placeholders to eliminate CLS
+  ---
+  duration_ms: 3.6274
+  type: 'test'
+  ...
+1..136
+# tests 136
+# suites 0
+# pass 135
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10170.4252

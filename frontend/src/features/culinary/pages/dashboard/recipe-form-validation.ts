@@ -9,7 +9,7 @@ const FIELD_MESSAGES: FieldErrors = {
   instructions: 'Ghi chú hướng dẫn không quá 10000 ký tự.',
   categoryId: 'Vui lòng chọn danh mục hợp lệ.',
   difficulty: 'Vui lòng chọn độ khó hợp lệ.',
-  prepTime: 'Thời gian chuẩn bị phải là số nguyên từ 1 phút.',
+  prepTime: 'Thời gian chuẩn bị phải là số nguyên không âm.',
   cookTime: 'Thời gian nấu phải là số nguyên không âm.',
   servings: 'Khẩu phần phải là số nguyên từ 1 người.',
   nutrition: 'Giá trị dinh dưỡng phải là số không âm.',
@@ -33,7 +33,7 @@ export function validateRecipe(payload: RecipeWrite): FieldErrors {
   if (!['easy', 'medium', 'hard', 'expert'].includes(payload.difficulty))
     errors.difficulty = FIELD_MESSAGES.difficulty
   for (const key of ['prepTime', 'cookTime', 'servings'] as const) {
-    if (!integer(payload[key], key === 'cookTime' ? 0 : 1)) errors[key] = FIELD_MESSAGES[key]
+    if (!integer(payload[key], key === 'servings' ? 1 : 0)) errors[key] = FIELD_MESSAGES[key]
   }
   for (const [key, value] of Object.entries(payload.nutrition ?? {})) {
     if (value !== null && (!Number.isFinite(value) || value < 0))

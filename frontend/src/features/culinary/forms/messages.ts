@@ -27,7 +27,7 @@ export const formMessages = {
   servingsInteger: 'Khẩu phần phải là số nguyên.',
   servingsMinimum: 'Khẩu phần phải lớn hơn 0.',
   timeInteger: 'Thời gian phải là số nguyên.',
-  prepTime: 'Thời gian chuẩn bị phải ít nhất 1 phút.',
+  prepTime: 'Thời gian chuẩn bị phải không âm.',
   cookTime: 'Thời gian nấu không được âm.',
   ingredientNameRequired: 'Tên nguyên liệu là bắt buộc.',
   ingredientNameLength: 'Tên nguyên liệu không được vượt quá 100 ký tự.',

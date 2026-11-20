@@ -29,7 +29,7 @@ import {
 } from '@/lib/api/content-client'
 import { Modal } from '@/components/ui/modal'
 import { apiErrorMessage } from '@/lib/api/problem-details'
-import { getTimerInput, TIMER_UNIT_SECONDS, type TimerUnit } from '@/lib/recipe-timer'
+import { getTimerInput, MAX_STEP_TIMER_MINUTES, TIMER_UNIT_SECONDS, type TimerUnit } from '@/lib/recipe-timer'
 import { formMessages } from '../../forms/messages'
 import { setServerFieldErrors } from '../../forms/server-errors'
 import { ingredientSchema, stepSchema } from '../../forms/content-schemas'
@@ -38,7 +38,13 @@ import { RecipeDetail } from '../RecipeDetail'
 import { RecipeStepList } from './RecipeStepList'
 
 const EMPTY_INGREDIENT: IngredientWrite = { name: '', quantity: null, unit: null, notes: null, orderIndex: 0 }
-const EMPTY_STEP: StepWrite = { title: '', description: '', timerMinutes: null, imageUrl: null }
+const EMPTY_STEP: StepWrite = {
+  stepType: 'cook',
+  title: '',
+  description: '',
+  timerMinutes: null,
+  imageUrl: null,
+}
 
 interface Props {
   recipe: Recipe
@@ -97,7 +103,7 @@ function PrivateImage({ image }: { image: RecipeImage }) {
   }, [path, shouldLoad])
 
   return (
-    <div ref={containerRef} className="relative h-32 w-full bg-muted">
+    <div ref={containerRef} className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
       {source ? (
         <Image
           fill
@@ -107,10 +113,10 @@ function PrivateImage({ image }: { image: RecipeImage }) {
           alt={image.altText ?? ''}
           loading="lazy"
           decoding="async"
-          className="h-32 w-full object-cover"
+          className="h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
+        <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
           {image.processingStatus === 'failed' ? 'Xử lý ảnh thất bại' : 'Đang xử lý ảnh…'}
         </div>
       )}
@@ -178,6 +184,7 @@ export function RecipeCompositionWizard({
   const originalTimer = getTimerInput(originalStep?.timerMinutes ?? null)
   const stepBaseline = originalStep
     ? {
+        stepType: originalStep.stepType ?? 'cook',
         title: originalStep.title,
         description: originalStep.description,
         timerMinutes: originalTimer.value,
@@ -349,12 +356,21 @@ export function RecipeCompositionWizard({
 
   const submitStep = (values: StepWrite) => {
     setClientError(null)
+    const timerMinutes =
+      values.timerMinutes === null ? null : (values.timerMinutes * TIMER_UNIT_SECONDS[timerUnit]) / 60
+    if (timerMinutes !== null && timerMinutes > MAX_STEP_TIMER_MINUTES) {
+      stepFields.setError('timerMinutes', {
+        type: 'validate',
+        message: 'Thời gian hẹn giờ của mỗi bước tối đa là 24 giờ.',
+      })
+      return
+    }
     stepMutation.mutate({
+      stepType: values.stepType ?? 'cook',
       title: values.title,
       description: values.description,
       imageUrl: values.imageUrl,
-      timerMinutes:
-        values.timerMinutes === null ? null : (values.timerMinutes * TIMER_UNIT_SECONDS[timerUnit]) / 60,
+      timerMinutes,
     })
   }
 
@@ -377,7 +393,7 @@ export function RecipeCompositionWizard({
   }
 
   const inputClass =
-    'w-full border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none'
+    'min-h-11 w-full border border-border bg-background px-3.5 py-2.5 text-sm transition-colors placeholder:text-muted-foreground/70 hover:border-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
   return (
     <section
       aria-labelledby="composition-heading"
@@ -408,9 +424,9 @@ export function RecipeCompositionWizard({
             <form
               noValidate
               onSubmit={ingredientFields.handleSubmit(submitIngredient)}
-              className="min-w-0 space-y-3 border border-border p-4 bg-background xl:max-h-full xl:overflow-y-auto xl:overscroll-contain"
+              className="min-w-0 space-y-3 border border-border bg-card p-4 sm:p-5"
             >
-              <h3 className="font-medium text-foreground">
+              <h3 className="border-b border-border pb-2.5 font-serif text-lg text-foreground">
                 {editingIngredient ? 'Sửa nguyên liệu' : 'Thêm nguyên liệu mới'}
               </h3>
               <input
@@ -432,7 +448,7 @@ export function RecipeCompositionWizard({
                 <div className="min-w-0">
                   <label
                     htmlFor="ingredient-quantity"
-                    className="mb-1.5 block text-xs font-medium text-foreground"
+                    className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-foreground/80"
                   >
                     Số lượng
                   </label>
@@ -469,7 +485,7 @@ export function RecipeCompositionWizard({
                 <div className="min-w-0">
                   <label
                     htmlFor="ingredient-unit"
-                    className="mb-1.5 block text-xs font-medium text-foreground"
+                    className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-foreground/80"
                   >
                     Đơn vị
                   </label>
@@ -510,11 +526,11 @@ export function RecipeCompositionWizard({
                 id="ingredient-notes-error"
                 message={ingredientFields.formState.errors.notes?.message}
               />
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2">
                 <button
                   type="submit"
                   disabled={ingredientMutation.isPending}
-                  className="flex items-center gap-2 bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  className="flex min-h-11 items-center gap-2 bg-primary px-5 py-2 text-xs font-medium uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
                   <Plus size={14} /> {editingIngredient ? 'Lưu nguyên liệu' : 'Thêm nguyên liệu'}
                 </button>
@@ -525,7 +541,7 @@ export function RecipeCompositionWizard({
                       setEditingIngredient(null)
                       setIngredientForm(EMPTY_INGREDIENT)
                     }}
-                    className="border border-border px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
+                    className="min-h-11 border border-border px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
                   >
                     Hủy sửa
                   </button>
@@ -549,12 +565,18 @@ export function RecipeCompositionWizard({
                     Chưa có nguyên liệu nào. Hãy thêm ít nhất 1 nguyên liệu để đủ điều kiện xuất bản.
                   </div>
                 )}
-                {recipe.ingredients.map((item) => (
+                {recipe.ingredients.map((item, index) => (
                   <article
                     key={item.id}
                     role="listitem"
-                    className="flex items-center gap-3 border border-border bg-background p-3"
+                    className="flex items-center gap-3 border border-border bg-card p-3 transition-colors hover:border-primary/40"
                   >
+                    <span
+                      aria-hidden="true"
+                      className="grid size-8 shrink-0 place-items-center border border-border bg-background font-serif text-sm text-muted-foreground"
+                    >
+                      {index + 1}
+                    </span>
                     <div className="min-w-0 flex-1 wrap-anywhere">
                       <strong className="block truncate text-sm text-foreground">{item.name}</strong>
                       <span className="text-xs text-muted-foreground">
@@ -566,7 +588,7 @@ export function RecipeCompositionWizard({
                       type="button"
                       aria-label="Đưa nguyên liệu lên"
                       onClick={() => moveIngredient(item, -1)}
-                      className="p-1 text-muted-foreground hover:text-foreground"
+                      className="grid size-9 shrink-0 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                       <ArrowUp size={15} />
                     </button>
@@ -574,13 +596,13 @@ export function RecipeCompositionWizard({
                       type="button"
                       aria-label="Đưa nguyên liệu xuống"
                       onClick={() => moveIngredient(item, 1)}
-                      className="p-1 text-muted-foreground hover:text-foreground"
+                      className="grid size-9 shrink-0 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                       <ArrowDown size={15} />
                     </button>
                     <button
                       type="button"
-                      className="text-xs underline text-muted-foreground hover:text-primary px-1"
+                      className="min-h-9 shrink-0 px-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
                       onClick={() => {
                         setEditingIngredient(item.id)
                         setIngredientForm({
@@ -597,7 +619,7 @@ export function RecipeCompositionWizard({
                     <button
                       type="button"
                       aria-label="Xóa nguyên liệu"
-                      className="p-1 text-muted-foreground hover:text-red-600"
+                      className="grid size-9 shrink-0 place-items-center text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
                       onClick={() =>
                         setDeleteTarget({
                           kind: 'ingredient',
@@ -615,18 +637,18 @@ export function RecipeCompositionWizard({
           </div>
 
           {/* Stepper Navigation */}
-          <div className="flex shrink-0 items-center justify-between border-t border-border pt-4">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border pt-5">
             <button
               type="button"
               onClick={() => onNavigateToStep?.('basic')}
-              className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              className="flex min-h-11 items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-primary"
             >
               <ArrowLeft size={14} /> Quay lại: Thông tin cơ bản
             </button>
             <button
               type="button"
               onClick={() => setStage('steps')}
-              className="flex items-center gap-1.5 bg-primary px-4 py-2 text-xs uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
+              className="flex min-h-11 items-center gap-1.5 bg-primary px-5 py-2.5 text-xs font-medium uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
             >
               Tiếp tục: Các bước <ArrowRight size={14} />
             </button>
@@ -641,13 +663,13 @@ export function RecipeCompositionWizard({
             <form
               noValidate
               onSubmit={stepFields.handleSubmit(submitStep)}
-              className="min-w-0 border border-border p-4 bg-background xl:max-h-full xl:overflow-y-auto xl:overscroll-contain"
+              className="min-w-0 border border-border bg-card p-4 sm:p-5"
             >
               <fieldset
                 disabled={stepMutation.isPending || reorderStepMutation.isPending || deleting}
                 className="min-w-0 space-y-3"
               >
-                <h3 className="font-medium text-foreground">
+                <h3 className="border-b border-border pb-2.5 font-serif text-lg text-foreground">
                   {editingStep ? 'Sửa bước thực hiện' : 'Thêm bước mới'}
                 </h3>
                 <input
@@ -664,8 +686,8 @@ export function RecipeCompositionWizard({
                   aria-label="Mô tả bước"
                   placeholder="Mô tả chi tiết cách thực hiện…"
                   maxLength={2000}
-                  rows={4}
-                  className={inputClass}
+                  rows={3}
+                  className={`${inputClass} resize-none`}
                   {...stepFields.register('description')}
                   aria-invalid={Boolean(stepFields.formState.errors.description)}
                   aria-describedby={
@@ -676,10 +698,19 @@ export function RecipeCompositionWizard({
                   id="step-description-error"
                   message={stepFields.formState.errors.description?.message}
                 />
-                <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3">
+                <div className="grid grid-cols-[7rem_minmax(0,1fr)_5.5rem] gap-2">
+                  <select
+                    aria-label="Phân loại bước"
+                    className={inputClass}
+                    {...stepFields.register('stepType')}
+                  >
+                    <option value="prep">Chuẩn bị</option>
+                    <option value="cook">Nấu</option>
+                  </select>
+
                   <input
                     aria-label="Thời gian hẹn giờ"
-                    placeholder="Hẹn giờ nấu (tùy chọn)"
+                    placeholder="Hẹn giờ (tùy chọn)"
                     type="number"
                     inputMode="numeric"
                     min="0"
@@ -720,11 +751,11 @@ export function RecipeCompositionWizard({
                   id="step-timerMinutes-error"
                   message={stepFields.formState.errors.timerMinutes?.message}
                 />
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2">
                   <button
                     type="submit"
                     disabled={stepMutation.isPending}
-                    className="flex items-center gap-2 bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    className="flex min-h-11 items-center gap-2 bg-primary px-5 py-2 text-xs font-medium uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                   >
                     <Save size={14} /> {editingStep ? 'Lưu bước' : 'Thêm bước'}
                   </button>
@@ -736,7 +767,7 @@ export function RecipeCompositionWizard({
                         setStepForm(EMPTY_STEP)
                         setTimerUnit('minutes')
                       }}
-                      className="border border-border px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
+                      className="min-h-11 border border-border px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:bg-secondary"
                     >
                       Hủy sửa
                     </button>
@@ -755,6 +786,7 @@ export function RecipeCompositionWizard({
                 const timer = getTimerInput(item.timerMinutes)
                 setTimerUnit(timer.unit)
                 setStepForm({
+                  stepType: item.stepType ?? 'cook',
                   title: item.title,
                   description: item.description,
                   timerMinutes: timer.value,
@@ -768,18 +800,18 @@ export function RecipeCompositionWizard({
           </div>
 
           {/* Stepper Navigation */}
-          <div className="flex shrink-0 items-center justify-between border-t border-border pt-4">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border pt-5">
             <button
               type="button"
               onClick={() => setStage('ingredients')}
-              className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              className="flex min-h-11 items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-primary"
             >
               <ArrowLeft size={14} /> Quay lại: Nguyên liệu
             </button>
             <button
               type="button"
               onClick={() => setStage('images')}
-              className="flex items-center gap-1.5 bg-primary px-4 py-2 text-xs uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
+              className="flex min-h-11 items-center gap-1.5 bg-primary px-5 py-2.5 text-xs font-medium uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
             >
               Tiếp tục: Hình ảnh <ArrowRight size={14} />
             </button>
@@ -827,14 +859,16 @@ export function RecipeCompositionWizard({
                 }
                 submitImage(event.dataTransfer.files[0])
               }}
-              className={`w-full border border-dashed p-5 text-center transition-colors disabled:cursor-wait disabled:opacity-60 ${
+              className={`w-full border-2 border-dashed p-10 text-center transition-colors disabled:cursor-wait disabled:opacity-60 ${
                 draggingImage
                   ? 'border-primary bg-primary/5'
                   : 'border-border bg-background hover:border-primary hover:bg-primary/5'
               }`}
             >
               <span className="pointer-events-none flex flex-col items-center gap-2">
-                <ImagePlus size={24} className="text-primary" aria-hidden="true" />
+                <span className="grid size-12 place-items-center border border-primary/30 bg-primary/5">
+                  <ImagePlus size={22} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
+                </span>
                 <span className="text-sm font-medium">
                   {imageMutation.isPending
                     ? 'Đang tải ảnh lên…'
@@ -876,7 +910,10 @@ export function RecipeCompositionWizard({
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {recipe.images.map((image) => (
-                    <article key={image.id} className="border border-border bg-background p-3 space-y-2">
+                    <article
+                      key={image.id}
+                      className="space-y-2 border border-border bg-card p-3 transition-colors hover:border-primary/40"
+                    >
                       <PrivateImage image={image} />
                       <div className="flex items-center justify-between pt-1">
                         <button
@@ -924,18 +961,18 @@ export function RecipeCompositionWizard({
           </div>
 
           {/* Stepper Navigation */}
-          <div className="flex shrink-0 items-center justify-between border-t border-border pt-4">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border pt-5">
             <button
               type="button"
               onClick={() => setStage('steps')}
-              className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              className="flex min-h-11 items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-primary"
             >
               <ArrowLeft size={14} /> Quay lại: Các bước
             </button>
             <button
               type="button"
               onClick={() => setStage('preview')}
-              className="flex items-center gap-1.5 bg-primary px-4 py-2 text-xs uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
+              className="flex min-h-11 items-center gap-1.5 bg-primary px-5 py-2.5 text-xs font-medium uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
             >
               Tiếp tục: Xem trước & Xuất bản <ArrowRight size={14} />
             </button>
@@ -951,7 +988,7 @@ export function RecipeCompositionWizard({
             <button
               type="button"
               onClick={() => setStage('images')}
-              className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              className="flex min-h-11 items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-primary"
             >
               <ArrowLeft size={14} /> Quay lại: Hình ảnh
             </button>
@@ -972,7 +1009,7 @@ export function RecipeCompositionWizard({
               type="button"
               disabled={deleting}
               onClick={() => setDeleteTarget(null)}
-              className="border border-border px-4 py-2"
+              className="min-h-11 border border-border px-5 py-2 text-xs uppercase tracking-widest hover:bg-secondary"
             >
               Hủy
             </button>
@@ -980,7 +1017,7 @@ export function RecipeCompositionWizard({
               type="button"
               disabled={deleting}
               onClick={confirmDelete}
-              className="bg-red-700 px-4 py-2 text-white"
+              className="min-h-11 bg-red-700 px-5 py-2 text-xs uppercase tracking-widest text-white hover:bg-red-800"
             >
               {deleting ? 'Đang xóa…' : 'Xóa nội dung'}
             </button>

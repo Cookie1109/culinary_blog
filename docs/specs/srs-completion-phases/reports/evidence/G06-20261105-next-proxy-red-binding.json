@@ -1,0 +1,9 @@
+{
+  "primaryClientPublicApiBase": "/api/v1",
+  "primaryApiCategoryStatus": 404,
+  "primaryApiRecipeStatus": 404,
+  "directRenderCategoryStatus": 200,
+  "directRenderCategoryContentType": "application/json; charset=utf-8",
+  "rootConfigBeforeSha256": "6501d0c3c902a294fd9d67e76b25a698897d2b30da2f32391934bc029cb91544",
+  "scope": "Read-only missing same-origin API gateway reproduction; no user record mutation"
+}

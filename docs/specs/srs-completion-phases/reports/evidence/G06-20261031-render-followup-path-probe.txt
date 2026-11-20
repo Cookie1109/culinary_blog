@@ -1,0 +1,4 @@
+uid=1654
+/app/data-protection present=yes writable=yes
+/var present=yes writable=no
+/var/data present=no writable=no

@@ -18,11 +18,14 @@ internal sealed class CategoryWriteRequestValidator : AbstractValidator<Category
             .MaximumLength(500)
             .Must(BeSafeUrl)
             .When(request => !string.IsNullOrWhiteSpace(request.ImageUrl))
-            .WithMessage("imageUrl must be an absolute HTTP or HTTPS URL.");
+            .WithMessage("imageUrl must be an absolute HTTP or HTTPS URL or an uploaded media path.");
         this.RuleFor(request => request.OrderIndex).GreaterThanOrEqualTo(0);
     }
 
     private static bool BeSafeUrl(string? value) =>
-        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
-        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        (value is not null && value.StartsWith("/api/v1/media/", StringComparison.Ordinal) &&
+            !value.Contains("..", StringComparison.Ordinal) &&
+            !value.Any(character => character is '\\' or '?' or '#' || char.IsWhiteSpace(character))) ||
+        (Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
 }

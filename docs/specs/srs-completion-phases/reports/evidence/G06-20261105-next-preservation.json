@@ -1,0 +1,32 @@
+{
+  "rootHead": "ce4ae4eb8fd7d94b36b600ec01da024f4a9670e3",
+  "rootIndexEmpty": true,
+  "outsideScopeDrift": [],
+  "baselineFiles": 1333,
+  "changedExistingFiles": [
+    "docs/operations/web-vitals.md",
+    "docs/specs/srs-completion-checklist.md",
+    "docs/specs/srs-completion-phases/progress.md",
+    "docs/specs/srs-completion-phases/reports/package-G06-result.md",
+    "frontend/next.config.mjs",
+    "infra/nginx/nginx.production.conf"
+  ],
+  "newCodeFiles": [
+    "frontend/tests/vercel-api-proxy.test.mjs"
+  ],
+  "nginxDeltaExactlyOneLocation": true,
+  "rootConfigOnlyProxyChange": true,
+  "dockerRuntimeConfigEquivalent": true,
+  "pdfUnchanged": true,
+  "abcUnchanged": true,
+  "priorEvidenceProofsUnchanged": 105,
+  "privateNeedleCount": 12,
+  "exactPrivateValueMatches": 0,
+  "gitEligibleFilesChecked": 1379,
+  "candidateCommitPushed": "d50f9dd439000a1ae865b0b84fc6d7465a4926c6",
+  "mainUnchanged": "41f619bd1d91079dbd37ee73c10c44fbbc5a6298",
+  "userContainerIdsPreservedAtPairedCleanup": 13,
+  "isolatedPairedProjectRemovedAtCleanup": true,
+  "currentDockerRuntimeVerification": "Unavailable; see runtime-unavailable proof, not pass",
+  "backupScheduleInstalled": false
+}

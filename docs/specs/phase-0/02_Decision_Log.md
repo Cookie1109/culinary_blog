@@ -4,6 +4,8 @@
 > Ngày chốt: 11/09/2026  
 > Giải thích đầy đủ về vị trí và lý do: [00_SRS_Conformance_and_Resolution.md](./00_SRS_Conformance_and_Resolution.md)
 
+Bổ sung vận hành26/10/2026: [ADR-011 — runtime release metadata](adr/ADR-011-release-metadata-providers.md), theo phê duyệt metadata của người dùng có điều kiện khớp PDF. Giữ nguyên GAP/đính chính A/B/C và các gate production Docker; chưa xác nhận môi trường demo hybrid đạt nghiệm thu triển khai.
+
 | GAP | Quyết định baseline | Owner thực thi | Tài liệu chi tiết | Trạng thái |
 |---|---|---|---|---|
 | GAP-001 | Dùng 34 FR; “27” là lỗi đếm | PO/QA | Product Baseline | Accepted |

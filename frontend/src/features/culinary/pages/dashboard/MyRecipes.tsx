@@ -5,7 +5,8 @@ import {
   Archive,
   ArrowLeft,
   ArrowRight,
-  EyeOff,
+  Eye,
+  Undo2,
   Globe,
   Pencil,
   PlusCircle,
@@ -45,9 +46,9 @@ const STATUS_LABELS: Record<RecipeStatus, string> = {
 }
 
 const STATUS_BADGE: Record<RecipeStatus, string> = {
-  published: 'bg-green-50 text-green-700 border border-green-200',
-  draft: 'bg-amber-50 text-amber-700 border border-amber-200',
-  archived: 'bg-secondary text-muted-foreground border border-border',
+  published: 'border border-emerald-200 bg-emerald-50 text-emerald-700',
+  draft: 'border border-amber-200 bg-amber-50 text-amber-700',
+  archived: 'border border-border bg-secondary text-muted-foreground',
 }
 
 type ConfirmActionType = 'publish' | 'unpublish' | 'archive' | 'unarchive' | 'delete'
@@ -228,23 +229,23 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
     confirmDialog?.type === 'publish' ? 'bg-green-700 hover:bg-green-800' : 'bg-primary hover:bg-primary/90'
 
   return (
-    <div>
+    <div data-managed-recipes={!systemOverview || undefined}>
       {/* Header */}
-      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="mb-7 flex flex-col justify-between gap-5 border-b border-border pb-7 sm:flex-row sm:items-center">
         <div>
           <Heading
             className={`font-serif text-foreground ${systemOverview ? 'text-2xl' : 'text-3xl lg:text-4xl'}`}
           >
             {scope === 'all' ? 'Tất cả công thức' : 'Công thức của tôi'}
           </Heading>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {recipesQuery.data ? totalDescription : emptyDescription}
           </p>
         </div>
         {!systemOverview && (
           <Link
             to="/dashboard/recipes/new"
-            className="flex shrink-0 items-center gap-2 bg-primary px-5 py-3 text-sm uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <PlusCircle size={16} /> Tạo công thức mới
           </Link>
@@ -252,8 +253,8 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative max-w-sm flex-1">
+      <div className="mb-5 flex flex-col gap-4 border border-border bg-card p-4 xl:flex-row xl:items-center">
+        <div className="relative min-w-0 flex-1">
           <Search
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
             size={16}
@@ -270,13 +271,13 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
             placeholder={
               scope === 'all' ? 'Tìm theo tiêu đề, danh mục, tác giả…' : 'Tìm theo tiêu đề, danh mục…'
             }
-            className="w-full border border-border bg-background py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="min-h-11 w-full border border-border bg-background py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
         <div
           role="group"
           aria-label="Lọc trạng thái công thức"
-          className="flex flex-wrap border border-border bg-background"
+          className="grid shrink-0 grid-cols-2 gap-1 border border-border bg-background p-1 sm:grid-cols-4"
         >
           {STATUS_FILTERS.map((item) => (
             <button
@@ -284,9 +285,9 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
               key={item.label}
               aria-pressed={status === item.value}
               onClick={() => handleStatusChange(item.value)}
-              className={`px-4 py-2.5 text-xs font-medium uppercase tracking-widest transition-colors ${
+              className={`min-h-11 whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors ${
                 status === item.value
-                  ? 'bg-foreground text-background'
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-secondary'
               }`}
             >
@@ -348,27 +349,40 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
           ) : (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-hidden border border-border bg-background">
+              <div className="hidden overflow-hidden border border-border bg-card md:block">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="border-b border-border bg-secondary/30 text-left text-xs uppercase tracking-widest text-muted-foreground">
                       <tr>
-                        <th className="px-6 py-3 font-medium">Tiêu đề</th>
-                        {scope === 'all' && <th className="px-6 py-3 font-medium">Tác giả</th>}
-                        <th className="px-6 py-3 font-medium">Danh mục</th>
-                        <th className="px-6 py-3 font-medium">Trạng thái</th>
-                        <th className="px-6 py-3 text-right font-medium">Ngày tạo</th>
-                        <th className="px-6 py-3 text-right font-medium">Thao tác</th>
+                        <th className="px-5 py-3 font-medium">Tiêu đề</th>
+                        {scope === 'all' && <th className="px-5 py-3 font-medium">Tác giả</th>}
+                        <th className="px-5 py-3 font-medium">Danh mục</th>
+                        <th className="px-5 py-3 font-medium">Trạng thái</th>
+                        <th className="px-5 py-3 text-right font-medium">Ngày tạo</th>
+                        <th className="px-5 py-3 text-right font-medium">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody>
                       {recipes.map((recipe) => (
                         <tr
                           key={recipe.id}
-                          className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors"
+                          className="border-b border-border transition-colors last:border-0 hover:bg-background/70"
                         >
-                          <td className="px-6 py-4">
-                            <span className="font-medium text-foreground">{recipe.title}</span>
+                          <td className="px-6 py-5">
+                            <div className="flex min-w-52 max-w-sm items-center gap-3">
+                              <span
+                                aria-hidden="true"
+                                className="flex size-11 shrink-0 items-center justify-center border border-border/60 bg-background font-serif text-xl text-primary"
+                              >
+                                {Array.from(recipe.title.trim())[0]?.toLocaleUpperCase('vi-VN')}
+                              </span>
+                              <Link
+                                to={`/dashboard/recipes/${recipe.id}/preview${originSuffix}`}
+                                className="min-w-0 break-words font-medium text-foreground hover:text-primary"
+                              >
+                                {recipe.title}
+                              </Link>
+                            </div>
                           </td>
                           {scope === 'all' && (
                             <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
@@ -377,114 +391,115 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                           )}
                           <td className="px-6 py-4 text-muted-foreground">{recipe.category.name}</td>
                           <td className="px-6 py-4">
-                            <span className={`px-2.5 py-1 text-xs ${STATUS_BADGE[recipe.status]}`}>
+                            <span
+                              className={`inline-flex min-w-28 items-center justify-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 text-xs ${STATUS_BADGE[recipe.status]}`}
+                            >
+                              <span aria-hidden="true" className="size-1.5 bg-current" />
                               {STATUS_LABELS[recipe.status]}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-right text-muted-foreground">
+                          <td className="whitespace-nowrap px-6 py-4 text-right text-muted-foreground">
                             {new Intl.DateTimeFormat('vi-VN').format(new Date(recipe.createdAt))}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-3">
-                              {/* Preview link */}
-                              <Link
-                                to={`/dashboard/recipes/${recipe.id}/preview${originSuffix}`}
-                                aria-label={`Xem trước ${recipe.title}`}
-                                title="Xem trước riêng tư"
-                                className="text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
-                              >
-                                Xem trước
-                              </Link>
+                              {/* Primary state action: one fixed-width slot so rows stay aligned */}
+                              <div className="w-32">
+                                {recipe.status === 'draft' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionError(null)
+                                      setConfirmDialog({ type: 'publish', recipe })
+                                    }}
+                                    aria-label={`Xuất bản ${recipe.title}`}
+                                    title="Xuất bản công thức"
+                                    className="flex min-h-10 w-full items-center justify-center gap-1.5 whitespace-nowrap border border-emerald-300 px-3 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
+                                  >
+                                    <Globe size={14} aria-hidden="true" /> Xuất bản
+                                  </button>
+                                )}
+                                {recipe.status === 'published' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionError(null)
+                                      setConfirmDialog({ type: 'unpublish', recipe })
+                                    }}
+                                    aria-label={`Gỡ xuất bản ${recipe.title}`}
+                                    title="Gỡ xuất bản"
+                                    className="flex min-h-10 w-full items-center justify-center gap-1.5 whitespace-nowrap border border-amber-300 px-3 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50"
+                                  >
+                                    <Undo2 size={14} aria-hidden="true" /> Gỡ xuất bản
+                                  </button>
+                                )}
+                                {recipe.status === 'archived' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionError(null)
+                                      setConfirmDialog({ type: 'unarchive', recipe })
+                                    }}
+                                    aria-label={`Khôi phục ${recipe.title}`}
+                                    title="Khôi phục về bản nháp"
+                                    className="flex min-h-10 w-full items-center justify-center gap-1.5 whitespace-nowrap border border-primary/40 px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
+                                  >
+                                    <RotateCcw size={14} aria-hidden="true" /> Khôi phục
+                                  </button>
+                                )}
+                              </div>
 
-                              {/* Edit link - disabled/blocked for archived recipes */}
-                              {recipe.status !== 'archived' && (
+                              {/* Tools: fixed slots, hidden ones keep their space */}
+                              <div className="flex items-center border-l border-border pl-3">
                                 <Link
-                                  to={`/dashboard/recipes/${recipe.id}/edit${originSuffix}`}
-                                  aria-label={`Chỉnh sửa ${recipe.title}`}
-                                  title="Chỉnh sửa công thức"
-                                  className="text-muted-foreground hover:text-primary"
+                                  to={`/dashboard/recipes/${recipe.id}/preview${originSuffix}`}
+                                  aria-label={`Xem trước ${recipe.title}`}
+                                  title="Xem trước riêng tư"
+                                  className="grid size-10 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
                                 >
-                                  <Pencil size={16} />
+                                  <Eye size={17} aria-hidden="true" />
                                 </Link>
-                              )}
-
-                              {/* Publish (Draft -> Published) */}
-                              {recipe.status === 'draft' && (
+                                {recipe.status !== 'archived' ? (
+                                  <Link
+                                    to={`/dashboard/recipes/${recipe.id}/edit${originSuffix}`}
+                                    aria-label={`Chỉnh sửa ${recipe.title}`}
+                                    title="Chỉnh sửa công thức"
+                                    className="grid size-10 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
+                                  >
+                                    <Pencil size={16} />
+                                  </Link>
+                                ) : (
+                                  <span aria-hidden="true" className="size-10" />
+                                )}
+                                {recipe.status !== 'archived' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionError(null)
+                                      setConfirmDialog({ type: 'archive', recipe })
+                                    }}
+                                    aria-label={`Lưu trữ ${recipe.title}`}
+                                    title="Lưu trữ công thức"
+                                    className="grid size-10 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                  >
+                                    <Archive size={16} />
+                                  </button>
+                                ) : (
+                                  <span aria-hidden="true" className="size-10" />
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setActionError(null)
-                                    setConfirmDialog({ type: 'publish', recipe })
+                                    setConfirmDialog({ type: 'delete', recipe })
                                   }}
-                                  aria-label={`Xuất bản ${recipe.title}`}
-                                  title="Xuất bản công thức"
-                                  className="text-muted-foreground hover:text-green-600"
+                                  aria-label={`Xóa ${recipe.title}`}
+                                  title="Xóa công thức"
+                                  className="grid size-10 place-items-center text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
                                 >
-                                  <Globe size={16} />
+                                  <Trash2 size={16} />
                                 </button>
-                              )}
-
-                              {/* Unpublish (Published -> Draft) */}
-                              {recipe.status === 'published' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActionError(null)
-                                    setConfirmDialog({ type: 'unpublish', recipe })
-                                  }}
-                                  aria-label={`Gỡ xuất bản ${recipe.title}`}
-                                  title="Gỡ xuất bản"
-                                  className="text-muted-foreground hover:text-amber-600"
-                                >
-                                  <EyeOff size={16} />
-                                </button>
-                              )}
-
-                              {/* Archive (Draft / Published -> Archived) */}
-                              {recipe.status !== 'archived' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActionError(null)
-                                    setConfirmDialog({ type: 'archive', recipe })
-                                  }}
-                                  aria-label={`Lưu trữ ${recipe.title}`}
-                                  title="Lưu trữ công thức"
-                                  className="text-muted-foreground hover:text-foreground"
-                                >
-                                  <Archive size={16} />
-                                </button>
-                              )}
-
-                              {/* Unarchive (Archived -> Draft) */}
-                              {recipe.status === 'archived' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActionError(null)
-                                    setConfirmDialog({ type: 'unarchive', recipe })
-                                  }}
-                                  aria-label={`Khôi phục ${recipe.title}`}
-                                  title="Khôi phục về bản nháp"
-                                  className="flex items-center gap-1 text-xs text-primary hover:underline"
-                                >
-                                  <RotateCcw size={14} /> Khôi phục
-                                </button>
-                              )}
-
-                              {/* Delete button */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActionError(null)
-                                  setConfirmDialog({ type: 'delete', recipe })
-                                }}
-                                aria-label={`Xóa ${recipe.title}`}
-                                title="Xóa công thức"
-                                className="text-muted-foreground hover:text-red-600"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -497,15 +512,19 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
               {/* Mobile Card View */}
               <div className="grid gap-4 md:hidden">
                 {recipes.map((recipe) => (
-                  <article key={recipe.id} className="border border-border bg-background p-4 space-y-3">
+                  <article key={recipe.id} className="space-y-4 border border-border bg-card p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <span className="text-xs uppercase tracking-widest text-muted-foreground">
                           {recipe.category.name}
                         </span>
-                        <h2 className="font-serif text-lg font-medium text-foreground">{recipe.title}</h2>
+                        <h2 className="break-words font-serif text-lg font-medium text-foreground">
+                          {recipe.title}
+                        </h2>
                       </div>
-                      <span className={`px-2 py-0.5 text-xs ${STATUS_BADGE[recipe.status]}`}>
+                      <span
+                        className={`shrink-0 whitespace-nowrap px-2.5 py-1 text-xs ${STATUS_BADGE[recipe.status]}`}
+                      >
                         {STATUS_LABELS[recipe.status]}
                       </span>
                     </div>
@@ -528,17 +547,17 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                       <div className="flex items-center gap-3">
                         <Link
                           to={`/dashboard/recipes/${recipe.id}/preview${originSuffix}`}
-                          className="text-xs underline text-muted-foreground hover:text-foreground"
+                          className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline hover:text-foreground"
                         >
                           Xem trước
                         </Link>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1">
                         {recipe.status !== 'archived' && (
                           <Link
                             to={`/dashboard/recipes/${recipe.id}/edit${originSuffix}`}
-                            className="border border-border px-3 py-1.5 text-xs uppercase tracking-wider hover:bg-secondary"
+                            className="min-h-11 border border-border px-3 py-2 text-xs uppercase tracking-wider hover:bg-secondary"
                           >
                             Sửa
                           </Link>
@@ -550,7 +569,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                               setActionError(null)
                               setConfirmDialog({ type: 'publish', recipe })
                             }}
-                            className="border border-green-600 bg-green-50 px-3 py-1.5 text-xs uppercase tracking-wider text-green-700 hover:bg-green-100"
+                            className="min-h-11 border border-green-600 bg-green-50 px-3 py-2 text-xs uppercase tracking-wider text-green-700 hover:bg-green-100"
                           >
                             Xuất bản
                           </button>
@@ -562,7 +581,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                               setActionError(null)
                               setConfirmDialog({ type: 'unpublish', recipe })
                             }}
-                            className="border border-amber-600 bg-amber-50 px-3 py-1.5 text-xs uppercase tracking-wider text-amber-700 hover:bg-amber-100"
+                            className="min-h-11 border border-amber-600 bg-amber-50 px-3 py-2 text-xs uppercase tracking-wider text-amber-700 hover:bg-amber-100"
                           >
                             Gỡ
                           </button>
@@ -574,7 +593,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                               setActionError(null)
                               setConfirmDialog({ type: 'archive', recipe })
                             }}
-                            className="border border-border px-3 py-1.5 text-xs uppercase tracking-wider hover:bg-secondary"
+                            className="min-h-11 border border-border px-3 py-2 text-xs uppercase tracking-wider hover:bg-secondary"
                           >
                             Lưu trữ
                           </button>
@@ -586,7 +605,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                               setActionError(null)
                               setConfirmDialog({ type: 'unarchive', recipe })
                             }}
-                            className="border border-primary bg-primary px-3 py-1.5 text-xs uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
+                            className="min-h-11 border border-primary bg-primary px-3 py-2 text-xs uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
                           >
                             Khôi phục
                           </button>
@@ -598,7 +617,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                             setConfirmDialog({ type: 'delete', recipe })
                           }}
                           aria-label={`Xóa ${recipe.title}`}
-                          className="p-1.5 text-muted-foreground hover:text-red-600"
+                          className="flex size-11 items-center justify-center text-muted-foreground hover:bg-red-50 hover:text-red-600"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -615,7 +634,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
                     Hiển thị {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, total)} trong tổng số{' '}
                     {total} công thức
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       disabled={page <= 1}
@@ -699,7 +718,7 @@ export function MyRecipes({ systemOverview = false }: { systemOverview?: boolean
               )}
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-end gap-1 pt-3 border-t border-border">
               <button
                 type="button"
                 disabled={isPendingAction}

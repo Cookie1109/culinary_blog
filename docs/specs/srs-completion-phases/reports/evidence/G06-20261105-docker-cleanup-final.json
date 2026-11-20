@@ -1,0 +1,29 @@
+{
+  "checkedAtUtc": "2026-11-05T00:22:48.688350+00:00",
+  "initialCFreeBytes": 0,
+  "afterCFreeBytes": 37310935040,
+  "dockerVhdBeforeBytes": 78191263744,
+  "dockerVhdAfterBytes": 41012953088,
+  "removedSyntheticContainers": 8,
+  "removedSupersededG06ImageTags": 8,
+  "backendCacheRecordsSelected": 58,
+  "frontendCacheRecordsSelected": 26,
+  "remainingContainerIdentitiesPreserved": 21,
+  "remainingVolumeNamesPreserved": 41,
+  "userContainerCount": 13,
+  "noGlobalPrune": true,
+  "nugetCacheMoved": false,
+  "backupsAndCurrentArtifactArchivesPreserved": true,
+  "localApplicationChecks": [
+    {
+      "path": "/health/ready",
+      "status": 200,
+      "recipeCount": null
+    },
+    {
+      "path": "/api/v1/recipes?pageSize=1",
+      "status": 200,
+      "recipeCount": 1
+    }
+  ]
+}

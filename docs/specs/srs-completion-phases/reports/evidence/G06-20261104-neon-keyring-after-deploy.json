@@ -1,0 +1,17 @@
+{
+  "checkedAtUtc": "2026-11-04T12:07:22.858598+00:00",
+  "keyring": {
+    "keys": 1,
+    "encrypted": true,
+    "plaintext": false,
+    "fingerprints": [
+      "b27ba9b7890e0dce299866aa4dea34d8f135fd348a98e0bef6c71d29dfb49612"
+    ]
+  },
+  "publicTablesExceptKeyring": 17,
+  "businessAndMigrationTablesPreserved": true,
+  "mismatchedTables": [],
+  "readOnly": true,
+  "mainMigrations": 5,
+  "passed": true
+}
