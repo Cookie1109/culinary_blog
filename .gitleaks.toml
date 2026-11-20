@@ -1,0 +1,12 @@
+title = "culinary-blog gitleaks config"
+
+[extend]
+useDefault = true
+
+# `generic-api-key` dựa trên entropy nên báo nhầm trên hash SHA-256, ID dịch vụ
+# Render (srv-...) và văn bản trong hồ sơ kiểm chứng. Chỉ bỏ qua rule này trong
+# docs/; mọi rule đặc thù (AWS, GitHub token, private key...) vẫn quét toàn repo.
+[[allowlists]]
+description = "Hash và ID tài nguyên trong hồ sơ kiểm chứng/báo cáo, không phải secret"
+targetRules = ["generic-api-key"]
+paths = ['''^docs/''']

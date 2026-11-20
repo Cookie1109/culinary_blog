@@ -14,7 +14,7 @@ const output = path.resolve(
 )
 await mkdir(output, { recursive: true })
 const commands = []
-async function run(exe, args, cwd, name, env = {}) {
+async function run(exe, args, cwd, name, env = {}, stream = false) {
   const started = new Date().toISOString()
   const child = spawn(exe, args, {
     cwd,
@@ -25,9 +25,11 @@ async function run(exe, args, cwd, name, env = {}) {
   let log = ''
   child.stdout.on('data', (chunk) => {
     log += chunk
+    if (stream) process.stdout.write(chunk)
   })
   child.stderr.on('data', (chunk) => {
     log += chunk
+    if (stream) process.stderr.write(chunk)
   })
   const code = await new Promise((resolve, reject) => {
     child.on('error', reject)
@@ -125,6 +127,7 @@ const log = await run(
   frontend,
   'browser',
   { CULINARY_E2E_BUILD_MANIFEST: manifestPath },
+  true,
 )
 assert.equal((await sources()).sha256, before.sha256, 'Source changed during the frozen-build verification')
 const evidence = []

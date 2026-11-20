@@ -8,6 +8,7 @@ import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
+import { MINIO_TEST_IMAGE, ensureMinioTestImage } from '../../scripts/minio-test-image.mjs'
 
 const frontend = fileURLToPath(new URL('../../', import.meta.url))
 const root = path.resolve(frontend, '..')
@@ -74,9 +75,15 @@ export async function withIsolatedApp({ media = false }, exercise) {
   }
   async function stop({ child, exit }) {
     if (child.exitCode === null && !child.signalCode) {
+      let force
       if (process.platform === 'win32') await command('taskkill', ['/PID', String(child.pid), '/T', '/F'])
-      else child.kill('SIGTERM')
+      else {
+        child.kill('SIGTERM')
+        // Servers holding open streams (such as real-time events) ignore a graceful stop on Linux.
+        force = setTimeout(() => child.kill('SIGKILL'), 10_000)
+      }
       await exit
+      clearTimeout(force)
     }
   }
   async function freePort() {
@@ -169,8 +176,9 @@ export async function withIsolatedApp({ media = false }, exercise) {
     const connection = `Host=127.0.0.1;Port=${pg.port};Database=users;Username=users;Password=synthetic-users-only`
     let minio
     if (media) {
+      await ensureMinioTestImage()
       minio = await container(
-        'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e',
+        MINIO_TEST_IMAGE,
         9000,
         { MINIO_ROOT_USER: 'media-storage', MINIO_ROOT_PASSWORD: 'synthetic-media-only' },
         ['server', '/data'],

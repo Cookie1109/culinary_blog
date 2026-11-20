@@ -424,7 +424,7 @@ export function RecipeCompositionWizard({
             <form
               noValidate
               onSubmit={ingredientFields.handleSubmit(submitIngredient)}
-              className="min-w-0 space-y-3 border border-border bg-card p-4 sm:p-5"
+              className="min-w-0 space-y-3 border border-border bg-card p-4 sm:p-5 xl:max-h-full xl:overflow-y-auto"
             >
               <h3 className="border-b border-border pb-2.5 font-serif text-lg text-foreground">
                 {editingIngredient ? 'Sửa nguyên liệu' : 'Thêm nguyên liệu mới'}
@@ -663,7 +663,7 @@ export function RecipeCompositionWizard({
             <form
               noValidate
               onSubmit={stepFields.handleSubmit(submitStep)}
-              className="min-w-0 border border-border bg-card p-4 sm:p-5"
+              className="min-w-0 border border-border bg-card p-4 sm:p-5 xl:max-h-full xl:overflow-y-auto"
             >
               <fieldset
                 disabled={stepMutation.isPending || reorderStepMutation.isPending || deleting}
@@ -821,7 +821,7 @@ export function RecipeCompositionWizard({
 
       {/* Stage: Images */}
       {stage === 'images' && (
-        <div className="flex min-h-0 flex-col gap-6 xl:flex-1">
+        <div className="flex min-h-0 flex-col gap-6 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain">
           <div className="shrink-0 space-y-3">
             <input
               id="recipe-image"
@@ -894,14 +894,14 @@ export function RecipeCompositionWizard({
             )}
           </div>
 
-          <div className="min-w-0 xl:flex xl:min-h-0 xl:flex-1 xl:flex-col">
+          <div className="min-w-0 xl:shrink-0">
             <h4 className="mb-3 shrink-0 text-xs font-medium uppercase tracking-widest text-muted-foreground">
               Thư viện ảnh của công thức ({recipe.images.length})
             </h4>
             <div
               role="region"
               aria-label="Thư viện ảnh của công thức"
-              className="max-h-[min(50dvh,28rem)] overflow-y-auto overscroll-contain pb-3 pr-2 [scrollbar-gutter:stable] xl:max-h-none xl:min-h-0 xl:flex-1"
+              className="max-h-[min(50dvh,28rem)] overflow-y-auto overscroll-contain pb-3 pr-2 [scrollbar-gutter:stable] xl:max-h-none xl:overflow-visible"
             >
               {recipe.images.length === 0 ? (
                 <p className="border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
@@ -961,7 +961,7 @@ export function RecipeCompositionWizard({
           </div>
 
           {/* Stepper Navigation */}
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border pt-5">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border pt-5 xl:sticky xl:bottom-0 xl:bg-background">
             <button
               type="button"
               onClick={() => setStage('steps')}
