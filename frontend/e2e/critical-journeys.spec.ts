@@ -137,7 +137,11 @@ test('E2E-02 local login, access expiry, rotation, logout and rejection of old r
   const sessionRead = await page.request.get('/api/auth/session')
   expect(sessionRead.headers()['set-cookie']).toBeUndefined()
   await logout(page)
-  await page.goto('/auth/login')
+  // The signed-out dashboard can still redirect to login and interrupt this navigation; retry it.
+  await expect(async () => {
+    await page.goto('/auth/login')
+    await expect(page.locator('#email')).toBeVisible()
+  }).toPass({ timeout: 15_000 })
   await page.locator('#email').fill(email)
   await page.locator('#password').fill('Wrong#Password123')
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
