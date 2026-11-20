@@ -9,7 +9,7 @@ namespace CulinaryBlog.Api.Presentation;
 internal static class RecipeEventsEndpoint
 {
     /// <summary>Maps the public event stream.</summary>
-    /// <param name="endpoints">The endpoint builder.</param>
+    /// <param name="endpoints">The route builder that receives the endpoint.</param>
     /// <returns>The endpoint builder.</returns>
     public static IEndpointRouteBuilder MapRecipeEventsEndpoint(this IEndpointRouteBuilder endpoints)
     {

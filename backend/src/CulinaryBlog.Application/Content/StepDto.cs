@@ -18,4 +18,5 @@ public sealed record StepDto(
     string Title,
     string Description,
     double? TimerMinutes,
-    string? ImageUrl, string StepType = "cook");
+    string? ImageUrl,
+    string StepType = "cook");

@@ -47,7 +47,9 @@ public sealed class ContentUpdateContractTests(AuthApiFactory factory) : IClassF
         using var update = await Mutation(client, HttpMethod.Put, path, 1, new { cookTime = 0 });
         var changed = await Data(update);
         Assert.Equal(recipe.GetProperty("title").GetString(), changed.GetProperty("title").GetString());
-        Assert.Equal(0, changed.GetProperty("cookTime").GetInt32());
+
+        // Recipe times are derived from steps, so a submitted cookTime does not change them.
+        Assert.Equal(recipe.GetProperty("cookTime").GetInt32(), changed.GetProperty("cookTime").GetInt32());
         Assert.Equal(string.Empty, changed.GetProperty("instructions").GetString());
         using var nutrition = await Mutation(client, HttpMethod.Put, path, 2, new { nutrition = new { calories = (decimal?)null, protein = 2m } });
         var nutritional = (await Data(nutrition)).GetProperty("nutrition");

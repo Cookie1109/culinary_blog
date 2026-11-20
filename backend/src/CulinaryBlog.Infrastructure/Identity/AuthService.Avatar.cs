@@ -16,6 +16,13 @@ internal sealed partial class AuthService
         "Could not remove obsolete avatar {ObjectKey}");
 
     /// <summary>Stores an avatar and commits the associated profile changes.</summary>
+    /// <param name="userId">The identifier of the user who owns the avatar.</param>
+    /// <param name="request">The profile fields saved together with the avatar.</param>
+    /// <param name="content">The uploaded image stream.</param>
+    /// <param name="length">The declared image length in bytes.</param>
+    /// <param name="contentType">The declared image MIME type.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>The updated user profile.</returns>
     public async Task<UserDto> UpdateProfileAvatarAsync(
         string userId,
         UpdateProfileRequest request,
@@ -72,6 +79,10 @@ internal sealed partial class AuthService
     }
 
     /// <summary>Reads only the current avatar of an active account.</summary>
+    /// <param name="userId">The identifier of the avatar owner.</param>
+    /// <param name="fileName">The stored avatar file name.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>The avatar stream and content type.</returns>
     public async Task<MediaFileDto> OpenProfileAvatarAsync(string userId, string fileName, CancellationToken cancellationToken)
     {
         var contentType = Path.GetExtension(fileName) switch

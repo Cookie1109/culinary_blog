@@ -66,6 +66,40 @@ internal sealed partial class ContentService
         }
     }
 
+    /// <summary>Reads a stored category image.</summary>
+    /// <param name="fileName">The stored file name including its extension.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>The image stream and content type.</returns>
+    public async Task<MediaFileDto> OpenCategoryImageAsync(string fileName, CancellationToken cancellationToken)
+    {
+        var extension = Path.GetExtension(fileName);
+        var contentType = ImageUpload.Extensions.FirstOrDefault(item => item.Value == extension).Key;
+        if (contentType is null || !IsCategoryImageFileName(fileName))
+        {
+            throw NotFound("IMAGE_NOT_FOUND", "The category image was not found.");
+        }
+
+        var objectKey = $"{CategoryImageKeyPrefix}{fileName}";
+        try
+        {
+            if (!await fileStorage.ExistsAsync(objectKey, cancellationToken).ConfigureAwait(false))
+            {
+                throw NotFound("IMAGE_NOT_FOUND", "The category image was not found.");
+            }
+
+            return new MediaFileDto(await fileStorage.OpenReadAsync(objectKey, cancellationToken).ConfigureAwait(false), contentType);
+        }
+        catch (Exception exception) when (exception is not (OperationCanceledException or ContentProblemException))
+        {
+            throw new ContentProblemException("FILE_UPLOAD_FAILED", "The image storage service is unavailable.", ContentProblemKind.ServiceUnavailable);
+        }
+    }
+
+    private static bool IsCategoryImageFileName(string fileName) =>
+        ImageUpload.Extensions.Values.Contains(Path.GetExtension(fileName), StringComparer.Ordinal) &&
+        Guid.TryParseExact(Path.GetFileNameWithoutExtension(fileName), "N", out _) &&
+        fileName.Length == 32 + Path.GetExtension(fileName).Length;
+
     /// <summary>Deletes a replaced category image once no category references it.</summary>
     /// <param name="previousUrl">The image URL the category used before the update.</param>
     /// <param name="cancellationToken">Cancels the operation.</param>
@@ -99,40 +133,6 @@ internal sealed partial class ContentService
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             CategoryImageCleanupFailed(logger, objectKey, exception);
-        }
-    }
-
-    private static bool IsCategoryImageFileName(string fileName) =>
-        ImageUpload.Extensions.Values.Contains(Path.GetExtension(fileName), StringComparer.Ordinal) &&
-        Guid.TryParseExact(Path.GetFileNameWithoutExtension(fileName), "N", out _) &&
-        fileName.Length == 32 + Path.GetExtension(fileName).Length;
-
-    /// <summary>Reads a stored category image.</summary>
-    /// <param name="fileName">The stored file name including its extension.</param>
-    /// <param name="cancellationToken">Cancels the operation.</param>
-    /// <returns>The image stream and content type.</returns>
-    public async Task<MediaFileDto> OpenCategoryImageAsync(string fileName, CancellationToken cancellationToken)
-    {
-        var extension = Path.GetExtension(fileName);
-        var contentType = ImageUpload.Extensions.FirstOrDefault(item => item.Value == extension).Key;
-        if (contentType is null || !IsCategoryImageFileName(fileName))
-        {
-            throw NotFound("IMAGE_NOT_FOUND", "The category image was not found.");
-        }
-
-        var objectKey = $"{CategoryImageKeyPrefix}{fileName}";
-        try
-        {
-            if (!await fileStorage.ExistsAsync(objectKey, cancellationToken).ConfigureAwait(false))
-            {
-                throw NotFound("IMAGE_NOT_FOUND", "The category image was not found.");
-            }
-
-            return new MediaFileDto(await fileStorage.OpenReadAsync(objectKey, cancellationToken).ConfigureAwait(false), contentType);
-        }
-        catch (Exception exception) when (exception is not (OperationCanceledException or ContentProblemException))
-        {
-            throw new ContentProblemException("FILE_UPLOAD_FAILED", "The image storage service is unavailable.", ContentProblemKind.ServiceUnavailable);
         }
     }
 }

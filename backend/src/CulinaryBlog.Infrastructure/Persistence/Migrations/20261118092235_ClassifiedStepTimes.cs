@@ -1,3 +1,5 @@
+// Culinary Blog. Authorship is recorded in the repository history.
+
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable

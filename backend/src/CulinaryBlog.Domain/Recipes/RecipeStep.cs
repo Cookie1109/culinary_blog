@@ -39,8 +39,8 @@ public sealed class RecipeStep : BaseEntity
     /// <param name="title">The title supplied to this operation.</param>
     /// <param name="description">The description supplied to this operation.</param>
     /// <param name="timerMinutes">The timer minutes supplied to this operation.</param>
-    /// <param name="stepType">The prep or cook classification.</param>
     /// <param name="imageUrl">The image url supplied to this operation.</param>
+    /// <param name="stepType">The prep or cook classification.</param>
     /// <returns>The create result.</returns>
     public static RecipeStep Create(
         Guid id,
@@ -49,7 +49,8 @@ public sealed class RecipeStep : BaseEntity
         string title,
         string description,
         double? timerMinutes,
-        string? imageUrl, string stepType = "cook")
+        string? imageUrl,
+        string stepType = "cook")
     {
         var step = new RecipeStep { Id = id, RecipeId = recipeId };
         step.Update(stepNumber, title, description, timerMinutes, imageUrl, stepType);
@@ -61,8 +62,8 @@ public sealed class RecipeStep : BaseEntity
     /// <param name="title">The title supplied to this operation.</param>
     /// <param name="description">The description supplied to this operation.</param>
     /// <param name="timerMinutes">The timer minutes supplied to this operation.</param>
-    /// <param name="stepType">The prep or cook classification.</param>
     /// <param name="imageUrl">The image url supplied to this operation.</param>
+    /// <param name="stepType">The prep or cook classification.</param>
     public void Update(int stepNumber, string title, string description, double? timerMinutes, string? imageUrl, string stepType = "cook")
     {
         var trimmedTitle = title.Trim();

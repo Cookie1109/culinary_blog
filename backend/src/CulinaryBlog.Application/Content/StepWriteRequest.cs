@@ -16,4 +16,5 @@ public sealed record StepWriteRequest(
     string Description,
     double? TimerMinutes = null,
     string? ImageUrl = null,
-    int? StepNumber = null, string StepType = "cook");
+    int? StepNumber = null,
+    string StepType = "cook");
