@@ -143,6 +143,15 @@ internal sealed partial class ContentService(
         }
         catch (DbUpdateException exception) when (IsUniqueViolation(exception, "Slug"))
         {
+            // A concurrent request with the same name violates both indexes; report the name, which is the real rule.
+            dbContext.Entry(category).State = EntityState.Detached;
+            if (await dbContext.Categories.IgnoreQueryFilters()
+                .AnyAsync(item => item.NormalizedName == normalizedName, cancellationToken)
+                .ConfigureAwait(false))
+            {
+                throw Conflict("CATEGORY_NAME_EXISTS", "A category with this name already exists.");
+            }
+
             throw Conflict("CATEGORY_SLUG_EXISTS", "A category already owns this slug.");
         }
 
