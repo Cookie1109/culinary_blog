@@ -119,11 +119,13 @@ test(
         await page.getByRole('textbox', { name: 'Mô tả bước', exact: true }).fill('Cook slowly until tender.')
         await write('Lưu bước', 'PUT', `/steps/${(await detail()).steps[0].id}`, 200)
         await stage('4\\. Hình ảnh')
+        const uploaded = page.waitForResponse(
+          (r) => r.request().method() === 'POST' && r.url().endsWith('/images'),
+        )
         await page
           .locator('#recipe-image')
           .setInputFiles({ name: 'dish.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
-        await page.getByRole('textbox', { name: 'Mô tả ảnh', exact: true }).fill('Synthetic rice image')
-        await write('Tải ảnh lên', 'POST', '/images', 201)
+        assert.equal((await uploaded).status(), 201)
         await expect.poll(async () => (await detail()).images[0]?.processingStatus).toBe('ready')
         const saved = await detail()
         // A new authenticated browser session proves persistence beyond client memory.
