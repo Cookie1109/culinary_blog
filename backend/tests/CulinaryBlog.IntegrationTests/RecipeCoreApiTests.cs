@@ -267,7 +267,7 @@ public sealed class RecipeCoreApiTests(AuthApiFactory factory) : IClassFixture<A
         Assert.Single(raceResponses, response => response.StatusCode == HttpStatusCode.Created);
         var rejectedRace = Assert.Single(raceResponses, response => response.StatusCode == HttpStatusCode.Conflict);
         var raceProblem = await rejectedRace.Content.ReadFromJsonAsync<Problem>();
-        Assert.Contains(raceProblem?.Code, new[] { "CATEGORY_NAME_EXISTS", "CATEGORY_SLUG_EXISTS" });
+        Assert.True(raceProblem?.Code is "CATEGORY_NAME_EXISTS" or "CATEGORY_SLUG_EXISTS", raceProblem?.Code);
         foreach (var response in raceResponses)
         {
             response.Dispose();
