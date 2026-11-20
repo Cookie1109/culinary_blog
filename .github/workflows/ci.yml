@@ -139,6 +139,7 @@ jobs:
   functional-browser:
     needs: [backend, frontend]
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -156,6 +157,7 @@ jobs:
         working-directory: frontend
         env:
           CULINARY_COMPLETION_RESULTS: ${{ github.workspace }}/artifacts/browser
+          DEBUG: pw:api
       - uses: actions/upload-artifact@v4
         if: always()
         with:
