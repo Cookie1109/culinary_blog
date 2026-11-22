@@ -1,0 +1,50 @@
+name: migrate-neon
+
+# Production keeps Database__ApplyMigrationsOnStartup=false, so schema changes
+# reach Neon here instead of at API startup. The script is idempotent: it only
+# applies migrations missing from __EFMigrationsHistory.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/src/CulinaryBlog.Infrastructure/Persistence/Migrations/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-neon
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.402
+      - run: dotnet tool restore
+      - run: dotnet restore CulinaryBlog.slnx --locked-mode
+      - run: dotnet build CulinaryBlog.slnx --configuration Release --no-restore
+      - name: Generate idempotent migration script
+        run: >
+          dotnet ef migrations script --idempotent
+          --no-build --configuration Release
+          --context AppDbContext
+          --project src/CulinaryBlog.Infrastructure
+          --startup-project src/CulinaryBlog.Api
+          --output "$RUNNER_TEMP/migrate.sql"
+      - name: Apply to Neon production
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "::error::Repository secret NEON_DATABASE_URL is not set."
+            exit 1
+          fi
+          psql "$NEON_DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction -f "$RUNNER_TEMP/migrate.sql"

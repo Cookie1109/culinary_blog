@@ -1,0 +1,4 @@
+# libssl3t64 (Debian 13.7) in the web image: OpenSSL QUIC stream memory leak.
+# Debian has not published a fixed version yet, so the image cannot be patched.
+# Expires on 2026-12-22 so the scan re-checks it.
+CVE-2026-124709 exp:2026-12-22
